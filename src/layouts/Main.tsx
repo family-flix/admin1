@@ -1,7 +1,7 @@
 /**
  * @file 后台布局
  */
-import { For, createSignal } from "solid-js";
+import { For, JSX, createSignal } from "solid-js";
 
 import { ViewCore } from "@/domains/router";
 import { PageCore } from "@/domains/router/something";
@@ -13,6 +13,7 @@ import { FolderInputIcon } from "@/components/icons/folder-input";
 import { HomeIcon } from "@/components/icons/home";
 // import { EmptyPageContainer } from "@/components/EmptyPageContainer";
 import { NavigatorCore } from "@/domains/navigator";
+import { ViewComponent } from "@/types";
 
 export const MainLayout = (props: {
   app: Application;
@@ -21,18 +22,15 @@ export const MainLayout = (props: {
   // page: PageCore;
 }) => {
   const { app, router, view } = props;
-
-  const [subViews, setSubViews] = createSignal([]);
-
-  console.log("[LAYOUT]MainLayout - render", view);
+  const [subViews, setSubViews] = createSignal(view.subViews);
+  // console.log("[LAYOUT]MainLayout - render", view);
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
   });
-  view.start({ pathname: router.pathname });
 
   return (
-    <div class="min-h-screen flex p-8">
-      <div class="w-[240px] p-4 bg-white rounded-xl">
+    <div class="min-h-screen flex p-8 bg-slate-200">
+      <div class="w-[240px] p-4 rounded-xl bg-white">
         <div class="space-y-2">
           <div
             class="flex items-center p-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
@@ -98,11 +96,11 @@ export const MainLayout = (props: {
           </div>
         </div>
       </div>
-      <div class="flex-1 ml-12 space-y-4">
+      <div class="flex-1 ml-8 space-y-4">
         <For each={subViews()}>
           {(view) => {
-            const PageContent = view.component;
-            return <PageContent app={app} router={navigator} view={view} />;
+            const PageContent = view.component as ViewComponent;
+            return <PageContent app={app} router={router} view={view} />;
           }}
         </For>
       </div>

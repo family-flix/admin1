@@ -23,6 +23,7 @@ enum Events {
 type TheTypesOfEvents = {
   [Events.PathnameChanged]: {
     pathname: string;
+    isBack?: boolean;
   };
   [Events.PushState]: {
     from?: string;
@@ -92,80 +93,24 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   protocol: string;
   origin: string;
 
-  constructor(
-    options: Partial<{
-      prefix: string;
-      host: string;
-      protocol: string;
-      origin: string;
-      href: string;
-      pathname: string;
-    }> = {}
-  ) {
-    super();
-    const {
-      prefix = null,
-      // host, protocol, origin, href, pathname
-    } = options;
-    //     this.prefix = prefix;
-    //     this.configs = [];
-    // this.host = host;
-    // this.protocol = protocol;
-    // this.origin = origin;
-    // this.pathname = pathname;
-    // this.url = href;
-    // this.query = buildQuery(href);
-    console.log("[DOMAIN]Router - init");
-  }
-
   /** 启动路由监听 */
   async start(location: RouteLocation) {
     // console.log("[DOMAIN]router - start");
     const { pathname, href, origin, host, protocol } = location;
-    console.log("[DOMAIN]Router - start, current pathname is", pathname);
-    this.setSomething(location);
+    console.log("[Router]start, current pathname is", pathname);
+    // this.setSomething(location);
+    this.prevPathname = null;
     this.setPathname(pathname);
-    //     const matchedRoute = this.configs.find((route) => {
-    //       const { regexp } = route;
-    //       console.log(
-    //         "[DOMAIN]Router - start, find config",
-    //         route.path,
-    //         route.regexp
-    //       );
-    //       const strictMatch = regexp.test(pathname);
-    //       if (strictMatch) {
-    //         return true;
-    //       }
-    //       return pathname.startsWith(route.path);
-    //     });
-    //     if (!matchedRoute) {
-    //       console.error(`[Router]start - route ${pathname} not found`);
-    //       this.emit(RouteEvents.Start, { host, origin, protocol, pathname, href });
-    //       return;
-    //     }
-    //     const { regexp, keys, config } = matchedRoute;
-    //     const params = buildParams({
-    //       regexp,
-    //       targetPath: pathname,
-    //       keys,
-    //     });
+    this.origin = origin;
     const query = buildQuery(href);
-    //     const { title, component, child } = await config();
-    //     this.modifyStacks(
-    //       {
-    //         title,
-    //         component,
-    //         regexp,
-    //         child,
-    //       },
-    //       { query, params }
-    //     );
-    this.stacks = [
+    this.histories = [
       {
         pathname,
       },
     ];
-    this.emit(Events.Start, { host, origin, protocol, pathname, href });
+    this.emit(Events.PathnameChanged, {
+      pathname,
+    });
     // document.addEventListener("click", (event) => {
     //   //       console.log("[DOMAIN]router - listen click event", event);
     //   let target = event.target;
@@ -246,81 +191,38 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     targetPathname: string,
     options: Partial<{ modifyHistory: boolean }> = {}
   ) {
-    console.log("[DOMAIN]Router - push", targetPathname, this.prevPathname);
-    if (this.prevPathname === targetPathname) {
+    console.log("[Navigator]push", targetPathname, this.prevPathname);
+    if (this.pathname === targetPathname) {
       console.log(
         "(ERROR)[DOMAIN]Router - cur pathname has been",
         targetPathname
       );
       return;
     }
-    this.setPrevPathname(this.pathname);
-    //     const matchedRoute = this.configs.find((route) => {
-    //       const { regexp } = route;
-    //       const strictMatch = regexp.test(targetPathname);
-    //       if (strictMatch) {
-    //         return true;
-    //       }
-    //       return targetPathname.startsWith(route.path);
-    //     });
-    //     if (!matchedRoute) {
-    //       console.error(`Route ${targetPathname} not found`);
-    //       return;
-    //     }
-    // targetPath 可能是带 search 的，不一定是 pathname 概念
+    const prevPathname = this.pathname;
+    this.setPrevPathname(prevPathname);
     this.setPathname(targetPathname);
-    //     const { regexp, keys, config } = matchedRoute;
-    //     const params = buildParams({
-    //       regexp,
-    //       targetPath: targetPathname,
-    //       keys,
-    //     });
     const query = buildQuery(targetPathname);
     this.query = query;
-    //     const { title, component } = await config();
-    //     this.modifyStacks(
-    //       {
-    //         title,
-    //         component,
-    //         regexp,
-    //       },
-    //       {
-    //         query,
-    //         params,
-    //       }
-    //     );
-    this.stacks.push({
-      pathname: targetPathname,
-    });
     this.emit(Events.PushState, {
       from: this.prevPathname,
-      //       title,
+      // 这里似乎不用 this.origin，只要是 / 开头的，就会拼接在后面
       path: `${this.origin}${targetPathname}`,
+      pathname: targetPathname,
+    });
+    this.emit(Events.PathnameChanged, {
       pathname: targetPathname,
     });
   }
   onPushState(handler: Handler<TheTypesOfEvents[Events.PushState]>) {
     this.on(Events.PushState, handler);
   }
-  // onStateChange(
-  //   handler: Handler<TheTypesOfRouterEvents[RouteEvents.PushState]>
-  // ) {
-  //   this.on(RouteEvents.PushState, handler);
-  // }
   replace = async (targetPathname: string) => {
     console.log("[DOMAIN]Router - replace", targetPathname, this.pathname);
     if (targetPathname === this.pathname) {
       return;
     }
     this.setPrevPathname(this.pathname);
-    //     const matchedRoute = this.configs.find((route) => {
-    //       const { regexp } = route;
-    //       return regexp.test(targetPathname);
-    //     });
-    //     if (!matchedRoute) {
-    //       console.error(`Route ${targetPathname} not found`);
-    //       return;
-    //     }
     this.setPathname(targetPathname);
     //     const { regexp, keys, config } = matchedRoute;
     //     const params = buildParams({
@@ -329,23 +231,13 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     //       keys,
     //     });
     const query = buildQuery(targetPathname);
-    //     const { title, component } = await config();
-    //     this.modifyStacks(
-    //       {
-    //         title,
-    //         component,
-    //         regexp,
-    //       },
-    //       {
-    //         query,
-    //         params,
-    //         replace: true,
-    //       }
-    //     );
     this.emit(Events.ReplaceState, {
       from: this.prevPathname,
       //       title,
       path: `${this.origin}${targetPathname}`,
+      pathname: targetPathname,
+    });
+    this.emit(Events.PathnameChanged, {
       pathname: targetPathname,
     });
   };
@@ -364,62 +256,14 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   onReload(handler: Handler<TheTypesOfEvents[Events.Reload]>) {
     this.on(Events.Reload, handler);
   }
-  private modifyStacks(
-    opt: RouteConfigure & { regexp: RegExp },
-    extra: {
-      query: Record<string, string>;
-      params: Record<string, string>;
-      replace?: boolean;
-    }
-  ) {
-    const { title, component, child } = opt;
-    const { query, params, replace = false } = extra;
-    this.query = query;
-    this.params = params;
-    this.child = child;
-    // console.log("[DOMAIN]router - push", path);
-    //     const cloneStacks = this.stacks.map((page) => {
-    //       return {
-    //         ...page,
-    //         hidden: true,
-    //       };
-    //     });
-    //     const newPage = new Page({
-    //       query,
-    //       params,
-    //     });
-    //     if (title) {
-    //       newPage.setTitle(title);
-    //     }
-    //     const createdStack = {
-    //       uid: this.uid(),
-    //       title,
-    //       pathname: this.pathname,
-    //       component,
-    //       hidden: false,
-    //       query,
-    //       params,
-    //       page: newPage,
-    //       child,
-    //     };
-    //     if (replace) {
-    //       cloneStacks[this.stacks.length - 1] = createdStack;
-    //     } else {
-    //       cloneStacks.push(createdStack);
-    //     }
-    //     this.stacks = cloneStacks;
-    //     this.emit(RouteEvents.StackChanged, cloneStacks);
-  }
-
   /** 监听路由发生改变 */
   onPathnameChanged(
     handler: Handler<TheTypesOfEvents[Events.PathnameChanged]>
   ) {
     this.on(Events.PathnameChanged, handler);
   }
-
-  prevStacks: { pathname: string }[] = [];
-  stacks: { pathname: string }[] = [];
+  prevHistories: { pathname: string }[] = [];
+  histories: { pathname: string }[] = [];
   /** 外部路由改变，作出响应 */
   handlePathnameChanged({
     type,
@@ -434,44 +278,41 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     }
     const targetPathname = pathname;
     const isForward = (() => {
-      if (this.prevStacks.length === 0) {
+      if (this.prevHistories.length === 0) {
         return false;
       }
-      const lastStackWhenBack = this.prevStacks[this.prevStacks.length - 1];
-      console.log("[Router]lastStackWhenBack", lastStackWhenBack);
+      const lastStackWhenBack =
+        this.prevHistories[this.prevHistories.length - 1];
+      // console.log("[Router]lastStackWhenBack", lastStackWhenBack);
       if (lastStackWhenBack.pathname === targetPathname) {
         return true;
       }
       return false;
     })();
-    this.emit(Events.PathnameChanged, { pathname });
+    this.emit(Events.PathnameChanged, { pathname, isBack: !isForward });
     // forward
     if (isForward) {
       this.setPrevPathname(this.pathname);
       this.setPathname(targetPathname);
-      const lastStackWhenBack = this.prevStacks.pop();
-      this.stacks = this.stacks.concat([lastStackWhenBack!]);
-      //       this.emit(RouteEvents.StackChanged, [...this.stacks]);
+      const lastStackWhenBack = this.prevHistories.pop();
+      this.histories = this.histories.concat([lastStackWhenBack!]);
       return;
     }
     // back
-    if (this.stacks.length === 1) {
+    if (this.histories.length === 1) {
       this.replace("/");
       return;
     }
-    const theStackPrepareDestroy = this.stacks[this.stacks.length - 1];
+    const theStackPrepareDestroy = this.histories[this.histories.length - 1];
     // @todo 可以让 emitHidden 返回 promise，决定是否要隐藏页面吗？
     //     theStackPrepareDestroy.page.emitHidden();
-    this.prevStacks = this.prevStacks.concat([theStackPrepareDestroy]);
+    this.prevHistories = this.prevHistories.concat([theStackPrepareDestroy]);
     //     setTimeout(() => {
     this.setPrevPathname(this.pathname);
     this.setPathname(targetPathname);
-    const cloneStacks = this.stacks.slice(0, this.stacks.length - 1);
+    const cloneStacks = this.histories.slice(0, this.histories.length - 1);
     //       const lastStack = cloneStacks[cloneStacks.length - 1];
-    this.stacks = cloneStacks;
-    //       if (lastStack.title) {
-    //         lastStack.page.setTitle(lastStack.title);
-    //       }
+    this.histories = cloneStacks;
     //       lastStack.page.emitDestroy();
     //       this.emit(RouteEvents.StackChanged, cloneStacks);
     //     }, 300);

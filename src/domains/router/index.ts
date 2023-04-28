@@ -50,6 +50,7 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     keys: ParamConfigure[];
     config: () => ViewCore;
   }[];
+  _uid: number;
 
   title: string;
   page: PageCore;
@@ -67,7 +68,6 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
   /** 当前访问地址 */
   url: string;
   component: unknown;
-  child?: ViewCore;
 
   constructor(
     options: Partial<{
@@ -82,6 +82,7 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     this.title = title;
     this.component = component;
     this.configs = [];
+    this._uid = this.uid();
   }
 
   /** 判断给定的 pathname 是否有匹配的内容 */
@@ -92,7 +93,26 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     pathname: string;
     type: "push" | "replace";
   }) {
-    console.log("[ViewCore]checkMatch - ", pathname, type);
+    console.log(
+      "[ViewCore]checkMatch - ",
+      this.title,
+      pathname,
+      this.configs,
+      this.subViews
+    );
+    // for (let i = 0; i < this.subViews.length; i += 1) {
+    //   const view = this.subViews[i];
+    //   view.checkMatch({ pathname, type });
+    // }
+    // const latestViewCore = this.subViews[this.subViews.length - 1];
+    // if (latestViewCore) {
+    //   console.log("[ViewCore]checkMatch - latest view is", latestViewCore);
+    //   latestViewCore.checkMatch({ pathname, type });
+    // }
+    if (this.configs.length === 0) {
+      console.log("[ViewCore]checkMatch", this.title, "do not have configs");
+      return;
+    }
     if (!pathname) {
       console.error("[ERROR]unexpected pathname", pathname);
       return;
@@ -111,31 +131,35 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     const { regexp, keys, config } = matchedRoute;
+    const v = await config();
+    if (this.subViews.includes(v)) {
+      console.log("the sub view has existing");
+    }
     const params = buildParams({
       regexp,
       targetPath: targetPathname,
       keys,
     });
     const query = buildQuery(targetPathname);
-    const v = await config();
     this.setSubViews(v, {
+      pathname,
+      type,
       query,
       params,
       replace: type === "replace",
     });
   }
   async start({ pathname }: { pathname: string }) {
-    // console.log("[DOMAIN]router - start");
-    console.log(
-      "[DOMAIN]Router - start, current pathname is",
-      pathname,
-      this.prefix
-    );
+    console.log("[ViewCore]start - current pathname is", this.title, pathname);
     this.checkMatch({ pathname, type: "push" });
     this.emit(Events.Start, { pathname });
   }
-  /** 添加路由 */
-  addSubViewBackup(path: string, configFactory: () => ViewCore) {
+  stop = false;
+  stopListen() {
+    this.stop = true;
+  }
+  /** 添加子视图 */
+  register(path: string, configFactory: () => ViewCore) {
     // @todo 检查重复注册路由
     const keys: ParamConfigure[] = [];
     const regexp = pathToRegexp(path, keys);
@@ -153,46 +177,36 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
   //   this.on(RouteEvents.ReplaceState, handler);
   // }
   private setSubViews(
-    opt: ViewCore,
+    subView: ViewCore,
     extra: {
+      pathname: string;
+      type: "push" | "replace";
       query: Record<string, string>;
       params: Record<string, string>;
       replace?: boolean;
     }
   ) {
-    console.log("[ViewCore]setSubViews", opt);
-    const { title, component } = opt;
-    const { query, params, replace = false } = extra;
-    // this.query = query;
-    // this.params = params;
-    // console.log("[DOMAIN]router - push", path);
-    const cloneStacks = this.subViews;
-    // const newPage = new PageCore({
-    //   query,
-    //   params,
+    console.log("[ViewCore]setSubViews", this.title, subView);
+    const { title, component } = subView;
+    const { pathname, type, query, params, replace = false } = extra;
+    // 已经在 / layout，当路由改变时，仍然响应，并且查找到了 / layout，就可能重复添加，这里做个判断，避免了重复添加
+    const existing = this.subViews.includes(subView);
+    // const existing = this.subViews.find((v) => {
+    //   return v._uid === subView._uid;
     // });
-    // if (title) {
-    //   newPage.setTitle(title);
-    // }
-    // const createdStack = {
-    //   uid: this.uid(),
-    //   title,
-    //   pathname: this.pathname,
-    //   component,
-    //   hidden: false,
-    //   query,
-    //   params,
-    //   page: newPage,
-    //   child,
-    // };
-    if (replace) {
-      cloneStacks[this.subViews.length - 1] = opt;
-    } else {
-      cloneStacks.push(opt);
+    console.log("[ViewCore]setSubViews - check existing", existing);
+    if (!existing) {
+      const cloneStacks = this.subViews;
+      if (replace) {
+        cloneStacks[this.subViews.length - 1] = subView;
+      } else {
+        cloneStacks.push(subView);
+      }
+      this.subViews = cloneStacks;
+      console.log("[ViewCore]setSubViews - emit SubViewsChanged");
+      this.emit(Events.SubViewsChanged, [...cloneStacks]);
     }
-    this.subViews = cloneStacks;
-    console.log("[ViewCore]modifyStacks", cloneStacks);
-    this.emit(Events.SubViewsChanged, cloneStacks);
+    subView.checkMatch({ pathname, type });
   }
   /** 获取路由信息 */
   // getLocation() {

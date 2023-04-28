@@ -94,7 +94,7 @@ export const HomePage = (props: {
                 );
               }}
             </For>
-            <div class="p-4 bg-white rounded-xl">
+            <div class="p-4 rounded-xl">
               <div class="grid w-full gap-2">
                 <Textarea
                   className=""
@@ -151,9 +151,9 @@ export const HomePage = (props: {
           </div>
         </div>
       </div>
-      <Modal title="hello" core={modal}>
+      {/* <Modal title="hello" core={modal}>
         <div>Hello</div>
-      </Modal>
+      </Modal> */}
       {/* <TMDBSearcherDialog
         visible={visible}
         title={

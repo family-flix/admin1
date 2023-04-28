@@ -4,13 +4,13 @@ import { ViewCore } from "..";
 describe("sub routes", () => {
   const router = new ViewCore({ prefix: "" });
   const subRouter = new ViewCore({ prefix: "/" });
-  subRouter.addSubViewBackup("/home", () => {
+  subRouter.register("/home", () => {
     return {
       title: "home",
       component: "home-component",
     };
   });
-  router.addSubViewBackup("/", () => {
+  router.register("/", () => {
     return {
       title: "layout1",
       component: "main-layout",

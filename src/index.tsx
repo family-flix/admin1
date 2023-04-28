@@ -13,65 +13,19 @@ import { TaskListPage } from "./pages/task/list";
 import { app } from "./store/app";
 
 import "./style.css";
+import { ViewComponent } from "./types";
 
-const view = new ViewCore({ title: "ROOT", component: "div" });
-view.addSubViewBackup("/", () => {
-  console.log("[]/");
-  const subView = new ViewCore({ title: "MainLayout", component: MainLayout });
-  subView.addSubViewBackup("/home", () => {
-    console.log("[]/home");
-    const a = new ViewCore({
-      title: "首页",
-      component: HomePage,
-    });
-    return a;
-    // return {
-    //   title: "首页",
-    //   component: HomePage,
-    // };
-  });
-  subView.addSubViewBackup("/task/list", () => {
-    console.log("[]/task/list");
-    const a = new ViewCore({
-      title: "任务列表",
-      component: TaskListPage,
-    });
-    return a;
-    // return {
-    //   title: "刮削任务列表",
-    //   component: TaskListPage,
-    // };
-  });
-  return subView;
-  // return {
-  //   title: "管理后台",
-  //   component: MainLayout,
-  // };
+const router = new NavigatorCore();
+// @ts-ignore
+window._router = router;
+router.onBack(() => {
+  window.history.back();
 });
-view.addSubViewBackup("/auth", () => {
-  console.log("[]/auth");
-  const subView = new ViewCore({
-    title: "EmptyLayout",
-    component: EmptyLayout,
-  });
-  subView.addSubViewBackup("/auth/login", () => {
-    const a = new ViewCore({
-      title: "登录",
-      component: LoginPage,
-    });
-    return a;
-  });
-  return subView;
-  // return {
-  //   title: "登录",
-  //   component: EmptyLayout,
-  // };
+router.onReload(() => {
+  window.location.reload();
 });
-
-const navigator = new NavigatorCore();
-navigator.onPushState(({ from, path, pathname }) => {
-  console.log("[ROOT]Application - onPushState");
-  view.checkMatch({ pathname, type: "push" });
+router.onPushState(({ from, path }) => {
+  console.log("[Application ]- onPushState", path);
   window.history.pushState(
     {
       from,
@@ -80,9 +34,8 @@ navigator.onPushState(({ from, path, pathname }) => {
     path
   );
 });
-navigator.onReplaceState(({ from, path, pathname }) => {
-  console.log("[ROOT]Application - onReplaceState");
-  view.checkMatch({ pathname, type: "replace" });
+router.onReplaceState(({ from, path, pathname }) => {
+  console.log("[Application ]- onReplaceState");
   window.history.replaceState(
     {
       from,
@@ -91,65 +44,116 @@ navigator.onReplaceState(({ from, path, pathname }) => {
     path
   );
 });
-navigator.onBack(() => {
-  window.history.back();
+
+const rootView = new ViewCore({ title: "ROOT", component: "div" });
+const mainLayoutView = new ViewCore({
+  title: "MainLayout",
+  component: MainLayout,
 });
-navigator.onReload(() => {
-  window.location.reload();
+const homeView = new ViewCore({
+  title: "首页",
+  component: HomePage,
 });
+const taskView = new ViewCore({
+  title: "任务列表",
+  component: TaskListPage,
+});
+const authLayoutView = new ViewCore({
+  title: "EmptyLayout",
+  component: EmptyLayout,
+});
+const loginView = new ViewCore({
+  title: "登录",
+  component: LoginPage,
+});
+mainLayoutView.register("/home", () => {
+  return homeView;
+});
+mainLayoutView.register("/task/list", () => {
+  return taskView;
+});
+rootView.register("/", () => {
+  return mainLayoutView;
+});
+authLayoutView.register("/auth/login", () => {
+  return loginView;
+});
+rootView.register("/auth", () => {
+  return authLayoutView;
+});
+router.onPathnameChanged(({ pathname }) => {
+  console.log("[]Application - pathname change", pathname);
+  rootView.checkMatch({ pathname, type: "push" });
+});
+
 window.addEventListener("popstate", (event) => {
   const { type } = event;
   const { pathname } = window.location;
-  navigator.handlePathnameChanged({ type, pathname });
+  router.handlePathnameChanged({ type, pathname });
 });
 
-function ViewComponent(props: { view: ViewCore }) {
-  const { view } = props;
-  const [subViews, setSubViews] = createSignal([]);
-  view.onSubViewsChange((nextSubViews) => {
-    console.log("[]ViewComponent - sub view changed", nextSubViews);
-    setSubViews(nextSubViews);
-  });
-  const { pathname } = navigator;
-  console.log("[]ViewComponent - before start", pathname);
-  view.start({ pathname });
-  return (
-    <For each={subViews()}>
-      {(subView) => {
-        // const { page } = subView;
-        const RenderedComponent = subView.component;
-        return (
-          <RenderedComponent
-            app={app}
-            router={navigator}
-            view={subView}
-            // page={page}
-          />
-        );
-      }}
-    </For>
-  );
-}
+// function ViewComponent(props: { view: ViewCore }) {
+//   const { view } = props;
+//   const [subViews, setSubViews] = createSignal([]);
+//   view.onSubViewsChange((nextSubViews) => {
+//     // console.log("[]ViewComponent - sub view changed", nextSubViews);
+//     setSubViews(nextSubViews);
+//   });
+//   const { pathname } = navigator;
+//   // console.log("[]ViewComponent - before start", pathname);
+//   // view.start({ pathname });
+//   // view.stopListen();
+//   return (
+//     <For each={subViews()}>
+//       {(subView) => {
+//         // const { page } = subView;
+//         const RenderedComponent = subView.component;
+//         return (
+//           <RenderedComponent
+//             app={app}
+//             router={navigator}
+//             view={subView}
+//             // page={page}
+//           />
+//         );
+//       }}
+//     </For>
+//   );
+// }
 
 function Application() {
-  // const [subViews, setSubViews] = createSignal([]);
-  // view.onSubViewsChange((nextSubViews) => {
-  //   console.log("[]Application - sub view changed", nextSubViews);
-  //   setSubViews(nextSubViews);
-  // });
-  // navigator.onStart((params) => {
-  //   view.start(params);
-  // });
+  const [subViews, setSubViews] = createSignal(rootView.subViews);
+  rootView.onSubViewsChange((nextSubViews) => {
+    console.log("[]Application - subViews changed", nextSubViews);
+    setSubViews(nextSubViews);
+  });
   app.onError((msg) => {
     alert(msg.message);
   });
   // console.log("[]Application - before start", window.history);
-  navigator.start(window.location);
+  router.start(window.location);
   app.start();
 
   return (
     <div>
-      <ViewComponent view={view} />
+      <For each={subViews()}>
+        {(subView) => {
+          const RenderedComponent = subView.component as ViewComponent;
+          console.log(
+            "[Application]render subView",
+            rootView.title,
+            subView.title
+          );
+          return (
+            <RenderedComponent
+              app={app}
+              router={router}
+              view={subView}
+              // page={page}
+            />
+          );
+        }}
+      </For>
     </div>
   );
 }
