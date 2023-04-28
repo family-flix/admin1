@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "types": ["vite/client"],
+    "noEmit": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@list-helper/core/*": ["./src/domains/list-helper-core/*"],
+      "@list-helper/hooks/*": ["./src/domains/list-helper-hooks/*"],
+      "@/*": ["./src/*"]
+    }
+  }
+}
