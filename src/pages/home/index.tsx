@@ -1,7 +1,7 @@
 /**
  * @file 管理后台首页
  */
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 // import { HelpCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,14 +32,17 @@ import Helper from "@list-helper/core/core";
 // import { Result } from "@/types";
 import DriveCard from "@/components/DriveCard";
 import Modal from "@/components/SingleModal";
+import { NavigatorCore } from "@/domains/navigator";
 
 export const HomePage = (props: {
   app: Application;
-  router: ViewCore;
+  router: NavigatorCore;
+  view: ViewCore;
   page: PageCore;
 }) => {
-  const { app, router, page } = props;
+  const { app, view, page } = props;
   const [count, setCount] = createSignal(0);
+  const [hidden, setHidden] = createSignal(view.hidden);
   const [driveResponse, setDriveResponse] = createSignal(
     Helper.defaultResponse
   );
@@ -49,7 +52,12 @@ export const HomePage = (props: {
   // const { toast } = useToast();
 
   console.log("[PAGE]home - render");
-
+  view.onShow(() => {
+    setHidden(false);
+  });
+  view.onHide(() => {
+    setHidden(true);
+  });
   setInterval(() => {
     setCount((prev) => prev + 1);
   }, 1000);
@@ -80,7 +88,7 @@ export const HomePage = (props: {
   const unknownTVRecords = () => unknownTVResponse().dataSource;
 
   return (
-    <>
+    <Show when={!hidden()}>
       <div>
         <div class="section">
           <h2 class="my-2 text-2xl">云盘列表{count()}</h2>
@@ -182,7 +190,7 @@ export const HomePage = (props: {
           set_visible(next_visible);
         }}
       /> */}
-    </>
+    </Show>
   );
 };
 

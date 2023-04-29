@@ -16,7 +16,8 @@ export type PageOptions = {
   query: Record<string, string>;
   params: Record<string, string>;
 };
-export enum PageEvent {
+
+enum PageEvent {
   /** 页面加载 */
   Ready,
   /** 页面隐藏 */
@@ -34,7 +35,7 @@ export enum PageEvent {
   /** 页面触底 */
   ReachBottom,
 }
-export type TheTypesOfPageEvent = {
+type TheTypesOfPageEvent = {
   [PageEvent.Ready]: Record<string, string>;
   [PageEvent.Show]: void;
   [PageEvent.Hidden]: void;

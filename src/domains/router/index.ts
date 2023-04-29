@@ -11,10 +11,16 @@ import { PageCore } from "./something";
 
 enum Events {
   SubViewsChanged,
+  SubViewChanged,
+  Show,
+  Hidden,
   Start,
 }
 type TheTypesOfEvents = {
   [Events.SubViewsChanged]: ViewCore[];
+  [Events.SubViewChanged]: ViewCore;
+  [Events.Show]: void;
+  [Events.Hidden]: void;
   [Events.Start]: { pathname: string };
 };
 type ParamConfigure = {
@@ -55,7 +61,12 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
   title: string;
   page: PageCore;
 
+  _hidden = false;
+  get hidden() {
+    return this._hidden;
+  }
   subViews: ViewCore[] = [];
+  curSubView: ViewCore;
   /** 浏览器返回后，被销毁的那个栈 */
   destroyStacksWhenBack: ViewCore[] = [];
 
@@ -132,9 +143,9 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     }
     const { regexp, keys, config } = matchedRoute;
     const v = await config();
-    if (this.subViews.includes(v)) {
-      console.log("the sub view has existing");
-    }
+    // if (this.subViews.includes(v)) {
+    //   console.log("the sub view has existing");
+    // }
     const params = buildParams({
       regexp,
       targetPath: targetPathname,
@@ -149,14 +160,60 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
       replace: type === "replace",
     });
   }
-  async start({ pathname }: { pathname: string }) {
-    console.log("[ViewCore]start - current pathname is", this.title, pathname);
-    this.checkMatch({ pathname, type: "push" });
-    this.emit(Events.Start, { pathname });
+  private setSubViews(
+    subView: ViewCore,
+    extra: {
+      pathname: string;
+      type: "push" | "replace";
+      query: Record<string, string>;
+      params: Record<string, string>;
+      replace?: boolean;
+    }
+  ) {
+    console.log("[ViewCore]setSubViews", this.title, subView);
+    const { title, component } = subView;
+    const { pathname, type, query, params, replace = false } = extra;
+    this.curSubView = subView;
+    this.emit(Events.SubViewChanged, subView);
+    const cloneStacks = this.subViews;
+    // 已经在 / layout，当路由改变时，仍然响应，并且查找到了 / layout，就可能重复添加，这里做个判断，避免了重复添加
+    const existing = this.subViews.includes(subView);
+    console.log(
+      "[ViewCore]setSubViews -",
+      this.title,
+      "check",
+      subView.title,
+      "existing",
+      existing
+    );
+    for (let i = 0; i < this.subViews.length; i += 1) {
+      const v = this.subViews[i];
+      if (v === subView) {
+        console.log("[ViewCore]", this.title, "show subView", v.title);
+        v.show();
+        continue;
+      }
+      console.log("[ViewCore]", this.title, "hide subView", v.title);
+      v.hide();
+    }
+    if (!existing) {
+      if (replace) {
+        cloneStacks[this.subViews.length - 1] = subView;
+      } else {
+        cloneStacks.push(subView);
+      }
+      // console.log("[ViewCore]setSubViews - emit SubViewsChanged");
+      this.emit(Events.SubViewsChanged, [...cloneStacks]);
+    }
+    subView.checkMatch({ pathname, type });
   }
-  stop = false;
-  stopListen() {
-    this.stop = true;
+  /** 视图栈改变 */
+  onSubViewsChange(handler: Handler<TheTypesOfEvents[Events.SubViewsChanged]>) {
+    this.on(Events.SubViewsChanged, handler);
+  }
+  /** 当前视图改变 */
+  onSubViewChange(handler: Handler<TheTypesOfEvents[Events.SubViewChanged]>) {
+    this.on(Events.SubViewChanged, handler);
   }
   /** 添加子视图 */
   register(path: string, configFactory: () => ViewCore) {
@@ -171,49 +228,30 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     });
     return this;
   }
-  // onReplaceState(
-  //   handler: Handler<TheTypesOfRouterEvents[RouteEvents.ReplaceState]>
-  // ) {
-  //   this.on(RouteEvents.ReplaceState, handler);
-  // }
-  private setSubViews(
-    subView: ViewCore,
-    extra: {
-      pathname: string;
-      type: "push" | "replace";
-      query: Record<string, string>;
-      params: Record<string, string>;
-      replace?: boolean;
+  show() {
+    if (this._hidden === false) {
+      return;
     }
-  ) {
-    console.log("[ViewCore]setSubViews", this.title, subView);
-    const { title, component } = subView;
-    const { pathname, type, query, params, replace = false } = extra;
-    // 已经在 / layout，当路由改变时，仍然响应，并且查找到了 / layout，就可能重复添加，这里做个判断，避免了重复添加
-    const existing = this.subViews.includes(subView);
-    // const existing = this.subViews.find((v) => {
-    //   return v._uid === subView._uid;
-    // });
-    console.log("[ViewCore]setSubViews - check existing", existing);
-    if (!existing) {
-      const cloneStacks = this.subViews;
-      if (replace) {
-        cloneStacks[this.subViews.length - 1] = subView;
-      } else {
-        cloneStacks.push(subView);
-      }
-      this.subViews = cloneStacks;
-      console.log("[ViewCore]setSubViews - emit SubViewsChanged");
-      this.emit(Events.SubViewsChanged, [...cloneStacks]);
-    }
-    subView.checkMatch({ pathname, type });
+    this._hidden = false;
+    this.emit(Events.Show);
   }
-  /** 获取路由信息 */
-  // getLocation() {
-  //   return window.location;
-  // }
-  onSubViewsChange(handler: Handler<TheTypesOfEvents[Events.SubViewsChanged]>) {
-    this.on(Events.SubViewsChanged, handler);
+  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
+    this.on(Events.Show, handler);
+  }
+  hide() {
+    if (this._hidden === true) {
+      return;
+    }
+    this._hidden = true;
+    this.emit(Events.Hidden);
+  }
+  onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
+    this.on(Events.Hidden, handler);
+  }
+  async start({ pathname }: { pathname: string }) {
+    console.log("[ViewCore]start - current pathname is", this.title, pathname);
+    this.checkMatch({ pathname, type: "push" });
+    this.emit(Events.Start, { pathname });
   }
   onStart(handler: Handler<TheTypesOfEvents[Events.Start]>) {
     this.on(Events.Start, handler);

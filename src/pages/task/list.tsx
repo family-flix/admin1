@@ -1,4 +1,4 @@
-import { For, createSignal } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 
 import Helper from "@list-helper/core/core";
 import {
@@ -14,20 +14,27 @@ import { NavigatorCore } from "@/domains/navigator";
 export const TaskListPage = (props: {
   page: PageCore;
   router: NavigatorCore;
+  view: ViewCore;
 }) => {
-  const { page, router } = props;
+  const { view, router } = props;
 
+  const [hidden, setHidden] = createSignal(view.hidden);
   const [response, setResponse] = createSignal(Helper.defaultResponse);
   const helper = new Helper<AsyncTask>(fetch_async_tasks);
   helper.onChange = (nextResponse) => {
     setResponse(nextResponse);
   };
+  view.onShow(() => {
+    setHidden(false);
+  });
+  view.onHide(() => {
+    setHidden(true);
+  });
   helper.init();
-
   const dataSource = () => response().dataSource;
 
   return (
-    <div>
+    <Show when={!hidden()}>
       <h2 class="my-2 text-2xl">任务列表</h2>
       <div class="space-y-4">
         <For each={dataSource()}>
@@ -68,6 +75,6 @@ export const TaskListPage = (props: {
           }}
         </For>
       </div>
-    </div>
+    </Show>
   );
 };
