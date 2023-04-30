@@ -9,6 +9,7 @@ specifiers:
   dayjs: ^1.11.7
   hls.js: ^1.4.0
   lodash: ^4.17.21
+  lucide-solid: ^0.187.0
   mitt: ^3.0.0
   nzh: ^1.0.8
   path-to-regexp: ^6.2.1
@@ -31,6 +32,7 @@ dependencies:
   dayjs: registry.npmmirror.com/dayjs/1.11.7
   hls.js: registry.npmmirror.com/hls.js/1.4.0
   lodash: registry.npmmirror.com/lodash/4.17.21
+  lucide-solid: registry.npmmirror.com/lucide-solid/0.187.0_solid-js@1.7.3
   mitt: registry.npmmirror.com/mitt/3.0.0
   nzh: registry.npmmirror.com/nzh/1.0.8
   path-to-regexp: registry.npmmirror.com/path-to-regexp/6.2.1
@@ -1656,6 +1658,17 @@ packages:
     dependencies:
       yallist: registry.npmmirror.com/yallist/4.0.0
     dev: true
+
+  registry.npmmirror.com/lucide-solid/0.187.0_solid-js@1.7.3:
+    resolution: {integrity: sha512-FvRsW5XaG5Mzh7TtAuLZIUweoiLhK5fEJvB3x/tS3E/r6vy61rPNwFsJnqykA2cBXiUjc59llPdd3fHFW6kNvg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/lucide-solid/-/lucide-solid-0.187.0.tgz}
+    id: registry.npmmirror.com/lucide-solid/0.187.0
+    name: lucide-solid
+    version: 0.187.0
+    peerDependencies:
+      solid-js: ^1.4.7
+    dependencies:
+      solid-js: registry.npmmirror.com/solid-js/1.7.3
+    dev: false
 
   registry.npmmirror.com/magic-string/0.30.0:
     resolution: {integrity: sha512-LA+31JYDJLs82r2ScLrlz1GjSgu66ZV518eyWT+S8VhyQn/JL0u9MeBOvQMGYiPk1DBiSN9DDMOcXvigJZaViQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/magic-string/-/magic-string-0.30.0.tgz}

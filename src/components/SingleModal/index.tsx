@@ -2,7 +2,6 @@
  * @file 带有 Footer 的 Modal 组件
  */
 import { JSX } from "solid-js";
-import { createSignal } from "solid-js";
 
 import {
   Dialog,
@@ -11,10 +10,8 @@ import {
   DialogHeader,
   // DialogTrigger,
   DialogFooter,
-  DialogOverlay,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Result } from "@/types";
 import { DialogCore } from "@/domains/ui/dialog";
 
 const Modal = (props: {
@@ -43,7 +40,7 @@ const Modal = (props: {
                   variant="subtle"
                   size="default"
                   onClick={() => {
-                    core.hide();
+                    core.cancel();
                   }}
                 >
                   取消
@@ -52,7 +49,7 @@ const Modal = (props: {
                   variant="default"
                   size="default"
                   onClick={async () => {
-                    core.hide();
+                    core.ok();
                   }}
                 >
                   确认

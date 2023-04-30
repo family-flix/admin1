@@ -28,6 +28,8 @@ export class UserCore extends BaseDomain<TheTypeOfEvent> {
   token: string = "";
   values: Partial<{ email: string; password: string }> = {};
 
+  static Events = Events;
+
   constructor(initialUser?: UserCore["user"]) {
     super();
 

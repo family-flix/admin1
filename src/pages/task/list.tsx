@@ -5,7 +5,7 @@ import {
   AsyncTask,
   fetch_async_tasks,
   stop_async_task,
-} from "@/domains/shared_files/services";
+} from "@/domains/shared_resource/services";
 import { Button } from "@/components/ui/button";
 import { ViewCore } from "@/domains/router";
 import { PageCore } from "@/domains/router/something";
@@ -19,7 +19,9 @@ export const TaskListPage = (props: {
   const { view, router } = props;
 
   const [hidden, setHidden] = createSignal(view.hidden);
-  const [response, setResponse] = createSignal(Helper.defaultResponse);
+  const [response, setResponse] = createSignal(
+    Helper.defaultResponse<AsyncTask>()
+  );
   const helper = new Helper<AsyncTask>(fetch_async_tasks);
   helper.onChange = (nextResponse) => {
     setResponse(nextResponse);

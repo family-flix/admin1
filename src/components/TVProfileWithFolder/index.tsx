@@ -1,7 +1,7 @@
 /**
  * @file 遍历文件夹并索引后的结果
  */
-import { TaskResultOfSharedTV } from "@/domains/shared_files/services";
+import { TaskResultOfSharedTV } from "@/domains/shared_resource/services";
 import LazyImage from "@/components/LazyImage";
 import {
   Tooltip,

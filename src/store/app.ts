@@ -1,16 +1,36 @@
 /**
- * @file 应用实例
- * 应该在这里进行一些初始化操作
+ * @file 应用实例，也可以看作启动入口，优先会执行这里的代码
+ * 应该在这里进行一些初始化操作、全局状态或变量的声明
  */
 import Helper from "@list-helper/core/core";
 import { Application } from "@/domains/app";
 import { LocalCache } from "@/domains/app/cache";
 import { ViewCore } from "@/domains/router";
 import { UserCore } from "@/domains/user";
+import { NavigatorCore } from "@/domains/navigator";
 import { Result } from "@/types";
+import { Drive } from "@/domains/drive";
+
+// class CurUser extends UserCore {
+//   /** 该用户的网盘列表 */
+//   drives: Drive[];
+
+//   constructor(props) {
+//     super(props);
+//   }
+
+//   async fetchDrives() {
+//     const r = await Drive.ListHelper.init();
+//     if (r.error) {
+//       this.emit(UserCore.Events.Error, r.error);
+//       return;
+//     }
+//     this.drives = r.data;
+//   }
+// }
 
 const cache = new LocalCache();
-const router = new ViewCore();
+const router = new NavigatorCore();
 const user = new UserCore(cache.get("user"));
 
 export const app = new Application({
@@ -31,16 +51,8 @@ export const app = new Application({
     user.onLogin((profile) => {
       cache.set("user", profile);
     });
-    // cache.init(JSON.parse(localStorage.getItem("global") || "{}"));
-    // const videoSettings = JSON.parse(
-    //   localStorage.getItem("video_settings") || "null"
-    // );
-    // if (videoSettings) {
-    //   cache.set("video_settings", videoSettings);
-    //   localStorage.removeItem("video_settings");
-    // }
     if (!user.isLogin) {
-      router.replace("/login");
+      // router.replace("/login");
       return Result.Ok(null);
     }
     return Result.Ok(null);

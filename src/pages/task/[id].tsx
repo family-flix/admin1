@@ -4,8 +4,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
-import { SharedFilesAnalysis } from "@/domains/shared_files";
-import { TaskResultOfSharedTV } from "@/domains/shared_files/services";
+import { SharedFilesAnalysis } from "@/domains/shared_resource";
+import { TaskResultOfSharedTV } from "@/domains/shared_resource/services";
 import useHelper from "@/domains/list-helper-hook";
 import { fetch_aliyun_drives } from "@/domains/drive/services";
 import TVProfileWithFolder from "@/components/TVProfileWithFolder";

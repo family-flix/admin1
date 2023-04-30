@@ -26,10 +26,11 @@ type TheTypesOfEvents<T> = {
   [Events.Completed]: void;
 };
 type Service<T, V> = (params: V) => Promise<Result<T>>;
+
 /**
- * 分页类
+ * 用于接口请求的核心类
  */
-class Client<
+export class RequestClient<
   T extends (...args: unknown[]) => Promise<Result<any>>
 > extends BaseDomain<
   TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>
@@ -82,5 +83,3 @@ class Client<
     this.on(Events.Tip, handler);
   }
 }
-
-export default Client;

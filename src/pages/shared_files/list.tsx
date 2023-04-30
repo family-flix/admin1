@@ -1,16 +1,14 @@
 /**
  * @file 查询过的分享文件列表
  */
-import Head from "next/head";
+import { For, createSignal } from "solid-js";
 
-import ScrollView from "@/components/ScrollView";
+import Helper from "@list-helper/core/core";
 import { FetchParams } from "@list-helper/core/typing";
+import { NavigatorCore } from "@/domains/navigator";
 import { request } from "@/utils/request";
-import useHelper from "@/domains/list-helper-hook";
-import { useEffect } from "react";
-import { ListResponse, RequestedResource } from "@/types";
-import { useRouter } from "next/router";
 import { relative_time_from_now } from "@/utils";
+import { ListResponse, RequestedResource } from "@/types";
 
 async function fetch_shared_files_histories(body: FetchParams) {
   const r = await request.get<
@@ -39,52 +37,44 @@ type SharedFileHistory = RequestedResource<
   typeof fetch_shared_files_histories
 >["list"][0];
 
-const SharedFilesHistoryPage = () => {
-  const router = useRouter();
-  const [response, helper] = useHelper<SharedFileHistory>(
-    fetch_shared_files_histories
+export const SharedFilesHistoryPage = (props: { router: NavigatorCore }) => {
+  const { router } = props;
+  const [response, setResponse] = createSignal(
+    Helper.defaultResponse<SharedFileHistory>()
   );
+  const helper = new Helper<SharedFileHistory>(fetch_shared_files_histories);
+  helper.onChange = (nextResponse) => {
+    setResponse(nextResponse);
+  };
+  helper.init();
 
-  useEffect(() => {
-    helper.init();
-  }, []);
-
-  const { dataSource } = response;
+  const dataSource = () => response().dataSource;
 
   return (
     <>
-      <Head>
-        <title>转存查看记录</title>
-      </Head>
-      <div className="mx-auto w-[960px] py-8">
-        <ScrollView
-          {...response}
-          onLoadMore={() => {
-            helper.loadMore();
-          }}
-        >
-          <div className="space-y-4">
-            {dataSource.map((shared_file) => {
-              const { id, url, title, created } = shared_file;
-              return (
-                <div
-                  key={id}
-                  className="p-4"
-                  onClick={() => {
-                    router.push(`/admin/shared_files?url=${url}`);
-                  }}
-                >
-                  <p>{title}</p>
-                  <div>{url}</div>
-                  <div>{created}</div>
-                </div>
-              );
-            })}
+      <div class="mx-auto w-[960px] py-8">
+        <view>
+          <div class="space-y-4">
+            <For each={dataSource()}>
+              {(sharedFile) => {
+                const { id, url, title, created } = sharedFile;
+                return (
+                  <div
+                    class="p-4"
+                    onClick={() => {
+                      router.push(`/admin/shared_files?url=${url}`);
+                    }}
+                  >
+                    <p>{title}</p>
+                    <div>{url}</div>
+                    <div>{created}</div>
+                  </div>
+                );
+              }}
+            </For>
           </div>
-        </ScrollView>
+        </view>
       </div>
     </>
   );
 };
-
-export default SharedFilesHistoryPage;

@@ -380,26 +380,6 @@ export type AliyunFolderItem = RequestedResource<
 >["items"][0];
 
 /**
- * 转存指定的分享文件到指定网盘
- * @param body
- * @returns
- */
-export async function save_shared_files(body: {
-  /** 分享链接 */
-  url: string;
-  /** 要转存的文件/文件夹 file_id */
-  file_id: string;
-  /** 要转存的文件/文件夹名称 */
-  file_name: string;
-  /** 转存到指定网盘 */
-  drive_id: string;
-  /** 转存到指定网盘的哪个文件夹，默认是根目录 */
-  target_folder_id?: string;
-}) {
-  return request.get("/api/shared_files/save", body);
-}
-
-/**
  * 遍历指定阿里云盘下的指定文件夹
  */
 export async function walk_aliyun_folder(body: {
@@ -460,9 +440,7 @@ export async function build_link_between_shared_files_with_folder(body: {
 }
 
 /**
- *
- * @param body
- * @returns
+ * 判断是否有同名文件夹
  */
 export async function check_has_same_name_tv(body: {
   /** 检查是否有新增文件的文件夹名称 */

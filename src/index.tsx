@@ -1,23 +1,25 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
-import { createSignal, For, onMount } from "solid-js";
+import { createSignal, For } from "solid-js";
 
 import { ViewCore } from "./domains/router";
 import { NavigatorCore } from "./domains/navigator";
-import { Window } from "./components/Page";
 import { MainLayout } from "./layouts/Main";
 import { EmptyLayout } from "./layouts/Empty";
 import { HomePage } from "./pages/home";
 import { LoginPage } from "./pages/login";
 import { TaskListPage } from "./pages/task/list";
+import { SharedFilesTransferPage } from "./pages/shared_files";
 import { app } from "./store/app";
-
-import "./style.css";
 import { ViewComponent } from "./types";
 
-const router = new NavigatorCore();
-// @ts-ignore
-window._router = router;
+import "./style.css";
+import { Toast } from "./components/ui/toast";
+import { DialogCore } from "./domains/ui/dialog";
+import { sleep } from "./utils";
+import { ToastCore } from "./domains/ui/toast";
+
+const { router } = app;
 router.onBack(() => {
   window.history.back();
 });
@@ -58,6 +60,10 @@ const taskView = new ViewCore({
   title: "任务列表",
   component: TaskListPage,
 });
+const sharedFilesTransferView = new ViewCore({
+  title: "文件转存",
+  component: SharedFilesTransferPage,
+});
 const authLayoutView = new ViewCore({
   title: "EmptyLayout",
   component: EmptyLayout,
@@ -71,6 +77,9 @@ mainLayoutView.register("/home", () => {
 });
 mainLayoutView.register("/task/list", () => {
   return taskView;
+});
+mainLayoutView.register("/shared_files", () => {
+  return sharedFilesTransferView;
 });
 rootView.register("/", () => {
   return mainLayoutView;
@@ -123,13 +132,26 @@ window.addEventListener("popstate", (event) => {
 
 function Application() {
   const [subViews, setSubViews] = createSignal(rootView.subViews);
+  const [texts, setTexts] = createSignal<string[]>([]);
+
+  const toast = new ToastCore();
+
   rootView.onSubViewsChange((nextSubViews) => {
     console.log("[]Application - subViews changed", nextSubViews);
     setSubViews(nextSubViews);
   });
-  app.onError((msg) => {
-    alert(msg.message);
+  app.onTip(async (msg) => {
+    const { text } = msg;
+    toast.show({
+      texts: text,
+    });
   });
+  toast.onContentChange((nextContent) => {
+    setTexts(nextContent.texts);
+  });
+  // app.onError((msg) => {
+  //   alert(msg.message);
+  // });
   // console.log("[]Application - before start", window.history);
   router.start(window.location);
   app.start();
@@ -154,6 +176,7 @@ function Application() {
           );
         }}
       </For>
+      <Toast core={toast} texts={texts()} />
     </div>
   );
 }

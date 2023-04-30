@@ -71,7 +71,9 @@ const innerPlugins: ListHelperPlugin[] = [];
  * 分页类
  */
 class Helper<T> {
-  static defaultResponse = { ...DEFAULT_RESPONSE };
+  static defaultResponse = <T>() => {
+    return { ...DEFAULT_RESPONSE } as Response<T>;
+  };
 
   static defaultProcessor = RESPONSE_PROCESSOR;
 
@@ -205,7 +207,7 @@ class Helper<T> {
     });
     this.params = { ...this.initialParams, ...extraParams };
     this.response = {
-      ...Helper.defaultResponse,
+      ...Helper.defaultResponse<T>(),
       ...this.extraResponse,
     };
     const { page: p, pageSize: ps, ...restParams } = this.params;

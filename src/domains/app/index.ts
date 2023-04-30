@@ -1,30 +1,34 @@
 import { Handler } from "mitt";
 
 import { UserCore } from "@/domains/user";
-import { ViewCore } from "@/domains/router";
 import { BaseDomain } from "@/domains/base";
+import { Drive } from "@/domains/drive";
+import { NavigatorCore } from "@/domains/navigator";
 import { Result } from "@/types";
 
 import { LocalCache } from "./cache";
 
-export enum Events {
+enum Events {
   Ready,
   Tip,
   Error,
   Login,
   Logout,
+  // 该怎么处理？
+  DrivesChange,
 }
-type TheTypeOfEvent = {
+type TheTypesOfEvents = {
   [Events.Ready]: void;
-  [Events.Tip]: { icon?: string; text: unknown };
+  [Events.Tip]: { icon?: string; text: string[] };
   [Events.Error]: Error;
   [Events.Login]: {};
   [Events.Logout]: void;
+  [Events.DrivesChange]: Drive[];
 };
 
-export class Application extends BaseDomain<TheTypeOfEvent> {
+export class Application extends BaseDomain<TheTypesOfEvents> {
   user: UserCore;
-  // router: ViewCore;
+  router: NavigatorCore;
   cache: LocalCache;
   lifetimes: Partial<{
     beforeReady: () => Promise<Result<null>>;
@@ -38,26 +42,33 @@ export class Application extends BaseDomain<TheTypeOfEvent> {
     height: 0,
   };
 
+  // @todo 怎么才能更方便地拓展 Application 类，给其添加许多的额外属性还能有类型提示呢？
+
+  /** 网盘列表 */
+  drives: Drive[] = [];
+
   state: Partial<{
     ready: boolean;
   }> = {};
 
+  static Events = Events;
+
   constructor(
     options: {
       user: UserCore;
-      router: ViewCore;
+      router: NavigatorCore;
       cache: LocalCache;
     } & Application["lifetimes"]
   ) {
     super();
 
-    const { user, cache, beforeReady, onReady } = options;
+    const { user, router, cache, beforeReady, onReady } = options;
     this.lifetimes = {
       beforeReady,
       onReady,
     };
     this.user = user;
-    // this.router = router;
+    this.router = router;
     this.cache = cache;
   }
   /** 启动应用 */
@@ -80,8 +91,22 @@ export class Application extends BaseDomain<TheTypeOfEvent> {
   setSize(size: { width: number; height: number }) {
     this.size = size;
   }
-  tip(msg: { icon?: string; text: unknown }) {
+  tip(msg: { icon?: string; text: string[] }) {
     this.emitTip(msg);
+  }
+  async fetchDrives() {
+    console.log(this);
+    if (this.drives.length !== 0) {
+      this.emit(Events.DrivesChange, this.drives);
+      return;
+    }
+    const r = await Drive.ListHelper.init();
+    if (r.error) {
+      this.emit(Events.Tip, { text: ["获取网盘失败", r.error.message] });
+      return;
+    }
+    this.drives = r.data;
+    this.emit(Events.DrivesChange, r.data);
   }
   /* ----------------
    * Lifetime
@@ -90,7 +115,7 @@ export class Application extends BaseDomain<TheTypeOfEvent> {
   emitReady = () => {
     this.emit(Events.Ready);
   };
-  onReady(handler: Handler<TheTypeOfEvent[Events.Ready]>) {
+  onReady(handler: Handler<TheTypesOfEvents[Events.Ready]>) {
     this.on(Events.Ready, handler);
   }
   /**
@@ -102,13 +127,16 @@ export class Application extends BaseDomain<TheTypeOfEvent> {
   emitError = (error: Error) => {
     this.emit(Events.Error, error);
   };
-  onError(handler: Handler<TheTypeOfEvent[Events.Error]>) {
+  onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
     this.on(Events.Error, handler);
   }
-  emitTip = (tip: { icon?: string; text: unknown }) => {
+  emitTip = (tip: { icon?: string; text: string[] }) => {
     this.emit(Events.Tip, tip);
   };
-  onTip(handler: Handler<TheTypeOfEvent[Events.Tip]>) {
+  onTip(handler: Handler<TheTypesOfEvents[Events.Tip]>) {
     this.on(Events.Tip, handler);
+  }
+  onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
+    this.on(Events.DrivesChange, handler);
   }
 }

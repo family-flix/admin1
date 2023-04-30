@@ -4,6 +4,7 @@ export class LocalCache {
   _values: Record<string, unknown> = {};
 
   constructor() {
+    // @todo localStorage 是端相关 API，应该在外部传入
     this._values = JSON.parse(localStorage.getItem("global") || "{}");
   }
 

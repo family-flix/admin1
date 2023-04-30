@@ -1,409 +1,165 @@
 /**
  * @file 分享文件转存
  */
-import { useEffect, useRef, useState } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
 
 import FolderCard from "@/components/FolderCard";
 import FolderMenu from "@/components/FolderMenu";
-import LazyImage from "@/components/LazyImage";
 import ScrollView from "@/components/ScrollView";
-import Modal from "@/components/SingleModal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import DriveFolders from "@/components/DriveFolders";
-import { Tabs, TabsTrigger, TabsList, TabsContent } from "@/components/ui/tabs";
-import { fetch_aliyun_drives, AliyunDriveItem } from "@/domains/drive/services";
-import useHelper from "@/domains/list-helper-hook";
-import { useToast } from "@/hooks/use-toast";
-import {
-  fetch_shared_files,
-  save_shared_files,
-  AliyunFolderItem,
-  patch_added_files,
-  build_link_between_shared_files_with_folder,
-  check_has_same_name_tv,
-  TVItem,
-  find_folders_has_same_name,
-  FolderItem,
-} from "@/services";
-import { Result } from "@/types";
+import { NavigatorCore } from "@/domains/navigator";
+import { For, Show, createSignal } from "solid-js";
+import { ViewCore } from "@/domains/router";
+import { SharedResource } from "@/domains/shared_resource";
+import { Input } from "@/components/ui/input";
 
-class SharedResource {
-  url: string;
-  file_id: string = "";
-  files: AliyunFolderItem[] = [];
-  next_marker: string = "";
-  loading = false;
-  paths: {
-    file_id: string;
-    name: string;
-  }[] = [];
-
-  constructor(options: { url: string }) {
-    const { url } = options;
-    this.url = url;
-  }
-  async _fetch(file_id: string) {
-    this.file_id = file_id;
-    if (this.loading) {
-      return Result.Err("is loading");
-    }
-    this.loading = true;
-    const r = await fetch_shared_files({
-      url: this.url,
-      file_id,
-      next_marker: this.next_marker,
+export const SharedFilesTransferPage = (props: {
+  router: NavigatorCore;
+  view: ViewCore;
+}) => {
+  const { view } = props;
+  const [state, setState] = createSignal({
+    url: "",
+    paths: [],
+    files: [],
+  });
+  const sharedResource = new SharedResource();
+  sharedResource.onTip((msg) => {
+    alert(msg);
+  });
+  sharedResource.onSuccess((values) => {
+    const { url, files, paths } = values;
+    setState({
+      url,
+      files,
+      paths,
     });
-    this.loading = false;
-    if (r.error) {
-      return r;
-    }
-    return r;
-  }
-  reset() {
-    this.paths = [];
-    this.files = [];
-  }
-  async fetch(file_id = "root", name = "root") {
-    this.next_marker = "";
-    const existing_index = this.paths.findIndex((p) => p.file_id === file_id);
-    if (existing_index !== -1 && existing_index === this.paths.length - 1) {
-      return Result.Err("已经在当前目录了");
-    }
-    const r = await this._fetch(file_id);
-    if (r.error) {
-      return r;
-    }
-    (() => {
-      if (this.paths.length === 0) {
-        this.paths = [{ file_id, name }];
-        return;
-      }
-      if (existing_index !== -1) {
-        this.paths = this.paths.slice(0, existing_index + 1);
-        return;
-      }
-      this.paths = this.paths.concat([{ file_id, name }]);
-    })();
-    this.files = [...r.data.items];
-    this.next_marker = r.data.next_marker;
-    return Result.Ok(null);
-  }
-  async load_more() {
-    const r = await this._fetch(this.file_id);
-    if (r.error) {
-      return r;
-    }
-    this.files = this.files.concat(r.data.items);
-    this.next_marker = r.data.next_marker;
-    return Result.Ok(null);
-  }
-}
+  });
 
-const SharedFilesManagePage = () => {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [url, set_url] = useState<string>("");
-  const cur_ref = useRef<SharedResource | null>(null);
-  const cur_folder_ref = useRef<AliyunFolderItem | null>(null);
-  const [files, set_files] = useState<AliyunFolderItem[]>([]);
-  const [paths, set_paths] = useState<{ file_id: string; name: string }[]>([]);
-  const [drives_response, drive_helper] =
-    useHelper<AliyunDriveItem>(fetch_aliyun_drives);
-  const same_name_tv_ref = useRef<TVItem | null>(null);
-  const [visible, set_visible] = useState(false);
-  const [drive_folder_visible, set_drive_folder_visible] = useState(false);
+  const url = () => state().url;
+  const paths = () => state().paths;
+  const files = () => state().files;
 
-  useEffect(() => {
-    drive_helper.init();
-  }, []);
-  useEffect(() => {
-    if (!router.query.url) {
-      return;
-    }
-    const url = router.query.url as string;
-    set_url(url);
-    (async () => {
-      cur_ref.current = new SharedResource({ url });
-      cur_ref.current.reset();
-      const r = await cur_ref.current.fetch("root", "root");
-      if (r.error) {
-        toast({
-          title: "Error",
-          description: r.error.message,
-        });
-        return;
-      }
-      set_files(cur_ref.current.files);
-      set_paths(cur_ref.current.paths);
-    })();
-  }, [router.query.url]);
+  const sharedFileActions = [
+    {
+      label: "查找同名文件夹并建立关联",
+      async on_click() {
+        // sharedResource.bindFolderInDrive()
+      },
+    },
+    {
+      label: "同名影视剧检查",
+      on_click() {
+        // check_has_same_name_tv({
+        //   file_name: name,
+        // });
+      },
+    },
+    {
+      label: "转存到默认网盘",
+      on_click() {
+        // patch_added_files({
+        //   url,
+        //   file_id: cur_folder_ref.current.file_id,
+        //   file_name: name,
+        // });
+      },
+    },
+    {
+      label: "转存到",
+      // children: drives_response.dataSource.map((drive) => {
+      //   const { name } = drive;
+      //   return {
+      //     label: name,
+      //     async on_click() {
+      //       const r = await save_shared_files({
+      //         url,
+      //         file_id,
+      //         file_name,
+      //         drive_id: drive.id,
+      //       });
+      //     },
+      //   };
+      // }),
+    },
+  ];
 
   return (
     <>
-      <Head>
-        <title>转存文件</title>
-      </Head>
-      <div className="min-h-screen pt-8">
-        <div className="m-auto w-[960px] space-y-4">
-          <h2 className="h2 mt-4">转存文件</h2>
-          <div>
-            <Textarea
-              placeholder="请输入分享链接"
-              value={url}
-              onChange={(event) => {
-                set_url(event.target.value);
-              }}
-            />
-            <div className="grid grid-cols-1 mt-2">
-              <Button
-                onClick={async () => {
-                  cur_ref.current = new SharedResource({ url });
-                  cur_ref.current.reset();
-                  const r = await cur_ref.current.fetch("root", "root");
-                  if (r.error) {
-                    toast({
-                      title: "Error",
-                      description: r.error.message,
-                    });
-                    return;
-                  }
-                  set_files(cur_ref.current.files);
-                  set_paths(cur_ref.current.paths);
-                }}
-              >
-                获取
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-cen">
-            {paths.map((p, index) => {
-              const { file_id, name } = p;
-              return (
-                <div key={file_id} className="flex items-center">
-                  <div
-                    className="text-blue-400 cursor-pointer hover:text-blue-500"
-                    onClick={async () => {
-                      if (cur_ref.current === null) {
-                        return;
-                      }
-                      const r = await cur_ref.current.fetch(file_id, name);
-                      if (r.error) {
-                        toast({
-                          title: "Error",
-                          description: r.error.message,
-                        });
-                        return;
-                      }
-                      set_files(cur_ref.current.files);
-                      set_paths(cur_ref.current.paths);
-                    }}
-                  >
-                    {name}
-                  </div>
-                  {index === paths.length - 1 ? null : (
-                    <div className="mx-2 text-gray-300">/</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <ScrollView
-            dataSource={cur_ref.current?.files || []}
-            loading={false}
-            initial={false}
-            error={undefined}
-            noMore={!cur_ref.current?.next_marker}
-            onLoadMore={async () => {
-              if (cur_ref.current === null) {
-                return;
-              }
-              if (!cur_ref.current.next_marker) {
-                return;
-              }
-              const r = await cur_ref.current.load_more();
-              if (r.error) {
-                toast({
-                  title: "Error",
-                  description: r.error.message,
-                });
-                return;
-              }
-              set_files(cur_ref.current.files);
+      <h2 class="my-2 text-2xl">转存文件</h2>
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-10">
+          <Input
+            className=""
+            placeholder="请输入分享链接"
+            value={url()}
+            onChange={(event) => {
+              sharedResource.input(event.target.value);
+            }}
+          />
+        </div>
+        <div class="grid col-span-2">
+          <Button
+            size="default"
+            variant="default"
+            onClick={() => {
+              sharedResource.fetch();
             }}
           >
-            <div className="grid grid-cols-6 gap-2">
-              {files.map((file) => {
-                const { file_id, name, type } = file;
-                return (
-                  <div
-                    key={file_id}
-                    className="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-                    onClick={async () => {
-                      if (cur_ref.current === null) {
-                        return;
-                      }
-                      if (type !== "folder") {
-                        return;
-                      }
-                      await cur_ref.current.fetch(file_id, name);
-                      set_files(cur_ref.current.files);
-                      set_paths(cur_ref.current.paths);
-                    }}
-                  >
-                    <FolderMenu
-                      options={[
-                        {
-                          label: "显示同名文件夹",
-                          async on_click() {
-                            if (cur_folder_ref.current === null) {
-                              return;
-                            }
-                            set_drive_folder_visible(true);
-                          },
-                        },
-                        {
-                          label: "查找同名文件夹并建立关联",
-                          async on_click() {
-                            if (cur_folder_ref.current === null) {
-                              return;
-                            }
-                            const r =
-                              await build_link_between_shared_files_with_folder(
-                                {
-                                  url,
-                                  file_id: cur_folder_ref.current.file_id,
-                                  file_name: cur_folder_ref.current.name,
-                                }
-                              );
-                            if (r.error) {
-                              toast({
-                                title: "ERROR",
-                                description: r.error.message,
-                              });
-                              return;
-                            }
-                            toast({
-                              title: "Success",
-                              description: "操作成功",
-                            });
-                          },
-                        },
-                        {
-                          label: "同名影视剧检查",
-                          async on_click() {
-                            if (cur_folder_ref.current === null) {
-                              return;
-                            }
-                            if (!url) {
-                              return;
-                            }
-                            const r = await check_has_same_name_tv({
-                              file_name: name,
-                            });
-                            if (r.error) {
-                              toast({
-                                title: "ERROR",
-                                description: r.error.message,
-                              });
-                              return;
-                            }
-                            const d = r.data;
-                            if (d === null) {
-                              toast({
-                                title: "Tip",
-                                description: "没有同名影视剧",
-                              });
-                              return;
-                            }
-                            same_name_tv_ref.current = d;
-                            set_visible(true);
-                            toast({
-                              title: "Tip",
-                              description: "存在同名影视剧",
-                            });
-                          },
-                        },
-                        {
-                          label: "转存新增影片",
-                          async on_click() {
-                            if (cur_folder_ref.current === null) {
-                              return;
-                            }
-                            if (!url) {
-                              return;
-                            }
-                            const r = await patch_added_files({
-                              url,
-                              file_id: cur_folder_ref.current.file_id,
-                              file_name: name,
-                            });
-                            if (r.error) {
-                              toast({
-                                title: "ERROR",
-                                description: r.error.message,
-                              });
-                              return;
-                            }
-                            toast({
-                              title: "Success",
-                              description: "操作成功",
-                            });
-                          },
-                        },
-                        {
-                          label: "转存到",
-                          children: drives_response.dataSource.map((drive) => {
-                            const { name } = drive;
-                            return {
-                              label: name,
-                              async on_click() {
-                                if (cur_folder_ref.current === null) {
-                                  return;
-                                }
-                                if (!url) {
-                                  return;
-                                }
-                                const r = await save_shared_files({
-                                  url,
-                                  file_id: cur_folder_ref.current.file_id,
-                                  file_name: cur_folder_ref.current.name,
-                                  drive_id: drive.id,
-                                });
-                                if (r.error) {
-                                  toast({
-                                    title: "ERROR",
-                                    description: r.error.message,
-                                  });
-                                  return;
-                                }
-                                toast({
-                                  title: "Success",
-                                  description: "操作成功",
-                                });
-                              },
-                            };
-                          }),
-                        },
-                      ]}
-                    >
-                      <FolderCard
-                        type={type}
-                        name={name}
-                        onContextMenu={() => {
-                          cur_folder_ref.current = file;
-                        }}
-                      />
-                    </FolderMenu>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollView>
+            获取
+          </Button>
         </div>
-        <Modal
+      </div>
+      <div class="flex items-center">
+        <For each={paths()}>
+          {(path, index) => {
+            const { file_id, name } = path;
+            return (
+              <div class="flex items-center">
+                <div
+                  class="cursor-pointer hover:text-blue-500"
+                  onClick={() => {
+                    sharedResource.fetch({ file_id, name });
+                  }}
+                >
+                  {name}
+                </div>
+                {index() === paths().length - 1 ? null : (
+                  <div class="mx-2 text-gray-300">/</div>
+                )}
+              </div>
+            );
+          }}
+        </For>
+      </div>
+      <div>
+        <div class="grid grid-cols-6 gap-2">
+          <For each={files()}>
+            {(file) => {
+              const { name, type } = file;
+              return (
+                <div
+                  class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    sharedResource.fetch(file);
+                  }}
+                >
+                  <div>
+                    <FolderCard
+                      type={type}
+                      name={name}
+                      // onContextMenu={() => {
+                      //   cur_folder_ref.current = file;
+                      // }}
+                    />
+                  </div>
+                </div>
+              );
+            }}
+          </For>
+        </div>
+      </div>
+      {/* <Modal
           title="同名影视剧"
           visible={visible}
           footer={null}
@@ -426,20 +182,20 @@ const SharedFilesManagePage = () => {
             } = same_name_tv_ref.current;
             return (
               <div
-                className="flex"
+                class="flex"
                 onClick={() => {
                   router.push(`/play/${id}`);
                 }}
               >
                 <LazyImage
-                  className="w-[180px] mr-4 object-fit"
+                  class="w-[180px] mr-4 object-fit"
                   src={poster_path}
                   alt={name || original_name}
                 />
-                <div className="flex-1">
-                  <div className="text-2xl">{name || original_name}</div>
-                  <div className="mt-4">{overview}</div>
-                  <div className="mt-4">{first_air_date}</div>
+                <div class="flex-1">
+                  <div class="text-2xl">{name || original_name}</div>
+                  <div class="mt-4">{overview}</div>
+                  <div class="mt-4">{first_air_date}</div>
                 </div>
               </div>
             );
@@ -476,13 +232,13 @@ const SharedFilesManagePage = () => {
               const { id, user_name } = drive;
               return (
                 <TabsContent
-                  className="p-4 min-h-[536px]"
+                  class="p-4 min-h-[536px]"
                   key={id}
                   value={user_name}
                 >
                   <DriveFolders
                     key={id}
-                    className="grid-cols-3"
+                    class="grid-cols-3"
                     options={[
                       {
                         label: "选择",
@@ -523,10 +279,7 @@ const SharedFilesManagePage = () => {
               );
             })}
           </Tabs>
-        </Modal>
-      </div>
+        </Modal> */}
     </>
   );
 };
-
-export default SharedFilesManagePage;
