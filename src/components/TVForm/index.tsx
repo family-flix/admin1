@@ -3,9 +3,7 @@
  */
 import { useState } from "react";
 
-import useHelper from "@/domains/list-helper-hook";
 import { MatchedTVOfTMDB, search_tv_in_tmdb } from "@/services";
-import LazyImage from "@/components/LazyImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

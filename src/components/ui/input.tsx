@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 
 export interface InputProps extends HTMLInputElement {}
 
-const Input = (props: {
-  className?: string;
-  value?: string;
-  onChange?: HTMLInputElement["onchange"];
-}) => {
+const Input = (
+  props: {
+    className?: string;
+    value?: string;
+    onChange?: HTMLInputElement["onchange"];
+  } & Partial<Pick<HTMLInputElement, "placeholder">>
+) => {
   const { className, ...restProps } = props;
   return (
     <input

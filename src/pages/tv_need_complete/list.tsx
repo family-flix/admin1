@@ -6,7 +6,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 
 import ScrollView from "@/components/ScrollView";
-import LazyImage from "@/components/LazyImage";
+import { LazyImage } from "@/components/LazyImage";
 import { Button } from "@/components/ui/button";
 import useHelper from "@/domains/list-helper-hook";
 import { FetchParams } from "@list-helper/core/typing";

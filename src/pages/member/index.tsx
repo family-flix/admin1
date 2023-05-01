@@ -19,7 +19,7 @@ import CopyAndCheckIcon from "@/components/CopyIcon";
 import { cn } from "@/lib/utils";
 import TVSelect from "@/components/TVSelect";
 import { PartialSearchedTV } from "@/domains/tmdb/services";
-import LazyImage from "@/components/LazyImage";
+import { LazyImage } from "@/components/LazyImage";
 
 const MemberManagePage = () => {
   const [response, helper] = useHelper<MemberItem>(fetch_members);

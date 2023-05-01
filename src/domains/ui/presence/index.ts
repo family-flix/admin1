@@ -129,6 +129,10 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   onPresentChange(handler: Handler<TheTypesOfEvents[Events.PresentChange]>) {
     this.on(Events.PresentChange, handler);
   }
+
+  get [Symbol.toStringTag]() {
+    return "Presence";
+  }
 }
 
 function getAnimationName(styles?: CSSStyleDeclaration) {

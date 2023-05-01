@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import ScrollView from "@/components/ScrollView";
 import useHelper from "@/domains/list-helper-hook";
 import { fetch_tv_list } from "@/services";
-import LazyImage from "@/components/LazyImage";
+import { LazyImage } from "@/components/LazyImage";
 import { PartialSearchedTV } from "@/domains/tmdb/services";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

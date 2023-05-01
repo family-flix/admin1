@@ -75,4 +75,8 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   onCancel(handler: Handler<TheTypesOfEvents[Events.Cancel]>) {
     this.on(Events.Cancel, handler);
   }
+
+  get [Symbol.toStringTag]() {
+    return "Dialog";
+  }
 }

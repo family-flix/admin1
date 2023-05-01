@@ -5,7 +5,7 @@ interface IProps {
   src?: string;
   alt?: string;
 }
-const LazyImage = (props) => {
+export const LazyImage = (props) => {
   const { className, src, alt } = props;
 
   let $img;
@@ -57,4 +57,4 @@ const LazyImage = (props) => {
   );
 };
 
-export default LazyImage;
+// export default LazyImage;

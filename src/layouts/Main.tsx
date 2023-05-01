@@ -2,15 +2,11 @@
  * @file 后台布局
  */
 import { For, JSX, Show, children, createSignal } from "solid-js";
+import { Calendar, Film, Users, FolderInput, Home } from "lucide-solid";
 
 import { ViewCore } from "@/domains/router";
 import { PageCore } from "@/domains/router/something";
 import { Application } from "@/domains/app";
-import { FilmIcon } from "@/components/icons/film";
-import { CalendarIcon } from "@/components/icons/calendar-check";
-import { UsersIcon } from "@/components/icons/users";
-import { FolderInputIcon } from "@/components/icons/folder-input";
-import { HomeIcon } from "@/components/icons/home";
 // import { EmptyPageContainer } from "@/components/EmptyPageContainer";
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewComponent } from "@/types";
@@ -51,7 +47,7 @@ export const MainLayout = (props: {
                 router.push("/home");
               }}
             >
-              <HomeIcon class="w-6 h-6" />
+              <Home class="w-6 h-6" />
               <div class="text-xl">首页</div>
             </div>
             <div
@@ -60,7 +56,7 @@ export const MainLayout = (props: {
                 router.push("/tv");
               }}
             >
-              <FilmIcon class="w-6 h-6" />
+              <Film class="w-6 h-6" />
               <div class="text-xl">影片管理</div>
             </div>
             <div
@@ -69,7 +65,7 @@ export const MainLayout = (props: {
                 router.push("/task/list");
               }}
             >
-              <CalendarIcon class="w-6 h-6" />
+              <Calendar class="w-6 h-6" />
               <p class="text-xl">任务列表</p>
             </div>
             <div
@@ -78,7 +74,7 @@ export const MainLayout = (props: {
                 // modal.show();
               }}
             >
-              <UsersIcon class="w-6 h-6" />
+              <Users class="w-6 h-6" />
               <div class="text-xl">TMDB 数据库</div>
             </div>
             <div
@@ -87,7 +83,7 @@ export const MainLayout = (props: {
                 router.push("/member");
               }}
             >
-              <UsersIcon class="w-6 h-6" />
+              <Users class="w-6 h-6" />
               <div class="text-xl">所有成员</div>
             </div>
             <div
@@ -96,7 +92,7 @@ export const MainLayout = (props: {
                 router.push("/shared_files");
               }}
             >
-              <FolderInputIcon class="w-6 h-6" />
+              <FolderInput class="w-6 h-6" />
               <div class="text-xl">文件转存</div>
             </div>
             <div
@@ -105,7 +101,7 @@ export const MainLayout = (props: {
                 router.push("/shared_files_in_progress/list");
               }}
             >
-              <FolderInputIcon class="w-6 h-6" />
+              <FolderInput class="w-6 h-6" />
               <div class="text-xl">待处理更新</div>
             </div>
           </div>

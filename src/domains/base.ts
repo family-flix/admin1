@@ -14,6 +14,7 @@ function uid() {
 export class BaseDomain<E extends Record<EventType, unknown>> {
   private _emitter = mitt<E>();
   on = this._emitter.on;
+  off = this._emitter.off;
   emit = this._emitter.emit;
 
   constructor() {}

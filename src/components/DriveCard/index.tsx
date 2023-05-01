@@ -1,35 +1,32 @@
 /**
  * @file 云盘卡片
  */
-import { For, Show, createSignal, onMount } from "solid-js";
-import { RefreshCw } from "lucide-solid";
+import { For, Show, createSignal } from "solid-js";
+import { MoreHorizontal, Loader } from "lucide-solid";
 
+import { Application } from "@/domains/app";
 import { Drive } from "@/domains/drive";
 import { ProgressCore } from "@/domains/ui/progress";
-// import { useToast } from "@/hooks/use-toast";
-import LazyImage from "@/components/LazyImage";
+import { DialogCore } from "@/domains/ui/dialog";
+import { PopoverCore } from "@/domains/ui/popover";
+import { ContextMenuCore } from "@/domains/ui/context-menu";
+import { LazyImage } from "@/components/LazyImage";
 import { Button } from "@/components/ui/button";
-// import Modal from "@/components/Modal";
 import { Input } from "@/components/ui/input";
 import FolderMenu from "@/components/FolderMenu";
-import { ContextMenuCore } from "@/domains/ui/context-menu";
-import { MoreHorizontalIcon } from "@/components/icons/more-horizontal";
-import { LoaderIcon } from "@/components/icons/loader";
 import { Progress } from "@/components/ui/progress";
-import { Application } from "@/domains/app";
+import { Popover } from "@/components/ui/popover";
 import Modal from "@/components/SingleModal";
-import { DialogCore } from "@/domains/ui/dialog";
 
 const DriveCard = (props: { app: Application; core: Drive }) => {
   const { app, core: drive } = props;
-  // const { id, user_name, avatar, total_size, used_size } = props;
-  // const { toast } = useToast();
   const [state, setState] = createSignal(drive.state);
   const [values, setValues] = createSignal(drive.values);
   const [folderColumns, setFolderColumns] = createSignal(drive.folderColumns);
   const foldersModal = new DialogCore();
   const createFolderModal = new DialogCore();
   const refreshTokenModal = new DialogCore();
+  const popover = new PopoverCore();
   const contextMenu = new ContextMenuCore([
     {
       label: "详情",
@@ -117,7 +114,9 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
       >
         <div class="">
           <div class="absolute top-2 right-2">
-            <MoreHorizontalIcon class="w-6 h-6 text-gray-600" />
+            <Popover store={popover} content={<div>Hello</div>}>
+              <MoreHorizontal class="w-6 h-6 text-gray-600" />
+            </Popover>
           </div>
           <div class="flex">
             <LazyImage
@@ -156,7 +155,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
                     }}
                   >
                     <Show when={loading()}>
-                      <LoaderIcon class="w-4 h-4" />
+                      <Loader class="w-4 h-4 animate-spin" />
                     </Show>
                     刮削
                   </Button>

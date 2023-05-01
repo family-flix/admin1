@@ -1,7 +1,7 @@
 /**
  * @file 文件夹卡片 组件
  */
-import LazyImage from "@/components/LazyImage";
+import { LazyImage } from "@/components/LazyImage";
 
 const FolderCard = (props: {
   type: string;

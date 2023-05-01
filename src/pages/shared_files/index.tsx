@@ -12,20 +12,28 @@ import { For, Show, createSignal } from "solid-js";
 import { ViewCore } from "@/domains/router";
 import { SharedResource } from "@/domains/shared_resource";
 import { Input } from "@/components/ui/input";
+import { Application } from "@/domains/app";
+import { MoreHorizontal } from "lucide-solid";
+import { Popover } from "@/components/ui/popover";
+import { PopoverCore } from "@/domains/ui/popover";
 
 export const SharedFilesTransferPage = (props: {
+  app: Application;
   router: NavigatorCore;
   view: ViewCore;
 }) => {
-  const { view } = props;
+  const { app, view } = props;
   const [state, setState] = createSignal({
     url: "",
     paths: [],
     files: [],
   });
+  const popover = new PopoverCore();
   const sharedResource = new SharedResource();
   sharedResource.onTip((msg) => {
-    alert(msg);
+    app.tip({
+      text: [msg],
+    });
   });
   sharedResource.onSuccess((values) => {
     const { url, files, paths } = values;
@@ -93,7 +101,7 @@ export const SharedFilesTransferPage = (props: {
             className=""
             placeholder="请输入分享链接"
             value={url()}
-            onChange={(event) => {
+            onChange={(event: Event & { target: HTMLInputElement }) => {
               sharedResource.input(event.target.value);
             }}
           />
@@ -109,6 +117,11 @@ export const SharedFilesTransferPage = (props: {
             获取
           </Button>
         </div>
+      </div>
+      <div>
+        <Popover store={popover} content={<div>Hello</div>}>
+          <MoreHorizontal />
+        </Popover>
       </div>
       <div class="flex items-center">
         <For each={paths()}>

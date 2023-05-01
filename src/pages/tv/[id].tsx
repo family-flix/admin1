@@ -10,7 +10,7 @@ import { request } from "@/utils/request";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { TVFormDialog } from "@/components/TVForm/dialog";
-import LazyImage from "@/components/LazyImage";
+import { LazyImage } from "@/components/LazyImage";
 import FolderMenu from "@/components/FolderMenu";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { bind_searched_tv_for_tv, delete_file_in_drive } from "@/services";

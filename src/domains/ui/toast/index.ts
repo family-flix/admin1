@@ -96,4 +96,8 @@ export class ToastCore extends BaseDomain<TheTypesOfEvents> {
   onVisibleChange(handler: Handler<TheTypesOfEvents[Events.VisibleChange]>) {
     this.on(Events.VisibleChange, handler);
   }
+
+  get [Symbol.toStringTag]() {
+    return "Toast";
+  }
 }
