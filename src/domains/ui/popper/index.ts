@@ -252,14 +252,10 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   onFloatingMounted(
     handler: Handler<TheTypesOfEvents[Events.FloatingMounted]>
   ) {
-    this.log("onFloatingMounted");
-    this.on(Events.FloatingMounted, handler);
+    return this.on(Events.FloatingMounted, handler);
   }
   onPlaced(handler: Handler<TheTypesOfEvents[Events.Placed]>) {
-    this.on(Events.Placed, handler);
-    return () => {
-      this.off(Events.Placed, handler);
-    };
+    return this.on(Events.Placed, handler);
   }
 
   get [Symbol.toStringTag]() {

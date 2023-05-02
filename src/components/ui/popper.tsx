@@ -33,13 +33,13 @@ const PopperAnchor = (props: {
   ref?: HTMLElement;
   children: JSX.Element;
 }) => {
-  const { store, children } = props;
+  const { store } = props;
   // const store = useContext(PopperContext);
 
   let $anchor: HTMLDivElement;
 
   onMount(() => {
-    store.log("mounted", $anchor);
+    store.log("mounted at PopperAnchor", $anchor, store.reference);
     if (store.reference) {
       return;
     }
@@ -51,15 +51,12 @@ const PopperAnchor = (props: {
   });
 
   if (store.reference) {
-    return children;
+    return props.children;
   }
 
   return (
-    <div
-      class={cn("popper__anchor", "inline-block", props.class)}
-      ref={$anchor}
-    >
-      {children}
+    <div class={cn("popper__anchor", "inline-block")} ref={$anchor}>
+      {props.children}
     </div>
   );
 };
@@ -75,7 +72,7 @@ const PopperContent = (props: {
 
   let $content: HTMLDivElement;
 
-  const off = store.onPlaced((nextState) => {
+  store.onPlaced((nextState) => {
     console.log("[COMPONENT]PopperContent - onPlaced", nextState);
     setState(nextState);
   });
@@ -84,7 +81,7 @@ const PopperContent = (props: {
     store.setFloating($content.getBoundingClientRect());
   });
   onCleanup(() => {
-    off();
+    store.destroy();
   });
 
   const x = () => state().x;

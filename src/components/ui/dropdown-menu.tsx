@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js";
+import { createContext, createSignal, useContext } from "solid-js";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { JSX } from "solid-js/jsx-runtime";
 import { ChevronRight, Hammer } from "lucide-solid";
@@ -14,84 +14,83 @@ export const DropdownMenu = (props: {
   const { store } = props;
   return (
     <DropdownMenuRoot store={store}>
-      <DropdownMenuTrigger store={store}>{props.children}</DropdownMenuTrigger>
-      <DropdownMenuPortal store={store}>
-        <DropdownMenuContent store={store} class="DropdownMenuContent">
-          <DropdownMenuItem store={store} class="DropdownMenuItem">
+      <DropdownMenuTrigger>{props.children}</DropdownMenuTrigger>
+      <DropdownMenuPortal>
+        <DropdownMenuContent class="DropdownMenuContent">
+          <DropdownMenuItem class="DropdownMenuItem">
             New Tab <div class="RightSlot">⌘+T</div>
           </DropdownMenuItem>
-          <DropdownMenuItem store={store} class="DropdownMenuItem">
+          <DropdownMenuItem class="DropdownMenuItem">
             New Window <div class="RightSlot">⌘+N</div>
           </DropdownMenuItem>
-          <DropdownMenuItem store={store} class="DropdownMenuItem" disabled>
+          <DropdownMenuItem class="DropdownMenuItem" disabled>
             New Private Window <div class="RightSlot">⇧+⌘+N</div>
           </DropdownMenuItem>
-          <DropdownMenuSub store={store}>
-            <DropdownMenuSubTrigger
-              store={store}
-              class="DropdownMenuSubTrigger"
-            >
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger class="DropdownMenuSubTrigger">
               More Tools
               <div class="RightSlot">
-                <ChevronRight />
+                <ChevronRight width={15} height={15} />
               </div>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent
-                store={store}
-                class="DropdownMenuSubContent"
-              >
+              <DropdownMenuSubContent class="DropdownMenuSubContent">
                 <DropdownMenuItem class="DropdownMenuItem">
                   Save Page As… <div class="RightSlot">⌘+S</div>
                 </DropdownMenuItem>
                 <DropdownMenuItem class="DropdownMenuItem">
                   Create Shortcut…
                 </DropdownMenuItem>
-                <DropdownMenuItem store={sub} class="DropdownMenuItem">
+                <DropdownMenuItem class="DropdownMenuItem">
                   Name Window…
                 </DropdownMenuItem>
                 <DropdownMenuSeparator class="DropdownMenu.Separator" />
-                <DropdownMenuItem store={sub} class="DropdownMenuItem">
+                <DropdownMenuItem class="DropdownMenuItem">
                   Developer Tools
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-          {/* <DropdownMenuSeparator class="DropdownMenuSeparator" /> */}
           <DropdownMenuSeparator class="DropdownMenuSeparator" />
           <DropdownMenuLabel class="DropdownMenuLabel">
             People
           </DropdownMenuLabel>
-          <DropdownMenuArrow store={store} class="DropdownMenuArrow" />
+          {/* <DropdownMenuArrow class="DropdownMenuArrow" /> */}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenuRoot>
   );
 };
 
+const DropdownMenuContext = createContext<DropdownMenuCore>();
 const DropdownMenuRoot = (props: {
-  store: DropdownMenuCore;
+  store?: DropdownMenuCore;
   children: JSX.Element;
 }) => {
   const { store } = props;
-  return <Menu.Root store={store.menu}>{props.children}</Menu.Root>;
+  return (
+    <DropdownMenuContext.Provider value={store}>
+      <Menu.Root store={store.menu}>{props.children}</Menu.Root>
+    </DropdownMenuContext.Provider>
+  );
 };
 
 /* -------------------------------------------------------------------------------------------------
  * DropdownMenuTrigger
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuTrigger = (props: {
-  store: DropdownMenuCore;
+  // store?: DropdownMenuCore;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
 
+  const store = useContext(DropdownMenuContext);
   const [state, setState] = createSignal(store.state);
 
   const disabled = () => state().disabled;
 
   return (
-    <Menu.Anchor store={store.menu}>
+    <Menu.Anchor>
       <button
         onPointerDown={() => {
           store.toggle();
@@ -124,10 +123,12 @@ const DropdownMenuTrigger = (props: {
  * DropdownMenuPortal
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuPortal = (props: {
-  store: DropdownMenuCore;
+  store?: DropdownMenuCore;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+  const store = useContext(DropdownMenuContext);
+
   return <Menu.Portal store={store.menu}>{props.children}</Menu.Portal>;
 };
 
@@ -135,11 +136,13 @@ const DropdownMenuPortal = (props: {
  * DropdownMenuContent
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuContent = (props: {
-  store: DropdownMenuCore;
+  store?: DropdownMenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+  const store = useContext(DropdownMenuContext);
+
   return (
     <Menu.Content store={store.menu} class={cn(props.class)}>
       {props.children}
@@ -173,12 +176,14 @@ const DropdownMenuLabel = (props: {
  * DropdownMenuItem
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuItem = (props: {
-  store: DropdownMenuCore;
+  store?: DropdownMenuCore;
   class?: string;
   disabled?: boolean;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+  const store = useContext(DropdownMenuContext);
+
   return (
     <Menu.Item store={store.menu} class={props.class} disabled={props.disabled}>
       {props.children}
@@ -197,13 +202,16 @@ const DropdownMenuSeparator = (props: { class?: string }) => {
  * DropdownMenuArrow
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuArrow = (props: {
-  store: DropdownMenuCore;
+  // store: DropdownMenuCore;
   class?: string;
   children?: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
   return (
-    <Menu.Arrow store={store.menu} class={props.class}>
+    <Menu.Arrow
+      // store={store.menu}
+      class={props.class}
+    >
       {props.children}
     </Menu.Arrow>
   );
@@ -213,10 +221,12 @@ const DropdownMenuArrow = (props: {
  * DropdownMenuSub
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuSub = (props: {
-  store: DropdownMenuCore;
+  store?: DropdownMenuCore;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+  const store = useContext(DropdownMenuContext);
+
   return <Menu.Sub store={store.menu}>{props.children}</Menu.Sub>;
 };
 
@@ -224,15 +234,15 @@ const DropdownMenuSub = (props: {
  * DropdownMenuSubTrigger
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuSubTrigger = (props: {
-  store: DropdownMenuCore;
+  store?: DropdownMenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+  // const store = useContext(DropdownMenuContext);
+
   return (
-    <Menu.SubTrigger store={store.menu} class={props.class}>
-      {props.children}
-    </Menu.SubTrigger>
+    <Menu.SubTrigger class={props.class}>{props.children}</Menu.SubTrigger>
   );
 };
 
@@ -240,15 +250,14 @@ const DropdownMenuSubTrigger = (props: {
  * DropdownMenuSubContent
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuSubContent = (props: {
-  store: DropdownMenuCore;
+  // store: DropdownMenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+
   return (
-    <Menu.SubContent store={store.menu} class={props.class}>
-      {props.children}
-    </Menu.SubContent>
+    <Menu.SubContent class={props.class}>{props.children}</Menu.SubContent>
   );
 };
 
