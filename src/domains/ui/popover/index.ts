@@ -27,8 +27,6 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
   present: PresenceCore;
   layer: DismissableLayerCore;
 
-  listeners: (() => void)[] = [];
-
   _side: Side;
   _align: Align;
 
@@ -45,11 +43,10 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     });
     this.present = new PresenceCore();
     this.layer = new DismissableLayerCore();
-    const off = this.layer.onDismiss(() => {
+    this.layer.onDismiss(() => {
       console.log("dismiss");
       this.hide();
     });
-    this.listeners.push(off);
   }
 
   state = {
@@ -76,10 +73,10 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Hidden);
   }
   destroy() {
-    for (let i = 0; i < this.listeners.length; i += 1) {
-      const off = this.listeners[i];
-      off();
-    }
+    super.destroy();
+    this.layer.destroy();
+    this.popper.destroy();
+    this.present.destroy();
   }
 
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
@@ -90,6 +87,6 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   get [Symbol.toStringTag]() {
-    return "Popover";
+    return "PopoverCore";
   }
 }

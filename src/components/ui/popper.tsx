@@ -13,20 +13,18 @@ import {
 } from "solid-js";
 
 import { PopperCore } from "@/domains/ui/popper";
+import { cn } from "@/utils";
 
 import { Arrow as PrimitiveArrow } from "./arrow";
 
 const PopperContext = createContext<PopperCore>();
 
 const PopperRoot = (props: { store: PopperCore; children: JSX.Element }) => {
-  const { store, children } = props;
+  const { store } = props;
 
-  console.log("[COMPONENT]PopperRoot", store);
+  // console.log("[COMPONENT]PopperRoot", store);
 
-  return children;
-  // return (
-  //   <PopperContext.Provider value={store}>{children}</PopperContext.Provider>
-  // );
+  return <div class={cn("popper__root")}>{props.children}</div>;
 };
 
 const PopperAnchor = (props: {
@@ -39,18 +37,25 @@ const PopperAnchor = (props: {
 
   let $anchor: HTMLDivElement;
 
-  console.log("[COMPONENT]PopperAnchor", store);
+  // console.log("[COMPONENT]PopperAnchor", store);
 
   onMount(() => {
-    store.setReference($anchor.getBoundingClientRect());
+    setTimeout(() => {
+      const size = $anchor.getBoundingClientRect();
+      store.log("setReference", $anchor, { x: size.x, y: size.y });
+      store.setReference(size);
+    }, 100);
   });
 
   // const c = children(() => props.children);
 
   return (
-    <span class={props.class} ref={$anchor}>
+    <div
+      class={cn("popper__anchor", "inline-block", props.class)}
+      ref={$anchor}
+    >
       {children}
-    </span>
+    </div>
   );
 };
 
@@ -87,7 +92,7 @@ const PopperContent = (props: {
   return (
     <div
       ref={$content}
-      class={props.class}
+      class={cn("popper__content", props.class)}
       style={{
         position: strategy(),
         left: 0,
@@ -104,6 +109,7 @@ const PopperContent = (props: {
       }}
     >
       <div
+        class={cn("popper__content-child")}
         data-side={placedSide()}
         data-align={placedAlign()}
         // style={{
@@ -146,7 +152,7 @@ const PopperArrow = (props: { store: PopperCore; class?: string }) => {
   return (
     <span
       ref={$arrow}
-      class={props.class}
+      class={cn("popper__arrow", props.class)}
       style={{
         position: "absolute",
         left: "20px",

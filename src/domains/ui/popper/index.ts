@@ -17,8 +17,8 @@ import type {
 
 const SIDE_OPTIONS = ["top", "right", "bottom", "left"] as const;
 const ALIGN_OPTIONS = ["start", "center", "end"] as const;
-type Side = (typeof SIDE_OPTIONS)[number];
-type Align = (typeof ALIGN_OPTIONS)[number];
+export type Side = (typeof SIDE_OPTIONS)[number];
+export type Align = (typeof ALIGN_OPTIONS)[number];
 
 enum Events {
   /** 内容元素被加载（可以获取宽高位置） */
@@ -45,6 +45,7 @@ type PopperState = {
   placedAlign: Align;
 };
 export class PopperCore extends BaseDomain<TheTypesOfEvents> {
+  name = "PopperCore";
   // side: Side = "bottom";
   // align: Align = "center";
   placement: Placement = "bottom";
@@ -95,7 +96,12 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   ) {
     super();
 
-    const { side, align, strategy = "fixed", middleware = [] } = options;
+    const {
+      side = "bottom",
+      align = "center",
+      strategy = "fixed",
+      middleware = [],
+    } = options;
     this.strategy = strategy;
     this.placement = (side +
       (align !== "center" ? "-" + align : "")) as Placement;
@@ -104,7 +110,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 基准元素加载完成 */
   setReference(reference: PopperCore["reference"]) {
-    console.log("[PopperCore]setReference", reference);
+    // console.log("[PopperCore]setReference", reference);
     this.reference = reference;
   }
   /** 内容元素加载完成 */
@@ -119,7 +125,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   setConfig(config: { placement?: Placement; strategy?: Strategy }) {}
   /** 计算浮动元素位置 */
   async place() {
-    console.log("[PopperCore]place", this.reference, this.floating);
+    this.log("place", this.reference, this.floating);
     this.middleware = [
       // arrow({
       //   element: this.floating,
@@ -144,7 +150,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
       placedSide,
       placedAlign,
     };
-    console.log("[PopperCore]place - before emit placed");
+    this.log("place - before emit placed", this.state);
     this.emit(Events.Placed, {
       ...this.state,
     });
@@ -246,6 +252,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   onFloatingMounted(
     handler: Handler<TheTypesOfEvents[Events.FloatingMounted]>
   ) {
+    this.log("onFloatingMounted");
     this.on(Events.FloatingMounted, handler);
   }
   onPlaced(handler: Handler<TheTypesOfEvents[Events.Placed]>) {
@@ -256,7 +263,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   get [Symbol.toStringTag]() {
-    return "Popper";
+    return "PopperCore";
   }
 }
 

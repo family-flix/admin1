@@ -6,22 +6,20 @@ import { Handler } from "mitt";
 import { BaseDomain } from "@/domains/base";
 
 enum Events {
-  StateChanged,
-  ChangePresent,
+  StateChange,
   PresentChange,
   Show,
   Hidden,
   Destroy,
 }
 type TheTypesOfEvents = {
-  [Events.StateChanged]: string;
-  [Events.ChangePresent]: boolean;
+  [Events.StateChange]: PresenceState;
   [Events.PresentChange]: boolean;
   [Events.Show]: void;
   [Events.Hidden]: void;
   [Events.Destroy]: void;
 };
-const EventMap = {
+const PresenceEventMap = {
   mounted: {
     UNMOUNT: "unmounted",
     ANIMATION_OUT: "unmountSuspended",
@@ -34,86 +32,100 @@ const EventMap = {
     MOUNT: "mounted",
   },
 };
+type PresenceState = {
+  mounted: boolean;
+  visible: boolean;
+  unmounted: boolean;
+};
 export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
+  name = "PresenceCore";
   /** 之前是否可见状态 */
   private prevPresent = false;
   styles: CSSStyleDeclaration;
   animationName = "none";
-  private state = "unmounted";
+  // private state = "unmounted";
 
   constructor() {
     super();
+  }
 
-    this.on(Events.ChangePresent, async (present) => {
-      const styles = this.styles;
-      const wasPresent = this.prevPresent;
-      const hasPresentChanged = wasPresent !== present;
-      if (hasPresentChanged) {
-        const prevAnimationName = this.animationName;
-        const currentAnimationName = getAnimationName();
-        if (present) {
-          this.send("MOUNT");
-        } else if (
-          currentAnimationName === "none" ||
-          styles.display === "none"
-        ) {
-          // If there is no exit animation or the element is hidden, animations won't run
-          // so we unmount instantly
-          this.send("UNMOUNT");
-        } else {
-          /**
-           * When `present` changes to `false`, we check changes to animation-name to
-           * determine whether an animation has started. We chose this approach (reading
-           * computed styles) because there is no `animationrun` event and `animationstart`
-           * fires after `animation-delay` has expired which would be too late.
-           */
-          const isAnimating = prevAnimationName !== currentAnimationName;
+  state: PresenceState = {
+    mounted: false,
+    visible: false,
+    unmounted: false,
+  };
 
-          if (wasPresent && isAnimating) {
-            this.send("ANIMATION_OUT");
-          } else {
-            this.send("UNMOUNT");
-          }
-        }
-        this.prevPresent = present;
-      }
-      this.emit(Events.PresentChange, this.isPresent);
-      if (this.isPresent) {
-        this.emit(Events.Show);
-        return;
-      }
-      this.emit(Events.Hidden);
-    });
+  calc(present) {
+    // const styles = this.styles;
+    // const wasPresent = this.prevPresent;
+    // const hasPresentChanged = wasPresent !== present;
+    // if (hasPresentChanged) {
+    //   const prevAnimationName = this.animationName;
+    //   const currentAnimationName = getAnimationName();
+    //   if (present) {
+    //     this.send("MOUNT");
+    //   } else if (currentAnimationName === "none" || styles.display === "none") {
+    //     // If there is no exit animation or the element is hidden, animations won't run
+    //     // so we unmount instantly
+    //     this.send("UNMOUNT");
+    //   } else {
+    //     const isAnimating = prevAnimationName !== currentAnimationName;
+    //     if (wasPresent && isAnimating) {
+    //       this.send("ANIMATION_OUT");
+    //     } else {
+    //       this.send("UNMOUNT");
+    //     }
+    //   }
+    //   this.prevPresent = present;
+    // }
+    // this.emit(Events.PresentChange, this.isPresent);
+    // if (this.isPresent) {
+    //   this.emit(Events.Show);
+    //   return;
+    // }
+    // this.emit(Events.Hidden);
   }
   /** 是否可见 */
   get isPresent() {
-    return ["mounted", "unmountSuspended"].includes(this.state);
+    return this.state.visible;
+    // return ["mounted", "unmountSuspended"].includes(this.state);
   }
   setStyles(styles: CSSStyleDeclaration) {
     this.styles = styles;
   }
   show() {
-    this.emit(Events.ChangePresent, true);
+    // this.calc(true);
+    // this.state.mounted = true;
+    this.state.visible = true;
+    this.emit(Events.Show);
+    this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
-    this.emit(Events.ChangePresent, false);
+    // this.calc(false);
+    this.state.visible = false;
+    this.emit(Events.Hidden);
+    this.emit(Events.StateChange, { ...this.state });
   }
   send(
     event: "UNMOUNT" | "ANIMATION_OUT" | "MOUNT" | "ANIMATION_END" | "MOUNT"
   ) {
-    const nextState = EventMap[this.state][event];
-    this.state = nextState;
-    const currentAnimationName = getAnimationName(this.styles);
-    this.animationName =
-      nextState === "mounted" ? currentAnimationName : "none";
-    this.emit(Events.StateChanged, nextState);
-    // console.log("[]Presence - send", this.isPresent);
+    // this.log("send", event, this.state);
+    // const nextState = PresenceEventMap[this.state][event];
+    // this.state = nextState;
+    // const currentAnimationName = getAnimationName(this.styles);
+    // this.animationName =
+    //   nextState === "mounted" ? currentAnimationName : "none";
+    // this.calc(nextState);
   }
   emitAnimationEnd() {
-    if (this.state === "unmounted") {
-      this.emit(Events.Destroy);
+    if (this.state.visible) {
+      return;
     }
+    this.state.unmounted = true;
+    this.emit(Events.Destroy);
+    this.emit(Events.StateChange, { ...this.state });
   }
+
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
     this.on(Events.Show, handler);
   }
@@ -123,8 +135,8 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   onDestroy(handler: Handler<TheTypesOfEvents[Events.Destroy]>) {
     this.on(Events.Destroy, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChanged]>) {
-    this.on(Events.StateChanged, handler);
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    this.on(Events.StateChange, handler);
   }
   onPresentChange(handler: Handler<TheTypesOfEvents[Events.PresentChange]>) {
     this.on(Events.PresentChange, handler);

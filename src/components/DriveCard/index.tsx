@@ -10,6 +10,7 @@ import { ProgressCore } from "@/domains/ui/progress";
 import { DialogCore } from "@/domains/ui/dialog";
 import { PopoverCore } from "@/domains/ui/popover";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
+import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { LazyImage } from "@/components/LazyImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,8 @@ import FolderMenu from "@/components/FolderMenu";
 import { Progress } from "@/components/ui/progress";
 import { Popover } from "@/components/ui/popover";
 import Modal from "@/components/SingleModal";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { MenuCore } from "@/domains/ui/menu";
 
 const DriveCard = (props: { app: Application; core: Drive }) => {
   const { app, core: drive } = props;
@@ -27,6 +30,16 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
   const createFolderModal = new DialogCore();
   const refreshTokenModal = new DialogCore();
   const popover = new PopoverCore();
+  const dropdown = new DropdownMenuCore();
+  const subMenu = new MenuCore({
+    side: "right",
+    align: "start",
+  });
+  dropdown.menu.onEnterItem((item) => {
+    console.log("[]onEnterItem", item);
+    subMenu.show();
+  });
+
   const contextMenu = new ContextMenuCore([
     {
       label: "详情",
@@ -114,9 +127,11 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
       >
         <div class="">
           <div class="absolute top-2 right-2">
-            <Popover store={popover} content={<div>Hello</div>}>
-              <MoreHorizontal class="w-6 h-6 text-gray-600" />
-            </Popover>
+            <DropdownMenu store={dropdown} sub={subMenu}>
+              <div class="p-4 cursor-pointer">
+                <MoreHorizontal class="w-6 h-6 text-gray-600" />
+              </div>
+            </DropdownMenu>
           </div>
           <div class="flex">
             <LazyImage
