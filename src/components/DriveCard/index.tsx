@@ -127,7 +127,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
       >
         <div class="">
           <div class="absolute top-2 right-2">
-            <DropdownMenu store={dropdown} sub={subMenu}>
+            <DropdownMenu store={dropdown}>
               <div class="p-4 cursor-pointer">
                 <MoreHorizontal class="w-6 h-6 text-gray-600" />
               </div>

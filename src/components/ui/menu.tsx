@@ -11,7 +11,7 @@ import { Presence } from "./presence";
 import { DismissableLayer } from "./dismissable-layer";
 import * as Collection from "./collection";
 import { cn } from "@/utils";
-import { createSignal } from "solid-js";
+import { createSignal, onMount } from "solid-js";
 
 export type Menu = {};
 export const Menu = (props: { options: {}[] }) => {};
@@ -28,9 +28,18 @@ const MenuRoot = (props: { store: MenuCore; children: JSX.Element }) => {
 /* -------------------------------------------------------------------------------------------------
  * MenuAnchor
  * -----------------------------------------------------------------------------------------------*/
-const MenuAnchor = (props: { store: MenuCore; children: JSX.Element }) => {
+const MenuAnchor = (props: {
+  store: MenuCore;
+  ref?: HTMLElement;
+  class?: string;
+  children: JSX.Element;
+}) => {
   const { store } = props;
-  return <Popper.Anchor store={store.popper}>{props.children}</Popper.Anchor>;
+  return (
+    <Popper.Anchor store={store.popper} class={props.class}>
+      {props.children}
+    </Popper.Anchor>
+  );
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -143,12 +152,20 @@ const MenuItemImpl = (props: {
     $item.blur();
   });
 
+  onMount(() => {
+    itemStore.log("mounted", $item);
+  });
+
   const disabled = () => state().disabled;
   const isFocused = () => state().focused;
 
   return (
     <div
       ref={$item}
+      class={cn("menu__item-impl", props.class)}
+      aria-haspopup="menu"
+      // aria-expanded=""
+      data-state=""
       onPointerMove={() => {
         // ...
       }}
@@ -178,7 +195,7 @@ const MenuItemImpl = (props: {
             itemStore.leave();
             return;
           }
-          itemStore.enter();
+          // itemStore.enter();
         }}
         onPointerLeave={(event) => {
           if (event.pointerType !== "mouse") {
@@ -211,9 +228,15 @@ const MenuArrow = (props: {
   return <Popper.Arrow store={store.popper} class={props.class}></Popper.Arrow>;
 };
 
+/* -------------------------------------------------------------------------------------------------
+ * MenuSub
+ * -----------------------------------------------------------------------------------------------*/
 const MenuSub = (props: { store: MenuCore; children: JSX.Element }) => {
   const { store } = props;
-  return <Popper.Root store={store.popper}>{props.children}</Popper.Root>;
+
+  const sub = store.appendSub();
+
+  return <Popper.Root store={sub.popper}>{props.children}</Popper.Root>;
 };
 const MenuSubTrigger = (props: {
   store: MenuCore;
@@ -222,7 +245,7 @@ const MenuSubTrigger = (props: {
 }) => {
   const { store } = props;
   return (
-    <MenuAnchor store={store}>
+    <MenuAnchor store={store} class={props.class}>
       <MenuItemImpl store={store} class={props.class}>
         {props.children}
       </MenuItemImpl>
@@ -236,15 +259,11 @@ const MenuSubContent = (props: {
 }) => {
   const { store } = props;
   return (
-    <Collection.Provider>
-      <Presence store={store.presence}>
-        <Collection.Slot>
-          <MenuContentImpl store={store} class={props.class}>
-            {props.children}
-          </MenuContentImpl>
-        </Collection.Slot>
-      </Presence>
-    </Collection.Provider>
+    <Presence store={store.presence}>
+      <MenuContentImpl store={store} class={props.class}>
+        {props.children}
+      </MenuContentImpl>
+    </Presence>
   );
 };
 

@@ -9,14 +9,13 @@ import { MenuCore } from "@/domains/ui/menu";
 
 export const DropdownMenu = (props: {
   store: DropdownMenuCore;
-  sub: MenuCore;
   children: JSX.Element;
 }) => {
-  const { store, sub } = props;
+  const { store } = props;
   return (
     <DropdownMenuRoot store={store}>
       <DropdownMenuTrigger store={store}>{props.children}</DropdownMenuTrigger>
-      <DropdownMenuPortal store={store.menu}>
+      <DropdownMenuPortal store={store}>
         <DropdownMenuContent store={store} class="DropdownMenuContent">
           <DropdownMenuItem store={store} class="DropdownMenuItem">
             New Tab <div class="RightSlot">⌘+T</div>
@@ -27,31 +26,32 @@ export const DropdownMenu = (props: {
           <DropdownMenuItem store={store} class="DropdownMenuItem" disabled>
             New Private Window <div class="RightSlot">⇧+⌘+N</div>
           </DropdownMenuItem>
-          <DropdownMenuSub store={sub}>
-            <DropdownMenuSubTrigger store={sub} class="DropdownMenuSubTrigger">
-              <DropdownMenuItem store={store} class="DropdownMenuItem">
-                More Tools
-                <div class="RightSlot">
-                  <ChevronRight />
-                </div>
-              </DropdownMenuItem>
+          <DropdownMenuSub store={store}>
+            <DropdownMenuSubTrigger
+              store={store}
+              class="DropdownMenuSubTrigger"
+            >
+              More Tools
+              <div class="RightSlot">
+                <ChevronRight />
+              </div>
             </DropdownMenuSubTrigger>
-            <DropdownMenuPortal store={sub}>
+            <DropdownMenuPortal>
               <DropdownMenuSubContent
-                store={sub}
+                store={store}
                 class="DropdownMenuSubContent"
               >
-                <DropdownMenuItem store={store} class="DropdownMenuItem">
+                <DropdownMenuItem class="DropdownMenuItem">
                   Save Page As… <div class="RightSlot">⌘+S</div>
                 </DropdownMenuItem>
-                <DropdownMenuItem store={store} class="DropdownMenuItem">
+                <DropdownMenuItem class="DropdownMenuItem">
                   Create Shortcut…
                 </DropdownMenuItem>
-                <DropdownMenuItem store={store} class="DropdownMenuItem">
+                <DropdownMenuItem store={sub} class="DropdownMenuItem">
                   Name Window…
                 </DropdownMenuItem>
                 <DropdownMenuSeparator class="DropdownMenu.Separator" />
-                <DropdownMenuItem store={store} class="DropdownMenuItem">
+                <DropdownMenuItem store={sub} class="DropdownMenuItem">
                   Developer Tools
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -124,11 +124,11 @@ const DropdownMenuTrigger = (props: {
  * DropdownMenuPortal
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuPortal = (props: {
-  store: MenuCore;
+  store: DropdownMenuCore;
   children: JSX.Element;
 }) => {
   const { store } = props;
-  return <Menu.Portal store={store}>{props.children}</Menu.Portal>;
+  return <Menu.Portal store={store.menu}>{props.children}</Menu.Portal>;
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -212,22 +212,25 @@ const DropdownMenuArrow = (props: {
 /* -------------------------------------------------------------------------------------------------
  * DropdownMenuSub
  * -----------------------------------------------------------------------------------------------*/
-const DropdownMenuSub = (props: { store: MenuCore; children: JSX.Element }) => {
+const DropdownMenuSub = (props: {
+  store: DropdownMenuCore;
+  children: JSX.Element;
+}) => {
   const { store } = props;
-  return <Menu.Sub store={store}>{props.children}</Menu.Sub>;
+  return <Menu.Sub store={store.menu}>{props.children}</Menu.Sub>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * DropdownMenuSubTrigger
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuSubTrigger = (props: {
-  store: MenuCore;
+  store: DropdownMenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
   const { store } = props;
   return (
-    <Menu.SubTrigger store={store} class={props.class}>
+    <Menu.SubTrigger store={store.menu} class={props.class}>
       {props.children}
     </Menu.SubTrigger>
   );
@@ -237,13 +240,13 @@ const DropdownMenuSubTrigger = (props: {
  * DropdownMenuSubContent
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuSubContent = (props: {
-  store: MenuCore;
+  store: DropdownMenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
   const { store } = props;
   return (
-    <Menu.SubContent store={store} class={props.class}>
+    <Menu.SubContent store={store.menu} class={props.class}>
       {props.children}
     </Menu.SubContent>
   );

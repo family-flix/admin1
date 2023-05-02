@@ -18,18 +18,19 @@ import { cn } from "@/utils";
 import { Arrow as PrimitiveArrow } from "./arrow";
 
 const PopperContext = createContext<PopperCore>();
-
 const PopperRoot = (props: { store: PopperCore; children: JSX.Element }) => {
   const { store } = props;
 
   // console.log("[COMPONENT]PopperRoot", store);
 
-  return <div class={cn("popper__root")}>{props.children}</div>;
+  // return <div class={cn("popper__root")}>{props.children}</div>;
+  return props.children;
 };
 
 const PopperAnchor = (props: {
   store: PopperCore;
   class?: string;
+  ref?: HTMLElement;
   children: JSX.Element;
 }) => {
   const { store, children } = props;
@@ -37,9 +38,11 @@ const PopperAnchor = (props: {
 
   let $anchor: HTMLDivElement;
 
-  // console.log("[COMPONENT]PopperAnchor", store);
-
   onMount(() => {
+    store.log("mounted", $anchor);
+    if (store.reference) {
+      return;
+    }
     setTimeout(() => {
       const size = $anchor.getBoundingClientRect();
       store.log("setReference", $anchor, { x: size.x, y: size.y });
@@ -47,7 +50,9 @@ const PopperAnchor = (props: {
     }, 100);
   });
 
-  // const c = children(() => props.children);
+  if (store.reference) {
+    return children;
+  }
 
   return (
     <div

@@ -44,7 +44,6 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.present = new PresenceCore();
     this.layer = new DismissableLayerCore();
     this.layer.onDismiss(() => {
-      console.log("dismiss");
       this.hide();
     });
   }

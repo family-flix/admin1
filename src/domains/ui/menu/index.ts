@@ -57,6 +57,9 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.popper = new PopperCore(options);
     this.presence = new PresenceCore();
     this.layer = new DismissableLayerCore();
+    this.layer.onDismiss(() => {
+      this.hide();
+    });
   }
 
   state = {
@@ -82,6 +85,10 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.state.visible = false;
     this.presence.hide();
     this.emit(Events.Hidden);
+  }
+  appendSub() {
+    const sub = new MenuCore();
+    return sub;
   }
   appendItem() {
     this.log("appendItem");
@@ -124,25 +131,32 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   }
 }
 
-enum SubEvents {
+// enum MenuSubEvents {}
+// type TheTypesOfMenuSubEvents = {};
+// export class MenuSubCore extends BaseDomain<TheTypesOfMenuSubEvents> {}
+
+// MenuItem
+enum MenuItemEvents {
   StateChange,
   Enter,
   Leave,
   Focus,
   Blur,
 }
-type TheTypesOfSubEvents = {
-  [SubEvents.StateChange]: MenuItemState;
-  [SubEvents.Enter]: void;
-  [SubEvents.Leave]: void;
-  [SubEvents.Focus]: void;
-  [SubEvents.Blur]: void;
+type TheTypesOfMenuItemEvents = {
+  [MenuItemEvents.StateChange]: MenuItemState;
+  [MenuItemEvents.Enter]: void;
+  [MenuItemEvents.Leave]: void;
+  [MenuItemEvents.Focus]: void;
+  [MenuItemEvents.Blur]: void;
 };
 type MenuItemState = {
   disabled: boolean;
   focused: boolean;
 };
-export class MenuItemCore extends BaseDomain<TheTypesOfSubEvents> {
+export class MenuItemCore extends BaseDomain<TheTypesOfMenuItemEvents> {
+  name = "MenuItemCore";
+
   state: MenuItemState = {
     disabled: false,
     focused: false,
@@ -154,7 +168,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfSubEvents> {
   /** 禁用指定菜单项 */
   disable() {
     this.state.disabled = true;
-    this.emit(SubEvents.StateChange, { ...this.state });
+    this.emit(MenuItemEvents.StateChange, { ...this.state });
   }
   /** 鼠标进入菜单项 */
   enter() {
@@ -164,8 +178,8 @@ export class MenuItemCore extends BaseDomain<TheTypesOfSubEvents> {
     this.log("enter");
     this._enter = true;
     this.state.focused = true;
-    this.emit(SubEvents.Enter);
-    this.emit(SubEvents.StateChange, { ...this.state });
+    this.emit(MenuItemEvents.Enter);
+    this.emit(MenuItemEvents.StateChange, { ...this.state });
   }
   /** 鼠标离开菜单项 */
   leave() {
@@ -175,8 +189,8 @@ export class MenuItemCore extends BaseDomain<TheTypesOfSubEvents> {
     this.log("leave");
     this._enter = false;
     this.state.focused = false;
-    this.emit(SubEvents.Leave);
-    this.emit(SubEvents.StateChange, { ...this.state });
+    this.emit(MenuItemEvents.Leave);
+    this.emit(MenuItemEvents.StateChange, { ...this.state });
   }
   focus() {
     if (this._focus) {
@@ -185,8 +199,8 @@ export class MenuItemCore extends BaseDomain<TheTypesOfSubEvents> {
     this.log("focus");
     this._focus = true;
     this.state.focused = true;
-    this.emit(SubEvents.Focus);
-    this.emit(SubEvents.StateChange, { ...this.state });
+    this.emit(MenuItemEvents.Focus);
+    this.emit(MenuItemEvents.StateChange, { ...this.state });
   }
   blur() {
     if (this._focus === false) {
@@ -195,24 +209,26 @@ export class MenuItemCore extends BaseDomain<TheTypesOfSubEvents> {
     this.log("blur");
     this._focus = false;
     this.state.focused = false;
-    this.emit(SubEvents.Blur);
-    this.emit(SubEvents.StateChange, { ...this.state });
+    this.emit(MenuItemEvents.Blur);
+    this.emit(MenuItemEvents.StateChange, { ...this.state });
   }
 
-  onStateChange(handler: Handler<TheTypesOfSubEvents[SubEvents.StateChange]>) {
-    return this.on(SubEvents.StateChange, handler);
+  onStateChange(
+    handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.StateChange]>
+  ) {
+    return this.on(MenuItemEvents.StateChange, handler);
   }
-  onEnter(handler: Handler<TheTypesOfSubEvents[SubEvents.Enter]>) {
-    return this.on(SubEvents.Enter, handler);
+  onEnter(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Enter]>) {
+    return this.on(MenuItemEvents.Enter, handler);
   }
-  onLeave(handler: Handler<TheTypesOfSubEvents[SubEvents.Leave]>) {
-    return this.on(SubEvents.Leave, handler);
+  onLeave(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Leave]>) {
+    return this.on(MenuItemEvents.Leave, handler);
   }
-  onFocus(handler: Handler<TheTypesOfSubEvents[SubEvents.Focus]>) {
-    return this.on(SubEvents.Focus, handler);
+  onFocus(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Focus]>) {
+    return this.on(MenuItemEvents.Focus, handler);
   }
-  onBlur(handler: Handler<TheTypesOfSubEvents[SubEvents.Blur]>) {
-    return this.on(SubEvents.Blur, handler);
+  onBlur(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Blur]>) {
+    return this.on(MenuItemEvents.Blur, handler);
   }
 
   get [Symbol.toStringTag]() {
