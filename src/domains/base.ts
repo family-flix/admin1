@@ -14,14 +14,14 @@ function uid() {
 export class BaseDomain<Events extends Record<EventType, unknown>> {
   private _emitter = mitt<Events>();
   name: string;
-  debug: boolean;
+  debug: boolean = false;
 
   listeners: (() => void)[] = [];
 
   constructor(params: Partial<{ name: string; debug: boolean }> = {}) {
-    const { name = "Domain", debug } = params;
-    this.name = name;
-    this.debug = debug;
+    // const { name = "Domain", debug } = params;
+    // this.name = name;
+    // this.debug = debug;
   }
 
   uid() {
@@ -29,6 +29,9 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
   }
 
   log(...args: unknown[]) {
+    if (!this.debug) {
+      return;
+    }
     console.log(
       `%c CORE %c ${this.name} %c`,
       "color:white;background:#dfa639;border-top-left-radius:2px;border-bottom-left-radius:2px;",

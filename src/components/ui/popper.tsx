@@ -73,7 +73,7 @@ const PopperContent = (props: {
   let $content: HTMLDivElement;
 
   store.onPlaced((nextState) => {
-    console.log("[COMPONENT]PopperContent - onPlaced", nextState);
+    // console.log("[COMPONENT]PopperContent - onPlaced", nextState);
     setState(nextState);
   });
 

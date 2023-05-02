@@ -31,14 +31,6 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
   const refreshTokenModal = new DialogCore();
   const popover = new PopoverCore();
   const dropdown = new DropdownMenuCore();
-  const subMenu = new MenuCore({
-    side: "right",
-    align: "start",
-  });
-  dropdown.menu.onEnterItem((item) => {
-    console.log("[]onEnterItem", item);
-    subMenu.show();
-  });
 
   const contextMenu = new ContextMenuCore([
     {

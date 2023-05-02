@@ -17,12 +17,6 @@ export const DropdownMenu = (props: {
       <DropdownMenuTrigger>{props.children}</DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent class="DropdownMenuContent">
-          <DropdownMenuItem class="DropdownMenuItem">
-            New Tab <div class="RightSlot">⌘+T</div>
-          </DropdownMenuItem>
-          <DropdownMenuItem class="DropdownMenuItem">
-            New Window <div class="RightSlot">⌘+N</div>
-          </DropdownMenuItem>
           <DropdownMenuItem class="DropdownMenuItem" disabled>
             New Private Window <div class="RightSlot">⇧+⌘+N</div>
           </DropdownMenuItem>
@@ -221,13 +215,19 @@ const DropdownMenuArrow = (props: {
  * DropdownMenuSub
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuSub = (props: {
-  store?: DropdownMenuCore;
+  // store?: DropdownMenuCore;
   children: JSX.Element;
 }) => {
   // const { store } = props;
-  const store = useContext(DropdownMenuContext);
+  // const store = useContext(DropdownMenuContext);
 
-  return <Menu.Sub store={store.menu}>{props.children}</Menu.Sub>;
+  return (
+    <Menu.Sub
+    // store={store.menu}
+    >
+      {props.children}
+    </Menu.Sub>
+  );
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -255,6 +255,7 @@ const DropdownMenuSubContent = (props: {
   children: JSX.Element;
 }) => {
   // const { store } = props;
+  // const store = useContext()
 
   return (
     <Menu.SubContent class={props.class}>{props.children}</Menu.SubContent>

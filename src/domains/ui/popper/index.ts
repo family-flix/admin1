@@ -110,6 +110,9 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 基准元素加载完成 */
   setReference(reference: PopperCore["reference"]) {
+    if (this.reference !== null) {
+      return;
+    }
     // console.log("[PopperCore]setReference", reference);
     this.reference = reference;
   }

@@ -4,7 +4,7 @@
 import { JSX } from "solid-js/jsx-runtime";
 import { Portal as PortalPrimitive } from "solid-js/web";
 
-import { MenuCore } from "@/domains/ui/menu";
+import { MenuCore, MenuItemCore } from "@/domains/ui/menu";
 
 import * as Popper from "./popper";
 import { Presence } from "./presence";
@@ -94,6 +94,7 @@ const MenuContentNonModal = (props: {
   );
 };
 
+const MenuContentContext = createContext<MenuCore>();
 const MenuContentImpl = (props: {
   store: MenuCore;
   class?: string;
@@ -101,13 +102,13 @@ const MenuContentImpl = (props: {
 }) => {
   const { store } = props;
   return (
-    <div class={cn("menu__content-impl")}>
+    <MenuContentContext.Provider value={store}>
       <DismissableLayer store={store.layer}>
         <Popper.Content store={store.popper} class={props.class}>
           {props.children}
         </Popper.Content>
       </DismissableLayer>
-    </div>
+    </MenuContentContext.Provider>
   );
 };
 
@@ -145,32 +146,38 @@ const MenuItemImpl = (props: {
 }) => {
   // const { store } = props;
   // const parent = useContext(MenuContext);
+  let $item: HTMLDivElement;
+  const store = useContext(MenuContentContext);
   // 如果处于 MenuSub 内，sub 才会有值
   const sub = useContext(MenuSubContext);
 
-  const store = useContext(MenuContext);
-
   // console.log("[COMPONENT]MenuItemImpl", store);
-
-  let $item: HTMLDivElement;
-  const itemStore = store.appendItem();
-  const [state, setState] = createSignal(itemStore.state);
-  itemStore.onStateChange((nextState) => {
+  const item = new MenuItemCore();
+  store.appendItem(item);
+  // 这种情况，只有放在 Sub 里面的 SubTrigger 才会触发
+  if (sub && sub !== store) {
+    item.setSub(sub);
+  }
+  // console.log("[COMPONENT]MenuItemImpl", store.items, store === sub);
+  const [state, setState] = createSignal(item.state);
+  item.onStateChange((nextState) => {
     setState(nextState);
   });
-  itemStore.onFocus(() => {
+  item.onFocus(() => {
     $item.focus();
   });
-  itemStore.onBlur(() => {
+  item.onBlur(() => {
     $item.blur();
   });
 
   onMount(() => {
-    store.log("mounted at MenuItemImpl", $item);
-    if (sub) {
-      const size = $item.getBoundingClientRect();
-      sub.log("setReference", $item, { x: size.x, y: size.y });
-      sub.popper.setReference(size);
+    // store.log("mounted at MenuItemImpl", $item);
+    if (item.sub) {
+      setTimeout(() => {
+        const size = $item.getBoundingClientRect();
+        // item.sub.log("setReference", $item, { x: size.x, y: size.y });
+        item.sub.popper.setReference(size);
+      }, 100);
     }
   });
 
@@ -180,7 +187,7 @@ const MenuItemImpl = (props: {
   return (
     <div
       ref={$item}
-      class={props.class}
+      class={cn("menu__item-impl", props.class)}
       role="menuitem"
       aria-haspopup="menu"
       // aria-expanded=""
@@ -193,23 +200,22 @@ const MenuItemImpl = (props: {
           return;
         }
         if (disabled()) {
-          itemStore.leave();
+          item.leave();
           return;
         }
-        itemStore.log("enter");
-        // itemStore.enter();
+        item.enter();
       }}
       onPointerLeave={(event) => {
         if (event.pointerType !== "mouse") {
           return;
         }
-        itemStore.leave();
+        item.leave();
       }}
       onFocus={() => {
-        itemStore.focus();
+        item.focus();
       }}
       onBlur={() => {
-        itemStore.blur();
+        item.blur();
       }}
     >
       {props.children}
@@ -235,10 +241,21 @@ const MenuArrow = (props: {
  * MenuSub
  * -----------------------------------------------------------------------------------------------*/
 const MenuSubContext = createContext<MenuCore>();
-const MenuSub = (props: { store?: MenuCore; children: JSX.Element }) => {
-  const { store } = props;
+const MenuSub = (props: {
+  // store?: MenuCore;
+  children: JSX.Element;
+}) => {
+  // const { store } = props;
+  const store = useContext(MenuContext);
 
-  const sub = store.appendSub();
+  const sub = new MenuCore({
+    side: "right",
+    align: "start",
+  });
+  store.appendSub(sub);
+  // sub.onLeave(() => {
+  //   sub.log("onLeave at MenuSub");
+  // });
 
   return (
     <Popper.Root store={sub.popper}>
@@ -251,7 +268,7 @@ const MenuSub = (props: { store?: MenuCore; children: JSX.Element }) => {
   );
 };
 const MenuSubTrigger = (props: {
-  store?: MenuCore;
+  // store?: MenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
@@ -272,6 +289,8 @@ const MenuSubTrigger = (props: {
     </MenuAnchor>
   );
 };
+
+const MenuSubContentContext = createContext<MenuCore>();
 const MenuSubContent = (props: {
   // store?: MenuCore;
   class?: string;
