@@ -1,21 +1,21 @@
 /**
  * @file 分享文件转存
  */
-
-import FolderCard from "@/components/FolderCard";
-import FolderMenu from "@/components/FolderMenu";
-import ScrollView from "@/components/ScrollView";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { NavigatorCore } from "@/domains/navigator";
 import { For, Show, createSignal } from "solid-js";
+import { ChevronRight } from "lucide-solid";
+
+import { NavigatorCore } from "@/domains/navigator";
 import { ViewCore } from "@/domains/router";
 import { SharedResource } from "@/domains/shared_resource";
-import { Input } from "@/components/ui/input";
 import { Application } from "@/domains/app";
-import { MoreHorizontal } from "lucide-solid";
-import { Popover } from "@/components/ui/popover";
 import { PopoverCore } from "@/domains/ui/popover";
+import { Input } from "@/components/ui/input";
+import FolderCard from "@/components/FolderCard";
+import { Button } from "@/components/ui/button";
+import * as ContextMenu from "@/components/ui/context-menu";
+import * as Tabs from "@/components/ui/tabs";
+import { ContextMenuCore } from "@/domains/ui/context-menu";
+import { TabsCore } from "@/domains/ui/tabs";
 
 export const SharedFilesTransferPage = (props: {
   app: Application;
@@ -28,8 +28,45 @@ export const SharedFilesTransferPage = (props: {
     paths: [],
     files: [],
   });
+  const [drives, setDrives] = createSignal(app.drives);
+  // const { toast } = useToast();
+  app.onDrivesChange((nextDrives) => {
+    setDrives(nextDrives);
+  });
   const popover = new PopoverCore();
+  const tabs = new TabsCore();
   const sharedResource = new SharedResource();
+  const contextMenu = new ContextMenuCore({
+    menus: [
+      {
+        label: "查找同名文件夹并建立关联",
+        onClick() {
+          // sharedResource.bindFolderInDrive()
+        },
+      },
+      {
+        label: "同名影视剧检查",
+        onClick() {
+          // check_has_same_name_tv({
+          //   file_name: name,
+          // });
+        },
+      },
+      {
+        label: "转存到默认网盘",
+        onClick() {
+          // patch_added_files({
+          //   url,
+          //   file_id: cur_folder_ref.current.file_id,
+          //   file_name: name,
+          // });
+        },
+      },
+      // {
+      //   label: "转存到",
+      // },
+    ],
+  });
   sharedResource.onTip((msg) => {
     app.tip({
       text: [msg],
@@ -44,56 +81,14 @@ export const SharedFilesTransferPage = (props: {
     });
   });
 
+  app.fetchDrives();
+
   const url = () => state().url;
   const paths = () => state().paths;
   const files = () => state().files;
 
-  const sharedFileActions = [
-    {
-      label: "查找同名文件夹并建立关联",
-      async on_click() {
-        // sharedResource.bindFolderInDrive()
-      },
-    },
-    {
-      label: "同名影视剧检查",
-      on_click() {
-        // check_has_same_name_tv({
-        //   file_name: name,
-        // });
-      },
-    },
-    {
-      label: "转存到默认网盘",
-      on_click() {
-        // patch_added_files({
-        //   url,
-        //   file_id: cur_folder_ref.current.file_id,
-        //   file_name: name,
-        // });
-      },
-    },
-    {
-      label: "转存到",
-      // children: drives_response.dataSource.map((drive) => {
-      //   const { name } = drive;
-      //   return {
-      //     label: name,
-      //     async on_click() {
-      //       const r = await save_shared_files({
-      //         url,
-      //         file_id,
-      //         file_name,
-      //         drive_id: drive.id,
-      //       });
-      //     },
-      //   };
-      // }),
-    },
-  ];
-
   return (
-    <>
+    <div>
       <h2 class="my-2 text-2xl">转存文件</h2>
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-10">
@@ -118,11 +113,6 @@ export const SharedFilesTransferPage = (props: {
           </Button>
         </div>
       </div>
-      <div>
-        <Popover store={popover} content={<div>Hello</div>}>
-          <MoreHorizontal />
-        </Popover>
-      </div>
       <div class="flex items-center">
         <For each={paths()}>
           {(path, index) => {
@@ -145,33 +135,81 @@ export const SharedFilesTransferPage = (props: {
           }}
         </For>
       </div>
-      <div>
-        <div class="grid grid-cols-6 gap-2">
-          <For each={files()}>
-            {(file) => {
-              const { name, type } = file;
-              return (
-                <div
-                  class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-                  onClick={() => {
-                    sharedResource.fetch(file);
-                  }}
-                >
-                  <div>
-                    <FolderCard
-                      type={type}
-                      name={name}
-                      // onContextMenu={() => {
-                      //   cur_folder_ref.current = file;
-                      // }}
-                    />
+      <Tabs.Root store={tabs} class="TabsRoot">
+        <Tabs.List class="TabsList">
+          <Tabs.Trigger class="TabsTrigger" value="01">
+            测试01
+          </Tabs.Trigger>
+          <Tabs.Trigger class="TabsTrigger" value="02">
+            测试02
+          </Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content class="TabsContent" value="01">
+          <div>测试01 - content</div>
+        </Tabs.Content>
+        <Tabs.Content class="TabsContent" value="02">
+          <div>测试02 - content</div>
+        </Tabs.Content>
+      </Tabs.Root>
+      <ContextMenu.Root store={contextMenu}>
+        <ContextMenu.Trigger>
+          <div class="grid grid-cols-6 gap-2">
+            <For each={files()}>
+              {(file) => {
+                const { name, type } = file;
+                return (
+                  <div
+                    class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
+                    onClick={() => {
+                      sharedResource.fetch(file);
+                    }}
+                  >
+                    <FolderCard type={type} name={name} />
                   </div>
+                );
+              }}
+            </For>
+          </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ContextMenu.Content class="DropdownMenuContent">
+            <ContextMenu.Item class="DropdownMenuItem">
+              New Private Window <div class="RightSlot">⇧+⌘+N</div>
+            </ContextMenu.Item>
+            <ContextMenu.Sub>
+              <ContextMenu.SubTrigger class="DropdownMenuSubTrigger">
+                More Tools
+                <div class="RightSlot">
+                  <ChevronRight width={15} height={15} />
                 </div>
-              );
-            }}
-          </For>
-        </div>
-      </div>
+              </ContextMenu.SubTrigger>
+              <ContextMenu.Portal>
+                <ContextMenu.SubContent class="DropdownMenuSubContent">
+                  <ContextMenu.Item class="DropdownMenuItem">
+                    Save Page As… <div class="RightSlot">⌘+S</div>
+                  </ContextMenu.Item>
+                  <ContextMenu.Item class="DropdownMenuItem">
+                    Create Shortcut…
+                  </ContextMenu.Item>
+                  <ContextMenu.Item class="DropdownMenuItem">
+                    Name Window…
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator class="DropdownMenu.Separator" />
+                  <ContextMenu.Item class="DropdownMenuItem">
+                    Developer Tools
+                  </ContextMenu.Item>
+                </ContextMenu.SubContent>
+              </ContextMenu.Portal>
+            </ContextMenu.Sub>
+            <ContextMenu.Separator class="DropdownMenuSeparator" />
+            <ContextMenu.Label class="DropdownMenuLabel">
+              People
+            </ContextMenu.Label>
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
+      <div></div>
+
       {/* <Modal
           title="同名影视剧"
           visible={visible}
@@ -293,6 +331,6 @@ export const SharedFilesTransferPage = (props: {
             })}
           </Tabs>
         </Modal> */}
-    </>
+    </div>
   );
 };

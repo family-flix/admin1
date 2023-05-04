@@ -9,37 +9,42 @@ import { cn } from "@/utils";
 
 export const Presence = (props: {
   store: PresenceCore;
-  children: JSX.Element;
+  children:
+    | ((options: Partial<{ present: boolean }>) => JSX.Element)
+    | JSX.Element;
 }) => {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
 
   store.onStateChange((nextState) => {
-    store.log("onStateChange", nextState);
+    // store.log("onStateChange", nextState);
     setState(nextState);
   });
 
   const visible = () => state().visible;
   const unmounted = () => state().unmounted;
-
   const openOrClosed = () => isOpenOrClosed(visible());
-  // const c = children(() => props.children);
 
   return (
     <Show when={visible()}>
       <div
         data-state={openOrClosed()}
+        role="presentation"
         class={cn(
           "presence"
           // "animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 data-[state=open]:sm:slide-in-from-bottom-0"
         )}
         onAnimationEnd={() => {
-          console.log("[COMPONENT]Presence - animation end");
-          store.emitAnimationEnd();
+          store.endAnimate();
         }}
       >
-        {props.children}
+        {(() => {
+          if (typeof props.children === "function") {
+            return props.children({ present: visible() });
+          }
+          return props.children;
+        })()}
       </div>
     </Show>
   );

@@ -16,10 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FolderMenu from "@/components/FolderMenu";
 import { Progress } from "@/components/ui/progress";
-import { Popover } from "@/components/ui/popover";
 import Modal from "@/components/SingleModal";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { MenuCore } from "@/domains/ui/menu";
 
 const DriveCard = (props: { app: Application; core: Drive }) => {
   const { app, core: drive } = props;
@@ -29,42 +27,30 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
   const foldersModal = new DialogCore();
   const createFolderModal = new DialogCore();
   const refreshTokenModal = new DialogCore();
-  const popover = new PopoverCore();
-  const dropdown = new DropdownMenuCore();
-
-  const contextMenu = new ContextMenuCore([
-    {
-      label: "详情",
-      on_click: () => {
-        // router.push(`/admin/drive/${id}`);
+  const dropdown = new DropdownMenuCore({
+    menus: [
+      {
+        label: "导出",
+        onClick() {
+          drive.export();
+        },
       },
-    },
-    {
-      label: "导出",
-      on_click() {
-        drive.export();
+      {
+        label: "刷新",
+        onClick() {
+          drive.refresh();
+        },
       },
-    },
-    {
-      label: "刷新",
-      on_click() {
-        drive.refresh();
+      {
+        label: "修改 refresh_token",
+        onClick() {
+          // drive.update_refresh_token(),
+        },
       },
-    },
-    {
-      label: "修改 refresh_token",
-      on_click() {
-        // drive.update_refresh_token(),
-      },
-    },
-    {
-      label: "查看重复影片",
-      on_click() {
-        // router.push(`/admin/drive/duplicate/${id}`);
-      },
-    },
-  ]);
+    ],
+  });
   const progress = new ProgressCore({ value: drive.state.used_percent });
+
   foldersModal.onOk(() => {
     drive.setRootFolder();
     foldersModal.hide();
@@ -111,12 +97,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
 
   return (
     <div class="relative p-4 bg-white rounded-xl">
-      <div
-        onContextMenu={(event) => {
-          const { x, y } = event;
-          contextMenu.show({ x, y });
-        }}
-      >
+      <div>
         <div class="">
           <div class="absolute top-2 right-2">
             <DropdownMenu store={dropdown}>

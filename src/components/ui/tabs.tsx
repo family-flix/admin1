@@ -1,55 +1,136 @@
-"use client";
+import { JSX, Show, createContext, createSignal, useContext } from "solid-js";
 
-import * as React from "react";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { TabsCore } from "@/domains/ui/tabs";
 
-import { cn } from "@/lib/utils";
+import * as RovingFocusGroup from "./roving-focus";
+import { Presence } from "./presence";
+import { PresenceCore } from "@/domains/ui/presence";
 
-const Tabs = TabsPrimitive.Root;
+const TabsContext = createContext<TabsCore>();
+const TabsRoot = (props: {
+  store: TabsCore;
+  class?: string;
+  children: JSX.Element;
+}) => {
+  const { store } = props;
 
-const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center rounded-md bg-slate-100 p-1 dark:bg-slate-800",
-      className
-    )}
-    {...props}
-  />
-));
-TabsList.displayName = TabsPrimitive.List.displayName;
+  const [state, setState] = createSignal(store.state);
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+  const direction = () => state().dir;
+  const orientation = "";
 
-const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    className={cn(
-      "inline-flex min-w-[100px] items-center justify-center rounded-[0.185rem] px-3 py-1.5 text-sm font-medium text-slate-700 transition-all  disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-200 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-slate-100",
-      className
-    )}
-    {...props}
-    ref={ref}
-  />
-));
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
+  return (
+    <TabsContext.Provider value={store}>
+      <div data-orientation={orientation} class={props.class}>
+        {props.children}
+      </div>
+    </TabsContext.Provider>
+  );
+};
 
-const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    className={cn(
-      "mt-2 rounded-md border border-slate-200 dark:border-slate-700",
-      className
-    )}
-    {...props}
-    ref={ref}
-  />
-));
-TabsContent.displayName = TabsPrimitive.Content.displayName;
+const TabsList = (props: { class?: string; children: JSX.Element }) => {
+  // const { store } = props;
+  const store = useContext(TabsContext);
 
-export { Tabs, TabsList, TabsTrigger, TabsContent };
+  const [state, setState] = createSignal(store.state);
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+
+  const orientation = () => state().orientation;
+
+  return (
+    <RovingFocusGroup.Root store={store.roving}>
+      <div class={props.class} role="tablist" aria-orientation={orientation()}>
+        {props.children}
+      </div>
+    </RovingFocusGroup.Root>
+  );
+};
+
+const TabsTrigger = (props: {
+  value: string;
+  class?: string;
+  children: JSX.Element;
+}) => {
+  const { value } = props;
+  const store = useContext(TabsContext);
+
+  return (
+    <RovingFocusGroup.Item>
+      <button
+        class={props.class}
+        onMouseDown={(event) => {
+          if (event.button === 0 && event.ctrlKey === false) {
+            store.selectTab(value);
+          }
+        }}
+        onKeyDown={(event) => {
+          if ([" ", "Enter"].includes(event.key)) {
+            store.selectTab(value);
+          }
+        }}
+        onFocus={() => {
+          // ...
+        }}
+      >
+        {props.children}
+      </button>
+    </RovingFocusGroup.Item>
+  );
+};
+
+const TabsContent = (props: {
+  value: string;
+  class?: string;
+  children: JSX.Element;
+}) => {
+  const { value } = props;
+  const store = useContext(TabsContext);
+
+  const [state, setState] = createSignal(store.state);
+
+  const presence = new PresenceCore();
+  store.appendContent({
+    id: store.uid(),
+    value,
+    presence,
+  });
+
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+
+  const orientation = () => state().orientation;
+  const isSelected = () => state().curValue === value;
+
+  return (
+    <Presence store={presence}>
+      {(presenceProps) => {
+        return (
+          <div
+            class={props.class}
+            data-state={isSelected ? "active" : "inactive"}
+            data-orientation={orientation()}
+            role="tabpanel"
+            // aria-labelledby={triggerId}
+            hidden={!presenceProps.present}
+            // id={contentId}
+            tabIndex={0}
+          >
+            <Show when={presenceProps.present}>{props.children}</Show>
+          </div>
+        );
+      }}
+    </Presence>
+  );
+};
+
+const Root = TabsRoot;
+const List = TabsList;
+const Trigger = TabsTrigger;
+const Content = TabsContent;
+
+export { Root, List, Trigger, Content };

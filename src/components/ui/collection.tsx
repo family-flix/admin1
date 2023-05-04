@@ -1,12 +1,37 @@
+import { CollectionCore } from "@/domains/ui/collection";
+import { createContext, onCleanup, useContext } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
 
-const CollectionProvider = (props: { children: JSX.Element }) => {
-  return props.children;
+const CollectionContext = createContext<CollectionCore>();
+const CollectionProvider = (props: {
+  store: CollectionCore;
+  children: JSX.Element;
+}) => {
+  const { store } = props;
+  return (
+    <CollectionContext.Provider value={store}>
+      {props.children}
+    </CollectionContext.Provider>
+  );
 };
 const CollectionSlot = (props: { children: JSX.Element }) => {
+  const store = useContext(CollectionContext);
+  const wrap = {};
+  store.setWrap(wrap);
+
   return props.children;
 };
 const CollectionItemSlot = (props: { children: JSX.Element }) => {
+  const store = useContext(CollectionContext);
+
+  const node = {
+    id: store.uid(),
+  };
+  store.add(node, node);
+  onCleanup(() => {
+    store.remove(node);
+  });
+
   return props.children;
 };
 

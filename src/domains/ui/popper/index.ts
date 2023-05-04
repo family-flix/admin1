@@ -25,6 +25,10 @@ enum Events {
   FloatingMounted,
   /** 被放置（其实就是计算好了浮动元素位置） */
   Placed,
+  /** 鼠标进入内容区 */
+  Enter,
+  /** 鼠标离开内容区 */
+  Leave,
 }
 type TheTypesOfEvents = {
   [Events.FloatingMounted]: {
@@ -34,6 +38,8 @@ type TheTypesOfEvents = {
     y: number;
   };
   [Events.Placed]: PopperState;
+  [Events.Enter]: void;
+  [Events.Leave]: void;
 };
 type PopperState = {
   strategy: Strategy;
@@ -46,6 +52,8 @@ type PopperState = {
 };
 export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   name = "PopperCore";
+  debug = true;
+
   // side: Side = "bottom";
   // align: Align = "center";
   placement: Placement = "bottom";
@@ -86,15 +94,19 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     placedAlign: "center",
   };
 
+  _enter = false;
+  _focus = false;
+
   constructor(
     options: Partial<{
+      name: string;
       side: Side;
       align: Align;
       strategy: "fixed" | "absolute";
       middleware: Middleware[];
     }> = {}
   ) {
-    super();
+    super(options);
 
     const {
       side = "bottom",
@@ -116,6 +128,16 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     // console.log("[PopperCore]setReference", reference);
     this.reference = reference;
   }
+  /** 更新基准元素（右键菜单时会用到这个方法） */
+  updateReference(reference: Partial<PopperCore["reference"]>) {
+    if (this.reference === null) {
+      return;
+    }
+    this.reference = {
+      ...this.reference,
+      ...reference,
+    };
+  }
   /** 内容元素加载完成 */
   setFloating(floating: PopperCore["floating"]) {
     this.floating = floating;
@@ -128,7 +150,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   setConfig(config: { placement?: Placement; strategy?: Strategy }) {}
   /** 计算浮动元素位置 */
   async place() {
-    this.log("place", this.reference, this.floating);
+    this.log("place", this.reference);
     this.middleware = [
       // arrow({
       //   element: this.floating,
@@ -153,7 +175,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
       placedSide,
       placedAlign,
     };
-    this.log("place - before emit placed", this.state);
+    this.log("place - before emit placed", { x, y });
     this.emit(Events.Placed, {
       ...this.state,
     });
@@ -252,6 +274,23 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     return coords;
   }
 
+  enter() {
+    this.log("enter", this.reference?.x, this._enter);
+    if (this._enter === true) {
+      return;
+    }
+    this._enter = true;
+    this.emit(Events.Enter);
+  }
+  leave() {
+    this.log("leave", this.reference?.x, this._enter);
+    if (this._enter === false) {
+      return;
+    }
+    this._enter = false;
+    this.emit(Events.Leave);
+  }
+
   onFloatingMounted(
     handler: Handler<TheTypesOfEvents[Events.FloatingMounted]>
   ) {
@@ -259,6 +298,12 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   }
   onPlaced(handler: Handler<TheTypesOfEvents[Events.Placed]>) {
     return this.on(Events.Placed, handler);
+  }
+  onEnter(handler: Handler<TheTypesOfEvents[Events.Enter]>) {
+    this.on(Events.Enter, handler);
+  }
+  onLeave(handler: Handler<TheTypesOfEvents[Events.Leave]>) {
+    this.on(Events.Leave, handler);
   }
 
   get [Symbol.toStringTag]() {

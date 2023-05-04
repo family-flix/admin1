@@ -5,6 +5,8 @@ import { PopperCore, Side, Align } from "@/domains/ui/popper";
 import { DismissableLayerCore } from "@/domains/ui/dismissable-layer";
 import { PresenceCore } from "@/domains/ui/presence";
 
+import { MenuItemCore } from "./item";
+
 type Direction = "ltr" | "rtl";
 
 const SELECTION_KEYS = ["Enter", " "];
@@ -52,16 +54,32 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
 
   constructor(
     options: Partial<{
+      name: string;
       side: Side;
       align: Align;
       strategy: "fixed" | "absolute";
+      options: {
+        label: string;
+        onClick: () => void;
+      }[];
     }> = {}
   ) {
-    super();
+    super(options);
 
-    this.popper = new PopperCore(options);
+    this.popper = new PopperCore({
+      ...options,
+      name: options.name ? `${options.name}-popper` : undefined,
+    });
     this.presence = new PresenceCore();
     this.layer = new DismissableLayerCore();
+    this.popper.onEnter(() => {
+      this.log("this.popper.onEnter", this.items.length);
+      this.emit(Events.EnterMenu);
+    });
+    this.popper.onLeave(() => {
+      this.log("this.popper.onLeave", this.items.length);
+      this.emit(Events.LeaveMenu);
+    });
     this.layer.onDismiss(() => {
       this.hide();
     });
@@ -73,6 +91,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   subs: MenuCore[] = [];
   curSub: MenuCore | null = null;
   items: MenuItemCore[] = [];
+  curItem: MenuItemCore | null = null;
   inside = false;
   inSubMenu = false;
 
@@ -87,7 +106,6 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   }
   show() {
     this.state.visible = true;
-    // this.inside = true;
     this.presence.show();
     this.popper.place();
     this.emit(Events.Show);
@@ -141,12 +159,12 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
         this.curSub.hide();
       }
       this.emit(Events.EnterItem, item);
-      this.emit(Events.EnterMenu);
+      // this.emit(Events.EnterMenu);
     });
     item.onLeave(() => {
       this.maybeLeave = true;
       this.emit(Events.LeaveItem, item);
-      this.log("item.onLeave");
+      this.log("item.onLeave", this.items.length);
       if (this.leaveTimer !== null) {
         clearInterval(this.leaveTimer);
         this.leaveTimer = setTimeout(() => {
@@ -169,7 +187,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.log("leaveMenu check need hide subMenu", this.curSub, this.inSubMenu);
     this.inside = false;
-    this.emit(Events.LeaveMenu);
+    // this.emit(Events.LeaveMenu);
     // 直接从有 SubMenu 的 MenuItem 离开，不到其他 MenuItem 场景下，也要关闭 SubMenu
     if (this.curSub && !this.inSubMenu) {
       this.curSub.hide();
@@ -177,6 +195,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   destroy() {
+    // this.log("destroy", this.name);
     super.destroy();
     this.layer.destroy();
     this.popper.destroy();
@@ -216,109 +235,3 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
 // enum MenuSubEvents {}
 // type TheTypesOfMenuSubEvents = {};
 // export class MenuSubCore extends BaseDomain<TheTypesOfMenuSubEvents> {}
-
-// MenuItem
-enum MenuItemEvents {
-  StateChange,
-  Enter,
-  Leave,
-  Focus,
-  Blur,
-}
-type TheTypesOfMenuItemEvents = {
-  [MenuItemEvents.StateChange]: MenuItemState;
-  [MenuItemEvents.Enter]: void;
-  [MenuItemEvents.Leave]: void;
-  [MenuItemEvents.Focus]: void;
-  [MenuItemEvents.Blur]: void;
-};
-type MenuItemState = {
-  disabled: boolean;
-  focused: boolean;
-};
-export class MenuItemCore extends BaseDomain<TheTypesOfMenuItemEvents> {
-  name = "MenuItemCore";
-
-  state: MenuItemState = {
-    disabled: false,
-    focused: false,
-  };
-
-  sub: MenuCore | null = null;
-
-  _enter = false;
-  _focus = false;
-
-  setSub(sub: MenuCore) {
-    this.sub = sub;
-  }
-  /** 禁用指定菜单项 */
-  disable() {
-    this.state.disabled = true;
-    this.emit(MenuItemEvents.StateChange, { ...this.state });
-  }
-  /** 鼠标进入菜单项 */
-  enter() {
-    if (this._enter) {
-      return;
-    }
-    this.log("enter");
-    this._enter = true;
-    this.state.focused = true;
-    this.emit(MenuItemEvents.Enter);
-    this.emit(MenuItemEvents.StateChange, { ...this.state });
-  }
-  /** 鼠标离开菜单项 */
-  leave() {
-    if (this._enter === false) {
-      return;
-    }
-    this.log("leave");
-    this._enter = false;
-    this.state.focused = false;
-    this.emit(MenuItemEvents.Leave);
-    this.emit(MenuItemEvents.StateChange, { ...this.state });
-  }
-  focus() {
-    if (this._focus) {
-      return;
-    }
-    this.log("focus");
-    this._focus = true;
-    this.state.focused = true;
-    this.emit(MenuItemEvents.Focus);
-    this.emit(MenuItemEvents.StateChange, { ...this.state });
-  }
-  blur() {
-    if (this._focus === false) {
-      return;
-    }
-    this.log("blur");
-    this._focus = false;
-    this.state.focused = false;
-    this.emit(MenuItemEvents.Blur);
-    this.emit(MenuItemEvents.StateChange, { ...this.state });
-  }
-
-  onStateChange(
-    handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.StateChange]>
-  ) {
-    return this.on(MenuItemEvents.StateChange, handler);
-  }
-  onEnter(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Enter]>) {
-    return this.on(MenuItemEvents.Enter, handler);
-  }
-  onLeave(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Leave]>) {
-    return this.on(MenuItemEvents.Leave, handler);
-  }
-  onFocus(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Focus]>) {
-    return this.on(MenuItemEvents.Focus, handler);
-  }
-  onBlur(handler: Handler<TheTypesOfMenuItemEvents[MenuItemEvents.Blur]>) {
-    return this.on(MenuItemEvents.Blur, handler);
-  }
-
-  get [Symbol.toStringTag]() {
-    return "MenuItem";
-  }
-}

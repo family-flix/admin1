@@ -80,9 +80,6 @@ const PopperContent = (props: {
   onMount(() => {
     store.setFloating($content.getBoundingClientRect());
   });
-  onCleanup(() => {
-    store.destroy();
-  });
 
   const x = () => state().x;
   const y = () => state().y;
@@ -108,6 +105,12 @@ const PopperContent = (props: {
         //   middlewareData.transformOrigin?.x,
         //   middlewareData.transformOrigin?.y,
         // ].join(" "),
+      }}
+      onPointerEnter={() => {
+        store.enter();
+      }}
+      onPointerLeave={() => {
+        store.leave();
       }}
     >
       <div

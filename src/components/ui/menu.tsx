@@ -4,14 +4,21 @@
 import { JSX } from "solid-js/jsx-runtime";
 import { Portal as PortalPrimitive } from "solid-js/web";
 
-import { MenuCore, MenuItemCore } from "@/domains/ui/menu";
+import { MenuCore } from "@/domains/ui/menu";
+import { MenuItemCore } from "@/domains/ui/menu/item";
 
 import * as Popper from "./popper";
 import { Presence } from "./presence";
 import { DismissableLayer } from "./dismissable-layer";
 import * as Collection from "./collection";
 import { cn } from "@/utils";
-import { createContext, createSignal, onMount, useContext } from "solid-js";
+import {
+  createContext,
+  createSignal,
+  onCleanup,
+  onMount,
+  useContext,
+} from "solid-js";
 
 export type Menu = {};
 export const Menu = (props: { options: {}[] }) => {};
@@ -22,6 +29,10 @@ export const Menu = (props: { options: {}[] }) => {};
 const MenuContext = createContext<MenuCore>();
 const MenuRoot = (props: { store: MenuCore; children: JSX.Element }) => {
   const { store } = props;
+
+  onCleanup(() => {
+    store.destroy();
+  });
 
   return (
     <Popper.Root store={store.popper}>
@@ -39,7 +50,7 @@ const MenuAnchor = (props: {
   // store?: MenuCore;
   ref?: HTMLElement;
   class?: string;
-  children: JSX.Element;
+  children?: JSX.Element;
 }) => {
   // const { store } = props;
   const store = useContext(MenuContext);
@@ -54,8 +65,14 @@ const MenuAnchor = (props: {
 /* -------------------------------------------------------------------------------------------------
  * MenuPortal
  * -----------------------------------------------------------------------------------------------*/
-const MenuPortal = (props: { store: MenuCore; children: JSX.Element }) => {
-  const { store } = props;
+const MenuPortal = (props: {
+  // store?: MenuCore;
+  children: JSX.Element;
+}) => {
+  // const { store } = props;
+  // const store = useContext(MenuContentContext);
+  const store = useContext(MenuContext);
+
   return (
     <Presence store={store.presence}>
       <PortalPrimitive>{props.children}</PortalPrimitive>
@@ -67,11 +84,13 @@ const MenuPortal = (props: { store: MenuCore; children: JSX.Element }) => {
  * MenuContent
  * -----------------------------------------------------------------------------------------------*/
 const MenuContent = (props: {
-  store: MenuCore;
+  // store: MenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
-  const { store } = props;
+  // const { store } = props;
+  const store = useContext(MenuContext);
+
   return (
     <Presence store={store.presence}>
       <MenuContentNonModal store={store} class={props.class}>
@@ -80,7 +99,7 @@ const MenuContent = (props: {
     </Presence>
   );
 };
-
+// 这里多一个，是因为还存在 MenuContentModal 场景，这两个和 MenuSubContent 都复用 MenuContentImpl
 const MenuContentNonModal = (props: {
   store: MenuCore;
   class?: string;
@@ -101,6 +120,7 @@ const MenuContentImpl = (props: {
   children: JSX.Element;
 }) => {
   const { store } = props;
+
   return (
     <MenuContentContext.Provider value={store}>
       <DismissableLayer store={store.layer}>
@@ -130,7 +150,7 @@ const MenuLabel = (props: { class?: string; children: JSX.Element }) => {
  * MenuItem
  * -----------------------------------------------------------------------------------------------*/
 const MenuItem = (props: {
-  store: MenuCore;
+  // store: MenuCore;
   class?: string;
   disabled?: boolean;
   children: JSX.Element;
@@ -161,6 +181,7 @@ const MenuItemImpl = (props: {
   // console.log("[COMPONENT]MenuItemImpl", store.items, store === sub);
   const [state, setState] = createSignal(item.state);
   item.onStateChange((nextState) => {
+    item.log("onStateChange", nextState);
     setState(nextState);
   });
   item.onFocus(() => {
@@ -171,16 +192,17 @@ const MenuItemImpl = (props: {
   });
 
   onMount(() => {
-    // store.log("mounted at MenuItemImpl", $item);
-    if (item.sub) {
-      setTimeout(() => {
-        const size = $item.getBoundingClientRect();
-        // item.sub.log("setReference", $item, { x: size.x, y: size.y });
-        item.sub.popper.setReference(size);
-      }, 100);
+    if (!item.sub) {
+      return;
     }
+    setTimeout(() => {
+      const size = $item.getBoundingClientRect();
+      // item.sub.log("setReference", $item, { x: size.x, y: size.y });
+      item.sub.popper.setReference(size);
+    }, 100);
   });
 
+  const visible = () => state().subOpen;
   const disabled = () => state().disabled;
   const isFocused = () => state().focused;
 
@@ -191,7 +213,7 @@ const MenuItemImpl = (props: {
       role="menuitem"
       aria-haspopup="menu"
       // aria-expanded=""
-      data-state=""
+      data-state={getOpenState(visible())}
       data-highlighted={isFocused() ? "" : undefined}
       aria-disabled={disabled() || undefined}
       data-disabled={disabled() ? "" : undefined}
@@ -249,6 +271,7 @@ const MenuSub = (props: {
   const store = useContext(MenuContext);
 
   const sub = new MenuCore({
+    name: "SubMenu",
     side: "right",
     align: "start",
   });
@@ -290,7 +313,7 @@ const MenuSubTrigger = (props: {
   );
 };
 
-const MenuSubContentContext = createContext<MenuCore>();
+// const MenuSubContentContext = createContext<MenuCore>();
 const MenuSubContent = (props: {
   // store?: MenuCore;
   class?: string;

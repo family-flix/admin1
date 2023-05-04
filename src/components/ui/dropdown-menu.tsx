@@ -1,4 +1,4 @@
-import { createContext, createSignal, useContext } from "solid-js";
+import { createContext, createSignal, onCleanup, useContext } from "solid-js";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { JSX } from "solid-js/jsx-runtime";
 import { ChevronRight, Hammer } from "lucide-solid";
@@ -62,6 +62,11 @@ const DropdownMenuRoot = (props: {
   children: JSX.Element;
 }) => {
   const { store } = props;
+
+  onCleanup(() => {
+    store.destroy();
+  });
+
   return (
     <DropdownMenuContext.Provider value={store}>
       <Menu.Root store={store.menu}>{props.children}</Menu.Root>
@@ -117,31 +122,24 @@ const DropdownMenuTrigger = (props: {
  * DropdownMenuPortal
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuPortal = (props: {
-  store?: DropdownMenuCore;
+  // store?: DropdownMenuCore;
   children: JSX.Element;
 }) => {
   // const { store } = props;
-  const store = useContext(DropdownMenuContext);
+  // const store = useContext(DropdownMenuContext);
 
-  return <Menu.Portal store={store.menu}>{props.children}</Menu.Portal>;
+  return <Menu.Portal>{props.children}</Menu.Portal>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * DropdownMenuContent
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuContent = (props: {
-  store?: DropdownMenuCore;
+  // store?: DropdownMenuCore;
   class?: string;
   children: JSX.Element;
 }) => {
-  // const { store } = props;
-  const store = useContext(DropdownMenuContext);
-
-  return (
-    <Menu.Content store={store.menu} class={cn(props.class)}>
-      {props.children}
-    </Menu.Content>
-  );
+  return <Menu.Content class={cn(props.class)}>{props.children}</Menu.Content>;
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -170,16 +168,16 @@ const DropdownMenuLabel = (props: {
  * DropdownMenuItem
  * -----------------------------------------------------------------------------------------------*/
 const DropdownMenuItem = (props: {
-  store?: DropdownMenuCore;
+  // store?: DropdownMenuCore;
   class?: string;
   disabled?: boolean;
   children: JSX.Element;
 }) => {
   // const { store } = props;
-  const store = useContext(DropdownMenuContext);
+  // const store = useContext(DropdownMenuContext);
 
   return (
-    <Menu.Item store={store.menu} class={props.class} disabled={props.disabled}>
+    <Menu.Item class={props.class} disabled={props.disabled}>
       {props.children}
     </Menu.Item>
   );

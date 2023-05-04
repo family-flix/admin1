@@ -118,7 +118,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     //   nextState === "mounted" ? currentAnimationName : "none";
     // this.calc(nextState);
   }
-  emitAnimationEnd() {
+  endAnimate() {
     if (this.state.visible) {
       return;
     }
