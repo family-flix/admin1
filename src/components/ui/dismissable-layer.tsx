@@ -53,6 +53,7 @@ function handleAndDispatchCustomEvent<
 
 export const DismissableLayer = (props: {
   store: DismissableLayerCore;
+  asChild?: boolean;
   children: JSX.Element;
 }) => {
   const { store } = props;
@@ -78,19 +79,6 @@ export const DismissableLayer = (props: {
   };
   onMount(() => {
     store.layers.add(node);
-    /**
-     * if this hook executes in a component that mounts via a `pointerdown` event, the event
-     * would bubble up to the document and trigger a `pointerDownOutside` event. We avoid
-     * this by delaying the event listener registration on the document.
-     * This is not React specific, but rather how the DOM works, ie:
-     * ```
-     * button.addEventListener('pointerdown', () => {
-     *   console.log('I will log');
-     *   document.addEventListener('pointerdown', () => {
-     *     console.log('I will also log');
-     *   })
-     * });
-     */
     timerId = window.setTimeout(() => {
       ownerDocument.addEventListener("pointerdown", handlePointerDown);
     }, 0);
@@ -107,15 +95,13 @@ export const DismissableLayer = (props: {
     window.clearTimeout(timerId);
     ownerDocument.removeEventListener("pointerdown", handlePointerDown);
     ownerDocument.removeEventListener("click", store.handlePointerDownOnTop);
-    //       ownerDocument.removeEventListener("focusin", handleFocus);
   });
 
   return (
     <div
       ref={$node}
+      class="dismissable-layer"
       style={{}}
-      //       onFocusCapture={() => {}}
-      //       onBlurCapture={() => {}}
       onPointerDown={() => {
         store.pointerDown();
       }}

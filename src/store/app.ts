@@ -3,13 +3,14 @@
  * 应该在这里进行一些初始化操作、全局状态或变量的声明
  */
 import Helper from "@list-helper/core/core";
+import { Result } from "@/types";
 import { Application } from "@/domains/app";
 import { LocalCache } from "@/domains/app/cache";
 import { ViewCore } from "@/domains/router";
 import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
-import { Result } from "@/types";
 import { Drive } from "@/domains/drive";
+import { bind } from "@/domains/app/bind.web";
 
 // class CurUser extends UserCore {
 //   /** 该用户的网盘列表 */
@@ -33,19 +34,19 @@ const cache = new LocalCache();
 const router = new NavigatorCore();
 const user = new UserCore(cache.get("user"));
 
-export const app = new Application({
+const _app = new Application({
   user,
   router,
   cache,
   async beforeReady() {
     Helper.onError = (error: Error) => {
-      app.emitTip({
-        text: error.message,
+      app.tip({
+        text: [error.message],
       });
     };
     user.onError((error) => {
-      app.emitTip({
-        text: error.message,
+      app.tip({
+        text: [error.message],
       });
     });
     user.onLogin((profile) => {
@@ -98,3 +99,5 @@ Helper.defaultProcessor = (originalResponse) => {
     };
   }
 };
+bind(_app);
+export const app = _app;

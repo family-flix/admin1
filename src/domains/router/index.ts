@@ -45,6 +45,9 @@ type ParamConfigure = {
 // } & RouteConfigure;
 
 export class ViewCore extends BaseDomain<TheTypesOfEvents> {
+  name = "ViewCore";
+  debug = false;
+
   prefix: string | null;
   /** 配置信息 */
   configs: {
@@ -104,8 +107,8 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     pathname: string;
     type: "push" | "replace";
   }) {
-    console.log(
-      "[ViewCore]checkMatch - ",
+    this.log(
+      "checkMatch - ",
       this.title,
       pathname,
       this.configs,
@@ -117,15 +120,15 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     // }
     // const latestViewCore = this.subViews[this.subViews.length - 1];
     // if (latestViewCore) {
-    //   console.log("[ViewCore]checkMatch - latest view is", latestViewCore);
+    //   this.log("checkMatch - latest view is", latestViewCore);
     //   latestViewCore.checkMatch({ pathname, type });
     // }
     if (this.configs.length === 0) {
-      console.log("[ViewCore]checkMatch", this.title, "do not have configs");
+      this.log("checkMatch", this.title, "do not have configs");
       return;
     }
     if (!pathname) {
-      console.error("[ERROR]unexpected pathname", pathname);
+      this.error("unexpected pathname", pathname);
       return;
     }
     const targetPathname = pathname;
@@ -138,13 +141,13 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
       return targetPathname.startsWith(route.path);
     });
     if (!matchedRoute) {
-      console.error(`[ERROR]View ${targetPathname} not found`);
+      this.error(`View ${targetPathname} not found`);
       return;
     }
     const { regexp, keys, config } = matchedRoute;
     const v = await config();
     // if (this.subViews.includes(v)) {
-    //   console.log("the sub view has existing");
+    //   this.log("the sub view has existing");
     // }
     const params = buildParams({
       regexp,
@@ -170,7 +173,7 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
       replace?: boolean;
     }
   ) {
-    console.log("[ViewCore]setSubViews", this.title, subView);
+    this.log("setSubViews", this.title, subView);
     const { title, component } = subView;
     const { pathname, type, query, params, replace = false } = extra;
     this.curSubView = subView;
@@ -178,8 +181,8 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     const cloneStacks = this.subViews;
     // 已经在 / layout，当路由改变时，仍然响应，并且查找到了 / layout，就可能重复添加，这里做个判断，避免了重复添加
     const existing = this.subViews.includes(subView);
-    console.log(
-      "[ViewCore]setSubViews -",
+    this.log(
+      "setSubViews -",
       this.title,
       "check",
       subView.title,
@@ -189,11 +192,11 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     for (let i = 0; i < this.subViews.length; i += 1) {
       const v = this.subViews[i];
       if (v === subView) {
-        console.log("[ViewCore]", this.title, "show subView", v.title);
+        this.log(this.title, "show subView", v.title);
         v.show();
         continue;
       }
-      console.log("[ViewCore]", this.title, "hide subView", v.title);
+      this.log(this.title, "hide subView", v.title);
       v.hide();
     }
     if (!existing) {
@@ -202,7 +205,7 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
       } else {
         cloneStacks.push(subView);
       }
-      // console.log("[ViewCore]setSubViews - emit SubViewsChanged");
+      // this.log("setSubViews - emit SubViewsChanged");
       this.emit(Events.SubViewsChanged, [...cloneStacks]);
     }
     subView.checkMatch({ pathname, type });
@@ -249,7 +252,7 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     this.on(Events.Hidden, handler);
   }
   async start({ pathname }: { pathname: string }) {
-    console.log("[ViewCore]start - current pathname is", this.title, pathname);
+    this.log("current pathname is", this.title, pathname);
     this.checkMatch({ pathname, type: "push" });
     this.emit(Events.Start, { pathname });
   }

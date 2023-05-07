@@ -1,8 +1,8 @@
 /**
  * @file 分享文件转存
  */
-import { For, Show, createSignal } from "solid-js";
-import { ChevronRight } from "lucide-solid";
+import { For, JSX, Show, createSignal } from "solid-js";
+import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-solid";
 
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewCore } from "@/domains/router";
@@ -14,8 +14,26 @@ import FolderCard from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import * as ContextMenu from "@/components/ui/context-menu";
 import * as Tabs from "@/components/ui/tabs";
+import * as Select from "@/components/ui/select";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
 import { TabsCore } from "@/domains/ui/tabs";
+import { cn } from "@/utils";
+import { SelectCore } from "@/domains/ui/select";
+
+const SelectItem = (props: {
+  value?: string;
+  class?: string;
+  children: JSX.Element;
+}) => {
+  return (
+    <Select.Item class={cn("SelectItem", props.class)} value={props.value}>
+      <Select.ItemText>{props.children}</Select.ItemText>
+      <Select.ItemIndicator class="SelectItemIndicator">
+        <Check />
+      </Select.ItemIndicator>
+    </Select.Item>
+  );
+};
 
 export const SharedFilesTransferPage = (props: {
   app: Application;
@@ -35,6 +53,10 @@ export const SharedFilesTransferPage = (props: {
   });
   const popover = new PopoverCore();
   const tabs = new TabsCore();
+  const select = new SelectCore();
+  select.onChange((v) => {
+    console.log("select onchange", v);
+  });
   const sharedResource = new SharedResource();
   const contextMenu = new ContextMenuCore({
     menus: [
@@ -89,11 +111,18 @@ export const SharedFilesTransferPage = (props: {
 
   return (
     <div>
-      <h2 class="my-2 text-2xl">转存文件</h2>
-      <div class="grid grid-cols-12 gap-4">
+      <h2
+        class="my-2 text-2xl"
+        onClick={() => {
+          select.show();
+        }}
+      >
+        转存文件
+      </h2>
+      {/* <div class="grid grid-cols-12 gap-4">
         <div class="col-span-10">
           <Input
-            className=""
+            class=""
             placeholder="请输入分享链接"
             value={url()}
             onChange={(event: Event & { target: HTMLInputElement }) => {
@@ -112,7 +141,7 @@ export const SharedFilesTransferPage = (props: {
             获取
           </Button>
         </div>
-      </div>
+      </div> */}
       <div class="flex items-center">
         <For each={paths()}>
           {(path, index) => {
@@ -135,7 +164,7 @@ export const SharedFilesTransferPage = (props: {
           }}
         </For>
       </div>
-      <Tabs.Root store={tabs} class="TabsRoot">
+      {/* <Tabs.Root store={tabs} class="TabsRoot">
         <Tabs.List class="TabsList">
           <Tabs.Trigger class="TabsTrigger" value="01">
             测试01
@@ -150,8 +179,53 @@ export const SharedFilesTransferPage = (props: {
         <Tabs.Content class="TabsContent" value="02">
           <div>测试02 - content</div>
         </Tabs.Content>
-      </Tabs.Root>
-      <ContextMenu.Root store={contextMenu}>
+      </Tabs.Root> */}
+      <Select.Root store={select}>
+        <Select.Trigger class="SelectTrigger" aria-label="Food">
+          <Select.Value placeholder="Select a fruit…" />
+          <Select.Icon class="SelectIcon">
+            <ChevronDown width={15} height={15} />
+          </Select.Icon>
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Content class="SelectContent">
+            <Select.ScrollUpButton class="SelectScrollButton">
+              <ChevronUp width={15} height={15} />
+            </Select.ScrollUpButton>
+            <Select.Viewport class="SelectViewport">
+              <Select.Group>
+                <Select.Label class="SelectLabel">Fruits</Select.Label>
+                <Select.Item class={cn("SelectItem")} value="apple">
+                  <Select.ItemText>Apple</Select.ItemText>
+                  <Select.ItemIndicator class="SelectItemIndicator">
+                    <Check width={15} height={15} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+                <Select.Item class={cn("SelectItem")} value="banana">
+                  <Select.ItemText>Banana</Select.ItemText>
+                  <Select.ItemIndicator class="SelectItemIndicator">
+                    <Check width={15} height={15} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              </Select.Group>
+              <Select.Separator class="SelectSeparator" />
+              <Select.Group>
+                <Select.Label class="SelectLabel">Vegetables</Select.Label>
+                <Select.Item class={cn("SelectItem")} value="aubergine">
+                  <Select.ItemText>Aubergine</Select.ItemText>
+                  <Select.ItemIndicator class="SelectItemIndicator">
+                    <Check width={15} height={15} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              </Select.Group>
+            </Select.Viewport>
+            <Select.ScrollDownButton class="SelectScrollButton">
+              <ChevronDown width={15} height={15} />
+            </Select.ScrollDownButton>
+          </Select.Content>
+        </Select.Portal>
+      </Select.Root>
+      {/* <ContextMenu.Root store={contextMenu}>
         <ContextMenu.Trigger>
           <div class="grid grid-cols-6 gap-2">
             <For each={files()}>
@@ -207,9 +281,7 @@ export const SharedFilesTransferPage = (props: {
             </ContextMenu.Label>
           </ContextMenu.Content>
         </ContextMenu.Portal>
-      </ContextMenu.Root>
-      <div></div>
-
+      </ContextMenu.Root> */}
       {/* <Modal
           title="同名影视剧"
           visible={visible}

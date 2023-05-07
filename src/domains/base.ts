@@ -4,60 +4,86 @@
  * 1、支持在 emitValuesChange 前做一些事情，比如衍生一些状态值
  */
 import mitt, { EventType, Handler } from "mitt";
+// import { Log } from './log';
 
 let _uid = 0;
 function uid() {
   _uid += 1;
   return _uid;
 }
+// 这里必须给 Tip 显示声明值，否则默认为 0，会和其他地方声明的 Events 第一个 Key 冲突
 enum BaseEvents {
-  Tip,
+  Tip = "__tip",
+  Destroy = "__destry",
 }
 type TheTypesOfBaseEvents = {
   [BaseEvents.Tip]: {
     icon?: unknown;
     text: string[];
   };
+  [BaseEvents.Destroy]: void;
 };
+type BaseDomainEvents<E> = TheTypesOfBaseEvents & E;
 
 export class BaseDomain<Events extends Record<EventType, unknown>> {
-  private _emitter = mitt<Events & TheTypesOfBaseEvents>();
   name: string;
   debug: boolean = false;
 
+  _emitter = mitt<BaseDomainEvents<Events>>();
   listeners: (() => void)[] = [];
 
-  constructor(params: Partial<{ name: string; debug: boolean }> = {}) {
-    const { name } = params;
+  constructor(
+    params: Partial<{
+      name: string;
+      debug: boolean;
+      getStyles: () => CSSStyleDeclaration;
+      getRect: () => DOMRect;
+    }> = {}
+  ) {
+    const { name, debug, getStyles, getRect } = params;
     if (name) {
       this.name = name;
     }
   }
-
   uid() {
     return uid();
   }
   log(...args: unknown[]) {
     if (!this.debug) {
+      return [];
+    }
+    // const error = new Error();
+    // const lineNumber = error.stack.split("\n")[2].trim().split(" ")[1];
+    // console.log(error.stack.split("\n"));
+    return [
+      `%c CORE %c ${this.name} %c`,
+      "color:white;background:#dfa639;border-top-left-radius:2px;border-bottom-left-radius:2px;",
+      "color:white;background:#19be6b;border-top-right-radius:2px;border-bottom-right-radius:2px;",
+      "color:#19be6b;",
+      ...args,
+    ];
+  }
+  error(...args: unknown[]) {
+    if (!this.debug) {
       return;
     }
     console.log(
       `%c CORE %c ${this.name} %c`,
-      "color:white;background:#dfa639;border-top-left-radius:2px;border-bottom-left-radius:2px;",
+      "color:white;background:red;border-top-left-radius:2px;border-bottom-left-radius:2px;",
       "color:white;background:#19be6b;border-top-right-radius:2px;border-bottom-right-radius:2px;",
       "color:#19be6b;",
       ...args
     );
   }
-  off<Key extends keyof (Events & TheTypesOfBaseEvents)>(
+  off<Key extends keyof BaseDomainEvents<Events>>(
     event: Key,
-    handler: Handler<(Events & TheTypesOfBaseEvents)[Key]>
+    handler: Handler<BaseDomainEvents<Events>[Key]>
   ) {
     this._emitter.off(event, handler);
   }
-  on<Key extends keyof (Events & TheTypesOfBaseEvents)>(
+  on<Key extends keyof BaseDomainEvents<Events>>(
     event: Key,
-    handler: Handler<(Events & TheTypesOfBaseEvents)[Key]>
+    handler: Handler<BaseDomainEvents<Events>[Key]>
   ) {
     const unlisten = () => {
       this.listeners = this.listeners.filter((l) => l !== unlisten);
@@ -67,11 +93,11 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     this._emitter.on(event, handler);
     return unlisten;
   }
-  emit<Key extends keyof (Events & TheTypesOfBaseEvents)>(
+  emit<Key extends keyof BaseDomainEvents<Events>>(
     event: Key,
-    value?: Partial<(Events & TheTypesOfBaseEvents)[Key]>
+    value?: BaseDomainEvents<Events>[Key]
   ) {
-    this._emitter.emit(event, value as (Events & TheTypesOfBaseEvents)[Key]);
+    this._emitter.emit(event, value);
   }
   tip(content: { icon?: unknown; text: string[] }) {
     // @ts-ignore
@@ -84,9 +110,13 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
       const off = this.listeners[i];
       off();
     }
+    this.emit(BaseEvents.Destroy);
   }
-  onTip(handler: Handler<(Events & TheTypesOfBaseEvents)[BaseEvents.Tip]>) {
-    this._emitter.on(BaseEvents.Tip, handler);
+  onTip(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Tip]>) {
+    this.on(BaseEvents.Tip, handler);
+  }
+  onDestroy(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Destroy]>) {
+    this.on(BaseEvents.Destroy, handler);
   }
 
   get [Symbol.toStringTag]() {

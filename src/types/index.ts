@@ -73,3 +73,15 @@ export type ViewComponent = (props: {
   router: NavigatorCore;
   view: ViewCore;
 }) => JSX.Element;
+
+export type Rect = {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  // scrollHeight: number;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};

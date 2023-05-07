@@ -2,50 +2,21 @@
 import { render } from "solid-js/web";
 import { createSignal, For } from "solid-js";
 
+import { ViewComponent } from "./types";
 import { ViewCore } from "./domains/router";
-import { NavigatorCore } from "./domains/navigator";
+import { ToastCore } from "./domains/ui/toast";
 import { MainLayout } from "./layouts/Main";
 import { EmptyLayout } from "./layouts/Empty";
+import { Toast } from "./components/ui/toast";
 import { HomePage } from "./pages/home";
 import { LoginPage } from "./pages/login";
 import { TaskListPage } from "./pages/task/list";
 import { SharedFilesTransferPage } from "./pages/shared_files";
 import { app } from "./store/app";
-import { ViewComponent } from "./types";
 
 import "./style.css";
-import { Toast } from "./components/ui/toast";
-import { DialogCore } from "./domains/ui/dialog";
-import { sleep } from "./utils";
-import { ToastCore } from "./domains/ui/toast";
 
 const { router } = app;
-router.onBack(() => {
-  window.history.back();
-});
-router.onReload(() => {
-  window.location.reload();
-});
-router.onPushState(({ from, path }) => {
-  console.log("[Application ]- onPushState", path);
-  window.history.pushState(
-    {
-      from,
-    },
-    null,
-    path
-  );
-});
-router.onReplaceState(({ from, path, pathname }) => {
-  console.log("[Application ]- onReplaceState");
-  window.history.replaceState(
-    {
-      from,
-    },
-    null,
-    path
-  );
-});
 
 const rootView = new ViewCore({ title: "ROOT", component: "div" });
 const mainLayoutView = new ViewCore({
@@ -91,13 +62,11 @@ rootView.register("/auth", () => {
   return authLayoutView;
 });
 router.onPathnameChanged(({ pathname }) => {
-  console.log("[]Application - pathname change", pathname);
+  // router.log("[]Application - pathname change", pathname);
   rootView.checkMatch({ pathname, type: "push" });
 });
-
-window.addEventListener("popstate", (event) => {
-  const { type } = event;
-  const { pathname } = window.location;
+app.onPopState((options) => {
+  const { type, pathname } = options;
   router.handlePathnameChanged({ type, pathname });
 });
 
@@ -137,7 +106,7 @@ function Application() {
   const toast = new ToastCore();
 
   rootView.onSubViewsChange((nextSubViews) => {
-    console.log("[]Application - subViews changed", nextSubViews);
+    // rootView.log("[]Application - subViews changed", nextSubViews);
     setSubViews(nextSubViews);
   });
   app.onTip(async (msg) => {
@@ -161,11 +130,11 @@ function Application() {
       <For each={subViews()}>
         {(subView) => {
           const RenderedComponent = subView.component as ViewComponent;
-          console.log(
-            "[Application]render subView",
-            rootView.title,
-            subView.title
-          );
+          // console.log(
+          //   "[Application]render subView",
+          //   rootView.title,
+          //   subView.title
+          // );
           return (
             <RenderedComponent
               app={app}

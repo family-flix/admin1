@@ -39,13 +39,17 @@ const PopperAnchor = (props: {
   let $anchor: HTMLDivElement;
 
   onMount(() => {
-    store.log("mounted at PopperAnchor", $anchor, store.reference);
+    console.log(
+      ...store.log("mounted at PopperAnchor", $anchor, store.reference)
+    );
     if (store.reference) {
       return;
     }
     setTimeout(() => {
       const size = $anchor.getBoundingClientRect();
-      store.log("setReference", $anchor, { x: size.x, y: size.y });
+      console.log(
+        ...store.log("setReference", $anchor, { x: size.x, y: size.y })
+      );
       store.setReference(size);
     }, 100);
   });
@@ -61,11 +65,16 @@ const PopperAnchor = (props: {
   );
 };
 
-const PopperContent = (props: {
-  store: PopperCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const PopperContent = (
+  props: {
+    store: PopperCore;
+    ref?: ((el: HTMLDivElement) => void) | HTMLDivElement;
+    children: JSX.Element;
+  } & {
+    class?: string;
+    style?: JSX.CSSProperties;
+  } & JSX.AriaAttributes
+) => {
   const { store, children } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
@@ -78,8 +87,10 @@ const PopperContent = (props: {
   });
 
   onMount(() => {
+    // console.log(...store.log("PopperContent mounted", props.ref));
     store.setFloating($content.getBoundingClientRect());
   });
+  // props.ref?.($content);
 
   const x = () => state().x;
   const y = () => state().y;
@@ -90,7 +101,13 @@ const PopperContent = (props: {
 
   return (
     <div
-      ref={$content}
+      ref={(el) => {
+        $content = el;
+        if (typeof props.ref === "function") {
+          props.ref(el);
+        }
+      }}
+      role={props.role}
       class={cn("popper__content", props.class)}
       style={{
         position: strategy(),
@@ -106,6 +123,7 @@ const PopperContent = (props: {
         //   middlewareData.transformOrigin?.y,
         // ].join(" "),
       }}
+      tabIndex={-1}
       onPointerEnter={() => {
         store.enter();
       }}

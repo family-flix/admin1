@@ -21,6 +21,8 @@ export type Side = (typeof SIDE_OPTIONS)[number];
 export type Align = (typeof ALIGN_OPTIONS)[number];
 
 enum Events {
+  /** 参考原始被加载 */
+  ReferenceMounted,
   /** 内容元素被加载（可以获取宽高位置） */
   FloatingMounted,
   /** 被放置（其实就是计算好了浮动元素位置） */
@@ -32,6 +34,12 @@ enum Events {
 }
 type TheTypesOfEvents = {
   [Events.FloatingMounted]: {
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+  };
+  [Events.ReferenceMounted]: {
     width: number;
     height: number;
     x: number;
@@ -127,6 +135,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     }
     // console.log("[PopperCore]setReference", reference);
     this.reference = reference;
+    this.emit(Events.ReferenceMounted, reference);
   }
   /** 更新基准元素（右键菜单时会用到这个方法） */
   updateReference(reference: Partial<PopperCore["reference"]>) {
@@ -150,7 +159,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   setConfig(config: { placement?: Placement; strategy?: Strategy }) {}
   /** 计算浮动元素位置 */
   async place() {
-    this.log("place", this.reference);
+    console.log(...this.log("place", this.reference, this.floating));
     this.middleware = [
       // arrow({
       //   element: this.floating,
@@ -175,7 +184,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
       placedSide,
       placedAlign,
     };
-    this.log("place - before emit placed", { x, y });
+    console.log(...this.log("place - before emit placed", { x, y }));
     this.emit(Events.Placed, {
       ...this.state,
     });
@@ -291,6 +300,11 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Leave);
   }
 
+  onReferenceMounted(
+    handler: Handler<TheTypesOfEvents[Events.ReferenceMounted]>
+  ) {
+    return this.on(Events.ReferenceMounted, handler);
+  }
   onFloatingMounted(
     handler: Handler<TheTypesOfEvents[Events.FloatingMounted]>
   ) {

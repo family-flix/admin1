@@ -14,15 +14,32 @@ enum Events {
   Error,
   Login,
   Logout,
+  // 一些平台相关的事件
+  PopState,
+  Resize,
+  Blur,
+  ClickLink,
   // 该怎么处理？
   DrivesChange,
 }
 type TheTypesOfEvents = {
   [Events.Ready]: void;
-  [Events.Tip]: { icon?: string; text: string[] };
+  // [Events.Tip]: { icon?: string; text: string[] };
   [Events.Error]: Error;
   [Events.Login]: {};
   [Events.Logout]: void;
+  [Events.PopState]: {
+    type: string;
+    pathname: string;
+  };
+  [Events.Resize]: {
+    width: number;
+    height: number;
+  };
+  [Events.ClickLink]: {
+    href: string;
+  };
+  [Events.Blur]: void;
   [Events.DrivesChange]: Drive[];
 };
 
@@ -41,6 +58,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     width: 0,
     height: 0,
   };
+  Events = Events;
 
   // @todo 怎么才能更方便地拓展 Application 类，给其添加许多的额外属性还能有类型提示呢？
 
@@ -91,18 +109,28 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   setSize(size: { width: number; height: number }) {
     this.size = size;
   }
-  tip(msg: { icon?: string; text: string[] }) {
-    this.emitTip(msg);
+  getComputedStyle() {
+    // 请实现该方法
+  }
+  /** 平台相关的全局事件 */
+  popstate({ type, pathname }: { type: string; pathname: string }) {
+    this.emit(Events.PopState, { type, pathname });
+  }
+  resize(size: { width: number; height: number }) {
+    this.size = size;
+    this.emit(Events.Resize, size);
+  }
+  blur() {
+    this.emit(Events.Blur);
   }
   async fetchDrives() {
-    console.log(this);
     if (this.drives.length !== 0) {
       this.emit(Events.DrivesChange, this.drives);
       return;
     }
     const r = await Drive.ListHelper.init();
     if (r.error) {
-      this.emit(Events.Tip, { text: ["获取网盘失败", r.error.message] });
+      this.tip({ text: ["获取网盘失败", r.error.message] });
       return;
     }
     this.drives = r.data;
@@ -118,6 +146,19 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   onReady(handler: Handler<TheTypesOfEvents[Events.Ready]>) {
     this.on(Events.Ready, handler);
   }
+  /** 平台相关全局事件 */
+  onPopState(handler: Handler<TheTypesOfEvents[Events.PopState]>) {
+    this.on(Events.PopState, handler);
+  }
+  onResize(handler: Handler<TheTypesOfEvents[Events.Resize]>) {
+    this.on(Events.Resize, handler);
+  }
+  onBlur(handler: Handler<TheTypesOfEvents[Events.Blur]>) {
+    this.on(Events.Blur, handler);
+  }
+  onClickLink(handler: Handler<TheTypesOfEvents[Events.ClickLink]>) {
+    this.on(Events.ClickLink, handler);
+  }
   /**
    * ----------------
    * Event
@@ -129,12 +170,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   };
   onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
     this.on(Events.Error, handler);
-  }
-  emitTip = (tip: { icon?: string; text: string[] }) => {
-    this.emit(Events.Tip, tip);
-  };
-  onTip(handler: Handler<TheTypesOfEvents[Events.Tip]>) {
-    this.on(Events.Tip, handler);
   }
   onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
     this.on(Events.DrivesChange, handler);

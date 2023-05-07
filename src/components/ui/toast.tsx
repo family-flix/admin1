@@ -77,7 +77,7 @@ export const ToastContent = (props: {
   });
   const state = () => getState(visible());
 
-  console.log("[COMPONENT]DialogContent - render");
+  // console.log("[COMPONENT]DialogContent - render");
 
   return (
     <ToastPortal store={store}>

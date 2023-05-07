@@ -19,6 +19,9 @@ type TheTypeOfEvent = {
 };
 
 export class UserCore extends BaseDomain<TheTypeOfEvent> {
+  name = "UserCore";
+  debug = false;
+
   _isLogin: boolean = false;
   user: {
     username: string;
@@ -33,7 +36,7 @@ export class UserCore extends BaseDomain<TheTypeOfEvent> {
   constructor(initialUser?: UserCore["user"]) {
     super();
 
-    console.log("[DOMAIN]User - constructor", initialUser);
+    this.log("constructor", initialUser);
     this._isLogin = !!initialUser;
     this.user = initialUser;
     this.token = initialUser ? initialUser.token : "";

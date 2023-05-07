@@ -17,6 +17,8 @@ type TheTypesOfEvents = {
 type AbsNode = {};
 
 export class DismissableLayerCore extends BaseDomain<TheTypesOfEvents> {
+  name = "DismissableLayerCore";
+
   layers = new Set();
   layersWithOutsidePointerEventsDisabled = new Set();
   branches: Set<AbsNode> = new Set();
@@ -30,7 +32,7 @@ export class DismissableLayerCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 响应冒泡到最顶层时的点击事件 */
   handlePointerDownOnTop(absNode?: {}) {
-    console.log("[DismissableLayerCore]handlePointerDownOnTop");
+    console.log(...this.log("handlePointerDownOnTop"));
     //     const { branches, layersWithOutsidePointerEventsDisabled } = this;
     //     const isBodyPointerEventsDisabled =
     //       layersWithOutsidePointerEventsDisabled.size > 0;

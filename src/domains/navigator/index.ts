@@ -63,6 +63,7 @@ type RouteConfigure = {
 };
 
 export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
+  debug = false;
   //   prefix: string | null;
   /** 配置信息 */
   //   configs: {
@@ -97,12 +98,12 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   async start(location: RouteLocation) {
     // console.log("[DOMAIN]router - start");
     const { pathname, href, origin, host, protocol } = location;
-    console.log("[Router]start, current pathname is", pathname);
+    this.log("start, current pathname is", pathname);
     // this.setSomething(location);
     this.prevPathname = null;
     this.setPathname(pathname);
     this.origin = origin;
-    const query = buildQuery(href);
+    // const query = buildQuery(href);
     this.histories = [
       {
         pathname,
@@ -111,41 +112,6 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.PathnameChanged, {
       pathname,
     });
-    // document.addEventListener("click", (event) => {
-    //   //       console.log("[DOMAIN]router - listen click event", event);
-    //   let target = event.target;
-    //   if (target instanceof Document) {
-    //     return;
-    //   }
-    //   if (target === null) {
-    //     return;
-    //   }
-    //   let matched = false;
-    //   while (target) {
-    //     const t = target as HTMLElement;
-    //     if (t.tagName === "A") {
-    //       matched = true;
-    //       break;
-    //     }
-    //     target = t.parentNode;
-    //   }
-    //   if (!matched) {
-    //     return;
-    //   }
-    //   const t = target as HTMLElement;
-    //   const href = t.getAttribute("href");
-    //   if (!href) {
-    //     return;
-    //   }
-    //   if (!href.startsWith("/")) {
-    //     return;
-    //   }
-    //   if (href.startsWith("http")) {
-    //     return;
-    //   }
-    //   event.preventDefault();
-    //   this.push(href);
-    // });
   }
 
   private setPrevPathname(p: string) {
@@ -191,12 +157,9 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     targetPathname: string,
     options: Partial<{ modifyHistory: boolean }> = {}
   ) {
-    console.log("[Navigator]push", targetPathname, this.prevPathname);
+    this.log("push", targetPathname, this.prevPathname);
     if (this.pathname === targetPathname) {
-      console.log(
-        "(ERROR)[DOMAIN]Router - cur pathname has been",
-        targetPathname
-      );
+      this.error("cur pathname has been", targetPathname);
       return;
     }
     const prevPathname = this.pathname;
@@ -218,7 +181,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.on(Events.PushState, handler);
   }
   replace = async (targetPathname: string) => {
-    console.log("[DOMAIN]Router - replace", targetPathname, this.pathname);
+    this.log("replace", targetPathname, this.pathname);
     if (targetPathname === this.pathname) {
       return;
     }
@@ -272,7 +235,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     type: string;
     pathname: string;
   }) {
-    console.log("[Router]pathname change", type, pathname);
+    this.log("pathname change", type, pathname);
     if (type !== "popstate") {
       return;
     }

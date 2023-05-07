@@ -22,19 +22,19 @@ export const MainLayout = (props: {
   const [hidden, setHidden] = createSignal(view.hidden);
   const [subViews, setSubViews] = createSignal(view.subViews);
   view.onShow(() => {
-    console.log("[LAYOUT]MainLayout - show");
+    // view.log("MainLayout - show");
     setHidden(false);
   });
   view.onHide(() => {
-    console.log("[LAYOUT]MainLayout - hidden");
+    // console.log("[LAYOUT]MainLayout - hidden");
     setHidden(true);
   });
   view.onSubViewsChange((nextSubViews) => {
-    console.log("[LAYOUT]MainLayout - subViewsChanged", nextSubViews.length);
+    // console.log("[LAYOUT]MainLayout - subViewsChanged", nextSubViews.length);
     setSubViews(nextSubViews);
   });
 
-  console.log("[LAYOUT]MainLayout - init", hidden);
+  // console.log("[LAYOUT]MainLayout - init", hidden);
 
   return (
     <Show when={!hidden()}>
