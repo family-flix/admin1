@@ -48,6 +48,10 @@ export class ContextMenuCore extends BaseDomain<TheTypeOfEvent> {
   show(position: { x: number; y: number }) {
     this.menu.show();
   }
+  hide() {
+    console.log("[]ContextMenuCore - hide");
+    this.menu.hide();
+  }
   setReference(reference: { getRect: () => Rect }) {
     // console.log("[ContextMenuCore]setReference", reference.getRect());
     this.menu.popper.setReference(reference);

@@ -5,57 +5,72 @@ import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
-import { sleep } from "@/utils";
 
 enum Events {
   BeforeShow,
   Show,
   BeforeHidden,
   Hidden,
-  VisibleChange,
-  Cancel,
-  Ok,
+  OpenChange,
   AnimationStart,
   AnimationEnd,
-  ContentChange,
+  StateChange,
 }
 type TheTypesOfEvents = {
   [Events.BeforeShow]: void;
   [Events.Show]: void;
   [Events.BeforeHidden]: void;
   [Events.Hidden]: void;
-  [Events.VisibleChange]: boolean;
-  [Events.Ok]: void;
-  [Events.Cancel]: void;
+  [Events.OpenChange]: boolean;
   [Events.AnimationStart]: void;
   [Events.AnimationEnd]: void;
-  [Events.ContentChange]: {
-    icon?: unknown;
-    texts: string[];
-  };
+  [Events.StateChange]: ToastState;
+};
+type ToastState = {
+  icon?: unknown;
+  texts: string[];
+};
+type ToastProps = {
+  delay: number;
 };
 
 export class ToastCore extends BaseDomain<TheTypesOfEvents> {
-  delay = 2000;
+  name = "ToastCore";
+
+  present: PresenceCore;
+  delay = 1200;
   timer: NodeJS.Timeout | null = null;
-  visible = false;
-  present = new PresenceCore();
+  open = false;
 
-  constructor() {
-    super();
+  state: ToastState = {
+    icon: null,
+    texts: [],
+  };
 
-    this.present.onShow(async () => {
-      this.emit(Events.VisibleChange, true);
+  constructor(options: Partial<{ name: string } & ToastProps> = {}) {
+    super(options);
+
+    const { delay } = options;
+    if (delay) {
+      this.delay = delay;
+    }
+    this.present = new PresenceCore();
+    this.present.onShow(() => {
+      console.log("[]ToastCore - this.present.onShow");
+      this.open = true;
+      this.emit(Events.OpenChange, true);
     });
-    this.present.onHidden(async () => {
-      this.emit(Events.VisibleChange, false);
+    this.present.onHidden(() => {
+      console.log("[]ToastCore - this.present.onHide");
+      this.open = false;
+      this.emit(Events.OpenChange, false);
     });
   }
 
   /** 显示弹窗 */
   async show(params: { icon?: unknown; texts: string[] }) {
     const { icon, texts } = params;
-    this.emit(Events.ContentChange, {
+    this.emit(Events.StateChange, {
       icon,
       texts,
     });
@@ -80,24 +95,25 @@ export class ToastCore extends BaseDomain<TheTypesOfEvents> {
     clearTimeout(this.timer);
     this.timer = null;
   }
-  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
-    this.on(Events.Show, handler);
-  }
-  onContentChange(handler: Handler<TheTypesOfEvents[Events.ContentChange]>) {
-    this.on(Events.ContentChange, handler);
-  }
   /** 隐藏弹窗 */
   hide() {
     this.present.hide();
   }
-  onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
-    this.on(Events.Hidden, handler);
+
+  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
+    return this.on(Events.Show, handler);
   }
-  onVisibleChange(handler: Handler<TheTypesOfEvents[Events.VisibleChange]>) {
-    this.on(Events.VisibleChange, handler);
+  onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
+    return this.on(Events.Hidden, handler);
+  }
+  onOpenChange(handler: Handler<TheTypesOfEvents[Events.OpenChange]>) {
+    return this.on(Events.OpenChange, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
   }
 
   get [Symbol.toStringTag]() {
-    return "Toast";
+    return "ToastCore";
   }
 }

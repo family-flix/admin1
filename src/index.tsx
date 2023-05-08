@@ -100,10 +100,9 @@ app.onPopState((options) => {
 // }
 
 function Application() {
-  const [subViews, setSubViews] = createSignal(rootView.subViews);
-  const [texts, setTexts] = createSignal<string[]>([]);
-
   const toast = new ToastCore();
+
+  const [subViews, setSubViews] = createSignal(rootView.subViews);
 
   rootView.onSubViewsChange((nextSubViews) => {
     // rootView.log("[]Application - subViews changed", nextSubViews);
@@ -114,9 +113,6 @@ function Application() {
     toast.show({
       texts: text,
     });
-  });
-  toast.onContentChange((nextContent) => {
-    setTexts(nextContent.texts);
   });
   // app.onError((msg) => {
   //   alert(msg.message);
@@ -145,7 +141,7 @@ function Application() {
           );
         }}
       </For>
-      <Toast core={toast} texts={texts()} />
+      <Toast store={toast} />
     </div>
   );
 }

@@ -136,8 +136,12 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Click);
   }
   reset() {
-    // this.state = { ...defaultMenuItemState };
+    // console.log("[]MenuItemCore - reset", this.state.open);
+    this.state = { ...this.state, focused: false, open: false };
     this._enter = false;
+    if (this.menu) {
+      this.menu.reset();
+    }
   }
   destroy() {
     super.destroy();

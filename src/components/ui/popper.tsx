@@ -116,6 +116,7 @@ const PopperContent = (
       }}
       tabIndex={-1}
       onPointerEnter={() => {
+        console.log("[]PopperContent - pointerEnter");
         store.enter();
       }}
       onPointerLeave={() => {

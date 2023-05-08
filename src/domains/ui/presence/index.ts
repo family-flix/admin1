@@ -39,7 +39,7 @@ type PresenceState = {
 };
 export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   name = "PresenceCore";
-  debug = true;
+  debug = false;
 
   /** 之前是否可见状态 */
   private prevPresent = false;
@@ -48,8 +48,8 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   // private state = "unmounted";
 
   state: PresenceState = {
-    mounted: false,
     open: false,
+    mounted: false,
     unmounted: false,
   };
 
@@ -100,11 +100,12 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     // this.calc(true);
     // this.state.mounted = true;
     this.state.open = true;
-    // this.emit(Events.Show);
+    this.state.mounted = true;
+    this.emit(Events.Show);
     this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
-    this.log("hide");
+    console.log(...this.log("hide"));
     // this.calc(false);
     this.state.open = false;
     this.emit(Events.Hidden);
@@ -122,29 +123,38 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     // this.calc(nextState);
   }
   animationEnd() {
+    console.log("[]PresenceCore - animationEnd", this.state.open);
     if (this.state.open) {
       this.emit(Events.Show);
       return;
     }
     this.state.unmounted = true;
+    this.state.mounted = false;
     this.emit(Events.Destroy);
     this.emit(Events.StateChange, { ...this.state });
   }
+  reset() {
+    this.state = {
+      mounted: false,
+      open: false,
+      unmounted: false,
+    };
+  }
 
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
-    this.on(Events.Show, handler);
+    return this.on(Events.Show, handler);
   }
   onHidden(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
-    this.on(Events.Hidden, handler);
+    return this.on(Events.Hidden, handler);
   }
   onDestroy(handler: Handler<TheTypesOfEvents[Events.Destroy]>) {
-    this.on(Events.Destroy, handler);
+    return this.on(Events.Destroy, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    this.on(Events.StateChange, handler);
+    return this.on(Events.StateChange, handler);
   }
   onPresentChange(handler: Handler<TheTypesOfEvents[Events.PresentChange]>) {
-    this.on(Events.PresentChange, handler);
+    return this.on(Events.PresentChange, handler);
   }
 
   get [Symbol.toStringTag]() {

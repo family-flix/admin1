@@ -1,14 +1,7 @@
 /**
  * @file 菜单 组件
  */
-import {
-  createContext,
-  createSignal,
-  onCleanup,
-  onMount,
-  useContext,
-} from "solid-js";
-import { JSX } from "solid-js/jsx-runtime";
+import { createSignal, onCleanup, onMount, JSX } from "solid-js";
 import { Portal as PortalPrimitive } from "solid-js/web";
 
 import { MenuCore } from "@/domains/ui/menu";
@@ -26,9 +19,9 @@ import * as Collection from "./collection";
 const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
-  onCleanup(() => {
-    store.destroy();
-  });
+  // onCleanup(() => {
+  //   console.log("[MenuRoot]onCleanup");
+  // });
 
   return <Popper.Root store={store.popper}>{props.children}</Popper.Root>;
 };
@@ -59,11 +52,14 @@ const Portal = (
 ) => {
   const { store } = props;
   // const store = useContext(MenuContentContext);
+  // onCleanup(() => {
+  //   console.log("[MenuPortal]onCleanup");
+  // });
 
   return (
-    // <Presence store={store.presence}>
-    <PortalPrimitive>{props.children}</PortalPrimitive>
-    // </Presence>
+    <Presence store={store.presence}>
+      <PortalPrimitive>{props.children}</PortalPrimitive>
+    </Presence>
   );
 };
 
@@ -77,9 +73,12 @@ const Content = (
 ) => {
   const { store } = props;
   // const store = useContext(MenuContext);
-  onMount(() => {
-    console.log("[]MenuContent onMounted");
-  });
+  // onMount(() => {
+  //   console.log("[]MenuContent onMounted");
+  // });
+  // onCleanup(() => {
+  //   console.log("[MenuContent]onCleanup");
+  // });
 
   return (
     <Presence store={store.presence}>
@@ -96,6 +95,9 @@ const ContentNonModal = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
+  // onCleanup(() => {
+  //   console.log("[MenuContentNonModal]onCleanup");
+  // });
 
   return (
     <ContentImpl store={store} class={props.class}>
@@ -110,6 +112,9 @@ const ContentImpl = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
+  // onCleanup(() => {
+  //   console.log("[MenuContentImpl]onCleanup");
+  // });
 
   return (
     <DismissableLayer store={store.layer}>
@@ -144,6 +149,9 @@ const Item = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
+  // onCleanup(() => {
+  //   console.log("[MenuItem]onCleanup");
+  // });
 
   return (
     <ItemImpl
@@ -174,8 +182,11 @@ const ItemImpl = (
   item.onBlur(() => {
     $item.blur();
   });
+  // onCleanup(() => {
+  //   console.log("[ItemImpl]onCleanup", item.label);
+  // });
 
-  const visible = () => state().open;
+  const open = () => state().open;
   const disabled = () => state().disabled;
   const focused = () => state().focused;
 
@@ -193,7 +204,7 @@ const ItemImpl = (
       role="menuitem"
       aria-haspopup="menu"
       // aria-expanded=""
-      data-state={getOpenState(visible())}
+      data-state={getOpenState(open())}
       data-highlighted={focused() ? "" : undefined}
       aria-disabled={disabled() || undefined}
       data-disabled={disabled() ? "" : undefined}
@@ -263,7 +274,7 @@ const SubTrigger = (
   item.menu?.popper.setReference({
     getRect() {
       const rect = $item.getBoundingClientRect();
-      console.log(...item.menu.popper.log("get reference rect", $item, rect));
+      // console.log(...item.menu.popper.log("get reference rect", $item, rect));
       return rect;
     },
   });
@@ -288,6 +299,9 @@ const SubContent = (
 ) => {
   const { store } = props;
   // const store = useContext(MenuSubContext);
+  // onCleanup(() => {
+  //   console.log("[MenuSubContent]onCleanup");
+  // });
 
   return (
     <Presence store={store.presence}>

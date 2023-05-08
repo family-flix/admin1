@@ -9,6 +9,7 @@ import {
   check_has_same_name_tv,
   fetch_shared_files,
   AliyunFolderItem,
+  save_shared_files,
 } from "./services";
 
 enum Events {
@@ -51,21 +52,35 @@ type TheTypesOfEvents = {
 };
 
 export class SharedResource extends BaseDomain<TheTypesOfEvents> {
+  /** 分享链接 */
   url: string;
+  /** 当前展示的文件夹列表所属的文件夹 id */
   file_id: string = "";
-  files: AliyunFolderItem[] = [];
+  /** 用来获取当前文件夹下一页的标志 */
   next_marker: string = "";
-  loading = false;
+  /** 当前展示的文件夹列表 */
+  files: AliyunFolderItem[] = [];
+  /** 当前访问的文件夹列表所在路径 */
   paths: {
     file_id: string;
     name: string;
+    type?: "file" | "folder";
   }[] = [];
+  /** 右键选中的文件夹 */
+  selectedFolder: {
+    file_id: string;
+    name: string;
+    type?: "file" | "folder";
+  } | null = null;
+  /** 是否处于请求中 */
+  loading = false;
 
   constructor() {
     super();
     // const { url } = options;
     // this.url = url;
   }
+
   /** 输入分享文件链接 */
   input(url: string) {
     this.url = url;
@@ -149,21 +164,28 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
       files: [...this.files],
     });
   }
+  bindSelectedFolderInDrive() {
+    if (this.selectedFolder === null) {
+      this.tip({ text: ["请先选择要关联的文件夹"] });
+      return;
+    }
+    this.bindFolderInDrive(this.selectedFolder);
+  }
   /**
    * 将分享文件夹和网盘内同名文件夹进行关联
    */
   async bindFolderInDrive(file: {
     file_id: string;
     name: string;
-    type: "file" | "folder";
+    type?: "file" | "folder";
   }) {
     const { file_id, name, type } = file;
     if (!this.url) {
-      this.emit(Events.Tip, "请先输入分享链接");
+      this.tip({ text: ["请先输入分享链接"] });
       return;
     }
     if (type === "file") {
-      this.emit(Events.Tip, "只有文件夹能进行关联");
+      this.tip({ text: ["只有文件夹能进行关联"] });
       return;
     }
     const r = await build_link_between_shared_files_with_folder({
@@ -175,7 +197,16 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.Tip, r.error.message);
       return;
     }
-    this.emit(Events.Tip, "关联成功");
+    this.tip({
+      text: ["关联成功"],
+    });
+  }
+  findTheTVHasSameNameWithSelectedFolder() {
+    if (this.selectedFolder === null) {
+      this.tip({ text: ["请先选择要关联的文件夹"] });
+      return;
+    }
+    this.findTheTVHasSameName(this.selectedFolder);
   }
   /**
    * 在网盘内查找同名影视剧
@@ -186,12 +217,12 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
       file_name: name,
     });
     if (r.error) {
-      this.emit(Events.Tip, r.error.message);
+      this.tip({ text: ["查找同名文件夹失败", r.error.message] });
       return;
     }
     const theTVHasSameName = r.data;
     if (theTVHasSameName === null) {
-      this.emit(Events.Tip, "没有同名影视剧");
+      this.tip({ text: ["没有同名影视剧"] });
       return;
     }
     const {
@@ -210,9 +241,33 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
       firstAirDate: first_air_date,
     });
   }
+  /** 选择指定的文件夹 */
+  selectFolder(folder: { file_id: string; name: string }) {
+    this.selectedFolder = folder;
+  }
   /** 将指定文件转存到指定网盘 */
-  transferToDrive(file: { file_id: string; name: string }, drive: Drive) {
-    
+  async transferSelectedFolderToDrive(drive: Drive) {
+    if (!this.url) {
+      this.tip({ text: ["请先指定分享链接"] });
+      return;
+    }
+    if (!this.selectFolder) {
+      this.tip({ text: ["请先指定转存文件"] });
+      return;
+    }
+    const resp = await save_shared_files({
+      url: this.url,
+      file_id: this.selectedFolder.file_id,
+      file_name: this.selectedFolder.name,
+      drive_id: drive.id,
+    });
+    if (resp.error) {
+      this.tip({ text: ["转存失败", resp.error.message] });
+      return;
+    }
+    this.tip({
+      text: ["转存成功"],
+    });
   }
 
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
@@ -226,11 +281,5 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
   }
   onShowTVProfile(handler: Handler<TheTypesOfEvents[Events.ShowTVProfile]>) {
     this.on(Events.ShowTVProfile, handler);
-  }
-  onTip(handler: Handler<TheTypesOfEvents[Events.Tip]>) {
-    this.on(Events.Tip, handler);
-  }
-  onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
-    this.on(Events.Error, handler);
   }
 }

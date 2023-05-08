@@ -319,6 +319,10 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     this._enter = false;
     this.emit(Events.Leave);
   }
+  reset() {
+    this._enter = false;
+    this._focus = false;
+  }
 
   onReferenceMounted(
     handler: Handler<TheTypesOfEvents[Events.ReferenceMounted]>

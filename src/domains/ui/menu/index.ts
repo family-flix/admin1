@@ -1,26 +1,15 @@
+/**
+ * @file 菜单 组件
+ */
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { PopperCore, Side, Align } from "@/domains/ui/popper";
 import { DismissableLayerCore } from "@/domains/ui/dismissable-layer";
 import { PresenceCore } from "@/domains/ui/presence";
+import { Direction } from "@/domains/ui/direction";
 
 import { MenuItemCore } from "./item";
-
-type Direction = "ltr" | "rtl";
-
-const SELECTION_KEYS = ["Enter", " "];
-const FIRST_KEYS = ["ArrowDown", "PageUp", "Home"];
-const LAST_KEYS = ["ArrowUp", "PageDown", "End"];
-const FIRST_LAST_KEYS = [...FIRST_KEYS, ...LAST_KEYS];
-const SUB_OPEN_KEYS: Record<Direction, string[]> = {
-  ltr: [...SELECTION_KEYS, "ArrowRight"],
-  rtl: [...SELECTION_KEYS, "ArrowLeft"],
-};
-const SUB_CLOSE_KEYS: Record<Direction, string[]> = {
-  ltr: ["ArrowLeft"],
-  rtl: ["ArrowRight"],
-};
 
 enum Events {
   Show,
@@ -44,6 +33,12 @@ type MenuState = {
   open: boolean;
   items: MenuItemCore[];
 };
+type MenuProps = {
+  side: Side;
+  align: Align;
+  strategy: "fixed" | "absolute";
+  items: MenuItemCore[];
+};
 
 export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   name = "MenuCore";
@@ -60,40 +55,43 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   };
 
   constructor(
-    options: Partial<{
-      name: string;
-      side: Side;
-      align: Align;
-      strategy: "fixed" | "absolute";
-      items: MenuItemCore[];
-    }> = {}
+    options: Partial<
+      {
+        name: string;
+      } & MenuProps
+    > = {}
   ) {
     super(options);
 
-    const { name, items = [] } = options;
+    const { name, items = [], side, align, strategy } = options;
     this.state.items = items;
+    this.items = items;
     this.listenItems(items);
     this.popper = new PopperCore({
-      ...options,
-      name: name ? `${name}-popper` : undefined,
+      side,
+      align,
+      strategy,
+      name: name ? `${name}-popper` : "MenuCore",
     });
     this.presence = new PresenceCore();
     this.layer = new DismissableLayerCore();
-    this.presence.onShow(() => {
-      // this.popper.place();
-      // this.emit(Events.Show);
-    });
+
     this.popper.onEnter(() => {
-      // this.log("this.popper.onEnter", this.items.length);
       this.emit(Events.EnterMenu);
     });
     this.popper.onLeave(() => {
-      // this.log("this.popper.onLeave", this.items.length);
       this.emit(Events.LeaveMenu);
     });
     this.layer.onDismiss(() => {
+      // console.log("[]MenuCore - this.layer.onDismiss", this.items);
       this.hide();
+    });
+    this.presence.onHidden(() => {
+      // console.log("this.presence.onHidden", this.items.length);
       this.reset();
+      if (this.curSub) {
+        this.curSub.hide();
+      }
     });
   }
 
@@ -102,11 +100,15 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   curSub: MenuCore | null = null;
   curItem: MenuItemCore | null = null;
   inside = false;
+  /** 鼠标是否处于子菜单中 */
   inSubMenu = false;
+  /** 鼠标离开 item 时，可能要隐藏子菜单，但是如果从有子菜单的 item 离开前往子菜单，就不用隐藏 */
+  maybeHideSub = false;
+  hideSubTimer: NodeJS.Timeout | null = null;
 
   toggle() {
     const { open } = this.state;
-    this.log("toggle", open);
+    // this.log("toggle", open);
     if (open) {
       this.hide();
       return;
@@ -114,99 +116,72 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.show();
   }
   show() {
-    // this.state.open = true;
     this.presence.show();
     this.popper.place();
     this.emit(Events.Show);
     // this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
-    // this.state.open = false;
-    // this.inside = false;
+    console.log(...this.log("hide"));
     this.presence.hide();
     this.emit(Events.Hidden);
     this.emit(Events.StateChange, { ...this.state });
   }
-  // appendSub(sub: MenuCore) {
-  //   if (this.subs.includes(sub)) {
-  //     return;
-  //   }
-  //   sub.onShow(() => {
-  //     this.log("sub.onShow");
-  //     this.curSub = sub;
-  //   });
-  //   sub.onEnter(() => {
-  //     this.log("sub.onEnter");
-  //     this.inSubMenu = true;
-  //   });
-  //   sub.onLeave(() => {
-  //     this.log("sub.onLeave");
-  //     this.inSubMenu = false;
-  //   });
-  //   sub.onHide(() => {
-  //     this.log("sub.onHide");
-  //     this.curSub = null;
-  //   });
-  //   this.subs.push(sub);
-  //   return sub;
-  // }
   listenItems(items: MenuItemCore[]) {
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
-      console.log(item);
       item.onEnter(() => {
         // this.log("item.onEnter", this.inside, this.curSub?.inside);
-        this.maybeLeave = false;
-        this.inside = true;
+        this.maybeHideSub = false;
         if (item.menu) {
-          this.maybeLeave = false;
-          item.menu.show();
+          this.maybeHideSub = false;
+          const subMenu = item.menu;
+          subMenu.show();
         }
         if (!item.menu && this.curSub) {
           this.curSub.hide();
         }
         this.emit(Events.EnterItem, item);
-        // this.emit(Events.EnterMenu);
       });
       item.onLeave(() => {
-        this.maybeLeave = true;
+        this.maybeHideSub = true;
         this.emit(Events.LeaveItem, item);
-        this.log("item.onLeave", this.items.length);
-        if (this.leaveTimer !== null) {
-          clearInterval(this.leaveTimer);
-          this.leaveTimer = setTimeout(() => {
-            this.leaveMenu(item);
+        // this.log("item.onLeave", this.items.length);
+        if (this.hideSubTimer !== null) {
+          clearInterval(this.hideSubTimer);
+          this.hideSubTimer = setTimeout(() => {
+            this.checkNeedHideSubMenu(item);
           }, 100);
           return;
         }
-        this.leaveTimer = setTimeout(() => {
-          this.leaveMenu(item);
+        this.hideSubTimer = setTimeout(() => {
+          this.checkNeedHideSubMenu(item);
         }, 100);
       });
       if (!item.menu) {
         continue;
       }
-      const sub = item.menu;
-      if (this.subs.includes(sub)) {
-        return;
-      }
-      sub.onShow(() => {
+      const subMenu = item.menu;
+      subMenu.onShow(() => {
         this.log("sub.onShow");
-        this.curSub = sub;
+        this.curSub = subMenu;
       });
-      sub.onEnter(() => {
-        this.log("sub.onEnter");
+      subMenu.onEnter(() => {
+        console.log(...this.log("sub.onEnter"));
         this.inSubMenu = true;
       });
-      sub.onLeave(() => {
+      subMenu.onLeave(() => {
         this.log("sub.onLeave");
         this.inSubMenu = false;
       });
-      sub.onHide(() => {
+      subMenu.onHide(() => {
         this.log("sub.onHide");
         this.curSub = null;
       });
-      this.subs.push(sub);
+      if (this.subs.includes(subMenu)) {
+        return;
+      }
+      this.subs.push(subMenu);
     }
   }
   setItems(items: MenuItemCore[]) {
@@ -217,16 +192,19 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
       ...this.state,
     });
   }
-  maybeLeave = false;
-  leaveTimer: NodeJS.Timeout | null = null;
-  leaveMenu(item: MenuItemCore) {
-    clearTimeout(this.leaveTimer);
-    this.leaveTimer = null;
-    if (this.maybeLeave === false) {
+  checkNeedHideSubMenu(item: MenuItemCore) {
+    clearTimeout(this.hideSubTimer);
+    this.hideSubTimer = null;
+    if (this.maybeHideSub === false) {
       return;
     }
-    this.log("leaveMenu check need hide subMenu", this.curSub, this.inSubMenu);
-    this.inside = false;
+    console.log(
+      ...this.log(
+        "leaveMenu check need hide subMenu",
+        this.curSub,
+        this.inSubMenu
+      )
+    );
     // this.emit(Events.LeaveMenu);
     // 直接从有 SubMenu 的 MenuItem 离开，不到其他 MenuItem 场景下，也要关闭 SubMenu
     if (this.curSub && !this.inSubMenu) {
@@ -234,10 +212,14 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   reset() {
-    this.inside = false;
+    console.log("[]MenuCore - reset", this.items);
     this.inSubMenu = false;
     this.curItem = null;
     this.curSub = null;
+    this.maybeHideSub = false;
+    this.hideSubTimer = null;
+    this.presence.reset();
+    this.popper.reset();
     for (let i = 0; i < this.items.length; i += 1) {
       this.items[i].reset();
     }
@@ -257,25 +239,54 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.reset();
   }
 
+  handlers: Handler[] = [];
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.Show, handler);
   }
   onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.Hidden, handler);
   }
   onEnterItem(handler: Handler<TheTypesOfEvents[Events.EnterItem]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.EnterItem, handler);
   }
   onLeaveItem(handler: Handler<TheTypesOfEvents[Events.LeaveItem]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.LeaveItem, handler);
   }
   onEnter(handler: Handler<TheTypesOfEvents[Events.EnterMenu]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.EnterMenu, handler);
   }
   onLeave(handler: Handler<TheTypesOfEvents[Events.LeaveMenu]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.LeaveMenu, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    // if (this.handlers.includes(handler)) {
+    //   return () => {};
+    // }
+    // this.handlers.push(handler);
     return this.on(Events.StateChange, handler);
   }
 
@@ -283,3 +294,16 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     return "Menu";
   }
 }
+
+const SELECTION_KEYS = ["Enter", " "];
+const FIRST_KEYS = ["ArrowDown", "PageUp", "Home"];
+const LAST_KEYS = ["ArrowUp", "PageDown", "End"];
+const FIRST_LAST_KEYS = [...FIRST_KEYS, ...LAST_KEYS];
+const SUB_OPEN_KEYS: Record<Direction, string[]> = {
+  ltr: [...SELECTION_KEYS, "ArrowRight"],
+  rtl: [...SELECTION_KEYS, "ArrowLeft"],
+};
+const SUB_CLOSE_KEYS: Record<Direction, string[]> = {
+  ltr: ["ArrowLeft"],
+  rtl: ["ArrowRight"],
+};

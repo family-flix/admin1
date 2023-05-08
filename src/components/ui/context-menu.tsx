@@ -119,7 +119,7 @@ const Trigger = (
   onMount(() => {
     contextMenu.setReference({
       getRect() {
-        console.log("[ContextMenuTrigger]get reference rect", $span);
+        // console.log("[ContextMenuTrigger]get reference rect", $span);
         return $span.getBoundingClientRect();
       },
     });
@@ -131,25 +131,25 @@ const Trigger = (
       style={{ "-webkit-touch-callout": "none" }}
       onContextMenu={(event) => {
         event.preventDefault();
-        const size = $span.getBoundingClientRect();
-        const { x, y } = size;
-        contextMenu.show({ x, y });
+        const { pageX: x, pageY: y } = event;
         contextMenu.updateReference({
           getRect() {
             const size = $span.getBoundingClientRect();
-            const { width, height, top, left, right, bottom } = size;
+            const { top, left, right, bottom } = size;
             return {
-              width,
-              height,
+              // 会基于鼠标位置和 reference 宽高计算气泡位置，这里给的宽高，就是离鼠标有多远距离
+              width: 4,
+              height: 4,
               top,
               left,
               right,
               bottom,
-              x: event.clientX,
-              y: event.clientY,
+              x,
+              y,
             };
           },
         });
+        contextMenu.show({ x, y });
       }}
       onPointerDown={() => {
         // ...

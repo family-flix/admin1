@@ -1,40 +1,22 @@
 /**
  * @file 分享文件转存
  */
-import { For, JSX, Show, createSignal, onMount } from "solid-js";
-import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-solid";
+import { For, createSignal, onCleanup, onMount } from "solid-js";
 
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewCore } from "@/domains/router";
 import { SharedResource } from "@/domains/shared_resource";
 import { Application } from "@/domains/app";
+import { ContextMenuCore } from "@/domains/ui/context-menu";
+import { TabsCore } from "@/domains/ui/tabs";
+import { MenuItemCore } from "@/domains/ui/menu/item";
+import { MenuCore } from "@/domains/ui/menu";
 import { Input } from "@/components/ui/input";
 import FolderCard from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ContextMenu } from "@/components/ui/context-menu";
 import * as Tabs from "@/components/ui/tabs";
-import * as Select from "@/components/ui/select";
-import { ContextMenuCore } from "@/domains/ui/context-menu";
-import { TabsCore } from "@/domains/ui/tabs";
 import { cn } from "@/utils";
-import { SelectCore } from "@/domains/ui/select";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { MenuCore } from "@/domains/ui/menu";
-
-// const SelectItem = (props: {
-//   value?: string;
-//   class?: string;
-//   children: JSX.Element;
-// }) => {
-//   return (
-//     <Select.Item class={cn("SelectItem", props.class)} value={props.value}>
-//       <Select.ItemText>{props.children}</Select.ItemText>
-//       <Select.ItemIndicator class="SelectItemIndicator">
-//         <Check />
-//       </Select.ItemIndicator>
-//     </Select.Item>
-//   );
-// };
 
 export const SharedFilesTransferPage = (props: {
   app: Application;
@@ -47,31 +29,12 @@ export const SharedFilesTransferPage = (props: {
     paths: [],
     files: [],
   });
-  const [drives, setDrives] = createSignal(app.drives);
-
   const tabs = new TabsCore();
-  const select = new SelectCore();
-  // select.onChange((v) => {
-  //   console.log("select onchange", v);
-  // });
   const sharedResource = new SharedResource();
   const driveSubMenu = new MenuCore({
     name: "drives-menu",
     side: "right",
     align: "start",
-    items: app.drives.map((drive) => {
-      const { name } = drive;
-      return new MenuItemCore({
-        label: name,
-        onClick() {
-          console.log("click drive", name);
-        },
-      });
-    }),
-  });
-  const item = new MenuItemCore({
-    label: "转存到",
-    menu: driveSubMenu,
   });
   const contextMenu = new ContextMenuCore({
     name: "shared_resource",
@@ -79,48 +42,43 @@ export const SharedFilesTransferPage = (props: {
       new MenuItemCore({
         label: "查找同名文件夹并建立关联",
         onClick() {
-          // sharedResource.bindFolderInDrive()
+          sharedResource.bindSelectedFolderInDrive();
         },
       }),
       new MenuItemCore({
         label: "同名影视剧检查",
         onClick() {
-          // check_has_same_name_tv({
-          //   file_name: name,
-          // });
+          sharedResource.findTheTVHasSameNameWithSelectedFolder();
         },
       }),
       new MenuItemCore({
         label: "转存到默认网盘",
         onClick() {
-          // patch_added_files({
-          //   url,
-          //   file_id: cur_folder_ref.current.file_id,
-          //   file_name: name,
-          // });
+          sharedResource.transferSelectedFolderToDrive(app.drives[0]);
         },
       }),
-      item,
+      new MenuItemCore({
+        label: "转存到",
+        menu: driveSubMenu,
+      }),
     ],
   });
   app.onDrivesChange((nextDrives) => {
-    setDrives(nextDrives);
     driveSubMenu.setItems(
       nextDrives.map((drive) => {
         const { name } = drive;
         return new MenuItemCore({
           label: name,
           onClick() {
-            console.log("click drive", name);
+            sharedResource.transferSelectedFolderToDrive(drive);
+            contextMenu.hide();
           },
         });
       })
     );
   });
   sharedResource.onTip((msg) => {
-    app.tip({
-      text: [msg],
-    });
+    app.tip(msg);
   });
   sharedResource.onSuccess((values) => {
     const { url, files, paths } = values;
@@ -143,7 +101,8 @@ export const SharedFilesTransferPage = (props: {
       <h2
         class="my-2 text-2xl"
         onClick={() => {
-          contextMenu.show({ x: 120, y: 120 });
+          // app.tip({ text: ["hello"] });
+          // contextMenu.show({ x: 120, y: 120 });
         }}
       >
         转存文件
@@ -193,6 +152,28 @@ export const SharedFilesTransferPage = (props: {
           }}
         </For>
       </div>
+      <ContextMenu store={contextMenu}>
+        <div class="grid grid-cols-6 gap-2">
+          <For each={files()}>
+            {(file) => {
+              const { name, type } = file;
+              return (
+                <div
+                  class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    sharedResource.fetch(file);
+                  }}
+                  onContextMenu={() => {
+                    sharedResource.selectFolder(file);
+                  }}
+                >
+                  <FolderCard type={type} name={name} />
+                </div>
+              );
+            }}
+          </For>
+        </div>
+      </ContextMenu>
       {/* <Tabs.Root store={tabs} class="TabsRoot">
         <Tabs.List class="TabsList">
           <Tabs.Trigger class="TabsTrigger" value="01">
@@ -209,9 +190,6 @@ export const SharedFilesTransferPage = (props: {
           <div>测试02 - content</div>
         </Tabs.Content>
       </Tabs.Root> */}
-      <ContextMenu store={contextMenu}>
-        <button>Hello</button>
-      </ContextMenu>
       {/* <Modal
           title="同名影视剧"
           visible={visible}
