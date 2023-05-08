@@ -18,6 +18,7 @@ import FolderMenu from "@/components/FolderMenu";
 import { Progress } from "@/components/ui/progress";
 import Modal from "@/components/SingleModal";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { MenuItemCore } from "@/domains/ui/menu/item";
 
 const DriveCard = (props: { app: Application; core: Drive }) => {
   const { app, core: drive } = props;
@@ -28,25 +29,27 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
   const createFolderModal = new DialogCore();
   const refreshTokenModal = new DialogCore();
   const dropdown = new DropdownMenuCore({
-    menus: [
-      {
+    items: [
+      new MenuItemCore({
         label: "导出",
         onClick() {
           drive.export();
         },
-      },
-      {
+      }),
+      new MenuItemCore({
         label: "刷新",
         onClick() {
           drive.refresh();
         },
-      },
-      {
+      }),
+      new MenuItemCore({
         label: "修改 refresh_token",
         onClick() {
+          console.log("修改 refresh_token");
+          dropdown.hide();
           // drive.update_refresh_token(),
         },
-      },
+      }),
     ],
   });
   const progress = new ProgressCore({ value: drive.state.used_percent });
@@ -82,7 +85,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
     setFolderColumns(nextFolderColumns);
   });
   drive.onTip((texts) => {
-    app.tip({ text: texts });
+    app.tip(texts);
   });
   // const { avatar, user_name, used_size, total_size, used_percent } = state();
   const initialized = () => state().initialized;
@@ -115,7 +118,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
             <div>
               <div class="text-xl">{user_name()}</div>
               <div class="flex items-center space-x-2">
-                <Progress className="" store={progress} />
+                <Progress class="" store={progress} />
                 {used_size()}/{total_size()}
               </div>
               <div class="flex items-center mt-4 space-x-2">

@@ -13,11 +13,12 @@ import { DismissableLayer } from "./dismissable-layer";
 import { Presence } from "./presence";
 import * as Popper from "./popper";
 
-export const Popover = (props: {
-  store: PopoverCore;
-  content: JSX.Element;
-  children: JSX.Element;
-}) => {
+export const Popover = (
+  props: {
+    store: PopoverCore;
+    content: JSX.Element;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store, children } = props;
 
   onCleanup(() => {
@@ -54,12 +55,11 @@ export const Popover = (props: {
 };
 
 const PopoverContext = createContext<PopoverCore>();
-
-const PopoverRoot = (props: { store: PopoverCore; children: JSX.Element }) => {
+const PopoverRoot = (
+  props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store, children } = props;
-
-  console.log("[COMPONENT]PopoverRoot", store);
-
+  // console.log("[COMPONENT]PopoverRoot", store);
   return <Popper.Root store={store.popper}>{children}</Popper.Root>;
 
   // return (
@@ -78,12 +78,12 @@ const PopoverRoot = (props: { store: PopoverCore; children: JSX.Element }) => {
 /* -------------------------------------------------------------------------------------------------
  * PopoverTrigger
  * -----------------------------------------------------------------------------------------------*/
-const PopoverTrigger = (props: {
-  store: PopoverCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  const { store, children } = props;
+const PopoverTrigger = (
+  props: {
+    store: PopoverCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
 
   // const store = useContext(PopoverContext);
 
@@ -94,7 +94,7 @@ const PopoverTrigger = (props: {
           store.toggle();
         }}
       >
-        {children}
+        {props.children}
       </button>
     </Popper.Anchor>
   );
@@ -103,46 +103,47 @@ const PopoverTrigger = (props: {
 /* -------------------------------------------------------------------------------------------------
  * PopoverPortal
  * -----------------------------------------------------------------------------------------------*/
-const PopoverPortal = (props: {
-  store: PopoverCore;
-  children: JSX.Element;
-}) => {
-  const { store, children } = props;
+const PopoverPortal = (
+  props: {
+    store: PopoverCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  // const { store, children } = props;
   // const store = useContext(PopoverContext);
 
-  return <Portal>{children}</Portal>;
+  return <Portal>{props.children}</Portal>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * PopoverContent
  * -----------------------------------------------------------------------------------------------*/
-const PopoverContent = (props: {
-  store: PopoverCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  const { store, children } = props;
+const PopoverContent = (
+  props: {
+    store: PopoverCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
   // const store = useContext(PopoverContext);
 
   return (
     <Presence store={store.present}>
       <PopoverContentNonModal store={store} class={props.class}>
-        {children}
+        {props.children}
       </PopoverContentNonModal>
     </Presence>
   );
 };
 
 /* -----------------------------------------------------------------------------------------------*/
-const PopoverContentNonModal = (props: {
-  store: PopoverCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  const { store, children } = props;
+const PopoverContentNonModal = (
+  props: {
+    store: PopoverCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
   return (
     <PopoverContentImpl store={store} class={props.class}>
-      {children}
+      {props.children}
     </PopoverContentImpl>
   );
 };
@@ -150,29 +151,29 @@ const PopoverContentNonModal = (props: {
 const FocusScope = (props: { children: JSX.Element }) => {
   return props.children;
 };
-const PopoverContentImpl = (props: {
-  store: PopoverCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  const { store, children } = props;
+const PopoverContentImpl = (
+  props: {
+    store: PopoverCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
   return (
     <FocusScope>
       <DismissableLayer store={store.layer}>
         <Popper.Content store={store.popper} class={props.class}>
-          {children}
+          {props.children}
         </Popper.Content>
       </DismissableLayer>
     </FocusScope>
   );
 };
 
-const PopoverClose = (props: {
-  store: PopoverCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  const { store, children } = props;
+const PopoverClose = (
+  props: {
+    store: PopoverCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
   // const store = useContext(PopoverContext);
   return (
     <button
@@ -181,12 +182,14 @@ const PopoverClose = (props: {
         store.hide();
       }}
     >
-      {children}
+      {props.children}
     </button>
   );
 };
 
-const PopoverArrow = (props: { store: PopoverCore; class?: string }) => {
+const PopoverArrow = (
+  props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
   return <Popper.Arrow store={store.popper} class={props.class}></Popper.Arrow>;
 };

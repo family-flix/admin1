@@ -6,10 +6,11 @@ import { RovingFocusCore } from "@/domains/ui/roving-focus";
 import * as Collection from "./collection";
 
 const RovingFocusContext = createContext<RovingFocusCore>();
-const RovingFocusGroup = (props: {
-  store: RovingFocusCore;
-  children: JSX.Element;
-}) => {
+const RovingFocusGroup = (
+  props: {
+    store: RovingFocusCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
 
   return (
@@ -23,10 +24,11 @@ const RovingFocusGroup = (props: {
   );
 };
 
-const RovingFocusGroupImpl = (props: {
-  store: RovingFocusCore;
-  children: JSX.Element;
-}) => {
+const RovingFocusGroupImpl = (
+  props: {
+    store: RovingFocusCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
   let isClickFocus = false;
 
@@ -53,7 +55,7 @@ const RovingFocusGroupImpl = (props: {
   );
 };
 
-const RovingFocusGroupItem = (props: { children: JSX.Element }) => {
+const RovingFocusGroupItem = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   const store = useContext(RovingFocusContext);
   const [state, setState] = createSignal(store.state);
 

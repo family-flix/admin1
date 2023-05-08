@@ -1,7 +1,5 @@
 /**
  * 注册的监听器
- * @todo
- * 1、支持在 emitValuesChange 前做一些事情，比如衍生一些状态值
  */
 import mitt, { EventType, Handler } from "mitt";
 // import { Log } from './log';
@@ -14,7 +12,7 @@ function uid() {
 // 这里必须给 Tip 显示声明值，否则默认为 0，会和其他地方声明的 Events 第一个 Key 冲突
 enum BaseEvents {
   Tip = "__tip",
-  Destroy = "__destry",
+  Destroy = "__destroy",
 }
 type TheTypesOfBaseEvents = {
   [BaseEvents.Tip]: {
@@ -36,11 +34,9 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     params: Partial<{
       name: string;
       debug: boolean;
-      getStyles: () => CSSStyleDeclaration;
-      getRect: () => DOMRect;
     }> = {}
   ) {
-    const { name, debug, getStyles, getRect } = params;
+    const { name, debug } = params;
     if (name) {
       this.name = name;
     }
@@ -113,10 +109,10 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     this.emit(BaseEvents.Destroy);
   }
   onTip(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Tip]>) {
-    this.on(BaseEvents.Tip, handler);
+    return this.on(BaseEvents.Tip, handler);
   }
   onDestroy(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Destroy]>) {
-    this.on(BaseEvents.Destroy, handler);
+    return this.on(BaseEvents.Destroy, handler);
   }
 
   get [Symbol.toStringTag]() {

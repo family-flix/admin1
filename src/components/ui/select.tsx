@@ -13,22 +13,24 @@ import { SelectCore } from "@/domains/ui/select";
 import { SelectItemCore } from "@/domains/ui/select/item";
 import { SelectViewportCore } from "@/domains/ui/select/viewport";
 import { SelectContentCore } from "@/domains/ui/select/content";
+import { SelectTriggerCore } from "@/domains/ui/select/trigger";
+import { SelectValueCore } from "@/domains/ui/select/value";
+import { SelectWrapCore } from "@/domains/ui/select/wrap";
 import { app } from "@/store/app";
 import { cn } from "@/utils";
 
 import * as Popper from "./popper";
 import * as Collection from "./collection";
 import { DismissableLayer } from "./dismissable-layer";
-import { SelectTriggerCore } from "@/domains/ui/select/trigger";
-import { SelectValueCore } from "@/domains/ui/select/value";
-import { SelectWrapCore } from "@/domains/ui/select/wrap";
 
 const SELECTION_KEYS = [" ", "Enter"];
 
 const SelectContext = createContext<SelectCore>();
 const SelectContentContext = createContext<SelectCore>();
 const SelectNativeOptionContext = createContext<SelectCore>();
-const SelectRoot = (props: { store: SelectCore; children: JSX.Element }) => {
+const SelectRoot = (
+  props: { store: SelectCore } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
   return (
     <Popper.Root store={store.popper}>

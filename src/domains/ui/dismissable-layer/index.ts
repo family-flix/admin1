@@ -1,8 +1,11 @@
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
+import { app } from "@/store/app";
 
+type AbsNode = {};
 enum Events {
+  /** 遮罩消失 */
   Dismiss,
   FocusOutside,
   PointerDownOutside,
@@ -14,7 +17,7 @@ type TheTypesOfEvents = {
   [Events.FocusOutside]: void;
   [Events.InteractOutside]: void;
 };
-type AbsNode = {};
+type DismissableLayerState = {};
 
 export class DismissableLayerCore extends BaseDomain<TheTypesOfEvents> {
   name = "DismissableLayerCore";
@@ -24,6 +27,16 @@ export class DismissableLayerCore extends BaseDomain<TheTypesOfEvents> {
   branches: Set<AbsNode> = new Set();
 
   isPointerInside = false;
+
+  state: DismissableLayerState = {};
+
+  constructor(options: Partial<{ name: string }> = {}) {
+    super(options);
+
+    app.onEscapeKeyDown(() => {
+      this.emit(Events.Dismiss);
+    });
+  }
 
   handlePointerOutside(branch: HTMLElement) {}
   /** 响应点击事件 */
@@ -57,9 +70,6 @@ export class DismissableLayerCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   onDismiss(handler: Handler<TheTypesOfEvents[Events.Dismiss]>) {
-    this.on(Events.Dismiss, handler);
-    return () => {
-      this.off(Events.Dismiss, handler);
-    };
+    return this.on(Events.Dismiss, handler);
   }
 }

@@ -1,96 +1,85 @@
 /**
  * @file 气泡 组件
- * Popover 是基于该组件的
+ * 仅负责计算气泡位置，不负责显隐
  */
-import {
-  JSX,
-  children,
-  createContext,
-  createSignal,
-  onMount,
-  useContext,
-  onCleanup,
-} from "solid-js";
+import { JSX, createSignal, onMount, onCleanup } from "solid-js";
 
 import { PopperCore } from "@/domains/ui/popper";
 import { cn } from "@/utils";
 
 import { Arrow as PrimitiveArrow } from "./arrow";
 
-const PopperContext = createContext<PopperCore>();
-const PopperRoot = (props: { store: PopperCore; children: JSX.Element }) => {
-  const { store } = props;
+// const PopperContext = createContext<PopperCore>();
+const PopperRoot = (
+  props: { store: PopperCore } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  // const { store } = props;
 
-  // console.log("[COMPONENT]PopperRoot", store);
-
-  // return <div class={cn("popper__root")}>{props.children}</div>;
   return props.children;
 };
 
-const PopperAnchor = (props: {
-  store: PopperCore;
-  class?: string;
-  ref?: HTMLElement;
-  children: JSX.Element;
-}) => {
+const PopperAnchor = (
+  props: {
+    store: PopperCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
-  // const store = useContext(PopperContext);
-
   let $anchor: HTMLDivElement;
 
-  onMount(() => {
-    console.log(
-      ...store.log("mounted at PopperAnchor", $anchor, store.reference)
+  // console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
+  if (!store.reference) {
+    store.setReference({
+      getRect() {
+        const rect = $anchor.getBoundingClientRect();
+        return rect;
+      },
+    });
+    return (
+      <div
+        ref={(el) => {
+          $anchor = el;
+          if (typeof props.ref === "function") {
+            props.ref(el);
+            return;
+          }
+          props.ref = el;
+        }}
+        class={cn("popper__anchor", "inline-block")}
+      >
+        {props.children}
+      </div>
     );
-    if (store.reference) {
-      return;
-    }
-    setTimeout(() => {
-      const size = $anchor.getBoundingClientRect();
-      console.log(
-        ...store.log("setReference", $anchor, { x: size.x, y: size.y })
-      );
-      store.setReference(size);
-    }, 100);
-  });
-
-  if (store.reference) {
-    return props.children;
   }
-
-  return (
-    <div class={cn("popper__anchor", "inline-block")} ref={$anchor}>
-      {props.children}
-    </div>
-  );
+  return props.children;
 };
 
 const PopperContent = (
   props: {
     store: PopperCore;
-    ref?: ((el: HTMLDivElement) => void) | HTMLDivElement;
-    children: JSX.Element;
-  } & {
-    class?: string;
-    style?: JSX.CSSProperties;
-  } & JSX.AriaAttributes
+  } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store, children } = props;
+  const { store } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
 
   let $content: HTMLDivElement;
 
-  store.onPlaced((nextState) => {
-    // console.log("[COMPONENT]PopperContent - onPlaced", nextState);
+  store.onStateChange((nextState) => {
     setState(nextState);
   });
-
   onMount(() => {
-    // console.log(...store.log("PopperContent mounted", props.ref));
-    store.setFloating($content.getBoundingClientRect());
+    store.setFloating({
+      getRect() {
+        const rect = $content.getBoundingClientRect();
+        console.log(
+          "[COMPONENT]PopperContent - getRect of floating",
+          $content,
+          rect
+        );
+        return rect;
+      },
+    });
   });
-  // props.ref?.($content);
 
   const x = () => state().x;
   const y = () => state().y;
@@ -105,7 +94,9 @@ const PopperContent = (
         $content = el;
         if (typeof props.ref === "function") {
           props.ref(el);
+          return;
         }
+        props.ref = el;
       }}
       role={props.role}
       class={cn("popper__content", props.class)}
@@ -139,7 +130,7 @@ const PopperContent = (
         //   animation: !isPlaced() ? "none" : undefined,
         // }}
       >
-        {children}
+        {props.children}
       </div>
     </div>
   );
@@ -151,14 +142,18 @@ const OPPOSITE_SIDE = {
   bottom: "top",
   left: "right",
 };
-const PopperArrow = (props: { store: PopperCore; class?: string }) => {
+const PopperArrow = (
+  props: {
+    store: PopperCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
   // const { arrowX, arrowY, baseSide, placedSide, shouldHideArrow } = state;
   let $arrow: HTMLSpanElement;
 
-  const off = store.onPlaced((nextState) => {
+  const off = store.onStateChange((nextState) => {
     setState(nextState);
   });
 

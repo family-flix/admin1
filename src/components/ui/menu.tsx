@@ -1,17 +1,6 @@
 /**
  * @file 菜单 组件
  */
-import { JSX } from "solid-js/jsx-runtime";
-import { Portal as PortalPrimitive } from "solid-js/web";
-
-import { MenuCore } from "@/domains/ui/menu";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-
-import * as Popper from "./popper";
-import { Presence } from "./presence";
-import { DismissableLayer } from "./dismissable-layer";
-import * as Collection from "./collection";
-import { cn } from "@/utils";
 import {
   createContext,
   createSignal,
@@ -19,44 +8,42 @@ import {
   onMount,
   useContext,
 } from "solid-js";
+import { JSX } from "solid-js/jsx-runtime";
+import { Portal as PortalPrimitive } from "solid-js/web";
 
-export type Menu = {};
-export const Menu = (props: { options: {}[] }) => {};
+import { MenuCore } from "@/domains/ui/menu";
+import { MenuItemCore } from "@/domains/ui/menu/item";
+import { cn } from "@/utils";
+
+import * as Popper from "./popper";
+import { Presence } from "./presence";
+import { DismissableLayer } from "./dismissable-layer";
+import * as Collection from "./collection";
 
 /* -------------------------------------------------------------------------------------------------
  * MenuRoot
  * -----------------------------------------------------------------------------------------------*/
-const MenuContext = createContext<MenuCore>();
-const MenuRoot = (props: { store: MenuCore; children: JSX.Element }) => {
+const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   onCleanup(() => {
     store.destroy();
   });
 
-  return (
-    <Popper.Root store={store.popper}>
-      <MenuContext.Provider value={store}>
-        {props.children}
-      </MenuContext.Provider>
-    </Popper.Root>
-  );
+  return <Popper.Root store={store.popper}>{props.children}</Popper.Root>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * MenuAnchor
  * -----------------------------------------------------------------------------------------------*/
-const MenuAnchor = (props: {
-  // store?: MenuCore;
-  ref?: HTMLElement;
-  class?: string;
-  children?: JSX.Element;
-}) => {
-  // const { store } = props;
-  const store = useContext(MenuContext);
+const Anchor = (
+  props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
+  // const store = useContext(MenuContext);
 
   return (
-    <Popper.Anchor store={store.popper} class={props.class}>
+    <Popper.Anchor class={props.class} store={store.popper}>
       {props.children}
     </Popper.Anchor>
   );
@@ -65,123 +52,120 @@ const MenuAnchor = (props: {
 /* -------------------------------------------------------------------------------------------------
  * MenuPortal
  * -----------------------------------------------------------------------------------------------*/
-const MenuPortal = (props: {
-  // store?: MenuCore;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
+const Portal = (
+  props: {
+    store: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
   // const store = useContext(MenuContentContext);
-  const store = useContext(MenuContext);
 
   return (
-    <Presence store={store.presence}>
-      <PortalPrimitive>{props.children}</PortalPrimitive>
-    </Presence>
+    // <Presence store={store.presence}>
+    <PortalPrimitive>{props.children}</PortalPrimitive>
+    // </Presence>
   );
 };
 
 /* -------------------------------------------------------------------------------------------------
  * MenuContent
  * -----------------------------------------------------------------------------------------------*/
-const MenuContent = (props: {
-  // store: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
-  const store = useContext(MenuContext);
+const Content = (
+  props: {
+    store: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
+  // const store = useContext(MenuContext);
+  onMount(() => {
+    console.log("[]MenuContent onMounted");
+  });
 
   return (
     <Presence store={store.presence}>
-      <MenuContentNonModal store={store} class={props.class}>
+      <ContentNonModal store={store} class={props.class}>
         {props.children}
-      </MenuContentNonModal>
+      </ContentNonModal>
     </Presence>
   );
 };
 // 这里多一个，是因为还存在 MenuContentModal 场景，这两个和 MenuSubContent 都复用 MenuContentImpl
-const MenuContentNonModal = (props: {
-  store: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const ContentNonModal = (
+  props: {
+    store: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
+
   return (
-    <MenuContentImpl store={store} class={props.class}>
+    <ContentImpl store={store} class={props.class}>
       {props.children}
-    </MenuContentImpl>
+    </ContentImpl>
   );
 };
 
-const MenuContentContext = createContext<MenuCore>();
-const MenuContentImpl = (props: {
-  store: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const ContentImpl = (
+  props: {
+    store: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
 
   return (
-    <MenuContentContext.Provider value={store}>
-      <DismissableLayer store={store.layer}>
-        <Popper.Content store={store.popper} class={props.class}>
-          {props.children}
-        </Popper.Content>
-      </DismissableLayer>
-    </MenuContentContext.Provider>
+    <DismissableLayer store={store.layer}>
+      <Popper.Content class={props.class} store={store.popper}>
+        {props.children}
+      </Popper.Content>
+    </DismissableLayer>
   );
 };
 
 /* -------------------------------------------------------------------------------------------------
  * MenuGroup
  * -----------------------------------------------------------------------------------------------*/
-const MenuGroup = (props: { children: JSX.Element }) => {
+const Group = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <div>{props.children}</div>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * MenuLabel
  * -----------------------------------------------------------------------------------------------*/
-const MenuLabel = (props: { class?: string; children: JSX.Element }) => {
+const Label = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <div class={props.class}>{props.children}</div>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * MenuItem
  * -----------------------------------------------------------------------------------------------*/
-const MenuItem = (props: {
-  // store: MenuCore;
-  class?: string;
-  disabled?: boolean;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
+const Item = (
+  props: {
+    store: MenuItemCore;
+    disabled?: boolean;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
 
-  return <MenuItemImpl class={props.class}>{props.children}</MenuItemImpl>;
+  return (
+    <ItemImpl
+      class={props.class}
+      store={store}
+      onClick={() => {
+        store.click();
+      }}
+    >
+      {props.children}
+    </ItemImpl>
+  );
 };
-const MenuItemImpl = (props: {
-  store?: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
-  // const parent = useContext(MenuContext);
+const ItemImpl = (
+  props: {
+    store: MenuItemCore;
+  } & JSX.HTMLAttributes<HTMLDivElement>
+) => {
+  const { store: item, ...restProps } = props;
   let $item: HTMLDivElement;
-  const store = useContext(MenuContentContext);
-  // 如果处于 MenuSub 内，sub 才会有值
-  const sub = useContext(MenuSubContext);
-
-  // console.log("[COMPONENT]MenuItemImpl", store);
-  const item = new MenuItemCore();
-  store.appendItem(item);
-  // 这种情况，只有放在 Sub 里面的 SubTrigger 才会触发
-  if (sub && sub !== store) {
-    item.setSub(sub);
-  }
-  // console.log("[COMPONENT]MenuItemImpl", store.items, store === sub);
   const [state, setState] = createSignal(item.state);
   item.onStateChange((nextState) => {
-    item.log("onStateChange", nextState);
     setState(nextState);
   });
   item.onFocus(() => {
@@ -191,41 +175,34 @@ const MenuItemImpl = (props: {
     $item.blur();
   });
 
-  onMount(() => {
-    if (!item.sub) {
-      return;
-    }
-    setTimeout(() => {
-      const size = $item.getBoundingClientRect();
-      // item.sub.log("setReference", $item, { x: size.x, y: size.y });
-      item.sub.popper.setReference(size);
-    }, 100);
-  });
-
-  const visible = () => state().subOpen;
+  const visible = () => state().open;
   const disabled = () => state().disabled;
-  const isFocused = () => state().focused;
+  const focused = () => state().focused;
 
   return (
     <div
-      ref={$item}
+      ref={(el) => {
+        $item = el;
+        if (typeof props.ref === "function") {
+          props.ref(el);
+          return;
+        }
+        props.ref = $item;
+      }}
       class={cn("menu__item-impl", props.class)}
       role="menuitem"
       aria-haspopup="menu"
       // aria-expanded=""
       data-state={getOpenState(visible())}
-      data-highlighted={isFocused() ? "" : undefined}
+      data-highlighted={focused() ? "" : undefined}
       aria-disabled={disabled() || undefined}
       data-disabled={disabled() ? "" : undefined}
+      tabIndex={disabled() ? undefined : -1}
       onPointerMove={(event) => {
         if (event.pointerType !== "mouse") {
           return;
         }
-        if (disabled()) {
-          item.leave();
-          return;
-        }
-        item.enter();
+        item.move();
       }}
       onPointerLeave={(event) => {
         if (event.pointerType !== "mouse") {
@@ -239,94 +216,84 @@ const MenuItemImpl = (props: {
       onBlur={() => {
         item.blur();
       }}
+      {...restProps}
     >
       {props.children}
     </div>
   );
 };
 
-const MenuSeparator = (props: { class?: string }) => {
+const Separator = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <div class={props.class}></div>;
 };
-const MenuArrow = (props: {
-  // store: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
-  const store = useContext(MenuContext);
+const Arrow = (
+  props: {
+    store: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
+  // const store = useContext(MenuContext);
 
-  return <Popper.Arrow store={store.popper} class={props.class}></Popper.Arrow>;
+  return <Popper.Arrow class={props.class} store={store.popper}></Popper.Arrow>;
 };
 
 /* -------------------------------------------------------------------------------------------------
  * MenuSub
  * -----------------------------------------------------------------------------------------------*/
-const MenuSubContext = createContext<MenuCore>();
-const MenuSub = (props: {
-  // store?: MenuCore;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
-  const store = useContext(MenuContext);
+const Sub = (
+  props: {
+    store: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
 
-  const sub = new MenuCore({
-    name: "SubMenu",
-    side: "right",
-    align: "start",
-  });
-  store.appendSub(sub);
-  // sub.onLeave(() => {
-  //   sub.log("onLeave at MenuSub");
-  // });
-
-  return (
-    <Popper.Root store={sub.popper}>
-      <MenuContext.Provider value={store}>
-        <MenuSubContext.Provider value={sub}>
-          {props.children}
-        </MenuSubContext.Provider>
-      </MenuContext.Provider>
-    </Popper.Root>
-  );
+  return <Popper.Root store={store.popper}>{props.children}</Popper.Root>;
 };
-const MenuSubTrigger = (props: {
-  // store?: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
+const SubTrigger = (
+  props: {
+    store: MenuItemCore;
+  } & JSX.HTMLAttributes<HTMLDivElement>
+) => {
+  const { store: item } = props;
+
+  let $item: HTMLDivElement;
   // const store = useContext(MenuSubContext);
 
+  // 既然在 SubTrigger 里面了，传入的 item 必然有 item.menu。但是为了避免可能的错误，还是用 ?. 处理
+  item.menu?.popper.setReference({
+    getRect() {
+      const rect = $item.getBoundingClientRect();
+      console.log(...item.menu.popper.log("get reference rect", $item, rect));
+      return rect;
+    },
+  });
+  onCleanup(() => {
+    item.menu?.popper.removeReference();
+  });
+
   return (
-    <MenuAnchor
-      // store={store}
-      class={props.class}
-    >
-      <MenuItemImpl
-        // store={store}
-        class={props.class}
-      >
+    <Anchor store={item.menu}>
+      <ItemImpl ref={$item} class={props.class} store={item}>
         {props.children}
-      </MenuItemImpl>
-    </MenuAnchor>
+      </ItemImpl>
+    </Anchor>
   );
 };
 
 // const MenuSubContentContext = createContext<MenuCore>();
-const MenuSubContent = (props: {
-  // store?: MenuCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  // const { store } = props;
-  const store = useContext(MenuSubContext);
+const SubContent = (
+  props: {
+    store?: MenuCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
+  // const store = useContext(MenuSubContext);
 
   return (
     <Presence store={store.presence}>
-      <MenuContentImpl store={store} class={props.class}>
+      <ContentImpl store={store} class={props.class}>
         {props.children}
-      </MenuContentImpl>
+      </ContentImpl>
     </Presence>
   );
 };
@@ -432,18 +399,18 @@ function whenMouse<E>(handler) {
     event.pointerType === "mouse" ? handler(event) : undefined;
 }
 
-const Root = MenuRoot;
-const Anchor = MenuAnchor;
-const Portal = MenuPortal;
-const Content = MenuContent;
-const Group = MenuGroup;
-const Label = MenuLabel;
-const Item = MenuItem;
-const Separator = MenuSeparator;
-const Arrow = MenuArrow;
-const Sub = MenuSub;
-const SubTrigger = MenuSubTrigger;
-const SubContent = MenuSubContent;
+// const Root = MenuRoot;
+// const Anchor = MenuAnchor;
+// const Portal = MenuPortal;
+// const Content = MenuContent;
+// const Group = MenuGroup;
+// const Label = MenuLabel;
+// const Item = MenuItem;
+// const Separator = MenuSeparator;
+// const Arrow = MenuArrow;
+// const Sub = MenuSub;
+// const SubTrigger = MenuSubTrigger;
+// const SubContent = MenuSubContent;
 export {
   Root,
   Anchor,

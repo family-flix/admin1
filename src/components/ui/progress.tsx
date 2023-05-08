@@ -1,15 +1,17 @@
 /**
  * @file 进度条
  */
-import { createSignal } from "solid-js";
+import { JSX, createSignal } from "solid-js";
+
 import { ProgressCore } from "@/domains/ui/progress";
+import { cn } from "@/utils";
 
-import { cn } from "@/lib/utils";
+const Progress = (
+  props: { store: ProgressCore } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store } = props;
 
-const Progress = (props: { className?: string; store: ProgressCore }) => {
-  const { className, store, ...restProps } = props;
   const [state, setState] = createSignal(store.state);
-
   store.onStateChange((nextState) => {
     setState(nextState);
   });
@@ -18,9 +20,8 @@ const Progress = (props: { className?: string; store: ProgressCore }) => {
     <div
       class={cn(
         "relative h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800",
-        className
+        props.class
       )}
-      {...restProps}
     >
       <div
         class="h-full w-full flex-1 bg-slate-900 transition-all dark:bg-slate-400"

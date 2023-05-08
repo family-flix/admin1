@@ -1,17 +1,17 @@
-// import * as React from "react";
+import { JSX } from "solid-js/jsx-runtime";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 export interface TextareaProps extends HTMLTextAreaElement {}
 
-const Textarea = ({ className, ...props }, ref) => {
+const Textarea = (props: {} & JSX.HTMLAttributes<HTMLTextAreaElement>) => {
   return (
     <textarea
+      ref={props.ref}
       class={cn(
         "flex h-20 w-full rounded-md border border-slate-300 bg-transparent py-2 px-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-50 dark:focus:ring-slate-400 dark:focus:ring-offset-slate-900",
-        className
+        props.class
       )}
-      ref={ref}
       {...props}
     />
   );

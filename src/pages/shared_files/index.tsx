@@ -1,39 +1,40 @@
 /**
  * @file 分享文件转存
  */
-import { For, JSX, Show, createSignal } from "solid-js";
+import { For, JSX, Show, createSignal, onMount } from "solid-js";
 import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-solid";
 
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewCore } from "@/domains/router";
 import { SharedResource } from "@/domains/shared_resource";
 import { Application } from "@/domains/app";
-import { PopoverCore } from "@/domains/ui/popover";
 import { Input } from "@/components/ui/input";
 import FolderCard from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
-import * as ContextMenu from "@/components/ui/context-menu";
+import { ContextMenu } from "@/components/ui/context-menu";
 import * as Tabs from "@/components/ui/tabs";
 import * as Select from "@/components/ui/select";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
 import { TabsCore } from "@/domains/ui/tabs";
 import { cn } from "@/utils";
 import { SelectCore } from "@/domains/ui/select";
+import { MenuItemCore } from "@/domains/ui/menu/item";
+import { MenuCore } from "@/domains/ui/menu";
 
-const SelectItem = (props: {
-  value?: string;
-  class?: string;
-  children: JSX.Element;
-}) => {
-  return (
-    <Select.Item class={cn("SelectItem", props.class)} value={props.value}>
-      <Select.ItemText>{props.children}</Select.ItemText>
-      <Select.ItemIndicator class="SelectItemIndicator">
-        <Check />
-      </Select.ItemIndicator>
-    </Select.Item>
-  );
-};
+// const SelectItem = (props: {
+//   value?: string;
+//   class?: string;
+//   children: JSX.Element;
+// }) => {
+//   return (
+//     <Select.Item class={cn("SelectItem", props.class)} value={props.value}>
+//       <Select.ItemText>{props.children}</Select.ItemText>
+//       <Select.ItemIndicator class="SelectItemIndicator">
+//         <Check />
+//       </Select.ItemIndicator>
+//     </Select.Item>
+//   );
+// };
 
 export const SharedFilesTransferPage = (props: {
   app: Application;
@@ -47,34 +48,49 @@ export const SharedFilesTransferPage = (props: {
     files: [],
   });
   const [drives, setDrives] = createSignal(app.drives);
-  // const { toast } = useToast();
-  app.onDrivesChange((nextDrives) => {
-    setDrives(nextDrives);
-  });
-  const popover = new PopoverCore();
+
   const tabs = new TabsCore();
   const select = new SelectCore();
-  select.onChange((v) => {
-    console.log("select onchange", v);
-  });
+  // select.onChange((v) => {
+  //   console.log("select onchange", v);
+  // });
   const sharedResource = new SharedResource();
+  const driveSubMenu = new MenuCore({
+    name: "drives-menu",
+    side: "right",
+    align: "start",
+    items: app.drives.map((drive) => {
+      const { name } = drive;
+      return new MenuItemCore({
+        label: name,
+        onClick() {
+          console.log("click drive", name);
+        },
+      });
+    }),
+  });
+  const item = new MenuItemCore({
+    label: "转存到",
+    menu: driveSubMenu,
+  });
   const contextMenu = new ContextMenuCore({
-    menus: [
-      {
+    name: "shared_resource",
+    items: [
+      new MenuItemCore({
         label: "查找同名文件夹并建立关联",
         onClick() {
           // sharedResource.bindFolderInDrive()
         },
-      },
-      {
+      }),
+      new MenuItemCore({
         label: "同名影视剧检查",
         onClick() {
           // check_has_same_name_tv({
           //   file_name: name,
           // });
         },
-      },
-      {
+      }),
+      new MenuItemCore({
         label: "转存到默认网盘",
         onClick() {
           // patch_added_files({
@@ -83,11 +99,23 @@ export const SharedFilesTransferPage = (props: {
           //   file_name: name,
           // });
         },
-      },
-      // {
-      //   label: "转存到",
-      // },
+      }),
+      item,
     ],
+  });
+  app.onDrivesChange((nextDrives) => {
+    setDrives(nextDrives);
+    driveSubMenu.setItems(
+      nextDrives.map((drive) => {
+        const { name } = drive;
+        return new MenuItemCore({
+          label: name,
+          onClick() {
+            console.log("click drive", name);
+          },
+        });
+      })
+    );
   });
   sharedResource.onTip((msg) => {
     app.tip({
@@ -102,8 +130,9 @@ export const SharedFilesTransferPage = (props: {
       paths,
     });
   });
-
-  app.fetchDrives();
+  onMount(() => {
+    app.fetchDrives();
+  });
 
   const url = () => state().url;
   const paths = () => state().paths;
@@ -114,12 +143,12 @@ export const SharedFilesTransferPage = (props: {
       <h2
         class="my-2 text-2xl"
         onClick={() => {
-          select.show();
+          contextMenu.show({ x: 120, y: 120 });
         }}
       >
         转存文件
       </h2>
-      {/* <div class="grid grid-cols-12 gap-4">
+      <div class="grid grid-cols-12 gap-4">
         <div class="col-span-10">
           <Input
             class=""
@@ -141,7 +170,7 @@ export const SharedFilesTransferPage = (props: {
             获取
           </Button>
         </div>
-      </div> */}
+      </div>
       <div class="flex items-center">
         <For each={paths()}>
           {(path, index) => {
@@ -180,108 +209,9 @@ export const SharedFilesTransferPage = (props: {
           <div>测试02 - content</div>
         </Tabs.Content>
       </Tabs.Root> */}
-      <Select.Root store={select}>
-        <Select.Trigger class="SelectTrigger" aria-label="Food">
-          <Select.Value placeholder="Select a fruit…" />
-          <Select.Icon class="SelectIcon">
-            <ChevronDown width={15} height={15} />
-          </Select.Icon>
-        </Select.Trigger>
-        <Select.Portal>
-          <Select.Content class="SelectContent">
-            <Select.ScrollUpButton class="SelectScrollButton">
-              <ChevronUp width={15} height={15} />
-            </Select.ScrollUpButton>
-            <Select.Viewport class="SelectViewport">
-              <Select.Group>
-                <Select.Label class="SelectLabel">Fruits</Select.Label>
-                <Select.Item class={cn("SelectItem")} value="apple">
-                  <Select.ItemText>Apple</Select.ItemText>
-                  <Select.ItemIndicator class="SelectItemIndicator">
-                    <Check width={15} height={15} />
-                  </Select.ItemIndicator>
-                </Select.Item>
-                <Select.Item class={cn("SelectItem")} value="banana">
-                  <Select.ItemText>Banana</Select.ItemText>
-                  <Select.ItemIndicator class="SelectItemIndicator">
-                    <Check width={15} height={15} />
-                  </Select.ItemIndicator>
-                </Select.Item>
-              </Select.Group>
-              <Select.Separator class="SelectSeparator" />
-              <Select.Group>
-                <Select.Label class="SelectLabel">Vegetables</Select.Label>
-                <Select.Item class={cn("SelectItem")} value="aubergine">
-                  <Select.ItemText>Aubergine</Select.ItemText>
-                  <Select.ItemIndicator class="SelectItemIndicator">
-                    <Check width={15} height={15} />
-                  </Select.ItemIndicator>
-                </Select.Item>
-              </Select.Group>
-            </Select.Viewport>
-            <Select.ScrollDownButton class="SelectScrollButton">
-              <ChevronDown width={15} height={15} />
-            </Select.ScrollDownButton>
-          </Select.Content>
-        </Select.Portal>
-      </Select.Root>
-      {/* <ContextMenu.Root store={contextMenu}>
-        <ContextMenu.Trigger>
-          <div class="grid grid-cols-6 gap-2">
-            <For each={files()}>
-              {(file) => {
-                const { name, type } = file;
-                return (
-                  <div
-                    class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-                    onClick={() => {
-                      sharedResource.fetch(file);
-                    }}
-                  >
-                    <FolderCard type={type} name={name} />
-                  </div>
-                );
-              }}
-            </For>
-          </div>
-        </ContextMenu.Trigger>
-        <ContextMenu.Portal>
-          <ContextMenu.Content class="DropdownMenuContent">
-            <ContextMenu.Item class="DropdownMenuItem">
-              New Private Window <div class="RightSlot">⇧+⌘+N</div>
-            </ContextMenu.Item>
-            <ContextMenu.Sub>
-              <ContextMenu.SubTrigger class="DropdownMenuSubTrigger">
-                More Tools
-                <div class="RightSlot">
-                  <ChevronRight width={15} height={15} />
-                </div>
-              </ContextMenu.SubTrigger>
-              <ContextMenu.Portal>
-                <ContextMenu.SubContent class="DropdownMenuSubContent">
-                  <ContextMenu.Item class="DropdownMenuItem">
-                    Save Page As… <div class="RightSlot">⌘+S</div>
-                  </ContextMenu.Item>
-                  <ContextMenu.Item class="DropdownMenuItem">
-                    Create Shortcut…
-                  </ContextMenu.Item>
-                  <ContextMenu.Item class="DropdownMenuItem">
-                    Name Window…
-                  </ContextMenu.Item>
-                  <ContextMenu.Separator class="DropdownMenu.Separator" />
-                  <ContextMenu.Item class="DropdownMenuItem">
-                    Developer Tools
-                  </ContextMenu.Item>
-                </ContextMenu.SubContent>
-              </ContextMenu.Portal>
-            </ContextMenu.Sub>
-            <ContextMenu.Separator class="DropdownMenuSeparator" />
-            <ContextMenu.Label class="DropdownMenuLabel">
-              People
-            </ContextMenu.Label>
-          </ContextMenu.Content>
-        </ContextMenu.Portal>
-      </ContextMenu.Root> */}
+      <ContextMenu store={contextMenu}>
+        <button>Hello</button>
+      </ContextMenu>
       {/* <Modal
           title="同名影视剧"
           visible={visible}

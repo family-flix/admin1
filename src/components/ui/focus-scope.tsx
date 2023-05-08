@@ -1,5 +1,6 @@
-import { FocusScopeCore } from "@/domains/ui/focus-scope";
 import { JSX, onCleanup } from "solid-js";
+
+import { FocusScopeCore } from "@/domains/ui/focus-scope";
 
 const FocusScopeRoot = (props: {
   store: FocusScopeCore;

@@ -1,17 +1,17 @@
 import { JSX, Show, createContext, createSignal, useContext } from "solid-js";
 
 import { TabsCore } from "@/domains/ui/tabs";
+import { PresenceCore } from "@/domains/ui/presence";
 
 import * as RovingFocusGroup from "./roving-focus";
 import { Presence } from "./presence";
-import { PresenceCore } from "@/domains/ui/presence";
 
 const TabsContext = createContext<TabsCore>();
-const TabsRoot = (props: {
-  store: TabsCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const TabsRoot = (
+  props: {
+    store: TabsCore;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
@@ -30,7 +30,7 @@ const TabsRoot = (props: {
   );
 };
 
-const TabsList = (props: { class?: string; children: JSX.Element }) => {
+const TabsList = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   // const { store } = props;
   const store = useContext(TabsContext);
 
@@ -50,11 +50,11 @@ const TabsList = (props: { class?: string; children: JSX.Element }) => {
   );
 };
 
-const TabsTrigger = (props: {
-  value: string;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const TabsTrigger = (
+  props: {
+    value: string;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { value } = props;
   const store = useContext(TabsContext);
 
@@ -82,48 +82,48 @@ const TabsTrigger = (props: {
   );
 };
 
-const TabsContent = (props: {
-  value: string;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const TabsContent = (
+  props: {
+    value: string;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
   const { value } = props;
   const store = useContext(TabsContext);
 
-  const [state, setState] = createSignal(store.state);
-
   const presence = new PresenceCore();
+  const [state, setState] = createSignal(store.state);
+  const [presenceState, setPresenceState] = createSignal(presence.state);
+  presence.onStateChange((nextState) => {
+    setPresenceState(nextState);
+  });
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+
   store.appendContent({
     id: store.uid(),
     value,
     presence,
   });
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
-  });
-
   const orientation = () => state().orientation;
   const isSelected = () => state().curValue === value;
+  const open = () => presenceState().open;
 
   return (
     <Presence store={presence}>
-      {(presenceProps) => {
-        return (
-          <div
-            class={props.class}
-            data-state={isSelected ? "active" : "inactive"}
-            data-orientation={orientation()}
-            role="tabpanel"
-            // aria-labelledby={triggerId}
-            hidden={!presenceProps.present}
-            // id={contentId}
-            tabIndex={0}
-          >
-            <Show when={presenceProps.present}>{props.children}</Show>
-          </div>
-        );
-      }}
+      <div
+        class={props.class}
+        data-state={isSelected ? "active" : "inactive"}
+        data-orientation={orientation()}
+        role="tabpanel"
+        // aria-labelledby={triggerId}
+        hidden={!open()}
+        // id={contentId}
+        tabIndex={0}
+      >
+        <Show when={open()}>{props.children}</Show>
+      </div>
     </Presence>
   );
 };

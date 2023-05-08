@@ -10,6 +10,7 @@ enum Events {
   Leave,
   Focus,
   Blur,
+  Click,
 }
 type TheTypesOfEvents = {
   [Events.StateChange]: MenuItemState;
@@ -17,40 +18,65 @@ type TheTypesOfEvents = {
   [Events.Leave]: void;
   [Events.Focus]: void;
   [Events.Blur]: void;
+  [Events.Click]: void;
 };
 type MenuItemState = {
+  label: string;
   /** 有子菜单并且子菜单展示了 */
-  subOpen: boolean;
+  open: boolean;
   disabled: boolean;
   focused: boolean;
+};
+type MenuItemProps = {
+  label: string;
+  disabled: boolean;
+  /** 子菜单 */
+  menu?: MenuCore;
+  /** 点击后的回调 */
+  onClick?: () => void;
+};
+const defaultMenuItemState: MenuItemState = {
+  label: "",
+  open: false,
+  disabled: false,
+  focused: false,
 };
 
 export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   name = "MenuItemCore";
+  debug = true;
 
-  state: MenuItemState = {
-    subOpen: false,
-    disabled: false,
-    focused: false,
-  };
+  state: MenuItemState = { ...defaultMenuItemState };
 
-  sub: MenuCore | null = null;
+  label: string;
+  /** 子菜单 */
+  menu: MenuCore | null = null;
 
-  _visible = false;
   _enter = false;
-  _focus = false;
 
-  /** MenuItem 悬浮时展示的菜单 */
-  setSub(sub: MenuCore) {
-    sub.onShow(() => {
-      this.state.subOpen = true;
-      this.emit(Events.StateChange, { ...this.state });
-    });
-    sub.onHide(() => {
-      this.state.subOpen = false;
-      this.emit(Events.StateChange, { ...this.state });
-    });
-    this.sub = sub;
+  constructor(options: Partial<{ name: string } & MenuItemProps> = {}) {
+    super(options);
+
+    const { label, disabled = false, menu, onClick } = options;
+    this.state.label = label;
+    this.state.disabled = disabled;
+    this.label = label;
+    if (menu) {
+      this.menu = menu;
+      menu.onShow(() => {
+        this.state.open = true;
+        this.emit(Events.StateChange, { ...this.state });
+      });
+      menu.onHide(() => {
+        this.state.open = false;
+        this.emit(Events.StateChange, { ...this.state });
+      });
+    }
+    if (onClick) {
+      this.onClick(() => {
+        onClick();
+      });
+    }
   }
   /** 禁用指定菜单项 */
   disable() {
@@ -59,15 +85,22 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 鼠标进入菜单项 */
   enter() {
+    // console.log("enter", this.label, this._enter);
     if (this._enter) {
       return;
     }
     this.log("enter");
     this._enter = true;
     this.state.focused = true;
-    // this.state.visible = true;
     this.emit(Events.Enter);
     this.emit(Events.StateChange, { ...this.state });
+  }
+  move() {
+    if (this.state.disabled) {
+      this.leave();
+      return;
+    }
+    this.enter();
   }
   /** 鼠标离开菜单项 */
   leave() {
@@ -81,32 +114,37 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   focus() {
-    if (this._focus) {
+    if (this.state.focused) {
       return;
     }
     this.log("focus");
-    this._focus = true;
     this.state.focused = true;
     this.emit(Events.Focus);
     this.emit(Events.StateChange, { ...this.state });
   }
   blur() {
-    if (this._focus === false) {
+    if (this.state.focused === false) {
       return;
     }
     this.log("blur");
-    this._focus = false;
     this.state.focused = false;
+    this._enter = false;
     this.emit(Events.Blur);
     this.emit(Events.StateChange, { ...this.state });
   }
-
+  click() {
+    this.emit(Events.Click);
+  }
+  reset() {
+    // this.state = { ...defaultMenuItemState };
+    this._enter = false;
+  }
   destroy() {
     super.destroy();
-
-    if (this.sub) {
-      this.sub.destroy();
+    if (this.menu) {
+      this.menu.destroy();
     }
+    this.reset();
   }
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
@@ -123,6 +161,9 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   }
   onBlur(handler: Handler<TheTypesOfEvents[Events.Blur]>) {
     return this.on(Events.Blur, handler);
+  }
+  onClick(handler: Handler<TheTypesOfEvents[Events.Click]>) {
+    return this.on(Events.Click, handler);
   }
 
   get [Symbol.toStringTag]() {

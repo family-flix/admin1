@@ -34,26 +34,28 @@ const PresenceEventMap = {
 };
 type PresenceState = {
   mounted: boolean;
-  visible: boolean;
+  open: boolean;
   unmounted: boolean;
 };
 export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   name = "PresenceCore";
+  debug = true;
+
   /** 之前是否可见状态 */
   private prevPresent = false;
   styles: CSSStyleDeclaration;
   animationName = "none";
   // private state = "unmounted";
 
-  constructor() {
-    super();
-  }
-
   state: PresenceState = {
     mounted: false,
-    visible: false,
+    open: false,
     unmounted: false,
   };
+
+  constructor(options: Partial<{ name: string }> = {}) {
+    super(options);
+  }
 
   calc(present) {
     // const styles = this.styles;
@@ -87,7 +89,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 是否可见 */
   get isPresent() {
-    return this.state.visible;
+    return this.state.open;
     // return ["mounted", "unmountSuspended"].includes(this.state);
   }
   setStyles(styles: CSSStyleDeclaration) {
@@ -97,13 +99,14 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     this.log("show");
     // this.calc(true);
     // this.state.mounted = true;
-    this.state.visible = true;
-    this.emit(Events.Show);
+    this.state.open = true;
+    // this.emit(Events.Show);
     this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
+    this.log("hide");
     // this.calc(false);
-    this.state.visible = false;
+    this.state.open = false;
     this.emit(Events.Hidden);
     this.emit(Events.StateChange, { ...this.state });
   }
@@ -118,8 +121,9 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     //   nextState === "mounted" ? currentAnimationName : "none";
     // this.calc(nextState);
   }
-  endAnimate() {
-    if (this.state.visible) {
+  animationEnd() {
+    if (this.state.open) {
+      this.emit(Events.Show);
       return;
     }
     this.state.unmounted = true;

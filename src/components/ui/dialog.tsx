@@ -5,13 +5,13 @@ import { children, createSignal } from "solid-js";
 import { Portal } from "solid-js/web";
 import { JSX } from "solid-js";
 
-import { cn } from "@/lib/utils";
 import { Presence } from "@/components/ui/presence";
 import { DialogCore } from "@/domains/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export const Dialog = (props: { core: DialogCore; children: JSX.Element }) => {
-  const c = children(() => props.children);
-  return <div>{c()}</div>;
+  // const c = children(() => props.children);
+  return <div>{props.children}</div>;
 };
 
 export const DialogPortal = (props: {
@@ -79,15 +79,13 @@ export const DialogContent = (props: {
   children: JSX.Element;
 }) => {
   const { store } = props;
-  const c = children(() => props.children);
+  // const c = children(() => props.children);
   const [visible, setVisible] = createSignal(store.visible);
 
   store.onVisibleChange((nextVisible) => {
     setVisible(nextVisible);
   });
   const state = () => getState(visible());
-
-  // console.log("[COMPONENT]DialogContent - render");
 
   return (
     <DialogPortal store={store}>
@@ -99,7 +97,7 @@ export const DialogContent = (props: {
           "animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 data-[state=open]:sm:slide-in-from-bottom-0"
         )}
       >
-        {c()}
+        {props.children}
         <div
           data-state={state()}
           class="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-slate-100 dark:focus:ring-slate-400 dark:focus:ring-offset-slate-900 dark:data-[state=open]:bg-slate-800"

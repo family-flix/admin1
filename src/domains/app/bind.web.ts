@@ -2,6 +2,7 @@ import { Application } from "@/domains/app";
 
 export function bind(app: Application) {
   const { router } = app;
+  const ownerDocument = globalThis.document;
   app.getComputedStyle = (el: HTMLElement) => {
     return window.getComputedStyle(el);
   };
@@ -41,7 +42,11 @@ export function bind(app: Application) {
   window.addEventListener("blur", () => {
     app.emit(app.Events.Blur);
   });
-  document.addEventListener("click", (event) => {
+  ownerDocument.addEventListener("keydown", (event) => {
+    const { key } = event;
+    app.keydown({ key });
+  });
+  ownerDocument.addEventListener("click", (event) => {
     let target = event.target;
     if (target instanceof Document) {
       return;
@@ -101,4 +106,12 @@ export function bind(app: Application) {
       path
     );
   });
+
+  const originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
+  app.disablePointer = () => {
+    ownerDocument.body.style.pointerEvents = "none";
+  };
+  app.enablePointer = () => {
+    ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
+  };
 }

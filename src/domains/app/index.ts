@@ -18,6 +18,8 @@ enum Events {
   PopState,
   Resize,
   Blur,
+  Keydown,
+  EscapeKeyDown,
   ClickLink,
   // 该怎么处理？
   DrivesChange,
@@ -36,6 +38,10 @@ type TheTypesOfEvents = {
     width: number;
     height: number;
   };
+  [Events.Keydown]: {
+    key: string;
+  };
+  [Events.EscapeKeyDown]: void;
   [Events.ClickLink]: {
     href: string;
   };
@@ -109,10 +115,25 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   setSize(size: { width: number; height: number }) {
     this.size = size;
   }
-  getComputedStyle() {
-    // 请实现该方法
+  getComputedStyle(el: HTMLElement): CSSStyleDeclaration {
+    throw new Error("请实现 getComputedStyle 方法");
+  }
+  disablePointer() {
+    throw new Error("请实现 disablePointer 方法");
+  }
+  enablePointer() {
+    throw new Error("请实现 enablePointer 方法");
   }
   /** 平台相关的全局事件 */
+  keydown({ key }) {
+    if (key === "Escape") {
+      this.escape();
+    }
+    this.emit(Events.Keydown, { key });
+  }
+  escape() {
+    this.emit(Events.EscapeKeyDown);
+  }
   popstate({ type, pathname }: { type: string; pathname: string }) {
     this.emit(Events.PopState, { type, pathname });
   }
@@ -158,6 +179,12 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   }
   onClickLink(handler: Handler<TheTypesOfEvents[Events.ClickLink]>) {
     this.on(Events.ClickLink, handler);
+  }
+  onKeydown(handler: Handler<TheTypesOfEvents[Events.Keydown]>) {
+    this.on(Events.Keydown, handler);
+  }
+  onEscapeKeyDown(handler: Handler<TheTypesOfEvents[Events.EscapeKeyDown]>) {
+    this.on(Events.EscapeKeyDown, handler);
   }
   /**
    * ----------------

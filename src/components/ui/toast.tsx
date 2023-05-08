@@ -1,13 +1,12 @@
 /**
  * @file 纯粹的弹窗组件
  */
-import { For, children, createSignal } from "solid-js";
+import { For, children, createSignal, JSX } from "solid-js";
 import { Portal } from "solid-js/web";
-import { JSX } from "solid-js";
 
-import { cn } from "@/lib/utils";
 import { Presence } from "@/components/ui/presence";
 import { ToastCore } from "@/domains/ui/toast";
+import { cn } from "@/utils";
 
 export const Toast = (props: { core: ToastCore; texts: string[] }) => {
   const { core } = props;

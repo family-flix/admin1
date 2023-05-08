@@ -115,9 +115,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   };
 
   constructor(options: DriveState) {
-    super();
-    const { id } = options;
+    super(options);
+    const { id, name } = options;
     this.id = id;
+    this.name = name;
     this.state = options;
   }
 
@@ -183,10 +184,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     const r = await update_aliyun_drive(this.id, this.values);
     this.values = {};
     if (r.error) {
-      this.emitError(r.error.message);
+      this.tip({ text: ["更新失败", r.error.message] });
       return Result.Err(r.error.message);
     }
-    this.emitTip("更新云盘信息成功");
+    this.tip({ text: ["更新云盘信息成功"] });
     return Result.Ok("更新云盘信息成功");
   }
   /** 刷新网盘基本信息 */
@@ -251,10 +252,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       drive_id: this.id,
     });
     if (r.error) {
-      this.emitError(r.error.message);
+      this.tip({ text: ["更新失败", r.error.message] });
       return Result.Err(r.error);
     }
-    this.emitTip("更新成功");
+    this.tip({ text: ["更新成功"] });
     return Result.Ok(null);
   }
   /** 获取该网盘内的文件/文件夹列表 */
@@ -364,18 +365,6 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     this.on(Events.StateChange, handler);
-  }
-  emitTip(msg: string) {
-    this.emit(Events.Tip, [msg]);
-  }
-  onTip(handler: Handler<TheTypesOfEvents[Events.Tip]>) {
-    this.on(Events.Tip, handler);
-  }
-  emitError(msg: string) {
-    this.emit(Events.Error, new Error(msg));
-  }
-  onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
-    this.on(Events.Error, handler);
   }
   emitCompleted(result: TheTypesOfEvents[Events.Completed]) {
     this.emit(Events.Completed, result);
