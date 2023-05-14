@@ -1,5 +1,12 @@
-import { FetchParams } from "@/domains/list-helper-core";
-// import { PartialSearchedTV } from "@/domains/tmdb/services";
+import dayjs from "dayjs";
+
+import { FetchParams } from "@/domains/list/typing";
+import {
+  episode_to_chinese_num,
+  relative_time_from_now,
+  season_to_chinese_num,
+} from "@/utils";
+import { request } from "@/utils/request";
 import {
   ListResponse,
   RequestedResource,
@@ -7,13 +14,6 @@ import {
   Unpacked,
   UnpackedResult,
 } from "@/types";
-import {
-  episode_to_chinese_num,
-  relative_time_from_now,
-  season_to_chinese_num,
-} from "@/utils";
-import { request } from "@/utils/request";
-import dayjs from "dayjs";
 
 /**
  * 获取电视剧列表
@@ -39,7 +39,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
   if (resp.error) {
     return resp;
   }
-  return {
+  return Result.Ok({
     ...resp.data,
     list: resp.data.list.map((history) => {
       const { ...rest } = history;
@@ -48,7 +48,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
         // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
       };
     }),
-  };
+  });
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][0];
 

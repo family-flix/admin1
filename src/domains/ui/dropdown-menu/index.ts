@@ -40,7 +40,7 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     this.listenItems(items);
     this.menu = new MenuCore({ items });
     this.menu.onHide(() => {
-      console.log("menu is hidden");
+      // console.log("menu is hidden");
       this.menu.reset();
     });
   }
@@ -48,7 +48,7 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
   listenItems(items: MenuItemCore[]) {
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
-      console.log(item);
+      // console.log(item);
       // item.onEnter(() => {
       //   this.maybeLeave = false;
       //   this.inside = true;

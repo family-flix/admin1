@@ -1,50 +1,26 @@
-"use client";
-
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Root,
+  Content,
+  Header,
+  Title,
+  Footer,
+  Submit,
 } from "@/components/ui/dialog";
-import { MatchedTVOfTMDB } from "@/services";
-import { Result } from "@/types";
 
-import TMDBSearcher from ".";
+import { TMDBSearcherDialogCore } from "./store";
+import { TMDBSearcher } from "./searcher";
+import { Button } from "@/components/ui/button";
 
-export function TMDBSearcherDialog(props: {
-  title?: string;
-  default_value?: string;
-  visible: boolean;
-  on_submit: (tv: MatchedTVOfTMDB) => Promise<Result<boolean>>;
-  on_visible_change: (nextVisible: boolean) => void;
-}) {
-  const {
-    title = "影视剧搜索",
-    default_value,
-    visible,
-    on_visible_change,
-    on_submit,
-  } = props;
+export function TMDBSearcherDialog(props: { store: TMDBSearcherDialogCore }) {
+  const { store } = props;
   return (
-    <Dialog open={visible} onOpenChange={on_visible_change}>
-      {/* <DialogTrigger asChild>
-        <Button variant="outline">Edit Profile</Button>
-      </DialogTrigger> */}
-      <DialogContent className="sm:max-w-[425px] xl:max-w-[728px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <TMDBSearcher
-          default_keyword={default_value}
-          on_submit={async (t) => {
-            const r = await on_submit(t);
-            if (r.data) {
-              on_visible_change(false);
-              return;
-            }
-          }}
-        />
-      </DialogContent>
-    </Dialog>
+    <Root store={store.dialog}>
+      <Content class="sm:max-w-[425px] xl:max-w-[728px]" store={store.dialog}>
+        <TMDBSearcher store={store.tmdb} />
+        <Footer>
+          <Submit store={store.dialog}>确定</Submit>
+        </Footer>
+      </Content>
+    </Root>
   );
 }

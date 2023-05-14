@@ -1,15 +1,14 @@
-import { createSignal, onMount } from "solid-js";
+import { JSX, Show, createSignal, onMount } from "solid-js";
 
-interface IProps {
-  className?: string;
-  src?: string;
-  alt?: string;
-}
-export const LazyImage = (props) => {
-  const { className, src, alt } = props;
+export const LazyImage = (
+  props: Partial<{ src: string; alt: string }> &
+    JSX.HTMLAttributes<HTMLImageElement>
+) => {
+  const { src, alt } = props;
 
   let $img;
   let has_visible = false;
+
   const [visible, set_visible] = createSignal(false);
 
   onMount(() => {
@@ -38,23 +37,21 @@ export const LazyImage = (props) => {
   // console.log("[COMPONENT]LazyImage - render", visible);
 
   return (
-    <div ref={$img} class={className}>
-      {(() => {
-        if (visible()) {
-          return (
-            <img
-              src={src}
-              alt={alt}
-              onError={() => {
-                set_visible(false);
-              }}
-            />
-          );
+    <div ref={$img} class={props.class}>
+      <Show
+        when={visible()}
+        fallback={
+          <div class="w-full h-full bg-gray-200 dark:bg-gray-800"></div>
         }
-        return <div class="w-full h-full bg-gray-200 dark:bg-gray-800"></div>;
-      })()}
+      >
+        <img
+          src={src}
+          alt={alt}
+          onError={() => {
+            set_visible(false);
+          }}
+        />
+      </Show>
     </div>
   );
 };
-
-// export default LazyImage;

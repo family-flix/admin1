@@ -2,7 +2,10 @@
  * @file 电视剧
  */
 import { Result } from "@/types";
-import { user } from "@/domains/user";
+
+import { BaseDomain } from "@/domains/base";
+import { UserCore } from "@/domains/user";
+import { find_recommended_pathname } from "@/utils";
 
 import {
   EpisodeResolutionTypes,
@@ -17,9 +20,15 @@ import {
   fetch_episode_profile,
   fetch_tv_and_episodes_profile,
 } from "./services";
-import { find_recommended_pathname, noop } from "@/utils";
 
-export class TV {
+enum Events {}
+type TheTypesOfEvents = {};
+type TVState = {};
+type TVProps = {
+  id: string;
+};
+
+export class TVCore extends BaseDomain<TheTypesOfEvents> {
   /** 电视剧 id */
   id: string = "";
   /** 该电视剧名称、剧集等信息 */
@@ -28,13 +37,16 @@ export class TV {
   _cur_episode: EpisodeProfile | null = null;
   _current_time = 0;
   /** 发生的错误 */
-  error: Error | null = null;
-  on_error_notice: (msg: string) => void = noop;
-  on_notice: (msg: string) => void = noop;
+  // error: Error | null = null;
 
-  constructor(options: { id: string }) {
-    // console.log("invoke constructor", options);
-    this.id = options.id;
+  user: UserCore;
+
+  state: TVState = {};
+
+  constructor(options: Partial<{ name: string } & TVProps> = {}) {
+    super(options);
+    const { id } = options;
+    this.id = id;
   }
   public get cur_episode() {
     if (this._cur_episode === null) {
@@ -56,17 +68,20 @@ export class TV {
 
   async init(id: string) {
     this.id = id;
-    if (!user.is_login) {
-      return this.error_notice(Result.Err("请先登录"));
+    if (!this.user.isLogin) {
+      this.tip({ text: ["请先登录"] });
+      return;
     }
     const resp = await this.fetch_profile();
     if (resp.error) {
-      return this.error_notice(Result.Err(resp.error));
+      this.tip({ text: ["获取详情失败", resp.error.message] });
+      return;
     }
     console.log("[DOMAIN]TV - init", id);
     const { first_episode } = resp.data;
     if (first_episode === null) {
-      return this.error_notice(Result.Err("该电视剧尚未收录影片"));
+      this.tip({ text: ["该电视剧尚未收录影片"] });
+      return;
     }
     const history_resp = await fetch_play_history_of_tv({
       tv_id: this.id,
@@ -110,8 +125,9 @@ export class TV {
       id: episode_id,
     });
     if (resp.error) {
-      this.error = resp.error;
-      return resp;
+      // this.error = resp.error;
+      this.tip({ text: ["获取影片详情失败", resp.error.message] });
+      return;
     }
     this._cur_episode = resp.data;
     return this._cur_episode;
@@ -119,7 +135,8 @@ export class TV {
   /** 播放下一集 */
   async play_next_episode() {
     if (this._info === null || this._cur_episode === null) {
-      return this.notice("视频还未加载");
+      this.tip({ text: ["视频还未加载"] });
+      return;
     }
     const { seasons, folders } = this._info;
     const {
@@ -128,14 +145,17 @@ export class TV {
       parent_paths,
     } = this._cur_episode;
     if (!folders) {
-      return this.notice("没有更多影片了");
+      this.tip({ text: ["没有更多影片了"] });
+      return;
     }
     if (folders.length === 0) {
-      return this.notice("没有更多影片了");
+      this.tip({ text: ["没有更多影片了"] });
+      return;
     }
     const folder = folders.find((f) => f.parent_paths === parent_paths);
     if (!folder) {
-      return this.notice("加载异常，请刷新后重试");
+      this.tip({ text: ["加载异常，请刷新后重试"] });
+      return;
     }
     const { episodes } = folder;
     const index = episodes.findIndex((e) => e.id === cur_episode_id);
@@ -148,24 +168,28 @@ export class TV {
       return this.play_episode(next_episode.id);
     }
     if (seasons.length === 1) {
-      return this.notice("已经是最后一集了");
+      this.tip({ text: ["已经是最后一集了"] });
+      return;
     }
     const cur_season_index = seasons.findIndex(
       (s) => s == season_of_cur_episode
     );
     if (cur_season_index === -1) {
-      return this.notice("已经是最后一集了");
+      this.tip({ text: ["已经是最后一集了"] });
+      return;
     }
     const next_season = seasons[cur_season_index + 1];
     if (!next_season) {
-      return this.notice("已经是最后一集了");
+      this.tip({ text: ["已经是最后一集了"] });
+      return;
     }
     await this.load_episodes_of_special_season(next_season);
   }
   /** 播放上一集 */
   async play_prev_episode() {
     if (this._info === null || this._cur_episode === null) {
-      return this.notice("视频还未加载");
+      this.tip({ text: ["视频还未加载"] });
+      return;
     }
     const { seasons, folders } = this._info;
     const {
@@ -174,14 +198,17 @@ export class TV {
       parent_paths,
     } = this._cur_episode;
     if (!folders) {
-      return this.notice("没有更多影片了");
+      this.tip({ text: ["没有更多影片了"] });
+      return;
     }
     if (folders.length === 0) {
-      return this.notice("没有更多影片了");
+      this.tip({ text: ["没有更多影片了"] });
+      return;
     }
     const folder = folders.find((f) => f.parent_paths === parent_paths);
     if (!folder) {
-      return this.notice("加载异常，请刷新后重试");
+      this.tip({ text: ["加载异常，请刷新后重试"] });
+      return;
     }
     const { episodes } = folder;
     const index = episodes.findIndex((e) => e.id === cur_episode_id);
@@ -194,24 +221,28 @@ export class TV {
       return this.play_episode(prev_episode.id);
     }
     if (seasons.length === 1) {
-      return this.notice("已经是第一集了");
+      this.tip({ text: ["已经是第一集了"] });
+      return;
     }
     const cur_season_index = seasons.findIndex(
       (s) => s == season_of_cur_episode
     );
     if (cur_season_index === -1) {
-      return this.notice("已经是第一集了");
+      this.tip({ text: ["已经是第一集了"] });
+      return;
     }
     const next_season = seasons[cur_season_index - 1];
     if (!next_season) {
-      return this.notice("已经是第一集了");
+      this.tip({ text: ["已经是第一集了"] });
+      return;
     }
     await this.load_episodes_of_special_season(next_season);
   }
   /** 加载指定季下的文件夹 */
   async load_episodes_of_special_season(season: string) {
     if (this._info === null) {
-      return this.notice("视频还未加载");
+      this.tip({ text: ["视频还未加载"] });
+      return;
     }
     if (season === this._cur_episode?.season) {
       return;
@@ -221,10 +252,12 @@ export class TV {
       season,
     });
     if (episodes_same_season_res.error) {
-      return this.notice("获取影片信息失败，请刷新后重试");
+      this.tip({ text: ["获取影片信息失败，请刷新后重试"] });
+      return;
     }
     if (episodes_same_season_res.data.length === 0) {
-      return this.notice("已经是最后一集了");
+      this.tip({ text: ["已经是最后一集了"] });
+      return;
     }
     this._info.folders = episodes_same_season_res.data;
     const recommended_path = find_recommended_pathname(
@@ -244,17 +277,20 @@ export class TV {
   /** 切换分辨率 */
   switch_resolution(target_type: EpisodeResolutionTypes) {
     if (this._cur_episode === null) {
-      return this.notice("视频还未加载完成");
+      this.tip({ text: ["视频还未加载完成"] });
+      return;
     }
     const { type, other } = this._cur_episode;
     if (type === target_type) {
-      return this.notice(
-        `当前已经是${EpisodeResolutionTypeTexts[target_type]}了`
-      );
+      this.tip({
+        text: [`当前已经是${EpisodeResolutionTypeTexts[target_type]}了`],
+      });
+      return;
     }
     const matched_resolution = other.find((e) => e.type === target_type);
     if (!matched_resolution) {
-      return this.notice(`没有 '${target_type}' 分辨率`);
+      this.tip({ text: [`没有 '${target_type}' 分辨率`] });
+      return;
     }
     const { url, type: next_type, width, height } = matched_resolution;
     this._cur_episode = {
@@ -275,7 +311,7 @@ export class TV {
     }
     const { current_time, duration } = params;
     // console.log("[DOMAIN]TVPlay - update_play_progress", params, user.is_login);
-    if (user.is_login) {
+    if (this.user.isLogin) {
       update_play_history({
         tv_id: this.id,
         episode_id: this._cur_episode.id,
@@ -283,17 +319,5 @@ export class TV {
         duration,
       });
     }
-  }
-  error_notice(res: Result<unknown>) {
-    if (!res.error) {
-      const e = "未知错误";
-      this.on_error_notice(e);
-      return Result.Err(e);
-    }
-    this.on_error_notice(res.error.message);
-    return res;
-  }
-  notice(msg: string) {
-    this.on_notice(msg);
   }
 }

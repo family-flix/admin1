@@ -1,11 +1,12 @@
 /**
- * @file 路由领域
+ * @file 根据路由判断是否可见的视图块
  */
 import qs from "qs";
 import { Handler } from "mitt";
 import { pathToRegexp } from "path-to-regexp";
 
 import { BaseDomain } from "@/domains/base";
+import { PresenceCore } from "@/domains/ui/presence";
 
 import { PageCore } from "./something";
 
@@ -15,6 +16,7 @@ enum Events {
   Show,
   Hidden,
   Start,
+  StateChange,
 }
 type TheTypesOfEvents = {
   [Events.SubViewsChanged]: ViewCore[];
@@ -22,32 +24,26 @@ type TheTypesOfEvents = {
   [Events.Show]: void;
   [Events.Hidden]: void;
   [Events.Start]: { pathname: string };
-};
-type ParamConfigure = {
-  name: string;
-  prefix: string;
-  suffix: string;
-  pattern: string;
-  modifier: string;
+  [Events.StateChange]: ViewState;
 };
 
-// type ViewCore = {
-//   uid: number;
-//   pathname: string;
-//   /** query 参数 */
-//   query: Record<string, string>;
-//   /** 路由参数 */
-//   params: Record<string, string>;
-//   /** 页面准备销毁 */
-//   // unmounting: boolean;
-//   /** 页面实例 */
-//   page: PageCore;
-// } & RouteConfigure;
+type ViewState = {
+  /** 是否加载到页面上（如果有动画，在隐藏动画播放时该值仍为 true，在 animation end 后将该值置为 false 来卸载视图） */
+  mounted: boolean;
+  /** 是否可见，用于判断是「进入动画」还是「退出动画」 */
+  visible: boolean;
+};
+type ViewProps = {
+  prefix: string;
+  title: string;
+  component: unknown;
+};
 
 export class ViewCore extends BaseDomain<TheTypesOfEvents> {
   name = "ViewCore";
   debug = false;
 
+  presence: PresenceCore;
   prefix: string | null;
   /** 配置信息 */
   configs: {
@@ -59,8 +55,8 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     keys: ParamConfigure[];
     config: () => ViewCore;
   }[];
-  _uid: number;
 
+  id = this.uid();
   title: string;
   page: PageCore;
 
@@ -72,7 +68,6 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
   curSubView: ViewCore;
   /** 浏览器返回后，被销毁的那个栈 */
   destroyStacksWhenBack: ViewCore[] = [];
-
   /** 当前 pathname */
   pathname: string;
   /** 当前路由的 query */
@@ -83,20 +78,27 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
   url: string;
   component: unknown;
 
-  constructor(
-    options: Partial<{
-      prefix: string;
-      title: string;
-      component: unknown;
-    }> = {}
-  ) {
-    super();
+  state: ViewState = {
+    mounted: true,
+    visible: true,
+  };
+
+  constructor(options: Partial<{ name: string } & ViewProps> = {}) {
+    super(options);
+
     const { prefix = null, title, component } = options;
     this.prefix = prefix;
     this.title = title;
     this.component = component;
     this.configs = [];
-    this._uid = this.uid();
+
+    this.presence = new PresenceCore();
+    this.presence.onStateChange((nextState) => {
+      const { open, mounted } = nextState;
+      this.state.visible = open;
+      this.state.mounted = mounted;
+      this.emit(Events.StateChange, { ...this.state });
+    });
   }
 
   /** 判断给定的 pathname 是否有匹配的内容 */
@@ -210,14 +212,6 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     }
     subView.checkMatch({ pathname, type });
   }
-  /** 视图栈改变 */
-  onSubViewsChange(handler: Handler<TheTypesOfEvents[Events.SubViewsChanged]>) {
-    this.on(Events.SubViewsChanged, handler);
-  }
-  /** 当前视图改变 */
-  onSubViewChange(handler: Handler<TheTypesOfEvents[Events.SubViewChanged]>) {
-    this.on(Events.SubViewChanged, handler);
-  }
   /** 添加子视图 */
   register(path: string, configFactory: () => ViewCore) {
     // @todo 检查重复注册路由
@@ -232,35 +226,55 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     return this;
   }
   show() {
-    if (this._hidden === false) {
-      return;
-    }
-    this._hidden = false;
-    this.emit(Events.Show);
-  }
-  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
-    this.on(Events.Show, handler);
+    this.presence.show();
+    // if (this._hidden === false) {
+    //   return;
+    // }
+    // this._hidden = false;
+    // this.emit(Events.Show);
   }
   hide() {
-    if (this._hidden === true) {
-      return;
-    }
-    this._hidden = true;
-    this.emit(Events.Hidden);
-  }
-  onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
-    this.on(Events.Hidden, handler);
+    this.presence.hide();
+    // if (this._hidden === true) {
+    //   return;
+    // }
+    // this._hidden = true;
+    // this.emit(Events.Hidden);
   }
   async start({ pathname }: { pathname: string }) {
     this.log("current pathname is", this.title, pathname);
     this.checkMatch({ pathname, type: "push" });
     this.emit(Events.Start, { pathname });
   }
+
   onStart(handler: Handler<TheTypesOfEvents[Events.Start]>) {
     this.on(Events.Start, handler);
   }
+  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
+    this.on(Events.Show, handler);
+  }
+  onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
+    this.on(Events.Hidden, handler);
+  }
+  /** 视图栈改变 */
+  onSubViewsChange(handler: Handler<TheTypesOfEvents[Events.SubViewsChanged]>) {
+    this.on(Events.SubViewsChanged, handler);
+  }
+  /** 当前视图改变 */
+  onSubViewChange(handler: Handler<TheTypesOfEvents[Events.SubViewChanged]>) {
+    this.on(Events.SubViewChanged, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    this.on(Events.StateChange, handler);
+  }
 }
-
+type ParamConfigure = {
+  name: string;
+  prefix: string;
+  suffix: string;
+  pattern: string;
+  modifier: string;
+};
 function buildParams(opt: {
   regexp: RegExp;
   targetPath: string;

@@ -17,6 +17,7 @@ enum Events {
   OK,
   AnimationStart,
   AnimationEnd,
+  StateChange,
 }
 type TheTypesOfEvents = {
   [Events.BeforeShow]: void;
@@ -28,20 +29,43 @@ type TheTypesOfEvents = {
   [Events.Cancel]: void;
   [Events.AnimationStart]: void;
   [Events.AnimationEnd]: void;
+  [Events.StateChange]: DialogState;
+};
+type DialogState = {
+  open: boolean;
+};
+type DialogProps = {
+  onCancel: () => void;
+  onOk: () => void;
 };
 
 export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   visible = false;
   present = new PresenceCore();
 
-  constructor() {
-    super();
+  state: DialogState = {
+    open: false,
+  };
 
+  constructor(options: Partial<{ name: string } & DialogProps> = {}) {
+    super(options);
+
+    const { onOk, onCancel } = options;
+    if (onOk) {
+      this.onOk(onOk);
+    }
+    if (onCancel) {
+      this.onCancel(onCancel);
+    }
     this.present.onShow(async () => {
+      this.state.open = true;
       this.emit(Events.VisibleChange, true);
+      this.emit(Events.StateChange, { ...this.state });
     });
     this.present.onHidden(async () => {
+      this.state.open = false;
       this.emit(Events.VisibleChange, false);
+      this.emit(Events.StateChange, { ...this.state });
     });
   }
   /** 显示弹窗 */
@@ -60,6 +84,7 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   cancel() {
     this.emit(Events.Cancel);
   }
+
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
     this.on(Events.Show, handler);
   }

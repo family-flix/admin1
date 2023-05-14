@@ -3,33 +3,26 @@
  */
 import { JSX } from "solid-js";
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogHeader,
-  // DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Root, Title, Content, Header, Footer } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DialogCore } from "@/domains/ui/dialog";
 
-const Modal = (props: {
-  core: DialogCore;
-  title: string;
+export const Modal = (props: {
+  store: DialogCore;
+  title?: string;
   children: JSX.Element;
   footer?: JSX.Element;
 }) => {
-  const { core, title, children, footer } = props;
+  const { store: store, title, children, footer } = props;
 
   return (
-    <Dialog core={core}>
-      <DialogContent store={core}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
+    <Root store={store}>
+      <Content store={store}>
+        <Header>
+          <Title>{title}</Title>
+        </Header>
         {children}
-        <DialogFooter>
+        <Footer>
           {(() => {
             if (footer !== undefined) {
               return footer;
@@ -40,7 +33,7 @@ const Modal = (props: {
                   variant="subtle"
                   size="default"
                   onClick={() => {
-                    core.cancel();
+                    store.cancel();
                   }}
                 >
                   取消
@@ -49,7 +42,7 @@ const Modal = (props: {
                   variant="default"
                   size="default"
                   onClick={async () => {
-                    core.ok();
+                    store.ok();
                   }}
                 >
                   确认
@@ -57,10 +50,8 @@ const Modal = (props: {
               </div>
             );
           })()}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </Footer>
+      </Content>
+    </Root>
   );
 };
-
-export default Modal;

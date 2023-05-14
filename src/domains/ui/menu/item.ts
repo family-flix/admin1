@@ -73,9 +73,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
       });
     }
     if (onClick) {
-      this.onClick(() => {
-        onClick();
-      });
+      this.onClick(onClick);
     }
   }
   /** 禁用指定菜单项 */

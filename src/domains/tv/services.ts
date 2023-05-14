@@ -1,4 +1,4 @@
-import { FetchParams } from "@/domains/list-helper-core";
+import { FetchParams } from "@/domains/list";
 import { RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { request } from "@/utils/request";
 import {

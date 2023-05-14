@@ -6,7 +6,7 @@ import {
   UnpackedResult,
 } from "@/types";
 import { request } from "@/utils/request";
-import { FetchParams } from "@/domains/list-helper-core";
+import { FetchParams } from "@/domains/list/typing";
 import dayjs from "dayjs";
 import { TVItem } from "@/services";
 
@@ -53,7 +53,9 @@ export async function fetch_async_tasks(params: FetchParams) {
 export type AsyncTask = RequestedResource<typeof fetch_async_tasks>["list"][0];
 
 export function stop_async_task(id: string) {
-  return request.get<{ id: string }>(`/api/task/stop/${id}`);
+  return request.get<{ id: string }>(`/api/task/stop/${id}`, {
+    force: "1",
+  });
 }
 
 export function fetch_async_task_profile(id: string) {

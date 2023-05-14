@@ -3,12 +3,12 @@
  */
 import { For, createSignal } from "solid-js";
 
-import Helper from "@list-helper/core/core";
-import { FetchParams } from "@list-helper/core/typing";
+import { ListCore } from "@/domains/list";
+import { FetchParams } from "@/domains/list/typing";
 import { NavigatorCore } from "@/domains/navigator";
 import { request } from "@/utils/request";
 import { relative_time_from_now } from "@/utils";
-import { ListResponse, RequestedResource } from "@/types";
+import { JSONObject, ListResponse, RequestedResource } from "@/types";
 
 async function fetch_shared_files_histories(body: FetchParams) {
   const r = await request.get<
@@ -18,7 +18,7 @@ async function fetch_shared_files_histories(body: FetchParams) {
       title: string;
       created: string;
     }>
-  >("/api/shared_files/list", body);
+  >("/api/shared_files/list", body as unknown as JSONObject);
   if (r.error) {
     return r;
   }
@@ -40,12 +40,12 @@ type SharedFileHistory = RequestedResource<
 export const SharedFilesHistoryPage = (props: { router: NavigatorCore }) => {
   const { router } = props;
   const [response, setResponse] = createSignal(
-    Helper.defaultResponse<SharedFileHistory>()
+    ListCore.defaultResponse<SharedFileHistory>()
   );
-  const helper = new Helper<SharedFileHistory>(fetch_shared_files_histories);
-  helper.onChange = (nextResponse) => {
-    setResponse(nextResponse);
-  };
+  const helper = new ListCore<SharedFileHistory>(fetch_shared_files_histories);
+  helper.onStateChange((nextState) => {
+    setResponse(nextState);
+  });
   helper.init();
 
   const dataSource = () => response().dataSource;

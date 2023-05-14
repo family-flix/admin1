@@ -46,6 +46,22 @@ export class ContextMenuCore extends BaseDomain<TheTypeOfEvent> {
   }
 
   show(position: { x: number; y: number }) {
+    const { x, y } = position;
+    console.log("show", x, y);
+    const originalGetRect = this.menu.popper.reference.getRect;
+    this.updateReference({
+      getRect() {
+        const rect = originalGetRect();
+        console.log("get rect", rect, x, y);
+        return {
+          ...rect,
+          left: x,
+          top: y,
+          // x,
+          // y,
+        };
+      },
+    });
     this.menu.show();
   }
   hide() {

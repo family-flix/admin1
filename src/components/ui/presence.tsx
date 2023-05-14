@@ -19,18 +19,18 @@ export const Presence = (
     console.log(...store.log("onStateChange", nextState));
     setState(nextState);
   });
-  store.onShow(() => {
-    console.log(1);
-  });
-  store.onHidden(() => {
-    console.log(2);
-  });
-  store.onDestroy(() => {
-    console.log(3);
-  });
+  // store.onShow(() => {
+  //   console.log(1);
+  // });
+  // store.onHidden(() => {
+  //   console.log(2);
+  // });
+  // store.onDestroy(() => {
+  //   console.log(3);
+  // });
 
   const open = () => state().open;
-  const unmounted = () => state().unmounted;
+  // const unmounted = () => state().unmounted;
   const mounted = () => state().mounted;
 
   return (

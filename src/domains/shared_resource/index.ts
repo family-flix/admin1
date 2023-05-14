@@ -51,7 +51,7 @@ type TheTypesOfEvents = {
   };
 };
 
-export class SharedResource extends BaseDomain<TheTypesOfEvents> {
+export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   /** 分享链接 */
   url: string;
   /** 当前展示的文件夹列表所属的文件夹 id */
@@ -248,12 +248,12 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
   /** 将指定文件转存到指定网盘 */
   async transferSelectedFolderToDrive(drive: Drive) {
     if (!this.url) {
-      this.tip({ text: ["请先指定分享链接"] });
-      return;
+      const msg = this.tip({ text: ["请先指定分享链接"] });
+      return Result.Err(msg);
     }
     if (!this.selectFolder) {
-      this.tip({ text: ["请先指定转存文件"] });
-      return;
+      const msg = this.tip({ text: ["请先指定转存文件"] });
+      return Result.Err(new Error(msg));
     }
     const resp = await save_shared_files({
       url: this.url,
@@ -262,12 +262,13 @@ export class SharedResource extends BaseDomain<TheTypesOfEvents> {
       drive_id: drive.id,
     });
     if (resp.error) {
-      this.tip({ text: ["转存失败", resp.error.message] });
-      return;
+      const msg = this.tip({ text: ["转存失败", resp.error.message] });
+      return Result.Err(msg);
     }
     this.tip({
       text: ["转存成功"],
     });
+    return Result.Ok(null);
   }
 
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {

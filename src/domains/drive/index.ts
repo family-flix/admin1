@@ -4,9 +4,9 @@
  */
 import { Handler } from "mitt";
 
-import { fetch_async_task } from "@/domains/async_task/services";
 import { BaseDomain } from "@/domains/base";
-import Helper from "@/domains/list-helper-core";
+import { ListCore } from "@/domains/list";
+import { fetch_async_task } from "@/domains/async_task/services";
 import { Result } from "@/types";
 
 import {
@@ -27,7 +27,6 @@ enum Events {
   /** 一些外部输入项改变 */
   ValuesChange,
   FoldersChange,
-  Tip,
   Error,
   Login,
   Logout,
@@ -42,7 +41,6 @@ type TheTypesOfEvents = {
     folder_name: string;
   }>;
   [Events.FoldersChange]: (DriveFile | DriveFolder)[][];
-  [Events.Tip]: string[];
   [Events.Error]: Error;
   [Events.Login]: {};
   [Events.Logout]: void;
@@ -62,7 +60,7 @@ type DriveFile = {
 type DriveState = AliyunDriveItem & {
   loading: boolean;
 };
-const helper = new Helper<AliyunDriveItem>(fetch_aliyun_drives);
+const helper = new ListCore<AliyunDriveItem>(fetch_aliyun_drives);
 export class Drive extends BaseDomain<TheTypesOfEvents> {
   /** 网盘id */
   id: string;
@@ -95,15 +93,14 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
 
   /** 网盘列表辅助类 */
   static ListHelper = {
-    response: Helper.defaultResponse,
+    response: ListCore.defaultResponse,
     async init() {
       const r = await helper.init();
-      const { error, dataSource } = r;
-      if (error) {
-        return Result.Err(error);
+      if (r.error) {
+        return Result.Err(r.error);
       }
       return Result.Ok(
-        dataSource.map((drive) => {
+        r.data.dataSource.map((drive) => {
           const d = new Drive({
             ...drive,
             loading: false,
@@ -125,17 +122,17 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   /** 开始刮削网盘 */
   async startScrape() {
     if (this.timer) {
-      this.emit(Events.Tip, ["索引正在进行中..."]);
+      this.tip({ text: ["索引正在进行中..."] });
       return;
     }
-    this.emit(Events.Tip, ["开始索引，请等待一段时间后刷新查看"]);
+    this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
     const resp = await analysis_aliyun_drive({ aliyun_drive_id: this.id });
     if (resp.error) {
       this.state.loading = false;
       this.emit(Events.StateChange, { ...this.state });
-      this.emit(Events.Tip, ["索引失败", resp.error.message]);
+      this.tip({ text: ["索引失败", resp.error.message] });
       return;
     }
     const { async_task_id } = resp.data;
@@ -144,7 +141,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       if (r.error) {
         this.state.loading = false;
         this.emit(Events.StateChange, { ...this.state });
-        this.emit(Events.Tip, ["获取索引状态失败", r.error.message]);
+        this.tip({ text: ["获取索引状态失败", r.error.message] });
         if (this.timer) {
           clearTimeout(this.timer);
         }
@@ -152,7 +149,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       }
       if (r.data.status === "Pause") {
         this.state.loading = false;
-        this.emit(Events.Tip, ["索引被中断"]);
+        this.tip({ text: ["索引被中断"] });
         this.emit(Events.StateChange, { ...this.state });
         if (this.timer) {
           clearInterval(this.timer);
@@ -161,7 +158,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       }
       if (r.data.status === "Finished") {
         this.state.loading = false;
-        this.emit(Events.Tip, ["索引完成"]);
+        this.tip({ text: ["索引完成"] });
         this.emit(Events.StateChange, { ...this.state });
         this.emitCompleted(r.data);
         if (this.timer) {
@@ -177,8 +174,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.Error, r.error);
       return;
     }
-    // copy(JSON.stringify(r.data));
-    this.emit(Events.Tip, ["网盘信息已复制到剪贴板"]);
+    this.tip({ text: ["网盘信息已复制到剪贴板"] });
   }
   async update() {
     const r = await update_aliyun_drive(this.id, this.values);
@@ -194,7 +190,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   async refresh() {
     const r = await refresh_drive_profile({ aliyun_drive_id: this.id });
     if (r.error) {
-      this.emit(Events.Tip, ["刷新失败", r.error.message]);
+      this.tip({ text: ["刷新失败", r.error.message] });
       return;
     }
     const { user_name, avatar, used_size, total_size, used_percent } = r.data;
@@ -205,7 +201,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       total_size,
       used_percent,
     });
-    this.emit(Events.Tip, ["刷新成功"]);
+    this.tip({ text: ["刷新成功"] });
     this.emit(Events.StateChange, { ...this.state });
   }
   /** 输入网盘根目录 id */
@@ -220,8 +216,8 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   async setRootFolder() {
     const { root_folder_id } = this.values;
     if (!root_folder_id) {
-      this.emit(Events.Tip, ["缺少 root_folder_id 参数"]);
-      return Result.Err("缺少 root_folder_id 参数");
+      const text = this.tip({ text: ["缺少 root_folder_id 参数"] });
+      return Result.Err(text);
     }
     const r = await set_drive_root_file_id({
       root_folder_id: root_folder_id,
@@ -229,11 +225,11 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     });
     this.values.root_folder_id = null;
     if (r.error) {
-      this.emit(Events.Tip, ["设置索引根目录失败", r.error.message]);
-      return Result.Err(r.error);
+      const text = this.tip({ text: ["设置索引根目录失败", r.error.message] });
+      return Result.Err(text);
     }
     this.state.initialized = true;
-    this.emit(Events.Tip, ["更新成功"]);
+    this.tip({ text: ["更新成功"] });
     this.emit(Events.StateChange, { ...this.state });
     return Result.Ok(null);
   }
@@ -263,7 +259,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     const { file_id, name } = folder;
     // this.file_id = file_id;
     if (this.list.loading) {
-      this.emit(Events.Tip, ["正在请求..."]);
+      this.tip({ text: ["正在请求..."] });
       return;
     }
     const body = (() => {
@@ -289,7 +285,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
 
     const r = await this._fetch(folder);
     if (r.error) {
-      this.emit(Events.Tip, ["获取文件列表失败", r.error.message]);
+      this.tip({ text: ["获取文件列表失败", r.error.message] });
       return;
     }
     // 初始化
@@ -347,7 +343,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   async addFolder() {
     const { folder_name } = this.values;
     if (!folder_name) {
-      this.emit(Events.Tip, ["请先输入文件夹名称"]);
+      this.tip({ text: ["请先输入文件夹名称"] });
       return;
     }
     const r = await add_folder_in_drive({
@@ -355,10 +351,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       name: folder_name,
     });
     if (r.error) {
-      this.emit(Events.Tip, ["添加文件夹失败", r.error.message]);
+      this.tip({ text: ["添加文件夹失败", r.error.message] });
       return Result.Err(r.error);
     }
-    this.emit(Events.Tip, ["添加文件夹成功"]);
+    this.tip({ text: ["添加文件夹成功"] });
     this.fetch({ file_id: "root", name: "文件" });
     return Result.Ok(r.data);
   }

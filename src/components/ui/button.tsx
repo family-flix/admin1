@@ -1,6 +1,7 @@
 // import * as React from "react";
-import { JSX, children } from "solid-js";
+import { JSX, children, createSignal } from "solid-js";
 import { VariantProps, cva } from "class-variance-authority";
+import { ButtonCore } from "@/domains/ui/button";
 
 const buttonVariants = cva(
   "active:scale-95 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:hover:bg-slate-800 dark:hover:text-slate-100 disabled:opacity-50 dark:focus:ring-slate-400 disabled:pointer-events-none dark:focus:ring-offset-slate-900 data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-slate-800",
@@ -36,26 +37,38 @@ export interface ButtonProps
   extends HTMLButtonElement,
     VariantProps<typeof buttonVariants> {}
 
-const Button = ({
-  variant,
-  size,
-  ...props
-}: {
-  className?: string;
-  onClick?: HTMLButtonElement["onclick"];
-  children: JSX.Element;
-} & VariantProps<typeof buttonVariants>) => {
-  const c = children(() => props.children);
+const Button = (
+  props: {
+    store?: ButtonCore;
+    variant?: string;
+    size?: string;
+  } & JSX.HTMLAttributes<HTMLButtonElement>
+) => {
+  const { store, variant, size } = props;
+
+  const [state, setState] = createSignal(store.state);
+
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+
+  const disabled = () => state().disabled;
   // console.log(
   //   "[COMPONENT]Button - render",
   //   buttonVariants({ variant, size, className: props.className })
   // );
   return (
     <button
-      class={buttonVariants({ variant, size, className: props.className })}
-      {...props}
+      class={buttonVariants({ variant, size, class: props.class })}
+      disabled={disabled()}
+      onClick={(event) => {
+        if (props.onClick) {
+          props.onClick(event);
+        }
+        store.click();
+      }}
     >
-      {c()}
+      {props.children}
     </button>
   );
 };

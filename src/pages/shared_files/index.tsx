@@ -5,32 +5,39 @@ import { For, createSignal, onCleanup, onMount } from "solid-js";
 
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewCore } from "@/domains/router";
-import { SharedResource } from "@/domains/shared_resource";
+import { SharedResourceCore } from "@/domains/shared_resource";
 import { Application } from "@/domains/app";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
 import { TabsCore } from "@/domains/ui/tabs";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { MenuCore } from "@/domains/ui/menu";
+import { DialogCore } from "@/domains/ui/dialog";
+import { TVProfileCore } from "@/domains/tv/profile";
 import { Input } from "@/components/ui/input";
-import FolderCard from "@/components/FolderCard";
+import { FolderCard } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/SingleModal";
 import { ContextMenu } from "@/components/ui/context-menu";
+import { TVCard } from "@/components/TVCard";
 import * as Tabs from "@/components/ui/tabs";
 import { cn } from "@/utils";
+import { InputCore } from "@/domains/ui/input";
 
 export const SharedFilesTransferPage = (props: {
   app: Application;
   router: NavigatorCore;
   view: ViewCore;
 }) => {
-  const { app, view } = props;
+  const { app, router, view } = props;
   const [state, setState] = createSignal({
     url: "",
     paths: [],
     files: [],
   });
   const tabs = new TabsCore();
-  const sharedResource = new SharedResource();
+  const modal1 = new DialogCore();
+  const tvProfile = new TVProfileCore();
+  const sharedResource = new SharedResourceCore();
   const driveSubMenu = new MenuCore({
     name: "drives-menu",
     side: "right",
@@ -63,19 +70,26 @@ export const SharedFilesTransferPage = (props: {
       }),
     ],
   });
+  const input1 = new InputCore({
+    placeholder: "请输入分享链接",
+  });
   app.onDrivesChange((nextDrives) => {
     driveSubMenu.setItems(
       nextDrives.map((drive) => {
         const { name } = drive;
         return new MenuItemCore({
           label: name,
-          onClick() {
+          async onClick() {
             sharedResource.transferSelectedFolderToDrive(drive);
             contextMenu.hide();
           },
         });
       })
     );
+  });
+  sharedResource.onShowTVProfile((profile) => {
+    tvProfile.set(profile);
+    modal1.show();
   });
   sharedResource.onTip((msg) => {
     app.tip(msg);
@@ -87,6 +101,9 @@ export const SharedFilesTransferPage = (props: {
       files,
       paths,
     });
+  });
+  input1.onChange((v) => {
+    sharedResource.input(v);
   });
   onMount(() => {
     app.fetchDrives();
@@ -109,14 +126,7 @@ export const SharedFilesTransferPage = (props: {
       </h2>
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-10">
-          <Input
-            class=""
-            placeholder="请输入分享链接"
-            value={url()}
-            onChange={(event: Event & { target: HTMLInputElement }) => {
-              sharedResource.input(event.target.value);
-            }}
-          />
+          <Input class="" store={input1} />
         </div>
         <div class="grid col-span-2">
           <Button
@@ -190,49 +200,10 @@ export const SharedFilesTransferPage = (props: {
           <div>测试02 - content</div>
         </Tabs.Content>
       </Tabs.Root> */}
+      <Modal title="同名影视剧" store={modal1} footer={null}>
+        <TVCard store={tvProfile} />
+      </Modal>
       {/* <Modal
-          title="同名影视剧"
-          visible={visible}
-          footer={null}
-          onCancel={async () => {
-            set_visible(false);
-            return Result.Ok(null);
-          }}
-        >
-          {(() => {
-            if (same_name_tv_ref.current === null) {
-              return null;
-            }
-            const {
-              id,
-              name,
-              original_name,
-              overview,
-              poster_path,
-              first_air_date,
-            } = same_name_tv_ref.current;
-            return (
-              <div
-                class="flex"
-                onClick={() => {
-                  router.push(`/play/${id}`);
-                }}
-              >
-                <LazyImage
-                  class="w-[180px] mr-4 object-fit"
-                  src={poster_path}
-                  alt={name || original_name}
-                />
-                <div class="flex-1">
-                  <div class="text-2xl">{name || original_name}</div>
-                  <div class="mt-4">{overview}</div>
-                  <div class="mt-4">{first_air_date}</div>
-                </div>
-              </div>
-            );
-          })()}
-        </Modal>
-        <Modal
           title="文件夹"
           visible={drive_folder_visible}
           footer={null}

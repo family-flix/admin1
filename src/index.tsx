@@ -1,7 +1,8 @@
 /* @refresh reload */
-import { render } from "solid-js/web";
 import { createSignal, For } from "solid-js";
+import { render } from "solid-js/web";
 
+import { app } from "./store/app";
 import { ViewComponent } from "./types";
 import { ViewCore } from "./domains/router";
 import { ToastCore } from "./domains/ui/toast";
@@ -12,7 +13,9 @@ import { HomePage } from "./pages/home";
 import { LoginPage } from "./pages/login";
 import { TaskListPage } from "./pages/task/list";
 import { SharedFilesTransferPage } from "./pages/shared_files";
-import { app } from "./store/app";
+import { TestPage } from "./pages/test";
+import { TVManagePage } from "./pages/tv";
+import { UnknownTVManagePage } from "./pages/unknown_tv";
 
 import "./style.css";
 
@@ -52,14 +55,34 @@ mainLayoutView.register("/task/list", () => {
 mainLayoutView.register("/shared_files", () => {
   return sharedFilesTransferView;
 });
-rootView.register("/", () => {
-  return mainLayoutView;
+mainLayoutView.register("/tv", () => {
+  return new ViewCore({
+    title: "电视剧列表",
+    component: TVManagePage,
+  });
 });
+mainLayoutView.register("/unknown_tv", () => {
+  return new ViewCore({
+    title: "未知电视剧列表",
+    component: UnknownTVManagePage,
+  });
+});
+
 authLayoutView.register("/auth/login", () => {
   return loginView;
 });
 rootView.register("/auth", () => {
   return authLayoutView;
+});
+const testView = new ViewCore({
+  title: "测试",
+  component: TestPage,
+});
+rootView.register("/test", () => {
+  return testView;
+});
+rootView.register("/", () => {
+  return mainLayoutView;
 });
 router.onPathnameChanged(({ pathname }) => {
   // router.log("[]Application - pathname change", pathname);

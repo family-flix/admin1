@@ -1,6 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 
-import Helper from "@list-helper/core/core";
+import { ListCore } from "@/domains/list";
 import {
   AsyncTask,
   fetch_async_tasks,
@@ -10,33 +10,36 @@ import { Button } from "@/components/ui/button";
 import { ViewCore } from "@/domains/router";
 import { PageCore } from "@/domains/router/something";
 import { NavigatorCore } from "@/domains/navigator";
+import { RequestCore } from "@/domains/client";
+import { Application } from "@/domains/app";
 
 export const TaskListPage = (props: {
+  app: Application;
   page: PageCore;
   router: NavigatorCore;
   view: ViewCore;
 }) => {
-  const { view, router } = props;
+  const { app, view, router } = props;
 
-  const [hidden, setHidden] = createSignal(view.hidden);
-  const [response, setResponse] = createSignal(
-    Helper.defaultResponse<AsyncTask>()
-  );
-  const helper = new Helper<AsyncTask>(fetch_async_tasks);
-  helper.onChange = (nextResponse) => {
-    setResponse(nextResponse);
-  };
-  view.onShow(() => {
-    setHidden(false);
+  const helper = new ListCore<AsyncTask>(fetch_async_tasks);
+  const request = new RequestCore(stop_async_task);
+  const [response, setResponse] = createSignal(helper.response);
+  helper.onStateChange((nextState) => {
+    setResponse(nextState);
   });
-  view.onHide(() => {
-    setHidden(true);
+  request.onFailed((err) => {
+    app.tip({ text: ["中止任务失败", err.message] });
+  });
+  request.onSuccess(() => {
+    app.tip({ text: ["中止任务成功"] });
+    helper.refresh();
   });
   helper.init();
+
   const dataSource = () => response().dataSource;
 
   return (
-    <Show when={!hidden()}>
+    <div>
       <h2 class="my-2 text-2xl">任务列表</h2>
       <div class="space-y-4">
         <For each={dataSource()}>
@@ -61,12 +64,7 @@ export const TaskListPage = (props: {
                     variant="default"
                     onClick={async (event) => {
                       event.stopPropagation();
-                      const r = await stop_async_task(id);
-                      if (r.error) {
-                        alert(r.error.message);
-                        return;
-                      }
-                      helper.refresh();
+                      request.run(id);
                     }}
                   >
                     停止任务
@@ -77,6 +75,6 @@ export const TaskListPage = (props: {
           }}
         </For>
       </div>
-    </Show>
+    </div>
   );
 };

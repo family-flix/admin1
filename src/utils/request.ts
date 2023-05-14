@@ -4,7 +4,7 @@
 import axios, { AxiosError } from "axios";
 import qs from "qs";
 
-import { Result } from "@/types";
+import { JSONObject, Result } from "@/types";
 import { app } from "@/store/app";
 
 import dayjs from "dayjs";
@@ -14,11 +14,8 @@ const client = axios.create({
   // baseURL: "https://api.funzm.com",
 });
 type RequestClient = {
-  get: <T>(
-    url: string,
-    query?: Record<string, string | number | undefined>
-  ) => Promise<Result<T>>;
-  post: <T>(url: string, body: Record<string, unknown>) => Promise<Result<T>>;
+  get: <T>(url: string, query?: JSONObject) => Promise<Result<T>>;
+  post: <T>(url: string, body: JSONObject) => Promise<Result<T>>;
 };
 export const request = {
   get: async (endpoint, query) => {

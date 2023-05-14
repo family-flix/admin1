@@ -8,17 +8,16 @@ import { Application } from "@/domains/app";
 import { Drive } from "@/domains/drive";
 import { ProgressCore } from "@/domains/ui/progress";
 import { DialogCore } from "@/domains/ui/dialog";
-import { PopoverCore } from "@/domains/ui/popover";
-import { ContextMenuCore } from "@/domains/ui/context-menu";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
+import { MenuItemCore } from "@/domains/ui/menu/item";
 import { LazyImage } from "@/components/LazyImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import FolderMenu from "@/components/FolderMenu";
 import { Progress } from "@/components/ui/progress";
-import Modal from "@/components/SingleModal";
+import { Modal } from "@/components/SingleModal";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { MenuItemCore } from "@/domains/ui/menu/item";
+import { InputCore } from "@/domains/ui/input";
+import { ButtonCore } from "@/domains/ui/button";
 
 const DriveCard = (props: { app: Application; core: Drive }) => {
   const { app, core: drive } = props;
@@ -47,13 +46,34 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
         onClick() {
           console.log("修改 refresh_token");
           dropdown.hide();
-          // drive.update_refresh_token(),
         },
       }),
     ],
   });
   const progress = new ProgressCore({ value: drive.state.used_percent });
-
+  const input1 = new InputCore();
+  const input2 = new InputCore();
+  const button1 = new ButtonCore({
+    onClick() {
+      foldersModal.show();
+      drive.fetch({ file_id: "root", name: "文件" });
+    },
+  });
+  const button2 = new ButtonCore({
+    onClick() {
+      drive.startScrape();
+    },
+  });
+  const button3 = new ButtonCore({
+    onClick() {
+      createFolderModal.show();
+    },
+  });
+  const button4 = new ButtonCore({
+    onClick() {
+      drive.refresh();
+    },
+  });
   foldersModal.onOk(() => {
     drive.setRootFolder();
     foldersModal.hide();
@@ -73,6 +93,12 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
   });
   refreshTokenModal.onOk(() => {
     drive.submitRefreshToken();
+  });
+  input1.onChange((v) => {
+    drive.inputNewFolderName(v);
+  });
+  input2.onChange((v) => {
+    drive.setRefreshToken(v);
   });
   drive.onStateChange((nextState) => {
     setState(nextState);
@@ -125,14 +151,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
                 <Show
                   when={initialized()}
                   fallback={
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      onClick={async () => {
-                        foldersModal.show();
-                        drive.fetch({ file_id: "root", name: "文件" });
-                      }}
-                    >
+                    <Button variant="subtle" size="sm" store={button1}>
                       索引
                     </Button>
                   }
@@ -140,27 +159,18 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
                   <Button
                     variant="subtle"
                     size="sm"
-                    onClick={async (event) => {
+                    store={button2}
+                    onClick={(event) => {
                       event.stopPropagation();
-                      drive.startScrape();
                     }}
                   >
                     <Show when={loading()}>
                       <Loader class="w-4 h-4 animate-spin" />
                     </Show>
-                    刮削
+                    索引
                   </Button>
                 </Show>
-                <Button
-                  variant="subtle"
-                  size="sm"
-                  onClick={async (event) => {
-                    drive.refresh();
-                    // app.tip({
-                    //   text: [Math.random().toString()],
-                    // });
-                  }}
-                >
+                <Button variant="subtle" size="sm" store={button4}>
                   刷新
                 </Button>
               </div>
@@ -168,20 +178,14 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
           </div>
         </div>
       </div>
-      <Modal title={user_name()} core={foldersModal}>
+      <Modal title={user_name()} store={foldersModal}>
         <div class="text-center">请先选择一个文件夹作为索引根目录</div>
         <Show
           when={folderColumns().length > 0}
           fallback={
             <div class="position">
               <div class="flex items-center justify-center">
-                <Button
-                  onClick={() => {
-                    createFolderModal.show();
-                  }}
-                >
-                  添加文件夹
-                </Button>
+                <Button store={button3}>添加文件夹</Button>
               </div>
             </div>
           }
@@ -225,21 +229,13 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
           </div>
         </Show>
       </Modal>
-      <Modal title="添加文件夹" core={createFolderModal}>
+      <Modal title="添加文件夹" store={createFolderModal}>
         <div>
-          <Input
-            onChange={(event: Event & { target: HTMLInputElement }) => {
-              drive.inputNewFolderName(event.target.value);
-            }}
-          />
+          <Input store={input1} />
         </div>
       </Modal>
-      <Modal title="修改 refresh_token" core={refreshTokenModal}>
-        <Input
-          onChange={(event: Event & { target: HTMLInputElement }) => {
-            drive.setRefreshToken(event.target.value);
-          }}
-        />
+      <Modal title="修改 refresh_token" store={refreshTokenModal}>
+        <Input store={input2} />
       </Modal>
     </div>
   );

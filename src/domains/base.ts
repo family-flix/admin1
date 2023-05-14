@@ -1,6 +1,7 @@
 /**
  * 注册的监听器
  */
+import { Result } from "@/types";
 import mitt, { EventType, Handler } from "mitt";
 // import { Log } from './log';
 
@@ -98,6 +99,7 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
   tip(content: { icon?: unknown; text: string[] }) {
     // @ts-ignore
     this._emitter.emit(BaseEvents.Tip, content);
+    return content.text.join("\n");
   }
   /** 主动销毁所有的监听事件 */
   destroy() {

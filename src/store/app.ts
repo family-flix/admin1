@@ -2,8 +2,7 @@
  * @file 应用实例，也可以看作启动入口，优先会执行这里的代码
  * 应该在这里进行一些初始化操作、全局状态或变量的声明
  */
-import Helper from "@list-helper/core/core";
-import { Result } from "@/types";
+import { ListCore } from "@/domains/list";
 import { Application } from "@/domains/app";
 import { LocalCache } from "@/domains/app/cache";
 import { ViewCore } from "@/domains/router";
@@ -11,6 +10,7 @@ import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
 import { Drive } from "@/domains/drive";
 import { bind } from "@/domains/app/bind.web";
+import { Result } from "@/types";
 
 // class CurUser extends UserCore {
 //   /** 该用户的网盘列表 */
@@ -39,11 +39,11 @@ const _app = new Application({
   router,
   cache,
   async beforeReady() {
-    Helper.onError = (error: Error) => {
-      app.tip({
-        text: [error.message],
-      });
-    };
+    // ListCore.onError = (error: Error) => {
+    //   app.tip({
+    //     text: [error.message],
+    //   });
+    // };
     user.onError((error) => {
       app.tip({
         text: [error.message],
@@ -60,7 +60,7 @@ const _app = new Application({
   },
 });
 
-Helper.defaultProcessor = (originalResponse) => {
+ListCore.commonProcessor = (originalResponse) => {
   if (originalResponse.error) {
     return {
       dataSource: [],

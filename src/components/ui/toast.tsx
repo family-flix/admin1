@@ -91,18 +91,18 @@ const Content = (props: { store: ToastCore; children: JSX.Element }) => {
     setOpen(nextOpen);
   });
   // "fixed z-51 flex items-start justify-center sm:items-center"
-  onMount(() => {
-    console.log("[]ToastContent onMount");
-  });
-  onCleanup(() => {
-    console.log("[]ToastContent onCleanup");
-  });
-  createEffect(() => {
-    console.log("open changed", open());
-  });
+  // onMount(() => {
+  //   console.log("[]ToastContent onMount");
+  // });
+  // onCleanup(() => {
+  //   console.log("[]ToastContent onCleanup");
+  // });
+  // createEffect(() => {
+  //   console.log("open changed", open());
+  // });
 
   return (
-    <div class="fixed z-51 left-[50%] translate-x-[-50%] top-60 w-120 h-120 ">
+    <div class="fixed z-99 left-[50%] translate-x-[-50%] top-60 w-120 h-120 ">
       <div
         data-state={open() ? "open" : "closed"}
         class={cn(

@@ -10,25 +10,16 @@ import { Application } from "@/domains/app";
 // import { EmptyPageContainer } from "@/components/EmptyPageContainer";
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewComponent } from "@/types";
+import { View } from "@/components/ui/view";
 
 export const MainLayout = (props: {
   app: Application;
   view: ViewCore;
   router: NavigatorCore;
-  // page: PageCore;
 }) => {
   const { app, router, view } = props;
 
-  const [hidden, setHidden] = createSignal(view.hidden);
   const [subViews, setSubViews] = createSignal(view.subViews);
-  view.onShow(() => {
-    // view.log("MainLayout - show");
-    setHidden(false);
-  });
-  view.onHide(() => {
-    // console.log("[LAYOUT]MainLayout - hidden");
-    setHidden(true);
-  });
   view.onSubViewsChange((nextSubViews) => {
     // console.log("[LAYOUT]MainLayout - subViewsChanged", nextSubViews.length);
     setSubViews(nextSubViews);
@@ -37,9 +28,9 @@ export const MainLayout = (props: {
   // console.log("[LAYOUT]MainLayout - init", hidden);
 
   return (
-    <Show when={!hidden()}>
+    <View store={view}>
       <div class="min-h-screen flex p-8 bg-slate-200">
-        <div class="w-[240px] p-4 rounded-xl bg-white">
+        <div class="fixed w-[240px] p-4 rounded-xl bg-white self-start">
           <div class="space-y-2">
             <div
               class="flex items-center p-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
@@ -60,6 +51,15 @@ export const MainLayout = (props: {
               <div class="text-xl">影片管理</div>
             </div>
             <div
+              class="flex items-center p-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
+              onClick={() => {
+                router.push("/unknown_tv");
+              }}
+            >
+              <Film class="w-6 h-6" />
+              <div class="text-xl">未知电视剧列表</div>
+            </div>
+            <div
               class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
               onClick={() => {
                 router.push("/task/list");
@@ -70,9 +70,7 @@ export const MainLayout = (props: {
             </div>
             <div
               class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                // modal.show();
-              }}
+              onClick={() => {}}
             >
               <Users class="w-6 h-6" />
               <div class="text-xl">TMDB 数据库</div>
@@ -106,15 +104,19 @@ export const MainLayout = (props: {
             </div>
           </div>
         </div>
-        <div class="flex-1 ml-8 space-y-4">
+        <div class="w-screen ml-[280px] space-y-4">
           <For each={subViews()}>
             {(subView) => {
               const PageContent = subView.component as ViewComponent;
-              return <PageContent app={app} router={router} view={subView} />;
+              return (
+                <View store={subView}>
+                  <PageContent app={app} router={router} view={subView} />
+                </View>
+              );
             }}
           </For>
         </div>
       </div>
-    </Show>
+    </View>
   );
 };

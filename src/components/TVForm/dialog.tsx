@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Dialog,
+  Root,
   DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Footer,
+  Header,
+  Title,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,12 @@ export function TVFormDialog(props: {
     on_submit,
   } = props;
   return (
-    <Dialog open={visible} onOpenChange={on_visible_change}>
+    <Root open={visible} onOpenChange={on_visible_change}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[425px] xl:max-w-[728px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
+        <Header>
+          <Title>{title}</Title>
+        </Header>
         <TVForm
           on_submit={async (t) => {
             if (on_submit) {
@@ -50,11 +50,11 @@ export function TVFormDialog(props: {
             }
           }}
         />
-        <DialogFooter>
+        <Footer>
           <Button variant="subtle">取消</Button>
           <Button>确定</Button>
-        </DialogFooter>
+        </Footer>
       </DialogContent>
-    </Dialog>
+    </Root>
   );
 }

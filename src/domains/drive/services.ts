@@ -3,10 +3,10 @@
  */
 import { request } from "@/utils/request";
 import { bytes_to_size, sleep } from "@/utils";
-import { FetchParams } from "@/domains/list-helper-core";
-import { ListResponse, RequestedResource, Result } from "@/types";
+import { FetchParams } from "@/domains/list/typing";
+import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 
-async function parseJSONStr<T extends Record<string, unknown>>(json: string) {
+async function parseJSONStr<T extends JSONObject>(json: string) {
   try {
     if (json[0] !== "{") {
       return Result.Err("不是合法的 json");
@@ -27,7 +27,7 @@ export async function add_aliyun_drive(body: { payload: string }) {
   if (r.error) {
     return Result.Err(r.error);
   }
-  return await request.post<{ id: string }>("/api/drive/add", {
+  return request.post<{ id: string }>("/api/drive/add", {
     payload: r.data,
   });
 }
@@ -38,7 +38,7 @@ export async function add_aliyun_drive(body: { payload: string }) {
  * @param body
  * @returns
  */
-export function update_aliyun_drive(id: string, body: Record<string, unknown>) {
+export function update_aliyun_drive(id: string, body: JSONObject) {
   return request.post<{ id: string }>(`/api/drive/update/${id}`, body);
 }
 

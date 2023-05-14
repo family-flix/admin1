@@ -1,167 +1,164 @@
 /**
- * @file 管理员/tv 管理页面
+ * @file 电视剧列表
  */
-import { useEffect, useRef, useState } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import { createSignal, For } from "solid-js";
 
-import useHelper from "@/domains/list-helper-hook";
+import { bind_searched_tv_for_tv, fetch_tv_list, TVItem } from "@/services";
+import { hidden_tv } from "@/domains/tv/services";
+import { ListCore } from "@/domains/list";
+import { InputCore } from "@/domains/ui/input";
+import { ButtonCore } from "@/domains/ui/button";
+import { ContextMenuCore } from "@/domains/ui/context-menu";
+import { MenuItemCore } from "@/domains/ui/menu/item";
+import { ContextMenu } from "@/components/ui/context-menu";
+import { RequestCore } from "@/domains/client";
+import { CurCore } from "@/domains/cur";
 import { LazyImage } from "@/components/LazyImage";
-import ScrollView from "@/components/ScrollView";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import FolderMenu from "@/components/FolderMenu";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { bind_searched_tv_for_tv, fetch_tv_list, TVItem } from "@/services";
-import { useToast } from "@/hooks/use-toast";
-import { Result } from "@/types";
-import { hidden_tv } from "@/domains/tv/services";
+import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { ViewComponent } from "@/types";
 
-const TVManagePage = () => {
-  const router = useRouter();
-  const [response, helper] = useHelper<TVItem>(fetch_tv_list);
-  const [name, set_name] = useState("");
-  const cur_ref = useRef<TVItem | null>(null);
-  const [visible, set_visible] = useState(false);
-  const { toast } = useToast();
+export const TVManagePage: ViewComponent = (props) => {
+  const { app, router } = props;
 
-  const { dataSource } = response;
+  const list = new ListCore<TVItem>(fetch_tv_list);
+  const cur = new CurCore<TVItem>();
+  const bindSearchedTVForTV = new RequestCore(bind_searched_tv_for_tv, {
+    onSuccess() {
+      app.tip({ text: ["修改成功"] });
+      dialog.hide();
+      list.refresh();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["修改失败", error.message],
+      });
+    },
+  });
+  const hiddenTV = new RequestCore(hidden_tv, {
+    onSuccess() {
+      list.refresh();
+    },
+    onFailed(error) {
+      app.tip({ text: ["隐藏失败", error.message] });
+    },
+  });
+  const dialog = new TMDBSearcherDialogCore({
+    onOk(searchedTV) {
+      if (bindSearchedTVForTV.args === null) {
+        app.tip({ text: ["请先选择文件夹"] });
+        dialog.hide();
+        return;
+      }
+      bindSearchedTVForTV.run(cur.consume().id, searchedTV);
+    },
+  });
+  const contextMenu = new ContextMenuCore({
+    items: [
+      new MenuItemCore({
+        label: "修改",
+        onClick() {
+          dialog.show();
+        },
+      }),
+      new MenuItemCore({
+        label: "隐藏",
+        onClick() {
+          hiddenTV.run({ id: cur.consume().id });
+        },
+      }),
+    ],
+  });
+  const input1 = new InputCore({ placeholder: "请输入名称搜索" });
+  const button1 = new ButtonCore({
+    onClick() {
+      if (!input1.value) {
+        return;
+      }
+      list.search({ name: input1.value });
+    },
+  });
+  const button2 = new ButtonCore({
+    onClick() {
+      list.reset();
+      input1.empty();
+    },
+  });
+
+  const [state, setState] = createSignal(list.response);
+
+  list.onStateChange((nextState) => {
+    setState(nextState);
+  });
+  list.init();
+
+  const response = () => state().dataSource;
 
   return (
     <>
-      <Head>
-        <title>影视剧管理</title>
-        <meta content="width=device-width, initial-scale=1" name="viewport" />
-        <meta name="description" content="影视剧列表" />
-        <meta name="referrer" content="no-referrer" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <div className="min-h-screen p-4 pt-8">
-        <div className="m-auto space-y-2">
-          <div className="">
-            <h2 className="h2">搜索结果</h2>
-            <div className="flex mt-4 space-x-2">
-              <Input
-                className=""
-                placeholder="请输入名称搜索"
-                value={name}
-                onChange={(event) => {
-                  set_name(event.target.value);
-                }}
-              />
-              <Button
-                className="w-[80px]"
-                onClick={() => {
-                  if (!name) {
-                    return;
-                  }
-                  helper.search({ name });
-                }}
-              >
+      <div class="min-h-screen">
+        <div class="">
+          <div class="">
+            <div class="flex space-x-2">
+              <Input store={input1} />
+              <Button class="w-[80px]" store={button1}>
                 搜索
               </Button>
-              <Button
-                className="w-[80px]"
-                onClick={() => {
-                  helper.reset();
-                }}
-              >
+              <Button class="w-[80px]" store={button2}>
                 重置
               </Button>
             </div>
           </div>
-          <ScrollView {...response} onLoadMore={helper.loadMore}>
-            <div className="space-y-4">
-              {dataSource.map((t) => {
-                const {
-                  id,
-                  name,
-                  original_name,
-                  overview,
-                  poster_path,
-                  first_air_date,
-                } = t;
-                return (
-                  <div
-                    key={id}
-                    className="card cursor-pointer"
-                    onClick={() => {
-                      router.push(`/admin/tv/${id}`);
-                    }}
-                  >
-                    <FolderMenu
-                      options={[
-                        {
-                          label: "修改",
-                          on_click() {
-                            cur_ref.current = t;
-                            set_visible(true);
-                          },
-                        },
-                        {
-                          label: "隐藏",
-                          async on_click() {
-                            const r = await hidden_tv({ id });
-                            if (r.error) {
-                              toast({
-                                title: "ERROR",
-                                description: r.error.message,
-                              });
-                            }
-                            helper.refresh();
-                          },
-                        },
-                      ]}
-                    >
-                      <div className="flex">
-                        <LazyImage
-                          className="mr-4 w-[180px] object-fit"
-                          src={poster_path}
-                          alt={name || original_name}
-                        />
-                        <div className="flex-1">
-                          <h2 className="text-2xl">{name}</h2>
-                          <div className="mt-4">
-                            <p className="">{overview}</p>
-                            <p className="">{first_air_date}</p>
+          <div>
+            <ContextMenu store={contextMenu}>
+              <div class="space-y-4">
+                <For each={response()}>
+                  {(tv) => {
+                    const {
+                      id,
+                      name,
+                      original_name,
+                      overview,
+                      poster_path,
+                      first_air_date,
+                    } = tv;
+                    return (
+                      <div
+                        class="card cursor-pointer"
+                        onClick={() => {
+                          router.push(`/admin/tv/${id}`);
+                        }}
+                        onContextMenu={(event: MouseEvent) => {
+                          const { pageX, pageY } = event;
+                          cur.save(tv);
+                        }}
+                      >
+                        <div class="flex">
+                          <LazyImage
+                            class="mr-4 w-[180px] object-fit"
+                            src={poster_path}
+                            alt={name}
+                          />
+                          <div class="flex-1">
+                            <h2 class="text-2xl">{name}</h2>
+                            <div class="mt-4">
+                              <p class="">{overview}</p>
+                              <p class="">{first_air_date}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </FolderMenu>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollView>
+                    );
+                  }}
+                </For>
+              </div>
+            </ContextMenu>
+          </div>
         </div>
-        <TMDBSearcherDialog
-          visible={visible}
-          on_visible_change={set_visible}
-          on_submit={async (searched_tv) => {
-            if (cur_ref.current === null) {
-              return Result.Err("请先选择文件夹");
-            }
-            const { id } = cur_ref.current;
-            const r = await bind_searched_tv_for_tv(id, searched_tv);
-            if (r.error) {
-              toast({
-                title: "ERROR",
-                description: r.error.message,
-              });
-              return r;
-            }
-            toast({
-              title: "Success",
-              description: "修改成功",
-            });
-            set_visible(false);
-            helper.refresh();
-            return Result.Ok(null);
-          }}
-        />
+        <TMDBSearcherDialog store={dialog} />
       </div>
     </>
   );
 };
-
-export default TVManagePage;
