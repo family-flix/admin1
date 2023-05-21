@@ -9,7 +9,7 @@
 import { JSX } from "solid-js";
 import { children, createMemo, createSignal, onMount } from "solid-js";
 
-import { PageCore } from "@/domains/router/something";
+// import { PageCore } from "@/domains/router/something";
 // import { classList } from "solid-js/web";
 // import { useInitialize } from "@/hooks";
 // import { useTheme } from "@/components/Theme";
@@ -22,12 +22,9 @@ import { PageCore } from "@/domains/router/something";
 //   index: number;
 // }
 export const EmptyPageContainer = (props: {
-  page: PageCore;
   index: number;
   children: JSX.Element;
 }) => {
-  const { page } = props;
-
   const c = children(() => props.children);
 
   //   let $wrap;
@@ -65,7 +62,7 @@ export const EmptyPageContainer = (props: {
     // $page.addEventListener("touchend", () => {
     //   page.handleTouchEnd();
     // });
-    page.emitReady();
+    // page.emitReady();
   });
 
   return <div>{c()}</div>;

@@ -12,7 +12,7 @@ import { AliyunFolderItem, fetch_aliyun_drive_files } from "@/services";
 import { Result } from "@/types";
 import {
   AliyunDriveProfile,
-  fetch_aliyun_drive_profile,
+  fetchDriveProfile,
 } from "@/domains/drive/services";
 import { cn } from "@/lib/utils";
 

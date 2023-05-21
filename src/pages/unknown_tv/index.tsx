@@ -1,5 +1,5 @@
 /**
- * @file 无法被刮削的电视剧列表
+ * @file 索引后没有找到匹配信息的电视剧（后面称为「未知电视剧」）
  */
 import { createSignal, For } from "solid-js";
 
@@ -9,7 +9,7 @@ import {
   fetch_unknown_tv_list,
   UnknownTVItem,
 } from "@/services";
-import { scrape_tv } from "@/domains/tv/services";
+// import { scrape_tv } from "@/domains/tv/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
@@ -19,6 +19,10 @@ import { RequestCore } from "@/domains/client";
 import { CurCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
+import { Modal } from "@/components/SingleModal";
+import { DialogCore } from "@/domains/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { InputCore } from "@/domains/ui/input";
 
 export const UnknownTVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -28,14 +32,18 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
   const dialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
       if (cur.isEmpty()) {
-        app.tip({ text: ["请先选择文件夹"] });
+        app.tip({ text: ["请先选择未匹配的电视剧"] });
         return;
       }
-      const { id } = cur.consume();
+      const { id } = cur.value;
       bindSearchedTVForTV.run(id, searched_tv);
     },
   });
   const bindSearchedTVForTV = new RequestCore(bind_searched_tv_for_tv, {
+    onLoading(loading) {
+      console.log("set loading", loading);
+      dialog.okBtn.setLoading(loading);
+    },
     onFailed(error) {
       app.tip({ text: ["修改失败", error.message] });
     },
@@ -48,37 +56,16 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
   const contextMenu = new ContextMenuCore({
     items: [
       new MenuItemCore({
-        label: "重新索引",
-        onClick() {
-          // if (cur_ref.current === null) {
-          //   return;
-          // }
-          // const r = await scrape_tv({ id });
-          // if (r.error) {
-          //   toast({
-          //     title: "ERROR",
-          //     description: r.error.message,
-          //   });
-          //   return;
-          // }
-          // helper.refresh();
-          // toast({
-          //   title: "Success",
-          //   description: "索引成功",
-          // });
-        },
-      }),
-      new MenuItemCore({
-        label: "手动索引",
+        label: "选择匹配的电视剧",
         onClick() {
           dialog.show();
           contextMenu.hide();
         },
       }),
-      new MenuItemCore({
-        label: "修改名称",
-      }),
     ],
+  });
+  dialog.onTip((msg) => {
+    app.tip(msg);
   });
 
   const [response, setResponse] = createSignal(unknownTVList.response);
@@ -124,8 +111,8 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
             </div>
           </div>
         </div>
-        <TMDBSearcherDialog store={dialog} />
       </div>
+      <TMDBSearcherDialog store={dialog} />
     </>
   );
 };

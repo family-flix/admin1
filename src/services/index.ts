@@ -1,3 +1,6 @@
+/**
+ *
+ */
 import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
@@ -31,7 +34,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
       first_air_date: string;
       // updated: string;
     }>
-  >("/api/tv/list", {
+  >("/api/admin/tv/list", {
     ...rest,
     page,
     page_size: pageSize,
@@ -74,80 +77,15 @@ export type PartialSearchedTV = Omit<
  */
 export function fetch_recommended_tvs(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  return request.get<ListResponse<{}>>("/api/member/recommended_tv/list", {
-    ...rest,
-    page,
-    page_size: pageSize,
-  });
+  return request.get<ListResponse<{}>>(
+    "/api/admin/member/recommended_tv/list",
+    {
+      ...rest,
+      page,
+      page_size: pageSize,
+    }
+  );
 }
-
-/**
- * 获取当前用户影片播放记录
- * @param params
- * @returns
- */
-export async function fetch_play_histories(params: FetchParams) {
-  const { page, pageSize, ...rest } = params;
-  const r = await request.get<
-    ListResponse<{
-      id: string;
-      /** 电视剧名称 */
-      name: string;
-      /** 电视剧外文名称或外文译名 */
-      original_name: string;
-      /** 电视剧海报地址 */
-      poster_path: string;
-      /** 电视剧id */
-      tv_id: string;
-      /** 影片id */
-      episode_id: string;
-      /** 该集总时长 */
-      duration: string;
-      /** 看到该电视剧第几集 */
-      episode: string;
-      /** 该集是第几季 */
-      season: string;
-      /** 播放记录当前集进度 */
-      current_time: string;
-      /** 播放记录更新时间 */
-      updated: string;
-      /** 当前总集数 */
-      cur_episode_count: number;
-      /** 该剧集当前季总集数 */
-      episode_count: number;
-      /** 最新一集添加时间 */
-      latest_episode: string;
-      /** 电视剧首播日期 */
-      first_air_date: string;
-      /** 该季首播日期 */
-      air_date: string;
-    }>
-  >("/api/history/list", {
-    ...rest,
-    page,
-    page_size: pageSize,
-  });
-  if (r.error) {
-    return r;
-  }
-  return Result.Ok({
-    ...r.data,
-    list: r.data.list.map((history) => {
-      const { updated, episode, season, latest_episode, ...rest } = history;
-      return {
-        ...rest,
-        episode: episode_to_chinese_num(episode),
-        season: season_to_chinese_num(season),
-        updated: relative_time_from_now(updated),
-        has_update: dayjs(latest_episode).isAfter(dayjs(updated)),
-      };
-    }),
-  });
-}
-export type PlayHistoryItem = RequestedResource<
-  typeof fetch_play_histories
->["list"][0];
-
 /**
  * 获取无法识别的 tv
  */
@@ -159,7 +97,7 @@ export async function fetch_unknown_tv_list(params: FetchParams) {
       name: string;
       original_name: string;
     }>
-  >(`/api/tv/incorrect`, {
+  >(`/api/admin/unknown_tv/list`, {
     ...rest,
     page,
     page_size: pageSize,
@@ -203,7 +141,7 @@ export function fetch_unknown_tv_profile(body: { id: string }) {
         season: string;
       }[];
     }[];
-  }>(`/api/unknown_tv/${id}`);
+  }>(`/api/admin/unknown_tv/${id}`);
 }
 export type UnknownTVProfile = RequestedResource<
   typeof fetch_unknown_tv_profile
@@ -227,7 +165,7 @@ export async function search_tv_in_tmdb(
       poster_path: string;
       searched_tv_id: string;
     }>
-  >(`/api/tmdb/search`, {
+  >(`/api/admin/tmdb/search`, {
     ...rest,
     keyword,
     page,
@@ -246,7 +184,7 @@ export async function bind_searched_tv_for_tv(
   id: string,
   body: MatchedTVOfTMDB
 ) {
-  return request.post(`/api/tv/bind_searched_tv/${id}`, body);
+  return request.post(`/api/admin/tv/bind_searched_tv/${id}`, body);
 }
 
 /**
@@ -256,44 +194,38 @@ export async function bind_searched_tv_for_tv(
  */
 export async function fetch_members(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const res = await request.get<
     ListResponse<{
       id: string;
       remark: string;
-      disabled: number;
-      links: {
+      disabled: boolean;
+      tokens: {
         id: string;
-        link: string;
+        token: string;
         used: boolean;
       }[];
-      recommended_tvs: {
-        id: string;
-        name: string;
-        original_name: string;
-        poster_path: string;
-      }[];
     }>
-  >("/api/member/list", {
+  >("/api/admin/member/list", {
     ...rest,
     page,
     page_size: pageSize,
   });
-  if (resp.error) {
-    return Result.Err(resp.error);
+  if (res.error) {
+    return Result.Err(res.error);
   }
   return Result.Ok({
-    ...resp.data,
-    list: resp.data.list.map((member) => {
-      const { links } = member;
+    ...res.data,
+    list: res.data.list.map((member) => {
+      // const { links } = member;
       return {
         ...member,
-        links: links.map((link) => {
-          const { link: pathname } = link;
-          return {
-            ...link,
-            link: `${window.location.protocol}//${window.location.host}${pathname}`,
-          };
-        }),
+        // links: links.map((link) => {
+        //   const { link: pathname } = link;
+        //   return {
+        //     ...link,
+        //     link: `${window.location.protocol}//${window.location.host}${pathname}`,
+        //   };
+        // }),
       };
     }),
   });
@@ -306,7 +238,7 @@ export type MemberItem = RequestedResource<typeof fetch_members>["list"][0];
  * @returns
  */
 export function add_member(body: { remark: string }) {
-  return request.post<{ id: string }>("/api/member/add", body);
+  return request.post<{ id: string }>("/api/admin/member/add", body);
 }
 
 /**
@@ -315,7 +247,7 @@ export function add_member(body: { remark: string }) {
  * @returns
  */
 export function create_member_auth_link(body: { id: string }) {
-  return request.post<{ id: string }>("/api/member_link/add", body);
+  return request.post<{ id: string }>("/api/admin/member_link/add", body);
 }
 
 /**
@@ -324,7 +256,10 @@ export function create_member_auth_link(body: { id: string }) {
  * @returns
  */
 export function add_recommended_tv(body: { member_id: string; tv_id: string }) {
-  return request.post<{ id: string }>("/api/member/recommended_tv/add", body);
+  return request.post<{ id: string }>(
+    "/api/admin/member/recommended_tv/add",
+    body
+  );
 }
 
 /**
@@ -351,7 +286,12 @@ export async function fetch_aliyun_drive_files(body: {
       thumbnail: string;
     }[];
     next_marker: string;
-  }>(`/api/drive/files/${drive_id}`, { name, file_id, next_marker, page_size });
+  }>(`/api/admin/drive/files/${drive_id}`, {
+    name,
+    file_id,
+    next_marker,
+    page_size,
+  });
   return r;
 }
 
@@ -372,7 +312,7 @@ export async function fetch_shared_files(body: {
       thumbnail: string;
     }[];
     next_marker: string;
-  }>("/api/shared_files", { url, file_id, next_marker });
+  }>("/api/admin/shared_files", { url, file_id, next_marker });
   return r;
 }
 export type AliyunFolderItem = RequestedResource<
@@ -388,7 +328,7 @@ export async function walk_aliyun_folder(body: {
   name: string;
 }) {
   const { drive_id, file_id, name } = body;
-  return request.get(`/api/aliyun/files/${file_id}`, { name, drive_id });
+  return request.get(`/api/admin/aliyun/files/${file_id}`, { name, drive_id });
 }
 
 /**
@@ -404,7 +344,7 @@ export async function patch_added_files(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.get("/api/shared_files/diff", body);
+  return request.get("/api/admin/shared_files/diff", body);
 }
 
 /**
@@ -414,7 +354,7 @@ export async function patch_added_files(body: {
  */
 export function find_folders_has_same_name(body: { name: string }) {
   return request.get<{ name: string; file_id: string }>(
-    "/api/shared_files/find_folder_has_same_name",
+    "/api/admin/shared_files/find_folder_has_same_name",
     body
   );
 }
@@ -436,7 +376,7 @@ export async function build_link_between_shared_files_with_folder(body: {
   target_file_name?: string;
   target_file_id?: string;
 }) {
-  return request.post("/api/shared_files/link", body);
+  return request.post("/api/admin/shared_files/link", body);
 }
 
 /**
@@ -446,5 +386,28 @@ export async function check_has_same_name_tv(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.post<null | TVItem>("/api/shared_files/check_same_name", body);
+  return request.post<null | TVItem>(
+    "/api/admin/shared_files/check_same_name",
+    body
+  );
+}
+
+/**
+ * 解析文件名
+ */
+export function parse_video_file_name(body: { name: string; keys?: string[] }) {
+  const { name, keys } = body;
+  return request.post<{
+    name: string;
+    original_name: string;
+    season: string;
+    episode: string;
+    episode_name: string;
+    resolution: string;
+    year: string;
+    source: string;
+    encode: string;
+    voice_encode: string;
+    episode_count: string;
+  }>("/api/admin/parse", { name, keys });
 }

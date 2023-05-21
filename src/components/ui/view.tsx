@@ -1,6 +1,6 @@
 import { Show, createSignal, JSX } from "solid-js";
 
-import { ViewCore } from "@/domains/router";
+import { ViewCore } from "@/domains/view";
 import { cn } from "@/utils";
 
 export function View(

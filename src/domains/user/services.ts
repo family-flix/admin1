@@ -10,18 +10,18 @@ export async function login(body: { email: string; password: string }) {
   return request.post<{
     id: string;
     username: string;
-    name: string;
-    email: string;
+    // name: string;
+    // email: string;
     avatar: string;
     verified: string;
-    created: string;
+    // created: string;
     token: string;
-  }>("/api/user/login", body);
+  }>("/api/admin/user/login", body);
 }
 
 export async function logout(body: { email: string; password: string }) {
   console.log("[]login params", body);
-  return await request.post("/api/user/logout", body);
+  return await request.post("/api/admin/user/logout", body);
 }
 
 export async function get_token() {
@@ -33,12 +33,12 @@ export async function get_token() {
  * @returns
  */
 export async function fetch_user_profile() {
-  return request.get("/api/user/profile");
+  return request.get("/api/admin/user/profile");
 }
 
 /**
  * 成员通过授权链接访问首页时，验证该链接是否有效
  */
-export async function validate_member_token(token: string) {
-  return request.post<{ token: string }>("/api/member/validate", { token });
+export async function validate(token: string) {
+  return request.post<{ token: string }>("/api/admin/user/validate", { token });
 }

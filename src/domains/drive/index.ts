@@ -10,17 +10,19 @@ import { fetch_async_task } from "@/domains/async_task/services";
 import { Result } from "@/types";
 
 import {
-  analysis_aliyun_drive,
-  export_aliyun_drive,
-  refresh_drive_profile,
-  set_drive_refresh_token,
+  analysisDrive,
+  exportDriveInfo,
+  refreshDriveProfile,
+  setAliyunDriveRefreshToken,
   set_drive_root_file_id,
-  update_aliyun_drive,
-  fetch_aliyun_drives,
-  AliyunDriveItem,
-  fetch_aliyun_drive_files,
-  add_folder_in_drive,
+  updateAliyunDrive,
+  fetchDrives,
+  DriveItem,
+  fetchDriveFiles,
+  addFolderInDrive,
+  checkInDrive,
 } from "./services";
+import { TaskStatus } from "@/constants";
 
 enum Events {
   StateChange,
@@ -57,10 +59,10 @@ type DriveFile = {
   file_id: string;
   name: string;
 };
-type DriveState = AliyunDriveItem & {
+type DriveState = DriveItem & {
   loading: boolean;
 };
-const helper = new ListCore<AliyunDriveItem>(fetch_aliyun_drives);
+const helper = new ListCore<DriveItem>(fetchDrives);
 export class Drive extends BaseDomain<TheTypesOfEvents> {
   /** 网盘id */
   id: string;
@@ -119,23 +121,23 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     this.state = options;
   }
 
-  /** 开始刮削网盘 */
+  /** 开始全量索引云盘 */
   async startScrape() {
     if (this.timer) {
       this.tip({ text: ["索引正在进行中..."] });
-      return;
+      return Result.Ok(null);
     }
     this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
-    const resp = await analysis_aliyun_drive({ aliyun_drive_id: this.id });
-    if (resp.error) {
+    const r = await analysisDrive({ drive_id: this.id });
+    if (r.error) {
       this.state.loading = false;
       this.emit(Events.StateChange, { ...this.state });
-      this.tip({ text: ["索引失败", resp.error.message] });
-      return;
+      this.tip({ text: ["索引失败", r.error.message] });
+      return Result.Err(r.error);
     }
-    const { async_task_id } = resp.data;
+    const { async_task_id } = r.data;
     this.timer = setInterval(async () => {
       const r = await fetch_async_task(async_task_id);
       if (r.error) {
@@ -144,40 +146,44 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
         this.tip({ text: ["获取索引状态失败", r.error.message] });
         if (this.timer) {
           clearTimeout(this.timer);
+          this.timer = null;
         }
         return;
       }
-      if (r.data.status === "Pause") {
+      if (r.data.status === TaskStatus.Paused) {
         this.state.loading = false;
         this.tip({ text: ["索引被中断"] });
         this.emit(Events.StateChange, { ...this.state });
         if (this.timer) {
           clearInterval(this.timer);
+          this.timer = null;
         }
         return;
       }
-      if (r.data.status === "Finished") {
+      if (r.data.status === TaskStatus.Finished) {
         this.state.loading = false;
         this.tip({ text: ["索引完成"] });
         this.emit(Events.StateChange, { ...this.state });
         this.emitCompleted(r.data);
         if (this.timer) {
           clearInterval(this.timer);
+          this.timer = null;
         }
       }
     }, 3000);
   }
-  /** 导出网盘信息 */
+  /** 导出云盘信息（可直接导入其他网站） */
   async export() {
-    const r = await export_aliyun_drive({ aliyun_drive_id: this.id });
+    const r = await exportDriveInfo({ drive_id: this.id });
     if (r.error) {
       this.emit(Events.Error, r.error);
       return;
     }
     this.tip({ text: ["网盘信息已复制到剪贴板"] });
   }
+  /** 更新云盘基本信息 */
   async update() {
-    const r = await update_aliyun_drive(this.id, this.values);
+    const r = await updateAliyunDrive(this.id, this.values);
     this.values = {};
     if (r.error) {
       this.tip({ text: ["更新失败", r.error.message] });
@@ -188,7 +194,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   }
   /** 刷新网盘基本信息 */
   async refresh() {
-    const r = await refresh_drive_profile({ aliyun_drive_id: this.id });
+    const r = await refreshDriveProfile({ drive_id: this.id });
     if (r.error) {
       this.tip({ text: ["刷新失败", r.error.message] });
       return;
@@ -243,7 +249,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     if (!refresh_token) {
       return Result.Err("缺少 refresh_token 参数");
     }
-    const r = await set_drive_refresh_token({
+    const r = await setAliyunDriveRefreshToken({
       refresh_token,
       drive_id: this.id,
     });
@@ -272,7 +278,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       };
     })();
     this.list.loading = true;
-    const r = await fetch_aliyun_drive_files(body);
+    const r = await fetchDriveFiles(body);
     this.list.loading = false;
     if (r.error) {
       return r;
@@ -346,7 +352,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["请先输入文件夹名称"] });
       return;
     }
-    const r = await add_folder_in_drive({
+    const r = await addFolderInDrive({
       drive_id: this.id,
       name: folder_name,
     });
@@ -357,6 +363,15 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     this.tip({ text: ["添加文件夹成功"] });
     this.fetch({ file_id: "root", name: "文件" });
     return Result.Ok(r.data);
+  }
+  async checkIn() {
+    const r = await checkInDrive({ drive_id: this.id });
+    if (r.error) {
+      this.tip({ text: ["签到失败", r.error.message] });
+      return;
+    }
+    this.tip({ text: ["签到成功"] });
+    this.refresh();
   }
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {

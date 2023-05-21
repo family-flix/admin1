@@ -1,6 +1,7 @@
-// import * as React from "react";
-import { JSX, children, createSignal } from "solid-js";
+import { JSX, Show, children, createSignal } from "solid-js";
 import { VariantProps, cva } from "class-variance-authority";
+import { Loader } from "lucide-solid";
+
 import { ButtonCore } from "@/domains/ui/button";
 
 const buttonVariants = cva(
@@ -21,9 +22,9 @@ const buttonVariants = cva(
         link: "bg-transparent dark:bg-transparent underline-offset-4 hover:underline text-slate-900 dark:text-slate-100 hover:bg-transparent dark:hover:bg-transparent",
       },
       size: {
-        default: "h-10 py-2 px-4",
-        sm: "h-9 px-2 rounded-md",
-        lg: "h-11 px-8 rounded-md",
+        default: "py-2 px-4",
+        sm: "px-2 rounded-md",
+        lg: "px-8 rounded-md",
       },
     },
     defaultVariants: {
@@ -37,41 +38,44 @@ export interface ButtonProps
   extends HTMLButtonElement,
     VariantProps<typeof buttonVariants> {}
 
-const Button = (
+function Button<T = unknown>(
   props: {
-    store?: ButtonCore;
+    store: ButtonCore<T>;
     variant?: string;
     size?: string;
   } & JSX.HTMLAttributes<HTMLButtonElement>
-) => {
+) {
   const { store, variant, size } = props;
 
   const [state, setState] = createSignal(store.state);
 
   store.onStateChange((nextState) => {
+    // console.log("button state change", nextState);
     setState(nextState);
   });
 
   const disabled = () => state().disabled;
+  const loading = () => state().loading;
   // console.log(
   //   "[COMPONENT]Button - render",
   //   buttonVariants({ variant, size, className: props.className })
   // );
   return (
-    <button
+    <div
       class={buttonVariants({ variant, size, class: props.class })}
-      disabled={disabled()}
+      role="button"
+      // disabled={disabled()}
       onClick={(event) => {
-        if (props.onClick) {
-          props.onClick(event);
-        }
         store.click();
       }}
     >
+      <Show when={loading()}>
+        <Loader class="animation animate-spin" width={12} height={12} />
+      </Show>
       {props.children}
-    </button>
+    </div>
   );
-};
+}
 Button.displayName = "Button";
 
 export { Button, buttonVariants };

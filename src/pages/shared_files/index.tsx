@@ -4,7 +4,7 @@
 import { For, createSignal, onCleanup, onMount } from "solid-js";
 
 import { NavigatorCore } from "@/domains/navigator";
-import { ViewCore } from "@/domains/router";
+import { ViewCore } from "@/domains/view";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { Application } from "@/domains/app";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
@@ -22,6 +22,7 @@ import { TVCard } from "@/components/TVCard";
 import * as Tabs from "@/components/ui/tabs";
 import { cn } from "@/utils";
 import { InputCore } from "@/domains/ui/input";
+import { ButtonCore } from "@/domains/ui/button";
 
 export const SharedFilesTransferPage = (props: {
   app: Application;
@@ -72,6 +73,13 @@ export const SharedFilesTransferPage = (props: {
   });
   const input1 = new InputCore({
     placeholder: "请输入分享链接",
+  });
+  const btn = new ButtonCore({
+    async onClick() {
+      btn.setLoading(true);
+      await sharedResource.fetch();
+      btn.setLoading(false);
+    },
   });
   app.onDrivesChange((nextDrives) => {
     driveSubMenu.setItems(
@@ -129,13 +137,7 @@ export const SharedFilesTransferPage = (props: {
           <Input class="" store={input1} />
         </div>
         <div class="grid col-span-2">
-          <Button
-            size="default"
-            variant="default"
-            onClick={() => {
-              sharedResource.fetch();
-            }}
-          >
+          <Button size="default" variant="default" store={btn}>
             获取
           </Button>
         </div>

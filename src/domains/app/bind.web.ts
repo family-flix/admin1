@@ -35,7 +35,6 @@ export function bind(app: Application) {
       width: innerWidth,
       height: innerHeight,
     };
-    console.log("resize", size);
     // app.emit(app.Events.Resize, { width: innerWidth, height: innerHeight });
     app.resize(size);
   });

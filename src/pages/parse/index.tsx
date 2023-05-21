@@ -1,89 +1,93 @@
 /**
  * @file 视频文件名解析页面
  */
-import React, { useCallback, useState } from "react";
+import { For, Show, createSignal } from "solid-js";
 
 import {
   ParsedVideoInfo,
-  parse_filename_for_video,
   VideoKeys,
   VIDEO_ALL_KEYS,
   VIDEO_KEY_NAME_MAP,
 } from "@/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import Head from "next/head";
+import { ButtonCore } from "@/domains/ui/button";
+import { InputCore } from "@/domains/ui/input";
+import { ViewComponent } from "@/types";
+import { RequestCore } from "@/domains/client";
+import { parse_video_file_name } from "@/services";
 
-const VideoParsingPage = () => {
-  const [info, setInfo] = useState<ParsedVideoInfo | null>(null);
-  const [value, setValue] = useState("");
+export const VideoParsingPage: ViewComponent = (props) => {
+  const { app } = props;
 
-  const parse = useCallback(async (filename: string) => {
-    if (!filename) {
-      alert("please input filename");
-      return;
-    }
-    const data = parse_filename_for_video(filename, VIDEO_ALL_KEYS);
+  const request = new RequestCore(parse_video_file_name, {
+    onLoading(loading) {
+      btn.setLoading(loading);
+    },
+  });
+  const input = new InputCore({
+    placeholder: "请输入要解析的文件名",
+  });
+  const btn = new ButtonCore({
+    onClick() {
+      if (!input.value) {
+        app.tip({ text: ["请输入要解析的文件名"] });
+        return;
+      }
+      request.run({
+        name: input.value,
+        keys: VIDEO_ALL_KEYS,
+      });
+    },
+  });
+  request.onSuccess((data) => {
+    console.log("request success", data);
     setInfo(data);
-  }, []);
+  });
+  request.onTip((msg) => {
+    app.tip(msg);
+  });
+
+  const [info, setInfo] = createSignal<ParsedVideoInfo | null>(null);
+
+  const keys = () => {
+    if (info() === null) {
+      return [];
+    }
+    const keys = Object.keys(info()) as VideoKeys[];
+    return keys;
+  };
 
   return (
-    <>
-      <Head>
-        <title>文件名称解析</title>
-      </Head>
-      <div>
-        <div>
-          <div className="m-auto w-[960px]">
-            <div className="mt-12">
-              <Textarea
-                className="h-32"
-                placeholder="please input filename"
-                value={value}
-                onChange={(e) => {
-                  setValue(e.target.value);
-                }}
-              />
-              <div className="grid mt-4">
-                <Button
-                  className="btn btn--primary btn--block"
-                  onClick={() => {
-                    parse(value);
-                  }}
-                >
-                  解析
-                </Button>
-              </div>
-            </div>
-            {(() => {
-              if (info === null) {
-                return null;
-              }
-              const keys = Object.keys(info) as VideoKeys[];
-              return (
-                <div className="mt-4">
-                  {keys.map((k) => {
-                    const v = info[k];
-                    return (
-                      <div key={k} className="flex align-middle">
-                        <div className="align-left min-w-[114px]">
-                          {VIDEO_KEY_NAME_MAP[k]}
-                        </div>
-                        <span>：</span>
-                        <div className="align-left w-full break-all whitespace-pre-wrap">
-                          {v}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
+    <div>
+      <div class="mt-12">
+        <Textarea class="h-32" store={input} />
+        <div class="grid mt-4">
+          <Button store={btn} class="btn btn--primary btn--block">
+            解析
+          </Button>
         </div>
       </div>
-    </>
+      <Show when={!!info()}>
+        <div class="mt-4">
+          <For each={keys()}>
+            {(k) => {
+              const v = () => info()[k];
+              return (
+                <div class="flex align-middle">
+                  <div class="align-left min-w-[114px]">
+                    {VIDEO_KEY_NAME_MAP[k]}
+                  </div>
+                  <span>：</span>
+                  <div class="align-left w-full break-all whitespace-pre-wrap">
+                    {v()}
+                  </div>
+                </div>
+              );
+            }}
+          </For>
+        </div>
+      </Show>
+    </div>
   );
 };
-
-export default VideoParsingPage;

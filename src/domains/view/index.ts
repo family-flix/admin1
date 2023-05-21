@@ -8,8 +8,6 @@ import { pathToRegexp } from "path-to-regexp";
 import { BaseDomain } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
 
-import { PageCore } from "./something";
-
 enum Events {
   SubViewsChanged,
   SubViewChanged,
@@ -58,7 +56,6 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
 
   id = this.uid();
   title: string;
-  page: PageCore;
 
   _hidden = false;
   get hidden() {

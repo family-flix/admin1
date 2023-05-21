@@ -4,26 +4,26 @@
 import { For, JSX, Show, children, createSignal } from "solid-js";
 import { Calendar, Film, Users, FolderInput, Home } from "lucide-solid";
 
-import { ViewCore } from "@/domains/router";
-import { PageCore } from "@/domains/router/something";
+import { ViewCore } from "@/domains/view";
 import { Application } from "@/domains/app";
 // import { EmptyPageContainer } from "@/components/EmptyPageContainer";
 import { NavigatorCore } from "@/domains/navigator";
 import { ViewComponent } from "@/types";
 import { View } from "@/components/ui/view";
+import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
+import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 
-export const MainLayout = (props: {
-  app: Application;
-  view: ViewCore;
-  router: NavigatorCore;
-}) => {
+export const MainLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
+
+  const dialog = new TMDBSearcherDialogCore();
 
   const [subViews, setSubViews] = createSignal(view.subViews);
   view.onSubViewsChange((nextSubViews) => {
     // console.log("[LAYOUT]MainLayout - subViewsChanged", nextSubViews.length);
     setSubViews(nextSubViews);
   });
+  app.user.validate();
 
   // console.log("[LAYOUT]MainLayout - init", hidden);
 
@@ -70,7 +70,9 @@ export const MainLayout = (props: {
             </div>
             <div
               class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {}}
+              onClick={() => {
+                dialog.show();
+              }}
             >
               <Users class="w-6 h-6" />
               <div class="text-xl">TMDB 数据库</div>
@@ -78,7 +80,7 @@ export const MainLayout = (props: {
             <div
               class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
               onClick={() => {
-                router.push("/member");
+                router.push("/members");
               }}
             >
               <Users class="w-6 h-6" />
@@ -102,6 +104,15 @@ export const MainLayout = (props: {
               <FolderInput class="w-6 h-6" />
               <div class="text-xl">待处理更新</div>
             </div>
+            <div
+              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
+              onClick={() => {
+                router.push("/parse");
+              }}
+            >
+              <FolderInput class="w-6 h-6" />
+              <div class="text-xl">解析文件名</div>
+            </div>
           </div>
         </div>
         <div class="w-screen ml-[280px] space-y-4">
@@ -117,6 +128,7 @@ export const MainLayout = (props: {
           </For>
         </div>
       </div>
+      <TMDBSearcherDialog store={dialog} />
     </View>
   );
 };

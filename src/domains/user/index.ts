@@ -3,46 +3,60 @@ import { Handler } from "mitt";
 import { Result } from "@/types";
 import { BaseDomain } from "@/domains/base";
 
-import { fetch_user_profile, login } from "./services";
+import { fetch_user_profile, login, validate } from "./services";
 
 export enum Events {
   Tip,
   Error,
   Login,
   Logout,
+  /** 身份凭证失效 */
+  Expired,
 }
-type TheTypeOfEvent = {
+type TheTypesOfEvents = {
   [Events.Tip]: string[];
   [Events.Error]: Error;
-  [Events.Login]: {};
+  [Events.Login]: UserState & { token: string };
   [Events.Logout]: void;
+  [Events.Expired]: void;
+};
+type UserState = {
+  id: string;
+  username: string;
+  avatar: string;
+};
+type UserProps = {
+  id: string;
+  username: string;
+  avatar: string;
+  token: string;
 };
 
-export class UserCore extends BaseDomain<TheTypeOfEvent> {
+export class UserCore extends BaseDomain<TheTypesOfEvents> {
   name = "UserCore";
   debug = false;
 
-  _isLogin: boolean = false;
-  user: {
-    username: string;
-    avatar: string;
-    token: string;
-  } | null = null;
+  state: UserState = {
+    id: "",
+    username: "Anonymous",
+    avatar: "",
+  };
+  isLogin: boolean = false;
   token: string = "";
   values: Partial<{ email: string; password: string }> = {};
 
   static Events = Events;
 
-  constructor(initialUser?: UserCore["user"]) {
-    super();
+  constructor(options: Partial<{ name: string } & UserProps> = {}) {
+    super(options);
 
-    this.log("constructor", initialUser);
-    this._isLogin = !!initialUser;
-    this.user = initialUser;
-    this.token = initialUser ? initialUser.token : "";
-  }
-  get isLogin() {
-    return this._isLogin;
+    const { id, username, avatar, token } = options;
+    // this.log("constructor", initialUser);
+    this.state.id = id;
+    this.state.username = username;
+    this.state.username = avatar;
+    this.isLogin = !!token;
+    this.token = token;
   }
   inputEmail(value: string) {
     this.values.email = value;
@@ -50,28 +64,39 @@ export class UserCore extends BaseDomain<TheTypeOfEvent> {
   inputPassword(value: string) {
     this.values.password = value;
   }
+  /** 校验用户凭证是否有效 */
+  async validate() {
+    const r = await validate(this.token);
+    if (r.error) {
+      this.emit(Events.Expired);
+      return Result.Err(r.error);
+    }
+    return Result.Ok(null);
+  }
   /** 用户名密码登录 */
   async login() {
     const { email, password } = this.values;
     if (!email) {
-      return Result.Err("请输入邮箱");
+      const msg = this.tip({ text: ["请输入邮箱"] });
+      return Result.Err(msg);
     }
     if (!password) {
-      return Result.Err("请输入密码");
+      const msg = this.tip({ text: ["请输入密码"] });
+      return Result.Err(msg);
     }
     const r = await login({ email, password });
     if (r.error) {
-      this.emitError(r.error.message);
-      return r;
+      this.tip({ text: ["登录失败", r.error.message] });
+      return Result.Err(r.error);
     }
     this.values = {};
-    this._isLogin = true;
-    this.user = r.data;
+    this.isLogin = true;
+    this.state = r.data;
     this.token = r.data.token;
-    this.emitLogin();
-    // localStorage.setItem("user", JSON.stringify(r.data));
+    this.emit(Events.Login, { ...this.state, token: this.token });
     return Result.Ok(r.data);
   }
+  /** 退出登录 */
   logout() {}
   async register() {
     const { email, password } = this.values;
@@ -81,19 +106,10 @@ export class UserCore extends BaseDomain<TheTypeOfEvent> {
     if (!password) {
       return Result.Err("Missing password");
     }
-    // const r = await login({ email, password });
-    // this.values = {};
-    // if (r.error) {
-    //   this.notice_error(r);
-    //   return r;
-    // }
-    // this.user = r.data;
-    // this.token = r.data.token;
-    // localStorage.setItem("user", JSON.stringify(r.data));
     return Result.Ok(null);
   }
   async fetchProfile() {
-    if (!this._isLogin) {
+    if (!this.isLogin) {
       return Result.Err("请先登录");
     }
     const r = await fetch_user_profile();
@@ -102,22 +118,14 @@ export class UserCore extends BaseDomain<TheTypeOfEvent> {
     }
     return Result.Ok(r.data);
   }
-  onError(handler: Handler<TheTypeOfEvent[Events.Error]>) {
+
+  onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
     this.on(Events.Error, handler);
   }
-  emitError(result: Result<null> | string) {
-    const error = (() => {
-      if (typeof result === "string") {
-        return new Error(result);
-      }
-      return result.error;
-    })();
-    this.emit(Events.Error, error);
-  }
-  onLogin(handler: Handler<TheTypeOfEvent[Events.Error]>) {
+  onLogin(handler: Handler<TheTypesOfEvents[Events.Login]>) {
     this.on(Events.Login, handler);
   }
-  emitLogin() {
-    this.emit(Events.Login, { ...this.user });
+  onExpired(handler: Handler<TheTypesOfEvents[Events.Expired]>) {
+    return this.on(Events.Expired, handler);
   }
 }

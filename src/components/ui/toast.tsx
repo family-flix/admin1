@@ -1,14 +1,7 @@
 /**
  * @file 小黑块 提示
  */
-import {
-  For,
-  createSignal,
-  JSX,
-  onMount,
-  onCleanup,
-  createEffect,
-} from "solid-js";
+import { For, createSignal, JSX } from "solid-js";
 import { Portal as PortalPrimitive } from "solid-js/web";
 
 import { Presence } from "@/components/ui/presence";
@@ -102,7 +95,7 @@ const Content = (props: { store: ToastCore; children: JSX.Element }) => {
   // });
 
   return (
-    <div class="fixed z-99 left-[50%] translate-x-[-50%] top-60 w-120 h-120 ">
+    <div class="fixed z-[99] left-[50%] translate-x-[-50%] top-60 w-120 h-120 ">
       <div
         data-state={open() ? "open" : "closed"}
         class={cn(
@@ -112,9 +105,9 @@ const Content = (props: { store: ToastCore; children: JSX.Element }) => {
           "data-[state=open]:fade-in-90",
           "data-[state=closed]:animate-out data-[state=closed]:fade-out"
         )}
-        onAnimationEnd={() => {
-          console.log("onAnimationEnd", store.open);
-        }}
+        // onAnimationEnd={() => {
+        //   console.log("onAnimationEnd", store.open);
+        // }}
       >
         {props.children}
       </div>

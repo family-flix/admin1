@@ -19,16 +19,25 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 
-const DriveCard = (props: { app: Application; core: Drive }) => {
-  const { app, core: drive } = props;
+export const DriveCard = (props: { app: Application; store: Drive }) => {
+  const { app, store: drive } = props;
+
   const [state, setState] = createSignal(drive.state);
   const [values, setValues] = createSignal(drive.values);
   const [folderColumns, setFolderColumns] = createSignal(drive.folderColumns);
+
   const foldersModal = new DialogCore();
   const createFolderModal = new DialogCore();
   const refreshTokenModal = new DialogCore();
   const dropdown = new DropdownMenuCore({
     items: [
+      new MenuItemCore({
+        label: "签到",
+        onClick() {
+          drive.checkIn();
+          dropdown.hide();
+        },
+      }),
       new MenuItemCore({
         label: "导出",
         onClick() {
@@ -69,9 +78,11 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
       createFolderModal.show();
     },
   });
-  const button4 = new ButtonCore({
-    onClick() {
-      drive.refresh();
+  const checkInBtn = new ButtonCore({
+    async onClick() {
+      checkInBtn.setLoading(true);
+      await drive.refresh();
+      checkInBtn.setLoading(false);
     },
   });
   foldersModal.onOk(() => {
@@ -116,7 +127,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
   // const { avatar, user_name, used_size, total_size, used_percent } = state();
   const initialized = () => state().initialized;
   const avatar = () => state().avatar;
-  const user_name = () => state().user_name;
+  const name = () => state().name;
   const used_size = () => state().used_size;
   const total_size = () => state().total_size;
   const used_percent = () => state().used_percent;
@@ -130,19 +141,19 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
         <div class="">
           <div class="absolute top-2 right-2">
             <DropdownMenu store={dropdown}>
-              <div class="p-4 cursor-pointer">
+              <div class="p-2 cursor-pointer">
                 <MoreHorizontal class="w-6 h-6 text-gray-600" />
               </div>
             </DropdownMenu>
           </div>
           <div class="flex">
             <LazyImage
-              className="overflow-hidden w-16 h-16 mr-4 rounded"
+              class="overflow-hidden w-16 h-16 mr-4 rounded"
               src={avatar()}
-              alt={user_name()}
+              alt={name()}
             />
             <div>
-              <div class="text-xl">{user_name()}</div>
+              <div class="text-xl">{name()}</div>
               <div class="flex items-center space-x-2">
                 <Progress class="" store={progress} />
                 {used_size()}/{total_size()}
@@ -170,7 +181,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
                     索引
                   </Button>
                 </Show>
-                <Button variant="subtle" size="sm" store={button4}>
+                <Button variant="subtle" size="sm" store={checkInBtn}>
                   刷新
                 </Button>
               </div>
@@ -178,7 +189,7 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
           </div>
         </div>
       </div>
-      <Modal title={user_name()} store={foldersModal}>
+      <Modal title={name()} store={foldersModal}>
         <div class="text-center">请先选择一个文件夹作为索引根目录</div>
         <Show
           when={folderColumns().length > 0}
@@ -240,5 +251,3 @@ const DriveCard = (props: { app: Application; core: Drive }) => {
     </div>
   );
 };
-
-export default DriveCard;

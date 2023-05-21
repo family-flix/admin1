@@ -148,15 +148,7 @@ const Submit = (
 ) => {
   const { store } = props;
 
-  return (
-    <button
-      onClick={() => {
-        store.ok();
-      }}
-    >
-      {props.children}
-    </button>
-  );
+  return <Button store={store.okBtn}>{props.children}</Button>;
 };
 
 const Cancel = (
@@ -164,15 +156,7 @@ const Cancel = (
 ) => {
   const { store } = props;
 
-  return (
-    <button
-      onClick={() => {
-        store.cancel();
-      }}
-    >
-      {props.children}
-    </button>
-  );
+  return <Button store={store.cancelBtn}>{props.children}</Button>;
 };
 
 function getState(open: boolean) {

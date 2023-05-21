@@ -1,220 +1,156 @@
-// import { useEffect, useState } from "react";
-// import Head from "next/head";
+/**
+ * @file 成员管理
+ */
+import { createSignal, For, Show } from "solid-js";
 
-// import Modal from "@/components/Modal";
-import ScrollView from "@/components/ScrollView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import useHelper from "@/domains/list-helper-hook";
 import {
   add_member,
-  add_recommended_tv,
   create_member_auth_link,
   fetch_members,
   MemberItem,
 } from "@/services";
-import { Result } from "@/types";
-import CopyAndCheckIcon from "@/components/CopyIcon";
-// import { copy } from "@/utils/front_end";
-import { cn } from "@/lib/utils";
-import TVSelect from "@/components/TVSelect";
-import { PartialSearchedTV } from "@/domains/tmdb/services";
-import { LazyImage } from "@/components/LazyImage";
+import { ViewComponent } from "@/types";
+import { cn } from "@/utils";
+import { Modal } from "@/components/SingleModal";
+import { DialogCore } from "@/domains/ui/dialog";
+import { ListCore } from "@/domains/list";
+import { RequestCore } from "@/domains/client";
+import { InputCore } from "@/domains/ui/input";
+import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 
-const MemberManagePage = () => {
-  const [response, helper] = useHelper<MemberItem>(fetch_members);
-  const [remark, set_remark] = useState("");
-  const [selected_tv, set_selected_tv] = useState<PartialSearchedTV | null>(
-    null
-  );
-  const [cur_member, set_cur_member] = useState<MemberItem | null>(null);
+export const MemberManagePage: ViewComponent = (props) => {
+  const { app, router } = props;
 
-  useEffect(() => {
-    helper.init();
-  }, []);
+  const list = new ListCore<MemberItem>(fetch_members);
+  const generateToken = new RequestCore(create_member_auth_link, {
+    onFailed(error) {
+      app.tip({ text: ["生成 token 失败", error.message] });
+    },
+    onSuccess() {
+      list.refresh();
+    },
+  });
+  const addMember = new RequestCore(add_member, {
+    onFailed(error) {
+      app.tip({ text: ["新增成员失败", error.message] });
+    },
+    onSuccess() {
+      dialog.hide();
+      input1.empty();
+      button2.clear();
+      list.refresh();
+    },
+  });
+  const dialog = new DialogCore({
+    onOk() {
+      if (!input1.value) {
+        app.tip({ text: ["请先输入成员备注"] });
+        return;
+      }
+      addMember.run({
+        remark: input1.value,
+      });
+    },
+  });
+  const input1 = new InputCore({
+    placeholder: "请输入备注",
+  });
+  const button1 = new ButtonCore({
+    onClick() {
+      dialog.show();
+    },
+  });
+  const button2 = new ButtonInListCore<MemberItem>({
+    onClick(member) {
+      generateToken.run({ id: member.id });
+    },
+  });
+  generateToken.onLoadingChange((loading) => {
+    button2.setLoading(loading);
+  });
 
-  const { dataSource, loading, noMore, error } = response;
+  const [response, setResponse] = createSignal(list.response);
+  list.onStateChange((nextState) => {
+    setResponse(nextState);
+  });
+
+  list.init();
+
+  const dataSource = () => response().dataSource;
 
   return (
     <>
-      <Head>
-        <title>成员管理</title>
-      </Head>
-      <div className="min-h-screen pt-8">
-        <div className="m-auto w-[960px] space-y-4">
-          <h2 className="h2 mt-4">成员列表</h2>
-          <Modal
-            title="新增成员"
-            trigger={<Button>新增成员</Button>}
-            on_ok={async () => {
-              const resp = await add_member({
-                remark,
-              });
-              if (resp.error) {
-                alert(resp.error.message);
-                return Result.Err(resp.error);
-              }
-              helper.refresh();
-              return Result.Ok(null);
-            }}
-          >
-            <div>
-              <Input
-                placeholder="请输入备注"
-                value={remark}
-                onChange={(event) => {
-                  set_remark(event.target.value);
-                }}
-              />
-            </div>
-          </Modal>
-          <ScrollView {...response}>
-            <div className="space-y-4">
-              {dataSource.map((member) => {
-                const { id, remark, disabled, links, recommended_tvs } = member;
-                return (
-                  <div key={id} className="card">
-                    <div className="flex justify-between">
-                      <div>
-                        <p className="text-2xl">{remark}</p>
-                        {disabled ? "disabled" : "enabled"}
+      <div class="min-h-screen">
+        <div class="">
+          <h2 class="">成员列表</h2>
+          <Button store={button1}>新增成员</Button>
+          <view>
+            <div class="space-y-4">
+              <For each={dataSource()}>
+                {(member) => {
+                  const { remark, disabled, tokens } = member;
+                  return (
+                    <div class="card">
+                      <div class="flex justify-between">
+                        <div>
+                          <p class="text-2xl">{remark}</p>
+                          {disabled ? "disabled" : "enabled"}
+                        </div>
+                      </div>
+                      <div class="mt-4">
+                        <Button variant="subtle" store={button2.bind(member)}>
+                          生成授权链接
+                        </Button>
+                        <Show when={tokens.length !== 0} fallback={null}>
+                          <div class="mt-4 space-y-4">
+                            <For each={tokens}>
+                              {(link) => {
+                                const { id, token, used } = link;
+                                return (
+                                  <div class="space-y-2">
+                                    {[
+                                      "https://pc-t.funzm.com/home?token=",
+                                      "https://h5-t.funzm.com/home?token=",
+                                      "http://video.funzm.com/home?token=",
+                                      "http://beta.funzm.com/home?token=",
+                                    ].map((prefix) => {
+                                      const url = `${prefix}${token}`;
+                                      return (
+                                        <div class="flex items-center">
+                                          {used ? null : (
+                                            <div class="mr-4"></div>
+                                          )}
+                                          <div
+                                            class={cn(
+                                              "w-full text-sm break-all whitespace-pre-wrap",
+                                              used ? "line-through" : ""
+                                            )}
+                                          >
+                                            {url}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              }}
+                            </For>
+                          </div>
+                        </Show>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <Button
-                        variant="subtle"
-                        onClick={async () => {
-                          const r = await create_member_auth_link({
-                            id,
-                          });
-                          if (r.error) {
-                            alert(r.error);
-                            return;
-                          }
-                          helper.refresh();
-                        }}
-                      >
-                        生成授权链接
-                      </Button>
-                      {(() => {
-                        if (links.length === 0) {
-                          return null;
-                        }
-                        return (
-                          <div className="mt-4 space-y-4">
-                            {links.map((link) => {
-                              const { id, token, used } = link;
-                              return (
-                                <div key={id} className="space-y-2">
-                                  {[
-                                    "https://dev.funzm.com",
-                                    "https://video-pc-dev.funzm.com",
-                                    "http://video.funzm.com",
-                                    "http://beta.funzm.com",
-                                  ].map((prefix) => {
-                                    const url = `${prefix}${token}`;
-                                    return (
-                                      <div
-                                        key={id}
-                                        className="flex items-center"
-                                      >
-                                        {used ? null : (
-                                          <div className="mr-4">
-                                            <CopyAndCheckIcon
-                                              on_click={() => {
-                                                copy(url);
-                                              }}
-                                            />
-                                          </div>
-                                        )}
-                                        <div
-                                          className={cn(
-                                            "w-full text-sm break-all whitespace-pre-wrap",
-                                            used ? "line-through" : ""
-                                          )}
-                                        >
-                                          {url}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                    <div className="mt-4">
-                      <Modal
-                        title="选择推荐影片"
-                        trigger={
-                          <Button
-                            variant="subtle"
-                            onClick={() => {
-                              set_cur_member(member);
-                            }}
-                          >
-                            设置推荐影片
-                          </Button>
-                        }
-                        on_ok={async () => {
-                          if (selected_tv === null) {
-                            return Result.Err("未选择影片");
-                          }
-                          if (cur_member === null) {
-                            return Result.Err("未选择成员");
-                          }
-                          const r = await add_recommended_tv({
-                            tv_id: selected_tv.id,
-                            member_id: cur_member.id,
-                          });
-                          if (r.error) {
-                            return r;
-                          }
-                          helper.refresh();
-                          return Result.Ok(null);
-                        }}
-                      >
-                        <TVSelect on_change={set_selected_tv} />
-                      </Modal>
-                      {(() => {
-                        if (links.length === 0) {
-                          return null;
-                        }
-                        return (
-                          <div className="mt-4 space-x-4">
-                            {recommended_tvs.map((tv) => {
-                              const { id, name, original_name, poster_path } =
-                                tv;
-                              return (
-                                <div key={id}>
-                                  <div className="flex">
-                                    <LazyImage
-                                      className="w-[60px] mr-2"
-                                      src={poster_path}
-                                      alt={name || original_name}
-                                    />
-                                    <div className="flex-1 text text-xl">
-                                      {name}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                }}
+              </For>
             </div>
-          </ScrollView>
+          </view>
         </div>
       </div>
+      <Modal title="新增成员" store={dialog}>
+        <Input store={input1} />
+      </Modal>
     </>
   );
 };
-
-export default MemberManagePage;

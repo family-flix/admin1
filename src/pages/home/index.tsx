@@ -12,29 +12,20 @@ import { HelpCircle } from "lucide-solid";
 //   TooltipTrigger,
 // } from "@/components/ui/tooltip";
 // import CopyAndCheckIcon from "@/components/CopyIcon";
-import { ListCore } from "@/domains/list";
-import { add_aliyun_drive } from "@/domains/drive/services";
-import { Application } from "@/domains/app";
-import { ViewCore } from "@/domains/router";
-import { PageCore } from "@/domains/router/something";
+import { addAliyunDrive } from "@/domains/drive/services";
 import { DialogCore } from "@/domains/ui/dialog";
 import { FormCore } from "@/domains/ui/form";
 import { RequestCore } from "@/domains/client";
-import { NavigatorCore } from "@/domains/navigator";
-import DriveCard from "@/components/DriveCard";
+import { DriveCard } from "@/components/DriveCard";
+import { ViewComponent } from "@/types";
 
-export const HomePage = (props: {
-  app: Application;
-  router: NavigatorCore;
-  view: ViewCore;
-  page: PageCore;
-}) => {
-  const { app, view, page } = props;
+export const HomePage: ViewComponent = (props) => {
+  const { app, view } = props;
   const [count, setCount] = createSignal(0);
   const [drives, setDrives] = createSignal(app.drives);
   const modal = new DialogCore();
   const form = new FormCore<{ payload: string }>();
-  const addingDriveClient = new RequestCore(add_aliyun_drive);
+  const addingDriveClient = new RequestCore(addAliyunDrive);
   app.onDrivesChange((nextDrives) => {
     setDrives(nextDrives);
   });
@@ -53,7 +44,7 @@ export const HomePage = (props: {
         <div class="grid grid-cols-2 gap-2">
           <For each={drives()}>
             {(drive) => {
-              return <DriveCard app={app} core={drive} />;
+              return <DriveCard app={app} store={drive} />;
             }}
           </For>
         </div>

@@ -18,8 +18,8 @@ import {
 import { Result } from "@/types";
 import {
   AliyunDriveProfile,
-  analysis_aliyun_drive,
-  fetch_aliyun_drive_profile,
+  analysisDrive,
+  fetchDriveProfile,
 } from "@/domains/drive/services";
 
 class AliyunDriveFolder {
@@ -113,7 +113,7 @@ const DriveProfilePage = () => {
     (async () => {
       // console.log(router.query.id);
       const id = router.query.id as string;
-      fetch_aliyun_drive_profile({ id }).then((r) => {
+      fetchDriveProfile({ drive_id: id }).then((r) => {
         if (r.error) {
           return;
         }
@@ -288,8 +288,8 @@ const DriveProfilePage = () => {
                               .map((p) => p.name)
                               .concat(name)
                               .join("/");
-                            const r = await analysis_aliyun_drive({
-                              aliyun_drive_id: cur_ref.current.id,
+                            const r = await analysisDrive({
+                              drive_id: cur_ref.current.id,
                               target_folder,
                             });
                             if (r.error) {

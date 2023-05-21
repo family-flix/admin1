@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import { SharedFilesAnalysis } from "@/domains/shared_resource";
 import { TaskResultOfSharedTV } from "@/domains/shared_resource/services";
 import useHelper from "@/domains/list-helper-hook";
-import { fetch_aliyun_drives } from "@/domains/drive/services";
+import { fetchDrives } from "@/domains/drive/services";
 import TVProfileWithFolder from "@/components/TVProfileWithFolder";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +20,7 @@ const TaskProfilePage = () => {
     null
   );
   const [response, helper] = useHelper<{ id: string; user_name: string }>(
-    fetch_aliyun_drives
+    fetchDrives
   );
 
   useEffect(() => {

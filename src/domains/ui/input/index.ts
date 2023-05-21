@@ -14,12 +14,14 @@ type InputState = {
   value: string;
   placeholder: string;
   disabled: boolean;
+  type: string;
 };
 type InputProps = {
   /** 字段键 */
   name: string;
   defaultValue: string;
   placeholder: string;
+  type: string;
 };
 
 export class InputCore extends BaseDomain<TheTypesOfEvents> {
@@ -29,15 +31,19 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     value: "",
     placeholder: "请输入",
     disabled: false,
+    type: "string",
   };
 
   constructor(options: Partial<{ name: string } & InputProps> = {}) {
     super(options);
 
-    const { name, defaultValue, placeholder } = options;
+    const { name, defaultValue, placeholder, type } = options;
     this.name = name;
     if (placeholder) {
       this.state.placeholder = placeholder;
+    }
+    if (type) {
+      this.state.type = type;
     }
     this._defaultValue = defaultValue;
     if (defaultValue) {

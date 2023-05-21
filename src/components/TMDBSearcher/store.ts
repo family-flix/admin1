@@ -2,6 +2,7 @@ import { BaseDomain } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { TheTVInTMDB } from "@/domains/tmdb/services";
+import { ButtonCore } from "@/domains/ui/button";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Handler } from "mitt";
 
@@ -27,6 +28,8 @@ type TMDBSearcherDialogProps = {
 export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
   tmdb = new TMDBSearcherCore();
   dialog: DialogCore;
+  okBtn: ButtonCore;
+  cancelBtn: ButtonCore;
 
   state: TMDBSearcherDialogState = {
     value: null,
@@ -46,6 +49,8 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
       },
       onCancel,
     });
+    this.okBtn = this.dialog.okBtn;
+    this.cancelBtn = this.dialog.cancelBtn;
     this.tmdb.list.onStateChange((nextState) => {
       this.state.list = nextState;
       this.emit(Events.StateChange, { ...this.state });
@@ -63,6 +68,9 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   onOk(handler: Handler<TheTypesOfEvents[Events.Ok]>) {
+    this.on(Events.Ok, handler);
+  }
+  onCancel(handler: Handler<TheTypesOfEvents[Events.Ok]>) {
     this.on(Events.Ok, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {

@@ -167,6 +167,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.setPathname(targetPathname);
     const query = buildQuery(targetPathname);
     this.query = query;
+    this.histories.push({ pathname: targetPathname });
     this.emit(Events.PushState, {
       from: this.prevPathname,
       // 这里似乎不用 this.origin，只要是 / 开头的，就会拼接在后面
@@ -194,6 +195,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     //       keys,
     //     });
     const query = buildQuery(targetPathname);
+    this.histories[this.histories.length - 1] = { pathname: targetPathname };
     this.emit(Events.ReplaceState, {
       from: this.prevPathname,
       //       title,

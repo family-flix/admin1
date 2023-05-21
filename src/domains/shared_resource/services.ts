@@ -9,18 +9,21 @@ import { request } from "@/utils/request";
 import { FetchParams } from "@/domains/list/typing";
 import dayjs from "dayjs";
 import { TVItem } from "@/services";
+import { TaskStatus } from "@/constants";
 
 /**
  * 开始对分享的文件进行分析
  */
-export function start_shared_files_analysis_task(url: string) {
-  return request.get<{ async_task_id: string }>(`/api/task/start?url=${url}`);
-}
+// export function start_shared_files_analysis_task(url: string) {
+//   return request.get<{ async_task_id: string }>(
+//     `/api/admin/task/start?url=${url}`
+//   );
+// }
 /**
  * 查询异步任务状态
  */
 export function fetch_async_task(id: string) {
-  return request.get<{ id: string; status: string }>(`/api/task/${id}`);
+  return request.get<{ id: string; status: string }>(`/api/admin/task/${id}`);
 }
 /**
  * 获取当前用户所有异步任务
@@ -30,20 +33,33 @@ export async function fetch_async_tasks(params: FetchParams) {
     ListResponse<{
       id: string;
       unique_id: string;
-      status: string;
+      status: TaskStatus;
       desc: string;
       created: string;
     }>
-  >(`/api/task/list`, params);
+  >(`/api/admin/task/list`, params);
   if (resp.error) {
     return Result.Err(resp.error);
   }
   const result = {
     ...resp.data,
     list: resp.data.list.map((task) => {
-      const { created, ...rest } = task;
+      const { created, status, ...rest } = task;
       return {
         ...rest,
+        status,
+        statusText: (() => {
+          if (status === TaskStatus.Running) {
+            return "运行中";
+          }
+          if (status === TaskStatus.Paused) {
+            return "已终止";
+          }
+          if (status === TaskStatus.Finished) {
+            return "已完成";
+          }
+          return "未知";
+        })(),
         created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
       };
     }),
@@ -53,7 +69,7 @@ export async function fetch_async_tasks(params: FetchParams) {
 export type AsyncTask = RequestedResource<typeof fetch_async_tasks>["list"][0];
 
 export function stop_async_task(id: string) {
-  return request.get<{ id: string }>(`/api/task/stop/${id}`, {
+  return request.get<{ id: string }>(`/api/admin/task/stop/${id}`, {
     force: "1",
   });
 }
@@ -87,7 +103,7 @@ export function fetch_async_task_profile(id: string) {
         }[];
       }[];
     }[];
-  }>(`/api/task/result/${id}`);
+  }>(`/api/admin/task/result/${id}`);
 }
 
 export type TaskResultOfSharedTV = UnpackedResult<
@@ -105,7 +121,7 @@ export function complete_async_task(
 ) {
   const { action, drive_id, tv_id, folder_id } = options;
   return request.get(
-    `/api/task/complete/${id}?action=${action}&drive_id=${drive_id}&folder_id=${folder_id}&tv_id=${tv_id}`
+    `/api/admin/task/complete/${id}?action=${action}&drive_id=${drive_id}&folder_id=${folder_id}&tv_id=${tv_id}`
   );
 }
 
@@ -116,7 +132,10 @@ export async function check_has_same_name_tv(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.post<null | TVItem>("/api/shared_files/check_same_name", body);
+  return request.post<null | TVItem>(
+    "/api/admin/shared_files/check_same_name",
+    body
+  );
 }
 
 /**
@@ -134,7 +153,7 @@ export async function build_link_between_shared_files_with_folder(body: {
   /** 要建立关联的网盘内文件夹id */
   target_file_id?: string;
 }) {
-  return request.post("/api/shared_files/link", body);
+  return request.post("/api/admin/shared_files/link", body);
 }
 
 /**
@@ -157,7 +176,7 @@ export async function fetch_shared_files(body: {
       thumbnail: string;
     }[];
     next_marker: string;
-  }>("/api/shared_files", { url, file_id, next_marker });
+  }>("/api/admin/shared_files", { url, file_id, next_marker });
   return r;
 }
 export type AliyunFolderItem = RequestedResource<
@@ -181,5 +200,5 @@ export async function save_shared_files(body: {
   /** 转存到指定网盘的哪个文件夹，默认是根目录 */
   target_folder_id?: string;
 }) {
-  return request.get("/api/shared_files/save", body);
+  return request.post("/api/admin/shared_files/save", body);
 }

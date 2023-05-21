@@ -1,9 +1,8 @@
-// import { Response } from "@list-helper/core/typing";
+import { JSX } from "solid-js/jsx-runtime";
 
 import { Application } from "@/domains/app";
 import { NavigatorCore } from "@/domains/navigator";
-import { ViewCore } from "@/domains/router";
-import { JSX } from "solid-js/jsx-runtime";
+import { ViewCore } from "@/domains/view";
 
 export type Resp<T> = {
   data: T extends null ? null : T;

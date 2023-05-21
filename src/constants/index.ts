@@ -1,6 +1,3 @@
-export const USER_ID = process.env.USER_ID;
-export const DRIVE_ID = process.env.DRIVE_ID;
-
 export const code = `const oo = document;
 const jj = JSON;
 const ll = localStorage;
@@ -63,4 +60,16 @@ export const code_get_drive_token = `${code_prefix}const oo=document,jj=JSON,ll=
 export enum FileType {
   File = 1,
   Folder = 2,
+}
+
+export enum TaskStatus {
+  Running,
+  Paused,
+  Finished,
+}
+
+export enum DriveFileType {
+  File = 1,
+  Folder = 2,
+  Unknown = 3,
 }

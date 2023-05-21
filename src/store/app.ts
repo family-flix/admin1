@@ -5,57 +5,31 @@
 import { ListCore } from "@/domains/list";
 import { Application } from "@/domains/app";
 import { LocalCache } from "@/domains/app/cache";
-import { ViewCore } from "@/domains/router";
 import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
-import { Drive } from "@/domains/drive";
-import { bind } from "@/domains/app/bind.web";
 import { Result } from "@/types";
-
-// class CurUser extends UserCore {
-//   /** 该用户的网盘列表 */
-//   drives: Drive[];
-
-//   constructor(props) {
-//     super(props);
-//   }
-
-//   async fetchDrives() {
-//     const r = await Drive.ListHelper.init();
-//     if (r.error) {
-//       this.emit(UserCore.Events.Error, r.error);
-//       return;
-//     }
-//     this.drives = r.data;
-//   }
-// }
 
 const cache = new LocalCache();
 const router = new NavigatorCore();
 const user = new UserCore(cache.get("user"));
+user.onTip((msg) => {
+  app.tip(msg);
+});
+user.onLogin((profile) => {
+  cache.set("user", profile);
+  // @todo 应该记住 redirect
+  router.push("/home");
+});
+user.onExpired(() => {
+  cache.clear("user");
+  router.replace("/auth/login");
+});
 
-const _app = new Application({
+export const app = new Application({
   user,
   router,
   cache,
   async beforeReady() {
-    // ListCore.onError = (error: Error) => {
-    //   app.tip({
-    //     text: [error.message],
-    //   });
-    // };
-    user.onError((error) => {
-      app.tip({
-        text: [error.message],
-      });
-    });
-    user.onLogin((profile) => {
-      cache.set("user", profile);
-    });
-    if (!user.isLogin) {
-      // router.replace("/login");
-      return Result.Ok(null);
-    }
     return Result.Ok(null);
   },
 });
@@ -99,5 +73,5 @@ ListCore.commonProcessor = (originalResponse) => {
     };
   }
 };
-bind(_app);
-export const app = _app;
+// bind(_app);
+// export const app = _app;

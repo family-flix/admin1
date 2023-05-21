@@ -137,13 +137,13 @@ export const TVManagePage: ViewComponent = (props) => {
                       >
                         <div class="flex">
                           <LazyImage
-                            class="mr-4 w-[180px] object-fit"
+                            class="mr-4 w-[120px] object-fit"
                             src={poster_path}
                             alt={name}
                           />
                           <div class="flex-1">
                             <h2 class="text-2xl">{name}</h2>
-                            <div class="mt-4">
+                            <div class="mt-2">
                               <p class="">{overview}</p>
                               <p class="">{first_air_date}</p>
                             </div>

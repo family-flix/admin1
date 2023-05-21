@@ -17,12 +17,13 @@ export class LocalCache {
   }
 
   set = debounce(100, (key: string, values: unknown) => {
+    console.log('cache set', key, values);
     const nextValues = {
       ...this._values,
       [key]: values,
     };
     this._values = nextValues;
-    localStorage.setItem("global", JSON.stringify(nextValues));
+    localStorage.setItem("global", JSON.stringify(this._values));
   }) as (key: string, value: unknown) => void;
 
   get<T>(key: string, defaultValue?: T) {
@@ -31,5 +32,18 @@ export class LocalCache {
       return defaultValue;
     }
     return v as T;
+  }
+
+  clear<T>(key: string) {
+    const v = this._values[key];
+    if (v === undefined) {
+      return null;
+    }
+    const nextValues = {
+      ...this._values,
+    };
+    delete nextValues[key];
+    this._values = { ...nextValues };
+    localStorage.setItem("global", JSON.stringify(this._values));
   }
 }

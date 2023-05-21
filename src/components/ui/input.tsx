@@ -18,6 +18,7 @@ const Input = (
   const value = () => state().value;
   const placeholder = () => state().placeholder;
   const disabled = () => state().disabled;
+  const type = () => state().type;
 
   return (
     <input
@@ -28,10 +29,12 @@ const Input = (
       value={value()}
       placeholder={placeholder()}
       disabled={disabled()}
+      type={type()}
       onInput={(event: Event & { currentTarget: HTMLInputElement }) => {
         const { value } = event.currentTarget;
         store.change(value);
       }}
+      {...restProps}
     />
   );
 };
