@@ -4,19 +4,17 @@
 import { For, JSX, Show, children, createSignal } from "solid-js";
 import { Calendar, Film, Users, FolderInput, Home } from "lucide-solid";
 
-import { ViewCore } from "@/domains/view";
-import { Application } from "@/domains/app";
-// import { EmptyPageContainer } from "@/components/EmptyPageContainer";
-import { NavigatorCore } from "@/domains/navigator";
-import { ViewComponent } from "@/types";
 import { View } from "@/components/ui/view";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { ViewComponent } from "@/types";
 
 export const MainLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  const dialog = new TMDBSearcherDialogCore();
+  const dialog = new TMDBSearcherDialogCore({
+    footer: false,
+  });
 
   const [subViews, setSubViews] = createSignal(view.subViews);
   view.onSubViewsChange((nextSubViews) => {

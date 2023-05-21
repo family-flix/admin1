@@ -18,7 +18,7 @@ async function fetch_shared_files_histories(body: FetchParams) {
       title: string;
       created: string;
     }>
-  >("/api/shared_files/list", body as unknown as JSONObject);
+  >("/api/shared_file/list", body as unknown as JSONObject);
   if (r.error) {
     return r;
   }

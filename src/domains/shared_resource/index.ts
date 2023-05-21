@@ -16,7 +16,7 @@ enum Events {
   /** 输入分享链接 */
   Input,
   /** 获取文件列表成功 */
-  RefreshSuccess,
+  StateChange,
   /** 分享文件夹绑定网盘内文件夹成功 */
   BindSuccess,
   /** 展示指定电视剧详情 */
@@ -41,7 +41,7 @@ type TheTypesOfEvents = {
     /** 首播时间 */
     firstAirDate: string;
   };
-  [Events.RefreshSuccess]: {
+  [Events.StateChange]: {
     url: string;
     paths: {
       file_id: string;
@@ -49,6 +49,18 @@ type TheTypesOfEvents = {
     }[];
     files: AliyunFolderItem[];
   };
+};
+type SharedResourceState = {
+  url: string;
+  paths: {
+    file_id: string;
+    name: string;
+    type?: "file" | "folder";
+  }[];
+  files: AliyunFolderItem[];
+};
+type SharedResourceProps = {
+  url: string;
 };
 
 export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
@@ -75,10 +87,14 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   /** 是否处于请求中 */
   loading = false;
 
-  constructor() {
+  state: SharedResourceState = {
+    url: "",
+    paths: [],
+    files: [],
+  };
+
+  constructor(options: Partial<{ name: string } & SharedResourceProps> = {}) {
     super();
-    // const { url } = options;
-    // this.url = url;
   }
 
   /** 输入分享文件链接 */
@@ -90,7 +106,6 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   async _fetch(file_id: string) {
     this.file_id = file_id;
     if (this.loading) {
-      // this.emit(Events.Tip, "正在加载中");
       return Result.Err(new Error("正在加载中"));
     }
     this.loading = true;
@@ -101,7 +116,6 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     });
     this.loading = false;
     if (r.error) {
-      // this.emit(Events.Error, r.error);
       return Result.Err(r.error);
     }
     return r;
@@ -143,12 +157,12 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     })();
     this.files = [...r.data.items];
     this.next_marker = r.data.next_marker;
-    this.emit(Events.RefreshSuccess, {
+    this.emit(Events.StateChange, {
       url: this.url,
       paths: [...this.paths],
       files: [...this.files],
     });
-    // return Result.Ok(null);
+    return Result.Ok(null);
   }
   async loadMore() {
     const r = await this._fetch(this.file_id);
@@ -158,7 +172,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.files = this.files.concat(r.data.items);
     this.next_marker = r.data.next_marker;
-    this.emit(Events.RefreshSuccess, {
+    this.emit(Events.StateChange, {
       url: this.url,
       paths: [...this.paths],
       files: [...this.files],
@@ -274,8 +288,8 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
     this.on(Events.Input, handler);
   }
-  onSuccess(handler: Handler<TheTypesOfEvents[Events.RefreshSuccess]>) {
-    this.on(Events.RefreshSuccess, handler);
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    this.on(Events.StateChange, handler);
   }
   onBindSuccess(handler: Handler<TheTypesOfEvents[Events.BindSuccess]>) {
     this.on(Events.BindSuccess, handler);

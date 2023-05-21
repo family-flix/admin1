@@ -1,5 +1,5 @@
 import { BaseDomain } from "@/domains/base";
-import { CurCore } from "@/domains/cur";
+import { SelectionCore } from "@/domains/cur";
 import { Handler } from "mitt";
 
 enum Events {
@@ -19,7 +19,7 @@ type ButtonProps<T = unknown> = {
 };
 export class ButtonCore<T = unknown> extends BaseDomain<TheTypesOfEvents<T>> {
   id = this.uid();
-  cur: CurCore<T>;
+  cur: SelectionCore<T>;
 
   state: ButtonState = {
     loading: false,
@@ -29,11 +29,11 @@ export class ButtonCore<T = unknown> extends BaseDomain<TheTypesOfEvents<T>> {
   constructor(options: Partial<{ name: string } & ButtonProps<T>> = {}) {
     super(options);
 
-    this.cur = new CurCore();
+    this.cur = new SelectionCore();
     const { onClick } = options;
     if (onClick) {
       this.onClick(() => {
-        onClick(this.cur.consume());
+        onClick(this.cur.value);
       });
     }
   }
@@ -60,7 +60,7 @@ export class ButtonCore<T = unknown> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   /** 当按钮处于列表中时，使用该方法保存所在列表记录 */
   bind(v: T) {
-    this.cur.save(v);
+    this.cur.select(v);
     return this;
   }
   setLoading(loading: boolean) {
@@ -117,7 +117,7 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.cur = null;
   }
   setLoading(loading) {
-    console.log("set loading", loading, this.cur);
+    // console.log("set loading", loading, this.cur);
     if (this.cur === null) {
       return;
     }

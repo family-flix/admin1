@@ -21,6 +21,7 @@ import {
   fetchDriveFiles,
   addFolderInDrive,
   checkInDrive,
+  analysisDriveQuickly,
 } from "./services";
 import { TaskStatus } from "@/constants";
 
@@ -121,8 +122,11 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     this.state = options;
   }
 
-  /** 开始全量索引云盘 */
-  async startScrape() {
+  /**
+   * 开始索引云盘
+   * @param {boolean} [quickly=false] 是否增量索引
+   */
+  async startScrape(quickly: boolean = false) {
     if (this.timer) {
       this.tip({ text: ["索引正在进行中..."] });
       return Result.Ok(null);
@@ -130,7 +134,12 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
-    const r = await analysisDrive({ drive_id: this.id });
+    const r = await (() => {
+      if (quickly) {
+        return analysisDriveQuickly({ drive_id: this.id });
+      }
+      return analysisDrive({ drive_id: this.id });
+    })();
     if (r.error) {
       this.state.loading = false;
       this.emit(Events.StateChange, { ...this.state });

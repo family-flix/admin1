@@ -173,7 +173,6 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
     }
   ) {
     this.log("setSubViews", this.title, subView);
-    const { title, component } = subView;
     const { pathname, type, query, params, replace = false } = extra;
     this.curSubView = subView;
     this.emit(Events.SubViewChanged, subView);
@@ -188,6 +187,9 @@ export class ViewCore extends BaseDomain<TheTypesOfEvents> {
       "existing",
       existing
     );
+    // 要展示的子视图
+    subView.query = query;
+    subView.params = params;
     for (let i = 0; i < this.subViews.length; i += 1) {
       const v = this.subViews[i];
       if (v === subView) {

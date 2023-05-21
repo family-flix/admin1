@@ -221,6 +221,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
       floating,
     };
     let { x, y } = this.computeCoordsFromPlacement(rects, placement, rtl);
+    // console.log('[]this.computeCoordsFromPlacement result', x, y);
     let middlewareData: MiddlewareData = {};
     for (let i = 0; i < this.middleware.length; i++) {
       const { name, fn } = this.middleware[i];

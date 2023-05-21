@@ -19,6 +19,7 @@ import { TVManagePage } from "./pages/tv";
 import { UnknownTVManagePage } from "./pages/unknown_tv";
 import { MemberManagePage } from "./pages/member";
 import { VideoParsingPage } from "./pages/parse";
+import { TVProfilePage } from "./pages/tv/profile";
 
 import "./style.css";
 
@@ -53,6 +54,12 @@ mainLayout.register("/shared_files", () => {
     component: SharedFilesTransferPage,
   });
   return sharedFilesTransferView;
+});
+mainLayout.register("/tv/:id", () => {
+  return new ViewCore({
+    title: "电视剧详情",
+    component: TVProfilePage,
+  });
 });
 mainLayout.register("/tv", () => {
   return new ViewCore({

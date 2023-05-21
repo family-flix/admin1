@@ -12,6 +12,7 @@ import * as Popper from "./popper";
 import { Presence } from "./presence";
 import { DismissableLayer } from "./dismissable-layer";
 import * as Collection from "./collection";
+import { Rect } from "@/types";
 
 /* -------------------------------------------------------------------------------------------------
  * MenuRoot
@@ -274,8 +275,17 @@ const SubTrigger = (
   item.menu?.popper.setReference({
     getRect() {
       const rect = $item.getBoundingClientRect();
-      // console.log(...item.menu.popper.log("get reference rect", $item, rect));
       return rect;
+      // console.log(...item.menu.popper.log("get reference rect", $item, rect));
+      // const { left, top, width, height, x, y } = rect;
+      // return {
+      //   left,
+      //   top,
+      //   width,
+      //   height,
+      //   x,
+      //   y,
+      // } as Rect;
     },
   });
   onCleanup(() => {

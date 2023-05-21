@@ -102,7 +102,7 @@ export const SharedFilesTransferPage = (props: {
   sharedResource.onTip((msg) => {
     app.tip(msg);
   });
-  sharedResource.onSuccess((values) => {
+  sharedResource.onStateChange((values) => {
     const { url, files, paths } = values;
     setState({
       url,

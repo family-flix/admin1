@@ -8,6 +8,7 @@ import { ContextMenuCore } from "@/domains/ui/context-menu";
 import * as Menu from "@/components/ui/menu";
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
+import { Rect } from "@/types";
 
 export const ContextMenu = (
   props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>
@@ -120,7 +121,17 @@ const Trigger = (
     contextMenu.setReference({
       getRect() {
         // console.log("[ContextMenuTrigger]get reference rect", $span);
-        return $span.getBoundingClientRect();
+        const rect = $span.getBoundingClientRect();
+        return rect;
+        // const { width, height, left, top, x, y } = rect;
+        // return {
+        //   width,
+        //   height,
+        //   left,
+        //   top,
+        //   x,
+        //   y,
+        // } as Rect;
       },
     });
   });

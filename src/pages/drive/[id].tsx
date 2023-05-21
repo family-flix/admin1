@@ -13,7 +13,7 @@ import {
   AliyunFolderItem,
   delete_file_in_drive,
   fetch_aliyun_drive_files,
-  walk_aliyun_folder,
+  fetch_drive_files,
 } from "@/services";
 import { Result } from "@/types";
 import {
@@ -181,7 +181,7 @@ const DriveProfilePage = () => {
                     if (cur_ref.current === null) {
                       return;
                     }
-                    await walk_aliyun_folder({
+                    await fetch_drive_files({
                       drive_id: cur_ref.current.id,
                       file_id: last.file_id,
                       name: last.name,

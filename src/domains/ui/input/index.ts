@@ -22,6 +22,7 @@ type InputProps = {
   defaultValue: string;
   placeholder: string;
   type: string;
+  onChange: (v: string) => void;
 };
 
 export class InputCore extends BaseDomain<TheTypesOfEvents> {
@@ -37,7 +38,7 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ name: string } & InputProps> = {}) {
     super(options);
 
-    const { name, defaultValue, placeholder, type } = options;
+    const { name, defaultValue, placeholder, type, onChange } = options;
     this.name = name;
     if (placeholder) {
       this.state.placeholder = placeholder;
@@ -49,6 +50,11 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     if (defaultValue) {
       this.value = defaultValue;
       this.state.value = defaultValue;
+    }
+    if (onChange) {
+      this.onChange((v) => {
+        onChange(v);
+      });
     }
   }
 

@@ -19,9 +19,9 @@ export async function search_tv_in_tmdb(
       overview: string;
       poster_path: string;
       searched_tv_id: string;
-      firstAirDate: string;
+      first_air_date: string;
     }>
-  >(`/api/tmdb/search`, {
+  >(`/api/admin/tmdb/search`, {
     ...rest,
     keyword,
     page,

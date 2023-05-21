@@ -138,10 +138,10 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
 }
 
 /**
- * 刮削指定云盘
+ * 全量索引指定云盘
  * @param {object} body
- * @param {string} body.drive_id 要刮削的云盘 id
- * @param {string} [body.target_folder] 要刮削的云盘内指定文件夹 id
+ * @param {string} body.drive_id 要索引的云盘 id
+ * @param {string} [body.target_folder] 要索引的云盘内指定文件夹 id
  */
 export async function analysisDrive(body: {
   drive_id: string;
@@ -155,14 +155,14 @@ export async function analysisDrive(body: {
 }
 
 /**
- * 刮削索引到的影视剧信息
+ * 增量索引指定云盘
  * @param {object} body
- * @param {string} body.drive_id 要刮削的云盘 id
+ * @param {string} body.drive_id 要索引的云盘 id
  */
-export async function scrapeDrive(body: { drive_id: string }) {
-  const { drive_id: drive_id } = body;
+export async function analysisDriveQuickly(body: { drive_id: string }) {
+  const { drive_id } = body;
   return request.get<{ async_task_id: string }>(
-    `/api/admin/drive/scrape/${drive_id}`
+    `/api/admin/drive/analysis_quickly/${drive_id}`
   );
 }
 

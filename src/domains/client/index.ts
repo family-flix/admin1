@@ -5,6 +5,7 @@ import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { Result, UnpackedResult, Unpacked } from "@/types";
+import { sleep } from "@/utils";
 
 enum Events {
   BeforeRequest,
@@ -47,6 +48,8 @@ export class RequestCore<
   pending = false;
   /** 调用 prepare 方法暂存的参数 */
   args: Parameters<T>;
+  /** 请求的响应 */
+  response: UnpackedResult<Unpacked<ReturnType<T>>> | null = null;
 
   constructor(
     service: T,
@@ -77,9 +80,10 @@ export class RequestCore<
     if (this.pending) {
       return;
     }
+    this.args = args;
     this.pending = true;
     this.emit(Events.LoadingChange, this.pending);
-    const r = await this._service(...args);
+    const [r] = await Promise.all([this._service(...args), sleep(1000)]);
     this.pending = false;
     this.emit(Events.LoadingChange, this.pending);
     this.emit(Events.Completed);
@@ -87,13 +91,15 @@ export class RequestCore<
       this.emit(Events.Failed, r.error);
       return;
     }
+    this.response = r.data;
     this.emit(
       Events.Success,
       r.data as UnpackedResult<Unpacked<ReturnType<T>>>
     );
   }
-  prepare(...args: Parameters<T>) {
-    this.args = args;
+  /** 使用当前参数再请求一次 */
+  reload() {
+    this.run(...this.args);
   }
 
   onLoadingChange(

@@ -133,7 +133,7 @@ export async function check_has_same_name_tv(body: {
   file_name: string;
 }) {
   return request.post<null | TVItem>(
-    "/api/admin/shared_files/check_same_name",
+    "/api/admin/shared_file/check_same_name",
     body
   );
 }
@@ -153,7 +153,7 @@ export async function build_link_between_shared_files_with_folder(body: {
   /** 要建立关联的网盘内文件夹id */
   target_file_id?: string;
 }) {
-  return request.post("/api/admin/shared_files/link", body);
+  return request.post("/api/admin/shared_file/link", body);
 }
 
 /**
@@ -176,7 +176,7 @@ export async function fetch_shared_files(body: {
       thumbnail: string;
     }[];
     next_marker: string;
-  }>("/api/admin/shared_files", { url, file_id, next_marker });
+  }>("/api/admin/shared_file", { url, file_id, next_marker });
   return r;
 }
 export type AliyunFolderItem = RequestedResource<
@@ -200,5 +200,5 @@ export async function save_shared_files(body: {
   /** 转存到指定网盘的哪个文件夹，默认是根目录 */
   target_folder_id?: string;
 }) {
-  return request.post("/api/admin/shared_files/save", body);
+  return request.post("/api/admin/shared_file/save", body);
 }

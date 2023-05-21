@@ -62,15 +62,14 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   const progress = new ProgressCore({ value: drive.state.used_percent });
   const input1 = new InputCore();
   const input2 = new InputCore();
-  const button1 = new ButtonCore({
-    onClick() {
-      foldersModal.show();
-      drive.fetch({ file_id: "root", name: "文件" });
-    },
-  });
   const button2 = new ButtonCore({
     onClick() {
-      drive.startScrape();
+      if (!drive.state.initialized) {
+        foldersModal.show();
+        drive.fetch({ file_id: "root", name: "文件" });
+        return;
+      }
+      drive.startScrape(true);
     },
   });
   const button3 = new ButtonCore({
@@ -125,7 +124,6 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
     app.tip(texts);
   });
   // const { avatar, user_name, used_size, total_size, used_percent } = state();
-  const initialized = () => state().initialized;
   const avatar = () => state().avatar;
   const name = () => state().name;
   const used_size = () => state().used_size;
@@ -159,28 +157,12 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
                 {used_size()}/{total_size()}
               </div>
               <div class="flex items-center mt-4 space-x-2">
-                <Show
-                  when={initialized()}
-                  fallback={
-                    <Button variant="subtle" size="sm" store={button1}>
-                      索引
-                    </Button>
-                  }
-                >
-                  <Button
-                    variant="subtle"
-                    size="sm"
-                    store={button2}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
-                  >
-                    <Show when={loading()}>
-                      <Loader class="w-4 h-4 animate-spin" />
-                    </Show>
-                    索引
-                  </Button>
-                </Show>
+                <Button variant="subtle" size="sm" store={button2}>
+                  <Show when={loading()}>
+                    <Loader class="w-4 h-4 animate-spin" />
+                  </Show>
+                  索引
+                </Button>
                 <Button variant="subtle" size="sm" store={checkInBtn}>
                   刷新
                 </Button>

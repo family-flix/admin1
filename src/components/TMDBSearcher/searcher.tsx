@@ -93,7 +93,7 @@ export const TMDBSearcher = (
         >
           <For each={dataSource()}>
             {(tv) => {
-              const { name, overview, poster_path, firstAirDate } = tv;
+              const { name, overview, poster_path, first_air_date } = tv;
               return (
                 <div
                   class={cn(
@@ -112,7 +112,7 @@ export const TMDBSearcher = (
                   <div class="flex-1">
                     <div class="text-2xl">{name}</div>
                     <div>{overview}</div>
-                    <div>{firstAirDate}</div>
+                    <div>{first_air_date}</div>
                   </div>
                 </div>
               );

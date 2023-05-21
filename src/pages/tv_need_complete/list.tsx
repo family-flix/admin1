@@ -47,7 +47,7 @@ export function fetch_link_shared_folder(body: { name: string }) {
       id: string;
       url: string;
     }>
-  >(`/api/shared_files/list`, { ...rest, name });
+  >(`/api/shared_file/list`, { ...rest, name });
 }
 type SharedFolderItem = RequestedResource<
   typeof fetch_link_shared_folder

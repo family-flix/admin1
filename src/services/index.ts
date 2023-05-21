@@ -30,9 +30,18 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
       original_name: string;
       overview: string;
       poster_path: string;
-      backdrop_path: string;
       first_air_date: string;
-      // updated: string;
+      episode_count: number;
+      season_count: number;
+      cur_episode_count: number;
+      cur_season_count: number;
+      episode_sources: number;
+      size_count: number;
+      size_count_text: string;
+      incomplete: boolean;
+      need_bind: boolean;
+      sync_task: { id: string } | null;
+      tips: string[];
     }>
   >("/api/admin/tv/list", {
     ...rest,
@@ -44,8 +53,8 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
   }
   return Result.Ok({
     ...resp.data,
-    list: resp.data.list.map((history) => {
-      const { ...rest } = history;
+    list: resp.data.list.map((tv) => {
+      const { ...rest } = tv;
       return {
         ...rest,
         // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
@@ -53,7 +62,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
     }),
   });
 }
-export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][0];
+export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
 /**
  * tv 列表中的元素
@@ -70,22 +79,6 @@ export type PartialSearchedTV = Omit<
   updated: string;
 };
 
-/**
- * 获取给成员设置的推荐影片
- * @param params
- * @returns
- */
-export function fetch_recommended_tvs(params: FetchParams) {
-  const { page, pageSize, ...rest } = params;
-  return request.get<ListResponse<{}>>(
-    "/api/admin/member/recommended_tv/list",
-    {
-      ...rest,
-      page,
-      page_size: pageSize,
-    }
-  );
-}
 /**
  * 获取无法识别的 tv
  */
@@ -184,7 +177,7 @@ export async function bind_searched_tv_for_tv(
   id: string,
   body: MatchedTVOfTMDB
 ) {
-  return request.post(`/api/admin/tv/bind_searched_tv/${id}`, body);
+  return request.post(`/api/admin/tv/update_profile/${id}`, body);
 }
 
 /**
@@ -215,19 +208,7 @@ export async function fetch_members(params: FetchParams) {
   }
   return Result.Ok({
     ...res.data,
-    list: res.data.list.map((member) => {
-      // const { links } = member;
-      return {
-        ...member,
-        // links: links.map((link) => {
-        //   const { link: pathname } = link;
-        //   return {
-        //     ...link,
-        //     link: `${window.location.protocol}//${window.location.host}${pathname}`,
-        //   };
-        // }),
-      };
-    }),
+    list: res.data.list,
   });
 }
 export type MemberItem = RequestedResource<typeof fetch_members>["list"][0];
@@ -248,18 +229,6 @@ export function add_member(body: { remark: string }) {
  */
 export function create_member_auth_link(body: { id: string }) {
   return request.post<{ id: string }>("/api/admin/member_link/add", body);
-}
-
-/**
- * 给成员设置推荐影片
- * @param body
- * @returns
- */
-export function add_recommended_tv(body: { member_id: string; tv_id: string }) {
-  return request.post<{ id: string }>(
-    "/api/admin/member/recommended_tv/add",
-    body
-  );
 }
 
 /**
@@ -320,9 +289,9 @@ export type AliyunFolderItem = RequestedResource<
 >["items"][0];
 
 /**
- * 遍历指定阿里云盘下的指定文件夹
+ * 获取云盘文件临平
  */
-export async function walk_aliyun_folder(body: {
+export async function fetch_drive_files(body: {
   drive_id: string;
   file_id: string;
   name: string;
@@ -332,9 +301,7 @@ export async function walk_aliyun_folder(body: {
 }
 
 /**
- * 转存新增的文件
- * @param body
- * @returns
+ * 执行一次同步任务（将分享资源新增的视频文件转存到云盘目标文件夹中）
  */
 export async function patch_added_files(body: {
   /** 分享链接 */
@@ -344,7 +311,7 @@ export async function patch_added_files(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.get("/api/admin/shared_files/diff", body);
+  return request.get("/api/admin/shared_file/diff", body);
 }
 
 /**
@@ -354,7 +321,7 @@ export async function patch_added_files(body: {
  */
 export function find_folders_has_same_name(body: { name: string }) {
   return request.get<{ name: string; file_id: string }>(
-    "/api/admin/shared_files/find_folder_has_same_name",
+    "/api/admin/shared_file/find_folder_has_same_name",
     body
   );
 }
@@ -376,7 +343,7 @@ export async function build_link_between_shared_files_with_folder(body: {
   target_file_name?: string;
   target_file_id?: string;
 }) {
-  return request.post("/api/admin/shared_files/link", body);
+  return request.post("/api/admin/shared_file/link", body);
 }
 
 /**
@@ -387,7 +354,7 @@ export async function check_has_same_name_tv(body: {
   file_name: string;
 }) {
   return request.post<null | TVItem>(
-    "/api/admin/shared_files/check_same_name",
+    "/api/admin/shared_file/check_same_name",
     body
   );
 }
@@ -410,4 +377,40 @@ export function parse_video_file_name(body: { name: string; keys?: string[] }) {
     voice_encode: string;
     episode_count: string;
   }>("/api/admin/parse", { name, keys });
+}
+
+/**
+ * 获取可以建立同步任务的文件夹转存记录
+ */
+export function fetch_folder_can_add_sync_task(body: {
+  page: number;
+  page_size: number;
+  name?: string[];
+}) {
+  const { page, page_size, name } = body;
+  return request.post<
+    ListResponse<{
+      id: string;
+      url: string;
+      file_id: string;
+      name: string;
+    }>
+  >("/api/admin/tv/enabled_shared_file/list", {
+    page,
+    page_size,
+    name,
+  });
+}
+export type FolderCanAddingSyncTaskItem = RequestedResource<
+  typeof fetch_folder_can_add_sync_task
+>["list"][number];
+
+/**
+ * 执行一次分享资源的同步任务
+ * @param body
+ * @returns
+ */
+export function run_file_sync_task_of_tv(body: { id: string }) {
+  const { id } = body;
+  return request.get(`/api/admin/tv/sync/${id}`);
 }

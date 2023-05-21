@@ -16,7 +16,7 @@ import { MenuItemCore } from "@/domains/ui/menu/item";
 import { ContextMenu } from "@/components/ui/context-menu";
 import { FolderCard } from "@/components/FolderCard";
 import { RequestCore } from "@/domains/client";
-import { CurCore } from "@/domains/cur";
+import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
 import { Modal } from "@/components/SingleModal";
@@ -27,7 +27,7 @@ import { InputCore } from "@/domains/ui/input";
 export const UnknownTVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
-  const cur = new CurCore<UnknownTVItem>();
+  const cur = new SelectionCore<UnknownTVItem>();
   const unknownTVList = new ListCore<UnknownTVItem>(fetch_unknown_tv_list);
   const dialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
@@ -99,7 +99,7 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
                           // event.stopPropagation();
                           event.preventDefault();
                           // const { pageX, pageY } = event;
-                          cur.save(file);
+                          cur.select(file);
                         }}
                       >
                         <FolderCard type="folder" name={name} />

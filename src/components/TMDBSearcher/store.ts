@@ -19,8 +19,15 @@ type TheTypesOfEvents = {
 type TMDBSearcherDialogState = {
   value: null | TheTVInTMDB;
   list: Response<TheTVInTMDB>;
+  showFooter: boolean;
 };
 type TMDBSearcherDialogProps = {
+  /** 是否底部按钮 */
+  footer: boolean;
+  /** 是否展示确定按钮 */
+  okBtn: boolean;
+  /** 是否展示取消按钮 */
+  cancelBtn: boolean;
   onCancel: () => void;
   onOk: (searched_tv: TheTVInTMDB) => void;
 };
@@ -34,12 +41,13 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
   state: TMDBSearcherDialogState = {
     value: null,
     list: this.tmdb.list.response,
+    showFooter: true,
   };
 
   constructor(options: Partial<{ name } & TMDBSearcherDialogProps> = {}) {
     super(options);
 
-    const { onOk, onCancel } = options;
+    const { footer = true, okBtn, cancelBtn, onOk, onCancel } = options;
     this.dialog = new DialogCore({
       onOk: () => {
         // this.emit(Events.Ok, { value: this.tmdb.state.cur });
@@ -49,6 +57,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
       },
       onCancel,
     });
+    this.state.showFooter = footer;
     this.okBtn = this.dialog.okBtn;
     this.cancelBtn = this.dialog.cancelBtn;
     this.tmdb.list.onStateChange((nextState) => {
@@ -65,6 +74,9 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
   }
   refresh() {
     this.tmdb.list.refresh();
+  }
+  input(name: string) {
+    this.tmdb.input.change(name);
   }
 
   onOk(handler: Handler<TheTypesOfEvents[Events.Ok]>) {
