@@ -71,11 +71,11 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.present.hide();
     this.emit(Events.Hidden);
   }
-  destroy() {
-    super.destroy();
-    this.layer.destroy();
-    this.popper.destroy();
-    this.present.destroy();
+  unmount() {
+    super.unmount();
+    this.layer.unmount();
+    this.popper.unmount();
+    this.present.unmount();
   }
 
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {

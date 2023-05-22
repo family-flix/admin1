@@ -4,10 +4,10 @@
 import { For, JSX, Show, children, createSignal } from "solid-js";
 import { Calendar, Film, Users, FolderInput, Home } from "lucide-solid";
 
-import { View } from "@/components/ui/view";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ViewComponent } from "@/types";
+import { KeepAliveView } from "@/components/ui/keep-alive";
 
 export const MainLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -24,109 +24,118 @@ export const MainLayout: ViewComponent = (props) => {
   app.user.validate();
 
   // console.log("[LAYOUT]MainLayout - init", hidden);
+  const menus = [
+    {
+      text: "首页",
+      icon: <Home class="w-6 h-6" />,
+      onClick() {
+        router.push("/home");
+      },
+    },
+    {
+      text: "电视剧",
+      icon: <Film class="w-6 h-6" />,
+      onClick() {
+        router.push("/tv");
+      },
+    },
+    {
+      text: "未识别电视剧",
+      icon: <Film class="w-6 h-6" />,
+      onClick() {
+        router.push("/unknown_tv");
+      },
+    },
+    {
+      text: "日志",
+      icon: <Film class="w-6 h-6" />,
+      onClick() {
+        router.push("/task");
+      },
+    },
+    {
+      text: "TMDB 数据库",
+      icon: <Users class="w-6 h-6" />,
+      onClick() {
+        dialog.show();
+      },
+    },
+    {
+      text: "成员",
+      icon: <Users class="w-6 h-6" />,
+      onClick() {
+        router.push("/members");
+      },
+    },
+    {
+      text: "转存资源",
+      icon: <Users class="w-6 h-6" />,
+      onClick() {
+        router.push("/shared_files");
+      },
+    },
+    {
+      text: "文件名解析",
+      icon: <Users class="w-6 h-6" />,
+      onClick() {
+        router.push("/parse");
+      },
+    },
+  ];
 
   return (
-    <View store={view}>
-      <div class="min-h-screen flex p-8 bg-slate-200">
-        <div class="fixed w-[240px] p-4 rounded-xl bg-white self-start">
+    <>
+      <div class="grid gap-4 grid-cols-12 min-h-screen p-8 bg-slate-200">
+        <div class="col-span-2 p-4 rounded-xl bg-white self-start shadow-xl">
           <div class="space-y-2">
-            <div
-              class="flex items-center p-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/home");
+            <For each={menus}>
+              {(menu) => {
+                const { icon, text, onClick } = menu;
+                return (
+                  <Menu icon={icon} onClick={onClick}>
+                    {text}
+                  </Menu>
+                );
               }}
-            >
-              <Home class="w-6 h-6" />
-              <div class="text-xl">首页</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/tv");
-              }}
-            >
-              <Film class="w-6 h-6" />
-              <div class="text-xl">影片管理</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/unknown_tv");
-              }}
-            >
-              <Film class="w-6 h-6" />
-              <div class="text-xl">未知电视剧列表</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/task/list");
-              }}
-            >
-              <Calendar class="w-6 h-6" />
-              <p class="text-xl">任务列表</p>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                dialog.show();
-              }}
-            >
-              <Users class="w-6 h-6" />
-              <div class="text-xl">TMDB 数据库</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/members");
-              }}
-            >
-              <Users class="w-6 h-6" />
-              <div class="text-xl">所有成员</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/shared_files");
-              }}
-            >
-              <FolderInput class="w-6 h-6" />
-              <div class="text-xl">文件转存</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/shared_files_in_progress/list");
-              }}
-            >
-              <FolderInput class="w-6 h-6" />
-              <div class="text-xl">待处理更新</div>
-            </div>
-            <div
-              class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-slate-200"
-              onClick={() => {
-                router.push("/parse");
-              }}
-            >
-              <FolderInput class="w-6 h-6" />
-              <div class="text-xl">解析文件名</div>
-            </div>
+            </For>
           </div>
         </div>
-        <div class="w-screen ml-[280px] space-y-4">
-          <For each={subViews()}>
-            {(subView) => {
-              const PageContent = subView.component as ViewComponent;
-              return (
-                <View store={subView}>
-                  <PageContent app={app} router={router} view={subView} />
-                </View>
-              );
-            }}
-          </For>
+        <div class="col-span-10 p-4 bg-white rounded-lg">
+          <div class="relative">
+            <For each={subViews()}>
+              {(subView, i) => {
+                const PageContent = subView.component as ViewComponent;
+                return (
+                  <KeepAliveView store={subView} index={i()}>
+                    <div class="bg-white">
+                      <PageContent app={app} router={router} view={subView} />
+                    </div>
+                  </KeepAliveView>
+                );
+              }}
+            </For>
+          </div>
         </div>
       </div>
       <TMDBSearcherDialog store={dialog} />
-    </View>
+    </>
   );
 };
+
+function Menu(
+  props: {
+    icon: JSX.Element;
+  } & JSX.HTMLAttributes<HTMLDivElement>
+) {
+  const { icon } = props;
+
+  return (
+    <div
+      class="flex items-center px-4 py-2 space-x-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-200"
+      onClick={props.onClick}
+    >
+      <div class="w-6 h-6">{icon}</div>
+      <div class="flex-1 text-xl">{props.children}</div>
+    </div>
+  );
+}

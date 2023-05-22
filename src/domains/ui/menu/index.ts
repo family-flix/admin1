@@ -224,17 +224,17 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
       this.items[i].reset();
     }
   }
-  destroy() {
+  unmount() {
     // this.log("destroy", this.name);
-    super.destroy();
-    this.layer.destroy();
-    this.popper.destroy();
-    this.presence.destroy();
+    super.unmount();
+    this.layer.unmount();
+    this.popper.unmount();
+    this.presence.unmount();
     for (let i = 0; i < this.subs.length; i += 1) {
-      this.subs[i].destroy();
+      this.subs[i].unmount();
     }
     for (let i = 0; i < this.items.length; i += 1) {
-      this.items[i].destroy();
+      this.items[i].unmount();
     }
     this.reset();
   }

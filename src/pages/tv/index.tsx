@@ -35,7 +35,11 @@ export const TVManagePage: ViewComponent = (props) => {
 
   const list = new ListCore<TVItem>(fetch_tv_list);
   const tvSelection = new SelectionCore<TVItem>();
-  const folderSelection = new SelectionCore<FolderCanAddingSyncTaskItem>();
+  const folderSelection = new SelectionCore<{
+    url: string;
+    name: string;
+    file_id: string;
+  }>();
   const bindSearchedTVForTV = new RequestCore(bind_searched_tv_for_tv, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
@@ -85,6 +89,8 @@ export const TVManagePage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择文件夹"] });
         return;
       }
+      const { url, name, file_id } = folderSelection.value;
+      // 还要看该电视剧有没有同名的 parsed_tv.file_name，如果没有，弹出所有的 parsed_tv 让用户选
     },
   });
   const contextMenu = new ContextMenuCore({
@@ -261,12 +267,16 @@ export const TVManagePage: ViewComponent = (props) => {
         <div>
           <For each={resourceState().files}>
             {(file) => {
-              const { name } = file;
+              const { name, file_id } = file;
               return (
                 <div
                   class="py-4 cursor-pointer"
                   onClick={() => {
-                    folderSelection.select(file);
+                    folderSelection.select({
+                      url: sharedResource.url,
+                      name,
+                      file_id,
+                    });
                   }}
                 >
                   {name}

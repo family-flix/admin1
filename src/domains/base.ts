@@ -102,7 +102,7 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     return content.text.join("\n");
   }
   /** 主动销毁所有的监听事件 */
-  destroy() {
+  unmount() {
     // this.log(this.name, "destroy");
     for (let i = 0; i < this.listeners.length; i += 1) {
       const off = this.listeners[i];

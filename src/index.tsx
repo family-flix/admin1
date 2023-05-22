@@ -22,6 +22,7 @@ import { VideoParsingPage } from "./pages/parse";
 import { TVProfilePage } from "./pages/tv/profile";
 
 import "./style.css";
+import { View } from "./components/ui/view";
 
 const { router } = app;
 
@@ -148,12 +149,14 @@ function Application() {
           //   subView.title
           // );
           return (
-            <RenderedComponent
-              app={app}
-              router={router}
-              view={subView}
-              // page={page}
-            />
+            <View store={subView}>
+              <RenderedComponent
+                app={app}
+                router={router}
+                view={subView}
+                // page={page}
+              />
+            </View>
           );
         }}
       </For>

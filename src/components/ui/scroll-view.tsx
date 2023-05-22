@@ -59,15 +59,17 @@ export const PageView = (
   const step = () => state().step;
 
   return (
-    <Root class="overflow-hidden fixed inset-0 w-screen h-screen">
-      <Indicator store={store}>
+    <Root 
+    // class="overflow-hidden fixed inset-0 w-screen h-screen"
+    >
+      {/* <Indicator store={store}>
         <div class="flex items-center justify-center h-[80px]">
           <Dynamic component={options[step()]} />
         </div>
-      </Indicator>
+      </Indicator> */}
       <Content
         store={store}
-        class="absolute inset-0 max-h-screen overflow-y-auto"
+        // class="absolute inset-0 max-h-screen overflow-y-auto"
       >
         {children}
       </Content>

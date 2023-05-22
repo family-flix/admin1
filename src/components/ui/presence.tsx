@@ -16,7 +16,6 @@ export const Presence = (
   const [state, setState] = createSignal(store.state);
 
   store.onStateChange((nextState) => {
-    console.log(...store.log("onStateChange", nextState));
     setState(nextState);
   });
   // store.onShow(() => {
@@ -30,7 +29,6 @@ export const Presence = (
   // });
 
   const open = () => state().open;
-  // const unmounted = () => state().unmounted;
   const mounted = () => state().mounted;
 
   return (
@@ -40,7 +38,7 @@ export const Presence = (
         role="presentation"
         data-state={open() ? "open" : "closed"}
         onAnimationEnd={() => {
-          store.animationEnd();
+          store.unmount();
         }}
       >
         {props.children}

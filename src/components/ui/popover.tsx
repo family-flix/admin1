@@ -22,7 +22,7 @@ export const Popover = (
   const { store, children } = props;
 
   onCleanup(() => {
-    store.destroy();
+    store.unmount();
   });
 
   return (

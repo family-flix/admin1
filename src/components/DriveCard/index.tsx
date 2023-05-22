@@ -134,7 +134,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   // const drive_ref = useRef(new Drive({ id }));
 
   return (
-    <div class="relative p-4 bg-white rounded-xl">
+    <div class="relative p-4 bg-white rounded-xl shadow-xl shadow-blue-200 border border-blue-400">
       <div>
         <div class="">
           <div class="absolute top-2 right-2">

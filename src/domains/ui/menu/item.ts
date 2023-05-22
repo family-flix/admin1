@@ -141,10 +141,10 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
       this.menu.reset();
     }
   }
-  destroy() {
-    super.destroy();
+  unmount() {
+    super.unmount();
     if (this.menu) {
-      this.menu.destroy();
+      this.menu.unmount();
     }
     this.reset();
   }

@@ -106,7 +106,7 @@ const Root = (
   const { store } = props;
 
   onCleanup(() => {
-    store.destroy();
+    store.unmount();
   });
 
   return <Menu.Root store={store.menu}>{props.children}</Menu.Root>;

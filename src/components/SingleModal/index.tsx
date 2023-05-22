@@ -4,7 +4,14 @@
  */
 import { JSX, createSignal } from "solid-js";
 
-import { Root, Title, Content, Header, Footer } from "@/components/ui/dialog";
+import {
+  Root,
+  Title,
+  Content,
+  Header,
+  Footer,
+  Portal,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DialogCore } from "@/domains/ui/dialog";
 import { ButtonCore } from "@/domains/ui/button";
@@ -37,22 +44,24 @@ export function Modal(
 
   return (
     <Root store={store}>
-      <Content store={store}>
-        <Header>
-          <Title>{title()}</Title>
-        </Header>
-        {props.children}
-        <Footer>
-          <div class="space-x-2">
-            <Button variant="subtle" size="default" store={cancelBtn}>
-              取消
-            </Button>
-            <Button variant="default" size="default" store={okBtn}>
-              确认
-            </Button>
-          </div>
-        </Footer>
-      </Content>
+      <Portal store={store}>
+        <Content store={store}>
+          <Header>
+            <Title>{title()}</Title>
+          </Header>
+          {props.children}
+          <Footer>
+            <div class="space-x-2">
+              <Button variant="subtle" size="default" store={cancelBtn}>
+                取消
+              </Button>
+              <Button variant="default" size="default" store={okBtn}>
+                确认
+              </Button>
+            </div>
+          </Footer>
+        </Content>
+      </Portal>
     </Root>
   );
 }

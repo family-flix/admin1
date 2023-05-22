@@ -104,11 +104,17 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
-    console.log(...this.log("hide"));
+    // console.log(...this.log("hide"));
     // this.calc(false);
     this.state.open = false;
     this.emit(Events.Hidden);
     this.emit(Events.StateChange, { ...this.state });
+    setTimeout(() => {
+      if (this.state.mounted === false) {
+        return;
+      }
+      this.unmount();
+    }, 800);
   }
   send(
     event: "UNMOUNT" | "ANIMATION_OUT" | "MOUNT" | "ANIMATION_END" | "MOUNT"
@@ -121,13 +127,17 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     //   nextState === "mounted" ? currentAnimationName : "none";
     // this.calc(nextState);
   }
-  animationEnd() {
-    console.log("[]PresenceCore - animationEnd", this.state.open);
+  /** 将 DOM 从页面卸载 */
+  unmount() {
+    console.log(
+      "[]PresenceCore - destroy",
+      this.state.open,
+      this.state.unmounted
+    );
     if (this.state.open) {
-      this.emit(Events.Show);
+      // this.emit(Events.Show);
       return;
     }
-    this.state.unmounted = true;
     this.state.mounted = false;
     this.emit(Events.Destroy);
     this.emit(Events.StateChange, { ...this.state });
