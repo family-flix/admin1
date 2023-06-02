@@ -7,11 +7,10 @@ import { JSX } from "solid-js/jsx-runtime";
 import { X } from "lucide-solid";
 
 import { PopoverCore } from "@/domains/ui/popover";
+import * as Popper from "@/packages/ui/popper";
+import { DismissableLayer } from "@/packages/ui/dismissable-layer";
+import { Presence } from "@/packages/ui/presence";
 import { cn } from "@/utils";
-
-import { DismissableLayer } from "./dismissable-layer";
-import { Presence } from "./presence";
-import * as Popper from "./popper";
 
 export const Popover = (
   props: {
@@ -27,10 +26,7 @@ export const Popover = (
 
   return (
     <PopoverRoot store={store}>
-      <PopoverTrigger
-        store={store}
-        class="inline-flex items-center justify-center"
-      >
+      <PopoverTrigger store={store} class="inline-flex items-center justify-center">
         {children}
       </PopoverTrigger>
       <PopoverPortal store={store}>
@@ -55,9 +51,7 @@ export const Popover = (
 };
 
 const PopoverContext = createContext<PopoverCore>();
-const PopoverRoot = (
-  props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const PopoverRoot = (props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store, children } = props;
   // console.log("[COMPONENT]PopoverRoot", store);
   return <Popper.Root store={store.popper}>{children}</Popper.Root>;
@@ -187,9 +181,7 @@ const PopoverClose = (
   );
 };
 
-const PopoverArrow = (
-  props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const PopoverArrow = (props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return <Popper.Arrow store={store.popper} class={props.class}></Popper.Arrow>;
 };

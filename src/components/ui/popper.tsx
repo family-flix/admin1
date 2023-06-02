@@ -7,12 +7,10 @@ import { JSX, createSignal, onMount, onCleanup } from "solid-js";
 import { PopperCore } from "@/domains/ui/popper";
 import { cn } from "@/utils";
 
-import { Arrow as PrimitiveArrow } from "./arrow";
+import { Arrow as PrimitiveArrow } from "@/packages/ui/arrow";
 
 // const PopperContext = createContext<PopperCore>();
-const PopperRoot = (
-  props: { store: PopperCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const PopperRoot = (props: { store: PopperCore } & JSX.HTMLAttributes<HTMLElement>) => {
   // const { store } = props;
 
   return props.children;
@@ -71,11 +69,7 @@ const PopperContent = (
     store.setFloating({
       getRect() {
         const rect = $content.getBoundingClientRect();
-        console.log(
-          "[COMPONENT]PopperContent - getRect of floating",
-          $content,
-          rect
-        );
+        console.log("[COMPONENT]PopperContent - getRect of floating", $content, rect);
         return rect;
       },
     });
@@ -108,6 +102,7 @@ const PopperContent = (
           ? `translate3d(${Math.round(x())}px, ${Math.round(y())}px, 0)`
           : "translate3d(0, -200%, 0)", // keep off the page when measuring
         "min-width": "max-content",
+        "z-index": 999,
         // zIndex: contentZIndex,
         // ["--radix-popper-transform-origin" as any]: [
         //   middlewareData.transformOrigin?.x,

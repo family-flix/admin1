@@ -6,13 +6,10 @@ import { Portal as PortalPrimitive } from "solid-js/web";
 
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
+import * as Popper from "@/packages/ui/popper";
+import { Presence } from "@/packages/ui/presence";
+import { DismissableLayer } from "@/packages/ui/dismissable-layer";
 import { cn } from "@/utils";
-
-import * as Popper from "./popper";
-import { Presence } from "./presence";
-import { DismissableLayer } from "./dismissable-layer";
-import * as Collection from "./collection";
-import { Rect } from "@/types";
 
 /* -------------------------------------------------------------------------------------------------
  * MenuRoot
@@ -30,9 +27,7 @@ const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
 /* -------------------------------------------------------------------------------------------------
  * MenuAnchor
  * -----------------------------------------------------------------------------------------------*/
-const Anchor = (
-  props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Anchor = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   // const store = useContext(MenuContext);
 
@@ -331,11 +326,7 @@ function isIndeterminate(checked?: CheckedState): checked is "indeterminate" {
 }
 
 function getCheckedState(checked: CheckedState) {
-  return isIndeterminate(checked)
-    ? "indeterminate"
-    : checked
-    ? "checked"
-    : "unchecked";
+  return isIndeterminate(checked) ? "indeterminate" : checked ? "checked" : "unchecked";
 }
 
 function focusFirst(candidates: HTMLElement[]) {
@@ -374,17 +365,13 @@ function wrapArray<T>(array: T[], startIndex: number) {
  * don't want focus to move if the current match still matches.
  */
 function getNextMatch(values: string[], search: string, currentMatch?: string) {
-  const isRepeated =
-    search.length > 1 && Array.from(search).every((char) => char === search[0]);
+  const isRepeated = search.length > 1 && Array.from(search).every((char) => char === search[0]);
   const normalizedSearch = isRepeated ? search[0] : search;
   const currentMatchIndex = currentMatch ? values.indexOf(currentMatch) : -1;
   let wrappedValues = wrapArray(values, Math.max(currentMatchIndex, 0));
   const excludeCurrentMatch = normalizedSearch.length === 1;
-  if (excludeCurrentMatch)
-    wrappedValues = wrappedValues.filter((v) => v !== currentMatch);
-  const nextMatch = wrappedValues.find((value) =>
-    value.toLowerCase().startsWith(normalizedSearch.toLowerCase())
-  );
+  if (excludeCurrentMatch) wrappedValues = wrappedValues.filter((v) => v !== currentMatch);
+  const nextMatch = wrappedValues.find((value) => value.toLowerCase().startsWith(normalizedSearch.toLowerCase()));
   return nextMatch !== currentMatch ? nextMatch : undefined;
 }
 
@@ -419,8 +406,7 @@ function isPointerInGraceArea(event: PointerEvent, area?: Polygon) {
 }
 
 function whenMouse<E>(handler) {
-  return (event) =>
-    event.pointerType === "mouse" ? handler(event) : undefined;
+  return (event) => (event.pointerType === "mouse" ? handler(event) : undefined);
 }
 
 // const Root = MenuRoot;
@@ -435,17 +421,4 @@ function whenMouse<E>(handler) {
 // const Sub = MenuSub;
 // const SubTrigger = MenuSubTrigger;
 // const SubContent = MenuSubContent;
-export {
-  Root,
-  Anchor,
-  Portal,
-  Content,
-  Group,
-  Label,
-  Item,
-  Separator,
-  Arrow,
-  Sub,
-  SubTrigger,
-  SubContent,
-};
+export { Root, Anchor, Portal, Content, Group, Label, Item, Separator, Arrow, Sub, SubTrigger, SubContent };

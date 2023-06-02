@@ -1,10 +1,10 @@
 /**
  * @file 分享文件转存
  */
-import { For, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 
 import { NavigatorCore } from "@/domains/navigator";
-import { ViewCore } from "@/domains/view";
+import { RouteViewCore } from "@/domains/route_view";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { Application } from "@/domains/app";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
@@ -16,19 +16,16 @@ import { TVProfileCore } from "@/domains/tv/profile";
 import { Input } from "@/components/ui/input";
 import { FolderCard } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/SingleModal";
+import { Dialog } from "@/components/ui/dialog";
 import { ContextMenu } from "@/components/ui/context-menu";
 import { TVCard } from "@/components/TVCard";
 import * as Tabs from "@/components/ui/tabs";
 import { cn } from "@/utils";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
+import { ChevronRight, Folder } from "lucide-solid";
 
-export const SharedFilesTransferPage = (props: {
-  app: Application;
-  router: NavigatorCore;
-  view: ViewCore;
-}) => {
+export const SharedFilesTransferPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, router, view } = props;
   const [state, setState] = createSignal({
     url: "",
@@ -47,14 +44,14 @@ export const SharedFilesTransferPage = (props: {
   const contextMenu = new ContextMenuCore({
     name: "shared_resource",
     items: [
+      // new MenuItemCore({
+      //   label: "查找同名文件夹并建立关联",
+      //   onClick() {
+      //     sharedResource.bindSelectedFolderInDrive();
+      //   },
+      // }),
       new MenuItemCore({
-        label: "查找同名文件夹并建立关联",
-        onClick() {
-          sharedResource.bindSelectedFolderInDrive();
-        },
-      }),
-      new MenuItemCore({
-        label: "同名影视剧检查",
+        label: "是否有同名文件夹",
         onClick() {
           sharedResource.findTheTVHasSameNameWithSelectedFolder();
         },
@@ -113,6 +110,12 @@ export const SharedFilesTransferPage = (props: {
   input1.onChange((v) => {
     sharedResource.input(v);
   });
+  view.onShow(() => {
+    console.log("shared files show");
+  });
+  view.onHide(() => {
+    console.log("shared files hide");
+  });
   onMount(() => {
     app.fetchDrives();
   });
@@ -123,69 +126,70 @@ export const SharedFilesTransferPage = (props: {
 
   return (
     <div>
-      <h2
-        class="my-2 text-2xl"
-        onClick={() => {
-          // app.tip({ text: ["hello"] });
-          // contextMenu.show({ x: 120, y: 120 });
-        }}
-      >
-        转存文件
-      </h2>
-      <div class="grid grid-cols-12 gap-4">
-        <div class="col-span-10">
-          <Input class="" store={input1} />
+      <h1 class="text-2xl">转存资源</h1>
+      <div class="mt-8">
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-10">
+            <Input store={input1} />
+          </div>
+          <div class="grid col-span-2">
+            <Button size="default" variant="default" store={btn}>
+              获取
+            </Button>
+          </div>
         </div>
-        <div class="grid col-span-2">
-          <Button size="default" variant="default" store={btn}>
-            获取
-          </Button>
+        <div class="mt-8">
+          <Show when={paths().length}>
+            <div class="flex items-center space-x-2">
+              <Folder class="w-4 h-4" />
+              <For each={paths()}>
+                {(path, index) => {
+                  const { file_id, name } = path;
+                  return (
+                    <div class="flex items-center">
+                      <div
+                        class="cursor-pointer hover:text-blue-500"
+                        onClick={() => {
+                          sharedResource.fetch({ file_id, name });
+                        }}
+                      >
+                        {name}
+                      </div>
+                      {index() === paths().length - 1 ? null : (
+                        <div class="mx-1">
+                          <ChevronRight class="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
         </div>
+        <ContextMenu store={contextMenu}>
+          <div class="grid grid-cols-6 gap-2">
+            <For each={files()}>
+              {(file) => {
+                const { name, type } = file;
+                return (
+                  <div
+                    class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
+                    onClick={() => {
+                      sharedResource.fetch(file);
+                    }}
+                    onContextMenu={() => {
+                      sharedResource.selectFolder(file);
+                    }}
+                  >
+                    <FolderCard type={type} name={name} />
+                  </div>
+                );
+              }}
+            </For>
+          </div>
+        </ContextMenu>
       </div>
-      <div class="flex items-center">
-        <For each={paths()}>
-          {(path, index) => {
-            const { file_id, name } = path;
-            return (
-              <div class="flex items-center">
-                <div
-                  class="cursor-pointer hover:text-blue-500"
-                  onClick={() => {
-                    sharedResource.fetch({ file_id, name });
-                  }}
-                >
-                  {name}
-                </div>
-                {index() === paths().length - 1 ? null : (
-                  <div class="mx-2 text-gray-300">/</div>
-                )}
-              </div>
-            );
-          }}
-        </For>
-      </div>
-      <ContextMenu store={contextMenu}>
-        <div class="grid grid-cols-6 gap-2">
-          <For each={files()}>
-            {(file) => {
-              const { name, type } = file;
-              return (
-                <div
-                  class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-                  onClick={() => {
-                    sharedResource.fetch(file);
-                  }}
-                  onContextMenu={() => {
-                    sharedResource.selectFolder(file);
-                  }}
-                >
-                  <FolderCard type={type} name={name} />
-                </div>
-              );
-            }}
-          </For>
-        </div>
-      </ContextMenu>
       {/* <Tabs.Root store={tabs} class="TabsRoot">
         <Tabs.List class="TabsList">
           <Tabs.Trigger class="TabsTrigger" value="01">
@@ -202,9 +206,9 @@ export const SharedFilesTransferPage = (props: {
           <div>测试02 - content</div>
         </Tabs.Content>
       </Tabs.Root> */}
-      <Modal title="同名影视剧" store={modal1} footer={null}>
+      <Dialog title="同名影视剧" store={modal1}>
         <TVCard store={tvProfile} />
-      </Modal>
+      </Dialog>
       {/* <Modal
           title="文件夹"
           visible={drive_folder_visible}

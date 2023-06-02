@@ -3,22 +3,18 @@
  */
 import { createSignal, For, Show } from "solid-js";
 
+import { add_member, create_member_auth_link, fetch_members, MemberItem } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  add_member,
-  create_member_auth_link,
-  fetch_members,
-  MemberItem,
-} from "@/services";
-import { ViewComponent } from "@/types";
-import { cn } from "@/utils";
-import { Modal } from "@/components/SingleModal";
+import { Dialog } from "@/components/ui/dialog";
 import { DialogCore } from "@/domains/ui/dialog";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/client";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
+import { ViewComponent } from "@/types";
+import { cn } from "@/utils";
+import { Instagram, UserPlus } from "lucide-solid";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -33,17 +29,22 @@ export const MemberManagePage: ViewComponent = (props) => {
     },
   });
   const addMember = new RequestCore(add_member, {
+    onLoading(loading) {
+      addMemberDialog.okBtn.setLoading(loading);
+      addMemberDialog.cancelBtn.setLoading(loading);
+    },
     onFailed(error) {
       app.tip({ text: ["新增成员失败", error.message] });
     },
     onSuccess() {
-      dialog.hide();
-      input1.empty();
+      addMemberDialog.hide();
+      input1.clear();
       button2.clear();
       list.refresh();
     },
   });
-  const dialog = new DialogCore({
+  const addMemberDialog = new DialogCore({
+    title: "新增成员",
     onOk() {
       if (!input1.value) {
         app.tip({ text: ["请先输入成员备注"] });
@@ -59,7 +60,7 @@ export const MemberManagePage: ViewComponent = (props) => {
   });
   const button1 = new ButtonCore({
     onClick() {
-      dialog.show();
+      addMemberDialog.show();
     },
   });
   const button2 = new ButtonInListCore<MemberItem>({
@@ -73,21 +74,23 @@ export const MemberManagePage: ViewComponent = (props) => {
 
   const [response, setResponse] = createSignal(list.response);
   list.onStateChange((nextState) => {
+    console.log("list ", nextState);
     setResponse(nextState);
   });
 
   list.init();
 
   const dataSource = () => response().dataSource;
+  const empty = () => response().empty;
 
   return (
     <>
-      <div class="min-h-screen">
-        <div class="">
-          <h2 class="">成员列表</h2>
+      <div class="min-h-full">
+        <h1 class="text-2xl">成员列表</h1>
+        <div class="mt-8">
           <Button store={button1}>新增成员</Button>
-          <view>
-            <div class="space-y-4">
+          <Show when={!empty()}>
+            <div class="space-y-4 mt-8">
               <For each={dataSource()}>
                 {(member) => {
                   const { remark, disabled, tokens } = member;
@@ -119,9 +122,7 @@ export const MemberManagePage: ViewComponent = (props) => {
                                       const url = `${prefix}${token}`;
                                       return (
                                         <div class="flex items-center">
-                                          {used ? null : (
-                                            <div class="mr-4"></div>
-                                          )}
+                                          {used ? null : <div class="mr-4"></div>}
                                           <div
                                             class={cn(
                                               "w-full text-sm break-all whitespace-pre-wrap",
@@ -145,12 +146,12 @@ export const MemberManagePage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-          </view>
+          </Show>
         </div>
       </div>
-      <Modal title="新增成员" store={dialog}>
+      <Dialog title="新增成员" store={addMemberDialog}>
         <Input store={input1} />
-      </Modal>
+      </Dialog>
     </>
   );
 };

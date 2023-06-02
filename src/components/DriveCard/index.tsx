@@ -2,7 +2,7 @@
  * @file 云盘卡片
  */
 import { For, Show, createSignal } from "solid-js";
-import { MoreHorizontal, Loader } from "lucide-solid";
+import { MoreHorizontal, Loader, Apple, ArrowBigDown, RefreshCcw, Edit3, Download } from "lucide-solid";
 
 import { Application } from "@/domains/app";
 import { Drive } from "@/domains/drive";
@@ -14,7 +14,7 @@ import { LazyImage } from "@/components/LazyImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Modal } from "@/components/SingleModal";
+import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
@@ -33,6 +33,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
     items: [
       new MenuItemCore({
         label: "签到",
+        icon: <Apple class="mr-2 w-4 h-4" />,
         onClick() {
           drive.checkIn();
           dropdown.hide();
@@ -40,20 +41,22 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       }),
       new MenuItemCore({
         label: "导出",
+        icon: <Download class="mr-2 w-4 h-4" />,
         onClick() {
           drive.export();
         },
       }),
       new MenuItemCore({
         label: "刷新",
+        icon: <RefreshCcw class="mr-2 w-4 h-4" />,
         onClick() {
           drive.refresh();
         },
       }),
       new MenuItemCore({
         label: "修改 refresh_token",
+        icon: <Edit3 class="mr-2 w-4 h-4" />,
         onClick() {
-          console.log("修改 refresh_token");
           dropdown.hide();
         },
       }),
@@ -62,14 +65,14 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   const progress = new ProgressCore({ value: drive.state.used_percent });
   const input1 = new InputCore();
   const input2 = new InputCore();
-  const button2 = new ButtonCore({
+  const analysisBtn = new ButtonCore({
     onClick() {
       if (!drive.state.initialized) {
         foldersModal.show();
         drive.fetch({ file_id: "root", name: "文件" });
         return;
       }
-      drive.startScrape(true);
+      drive.startScrape();
     },
   });
   const button3 = new ButtonCore({
@@ -134,7 +137,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   // const drive_ref = useRef(new Drive({ id }));
 
   return (
-    <div class="relative p-4 bg-white rounded-xl shadow-xl shadow-blue-200 border border-blue-400">
+    <div class="relative p-4 bg-white rounded-xl">
       <div>
         <div class="">
           <div class="absolute top-2 right-2">
@@ -145,11 +148,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
             </DropdownMenu>
           </div>
           <div class="flex">
-            <LazyImage
-              class="overflow-hidden w-16 h-16 mr-4 rounded"
-              src={avatar()}
-              alt={name()}
-            />
+            <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" src={avatar()} alt={name()} />
             <div>
               <div class="text-xl">{name()}</div>
               <div class="flex items-center space-x-2">
@@ -157,7 +156,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
                 {used_size()}/{total_size()}
               </div>
               <div class="flex items-center mt-4 space-x-2">
-                <Button variant="subtle" size="sm" store={button2}>
+                <Button variant="subtle" size="sm" store={analysisBtn}>
                   <Show when={loading()}>
                     <Loader class="w-4 h-4 animate-spin" />
                   </Show>
@@ -171,7 +170,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
           </div>
         </div>
       </div>
-      <Modal title={name()} store={foldersModal}>
+      <Dialog title={name()} store={foldersModal}>
         <div class="text-center">请先选择一个文件夹作为索引根目录</div>
         <Show
           when={folderColumns().length > 0}
@@ -187,10 +186,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
             <For each={folderColumns()}>
               {(column) => {
                 return (
-                  <Show
-                    when={column.length > 0}
-                    fallback={<div>该文件夹没有文件</div>}
-                  >
+                  <Show when={column.length > 0} fallback={<div>该文件夹没有文件</div>}>
                     <div class="px-2 border-r-2">
                       <For each={column}>
                         {(folder) => {
@@ -200,8 +196,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
                               <div
                                 class="p-2 cursor-pointer hover:bg-slate-300"
                                 classList={{
-                                  "bg-slate-200":
-                                    file_id === values().root_folder_id,
+                                  "bg-slate-200": file_id === values().root_folder_id,
                                 }}
                                 onClick={() => {
                                   drive.inputRootFolder(folder);
@@ -221,15 +216,15 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
             </For>
           </div>
         </Show>
-      </Modal>
-      <Modal title="添加文件夹" store={createFolderModal}>
+      </Dialog>
+      <Dialog title="添加文件夹" store={createFolderModal}>
         <div>
           <Input store={input1} />
         </div>
-      </Modal>
-      <Modal title="修改 refresh_token" store={refreshTokenModal}>
+      </Dialog>
+      <Dialog title="修改 refresh_token" store={refreshTokenModal}>
         <Input store={input2} />
-      </Modal>
+      </Dialog>
     </div>
   );
 };

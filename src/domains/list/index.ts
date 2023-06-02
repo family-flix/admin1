@@ -6,22 +6,9 @@ import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 
-import {
-  DEFAULT_RESPONSE,
-  DEFAULT_PARAMS,
-  DEFAULT_CURRENT_PAGE,
-  DEFAULT_PAGE_SIZE,
-  DEFAULT_TOTAL,
-} from "./constants";
+import { DEFAULT_RESPONSE, DEFAULT_PARAMS, DEFAULT_CURRENT_PAGE, DEFAULT_PAGE_SIZE, DEFAULT_TOTAL } from "./constants";
 import { omit } from "./utils";
-import {
-  OriginalResponse,
-  FetchParams,
-  Response,
-  Search,
-  ParamsProcessor,
-  ListProps,
-} from "./typing";
+import { OriginalResponse, FetchParams, Response, Search, ParamsProcessor, ListProps } from "./typing";
 
 /**
  * 只处理
@@ -44,6 +31,7 @@ const RESPONSE_PROCESSOR = <T>(originalResponse: OriginalResponse) => {
       pageSize,
       total,
       noMore: false,
+      empty: false,
       error: null,
     };
     if (total <= pageSize * page) {
@@ -51,6 +39,9 @@ const RESPONSE_PROCESSOR = <T>(originalResponse: OriginalResponse) => {
     }
     if (isEnd !== undefined) {
       result.noMore = isEnd;
+    }
+    if (list.length === 0 && page > 1) {
+      result.empty = true;
     }
     return result;
   } catch (error) {
@@ -60,9 +51,7 @@ const RESPONSE_PROCESSOR = <T>(originalResponse: OriginalResponse) => {
       pageSize: DEFAULT_PAGE_SIZE,
       total: DEFAULT_TOTAL,
       noMore: false,
-      error: new Error(
-        `process response fail, because ${(error as Error).message}`
-      ),
+      error: new Error(`process response fail, because ${(error as Error).message}`),
     };
   }
 };
@@ -84,9 +73,7 @@ interface ListState<T> extends Response<T> {}
 /**
  * 分页类
  */
-export class ListCore<T extends Record<string, unknown>> extends BaseDomain<
-  TheTypesOfEvents<T>
-> {
+export class ListCore<T extends Record<string, unknown>> extends BaseDomain<TheTypesOfEvents<T>> {
   debug: boolean = false;
 
   static defaultResponse = <T>() => {
@@ -119,13 +106,7 @@ export class ListCore<T extends Record<string, unknown>> extends BaseDomain<
       throw new Error("fetch must be a function");
     }
 
-    const {
-      debug,
-      rowKey = "id",
-      beforeRequest,
-      processor,
-      extraDefaultResponse,
-    } = options;
+    const { debug, rowKey = "id", beforeRequest, processor, extraDefaultResponse } = options;
     this.debug = !!debug;
     this.rowKey = rowKey;
     this.originalFetch = fetch;
@@ -188,7 +169,6 @@ export class ListCore<T extends Record<string, unknown>> extends BaseDomain<
       ...responseFromPlugin,
       search: {
         ...this.response.search,
-        ...responseFromPlugin.search,
       },
     };
   };
@@ -226,6 +206,7 @@ export class ListCore<T extends Record<string, unknown>> extends BaseDomain<
     this.response.loading = false;
     this.response.search = omit({ ...mergedParams }, ["page", "pageSize"]);
     this.params = { ...processedParams };
+    this.emit(Events.LoadingChange, false);
     this.emit(Events.ParamsChange, { ...this.params });
     if (res.error) {
       return Result.Err(res.error);
@@ -489,14 +470,10 @@ export class ListCore<T extends Record<string, unknown>> extends BaseDomain<
   onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
     this.on(Events.StateChange, handler);
   }
-  onLoadingChange = (
-    handler: Handler<TheTypesOfEvents<T>[Events.LoadingChange]>
-  ) => {
+  onLoadingChange = (handler: Handler<TheTypesOfEvents<T>[Events.LoadingChange]>) => {
     this.on(Events.LoadingChange, handler);
   };
-  onDataSourceAdded = (
-    handler: Handler<TheTypesOfEvents<T>[Events.DataSourceAdded]>
-  ) => {
+  onDataSourceAdded = (handler: Handler<TheTypesOfEvents<T>[Events.DataSourceAdded]>) => {
     this.on(Events.DataSourceAdded, handler);
   };
 }

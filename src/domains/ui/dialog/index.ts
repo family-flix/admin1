@@ -35,9 +35,11 @@ type TheTypesOfEvents = {
 type DialogState = {
   open: boolean;
   title: string;
+  footer?: boolean;
 };
 type DialogProps = {
   title: string;
+  footer?: boolean;
   onCancel: () => void;
   onOk: () => void;
 };
@@ -56,8 +58,11 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ name: string } & DialogProps> = {}) {
     super(options);
 
-    const { title, onOk, onCancel } = options;
-    this.state.title = title;
+    const { title, footer = true, onOk, onCancel } = options;
+    if (title) {
+      this.state.title = title;
+    }
+    this.state.footer = footer;
     if (onOk) {
       this.onOk(onOk);
     }

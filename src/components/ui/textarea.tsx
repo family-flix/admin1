@@ -6,10 +6,8 @@ import { createSignal } from "solid-js";
 
 export interface TextareaProps extends HTMLTextAreaElement {}
 
-const Textarea = (
-  props: { store: InputCore } & JSX.HTMLAttributes<HTMLTextAreaElement>
-) => {
-  const { store, ...restProps } = props;
+const Textarea = (props: { store: InputCore } & JSX.HTMLAttributes<HTMLTextAreaElement>) => {
+  const { store, class: className, ...restProps } = props;
 
   const [state, setState] = createSignal(store.state);
   store.onStateChange((nextState) => {
@@ -19,7 +17,6 @@ const Textarea = (
   const value = () => state().value;
   const placeholder = () => state().placeholder;
   const disabled = () => state().disabled;
-  // const type = () => state().type;
 
   return (
     <textarea

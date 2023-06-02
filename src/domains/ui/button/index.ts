@@ -7,21 +7,23 @@ enum Events {
   StateChange,
 }
 type TheTypesOfEvents<T = unknown> = {
-  [Events.Click]: T;
+  [Events.Click]: T | null;
   [Events.StateChange]: ButtonState;
 };
 type ButtonState = {
+  text: string;
   loading: boolean;
   disabled: boolean;
 };
 type ButtonProps<T = unknown> = {
-  onClick: (record?: T) => void;
+  onClick: (record: T | null) => void;
 };
 export class ButtonCore<T = unknown> extends BaseDomain<TheTypesOfEvents<T>> {
   id = this.uid();
   cur: SelectionCore<T>;
 
   state: ButtonState = {
+    text: "Click it",
     loading: false,
     disabled: false,
   };
@@ -100,7 +102,7 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
       return btn.cur.value === v;
     });
     if (existing) {
-      return;
+      return existing;
     }
     const btn = new ButtonCore<T>({
       onClick: (record) => {
@@ -116,9 +118,13 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   clear() {
     this.cur = null;
   }
-  setLoading(loading) {
+  setLoading(loading: boolean) {
     // console.log("set loading", loading, this.cur);
     if (this.cur === null) {
+      for (let i = 0; i < this.btns.length; i += 1) {
+        const btn = this.btns[i];
+        btn.setLoading(loading);
+      }
       return;
     }
     this.cur.setLoading(loading);

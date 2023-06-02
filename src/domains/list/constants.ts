@@ -17,6 +17,8 @@ export const DEFAULT_RESPONSE: Response<any> = {
   noMore: false,
   loading: false,
   refreshing: undefined,
+  empty: false,
+  error: null,
 };
 
 export const DEFAULT_PARAMS = {

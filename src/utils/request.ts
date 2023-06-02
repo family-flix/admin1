@@ -21,14 +21,14 @@ export const request = {
   get: async (endpoint, query) => {
     try {
       const url = `${endpoint}${query ? "?" + qs.stringify(query) : ""}`;
-      const resp = await client.get(url, {
+      const resp = await client.get<{ code: number | string; msg: string; data: unknown | null }>(url, {
         headers: {
           Authorization: app.user.token,
         },
       });
       const { code, msg, data } = resp.data;
       if (code !== 0) {
-        return Result.Err(msg);
+        return Result.Err(msg, code, data);
       }
       return Result.Ok(data);
     } catch (err) {
@@ -38,14 +38,14 @@ export const request = {
   },
   post: async (url, body) => {
     try {
-      const resp = await client.post(url, body, {
+      const resp = await client.post<{ code: number | string; msg: string; data: unknown | null }>(url, body, {
         headers: {
           Authorization: app.user.token,
         },
       });
       const { code, msg, data } = resp.data;
       if (code !== 0) {
-        return Result.Err(msg);
+        return Result.Err(msg, code, data);
       }
       return Result.Ok(data);
     } catch (err) {

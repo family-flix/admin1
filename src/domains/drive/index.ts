@@ -1,12 +1,12 @@
 /**
- * @file 对云盘文件进行分析
- * 包含哪些影视剧
+ * @file 云盘实例
+ * 包含所有云盘相关的操作、数据
  */
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { ListCore } from "@/domains/list";
-import { fetch_async_task } from "@/domains/async_task/services";
+import { fetch_job_profile } from "@/domains/job/services";
 import { Result } from "@/types";
 
 import {
@@ -146,9 +146,9 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["索引失败", r.error.message] });
       return Result.Err(r.error);
     }
-    const { async_task_id } = r.data;
+    const { job_id } = r.data;
     this.timer = setInterval(async () => {
-      const r = await fetch_async_task(async_task_id);
+      const r = await fetch_job_profile(job_id);
       if (r.error) {
         this.state.loading = false;
         this.emit(Events.StateChange, { ...this.state });
@@ -275,7 +275,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     // this.file_id = file_id;
     if (this.list.loading) {
       this.tip({ text: ["正在请求..."] });
-      return;
+      // return Result.;
     }
     const body = (() => {
       return {
@@ -309,18 +309,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.FoldersChange, [...this.folderColumns]);
       return;
     }
-
     this.list.nextMarker = r.data.next_marker;
     this.folderColumns = (() => {
-      const existingFolder = this.folderColumns[index].find(
-        (p) => p.file_id === file_id
-      );
-      console.log(
-        "[]before modify folder columns",
-        this.folderColumns,
-        r.data.items,
-        index
-      );
+      const existingFolder = this.folderColumns[index].find((p) => p.file_id === file_id);
+      // console.log("[]before modify folder columns", this.folderColumns, r.data.items, index);
       if (existingFolder) {
       }
       if (index === 0) {
@@ -358,16 +350,16 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   async addFolder() {
     const { folder_name } = this.values;
     if (!folder_name) {
-      this.tip({ text: ["请先输入文件夹名称"] });
-      return;
+      const msg = this.tip({ text: ["请先输入文件夹名称"] });
+      return Result.Err(msg);
     }
     const r = await addFolderInDrive({
       drive_id: this.id,
       name: folder_name,
     });
     if (r.error) {
-      this.tip({ text: ["添加文件夹失败", r.error.message] });
-      return Result.Err(r.error);
+      const msg = this.tip({ text: ["添加文件夹失败", r.error.message] });
+      return Result.Err(msg);
     }
     this.tip({ text: ["添加文件夹成功"] });
     this.fetch({ file_id: "root", name: "文件" });
@@ -392,9 +384,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   onCompleted(handler: Handler<TheTypesOfEvents[Events.Completed]>) {
     this.on(Events.Completed, handler);
   }
-  onFolderColumnChange(
-    handler: Handler<TheTypesOfEvents[Events.FoldersChange]>
-  ) {
+  onFolderColumnChange(handler: Handler<TheTypesOfEvents[Events.FoldersChange]>) {
     this.on(Events.FoldersChange, handler);
   }
   onValuesChange(handler: Handler<TheTypesOfEvents[Events.ValuesChange]>) {

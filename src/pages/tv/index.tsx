@@ -2,12 +2,15 @@
  * @file 电视剧列表
  */
 import { createSignal, For, Show } from "solid-js";
+import { Award, Calendar, Info, Send, Smile, X } from "lucide-solid";
 
 import {
+  add_file_sync_task_of_tv,
   bind_searched_tv_for_tv,
   fetch_folder_can_add_sync_task,
   fetch_tv_list,
   FolderCanAddingSyncTaskItem,
+  run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
   TVItem,
 } from "@/services";
@@ -26,9 +29,10 @@ import { Button } from "@/components/ui/button";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ViewComponent } from "@/types";
-import { Modal } from "@/components/SingleModal";
+import { Dialog } from "@/components/ui/dialog";
 import { DialogCore } from "@/domains/ui/dialog";
 import { SharedResourceCore } from "@/domains/shared_resource";
+import { JobCore } from "@/domains/job";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -60,23 +64,54 @@ export const TVManagePage: ViewComponent = (props) => {
       app.tip({ text: ["隐藏失败", error.message] });
     },
   });
-  const runFileSyncTask = new RequestCore(run_file_sync_task_of_tv, {
+  const addFileSyncTask = new RequestCore(add_file_sync_task_of_tv, {
     onLoading(loading) {
-      execSyncTaskBtn.setLoading(loading);
+      sharedResourceBtn.setLoading(loading);
     },
     onSuccess() {
-      app.tip({ text: ["同步成功"] });
+      app.tip({ text: ["新增更新任务成功"] });
+      setFolders([]);
+      sharedResourceUrlInput.clear();
+      addSyncTaskDialog.hide();
     },
     onFailed(error) {
-      app.tip({ text: ["同步失败", error.message] });
+      console.log(error);
+      app.tip({ text: ["新增更新任务失败", error.message] });
+      const { code, data } = error;
+      if (code !== "20001") {
+        return;
+      }
+      const folders = data as {
+        file_id: string;
+        file_name: string;
+      }[];
+      setFolders(folders);
     },
   });
-  const folderCanAddSyncTaskList = new ListCore<FolderCanAddingSyncTaskItem>(
-    fetch_folder_can_add_sync_task
-  );
+  const runFileSyncTask = new RequestCore(run_file_sync_task_of_tv, {
+    onBeforeRequest() {
+      execSyncTaskBtn.setLoading(true);
+    },
+    onSuccess(resp) {
+      const job = new JobCore({ id: resp.job_id });
+      job.onTip((msg) => {
+        app.tip(msg);
+      });
+      job.onFinish(() => {
+        execSyncTaskBtn.setLoading(false);
+      });
+      job.wait_finish();
+      list.refresh();
+    },
+    onFailed(error) {
+      app.tip({ text: ["更新失败", error.message] });
+      execSyncTaskBtn.setLoading(false);
+    },
+  });
+  const folderCanAddSyncTaskList = new ListCore<FolderCanAddingSyncTaskItem>(fetch_folder_can_add_sync_task);
   const dialog = new TMDBSearcherDialogCore({
     onOk(searchedTV) {
-      if (!tvSelection.value.id) {
+      if (!tvSelection.value?.id) {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
       }
@@ -84,6 +119,8 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const addSyncTaskDialog = new DialogCore({
+    title: "新增更新任务",
+    footer: false,
     onOk() {
       if (!folderSelection.value) {
         app.tip({ text: ["请先选择文件夹"] });
@@ -93,24 +130,27 @@ export const TVManagePage: ViewComponent = (props) => {
       // 还要看该电视剧有没有同名的 parsed_tv.file_name，如果没有，弹出所有的 parsed_tv 让用户选
     },
   });
-  const contextMenu = new ContextMenuCore({
-    items: [
-      new MenuItemCore({
-        label: "修改",
-        onClick() {
-          dialog.show();
-        },
-      }),
-      new MenuItemCore({
-        label: "隐藏",
-        onClick() {
-          hiddenTV.run({ id: tvSelection.value.id });
-        },
-      }),
-    ],
-  });
+  // const contextMenu = new ContextMenuCore({
+  //   items: [
+  //     new MenuItemCore({
+  //       label: "修改",
+  //       onClick() {
+  //         dialog.show();
+  //       },
+  //     }),
+  //     new MenuItemCore({
+  //       label: "隐藏",
+  //       onClick() {
+  //         if (tvSelection.value === null) {
+  //           return;
+  //         }
+  //         hiddenTV.run({ id: tvSelection.value.id });
+  //       },
+  //     }),
+  //   ],
+  // });
   const input1 = new InputCore({ placeholder: "请输入名称搜索" });
-  const button1 = new ButtonCore({
+  const searchBtn = new ButtonCore({
     onClick() {
       if (!input1.value) {
         return;
@@ -118,10 +158,10 @@ export const TVManagePage: ViewComponent = (props) => {
       list.search({ name: input1.value });
     },
   });
-  const button2 = new ButtonCore({
+  const resetBtn = new ButtonCore({
     onClick() {
       list.reset();
-      input1.empty();
+      input1.clear();
     },
   });
   const sharedResourceUrlInput = new InputCore({
@@ -133,11 +173,22 @@ export const TVManagePage: ViewComponent = (props) => {
   const sharedResource = new SharedResourceCore();
   const sharedResourceBtn = new ButtonCore({
     onClick() {
-      sharedResource.fetch();
+      // sharedResource.fetch();
+      if (!tvSelection.value) {
+        app.tip({ text: ["请先选择电视剧"] });
+        return;
+      }
+      addFileSyncTask.run({
+        tv_id: tvSelection.value.id,
+        url: sharedResourceUrlInput.value,
+      });
     },
   });
   const addSyncTaskBtn = new ButtonInListCore<TVItem>({
     onClick(record) {
+      if (record === null) {
+        return;
+      }
       tvSelection.select(record);
       // sharedResource.input();
       folderCanAddSyncTaskList.search({
@@ -148,25 +199,52 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const execSyncTaskBtn = new ButtonInListCore<TVItem>({
     onClick(record) {
+      if (record === null) {
+        return;
+      }
       runFileSyncTask.run({ id: record.id });
     },
   });
   const profileBtn = new ButtonInListCore<TVItem>({
     onClick(record) {
+      if (record === null) {
+        return;
+      }
       router.push(`/tv/${record.id}`);
+    },
+  });
+  const syncAllTVRequest = new RequestCore(run_all_file_sync_tasks, {
+    onLoading(loading) {
+      syncAllTVBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({ text: ["同步更新成功"] });
+    },
+    onFailed(error) {
+      app.tip({ text: ["同步更新失败", error.message] });
+    },
+  });
+  const syncAllTVBtn = new ButtonCore({
+    onClick() {
+      syncAllTVRequest.run();
     },
   });
 
   const [state, setState] = createSignal(list.response);
-  const [folders, setFolders] = createSignal(folderCanAddSyncTaskList.response);
+  const [folders, setFolders] = createSignal<
+    {
+      file_id: string;
+      file_name: string;
+    }[]
+  >([]);
   const [resourceState, setResourceState] = createSignal(sharedResource.state);
 
   list.onStateChange((nextState) => {
     setState(nextState);
   });
-  folderCanAddSyncTaskList.onStateChange((nextState) => {
-    setFolders(nextState);
-  });
+  // folderCanAddSyncTaskList.onStateChange((nextState) => {
+  //   setFolders(nextState);
+  // });
   sharedResource.onStateChange((nextState) => {
     setResourceState(nextState);
   });
@@ -176,136 +254,151 @@ export const TVManagePage: ViewComponent = (props) => {
 
   return (
     <>
-      <div class="min-h-screen">
-        <div class="">
-          <div class="">
-            <div class="flex space-x-2">
-              <Input store={input1} />
-              <Button class="w-[80px]" store={button1}>
-                搜索
-              </Button>
-              <Button class="w-[80px]" store={button2}>
-                重置
-              </Button>
-            </div>
+      <div class="">
+        <h1 class="text-2xl">电视剧列表</h1>
+        <div class="mt-8">
+          <div class="grid grid-cols-12 gap-2">
+            <Input class="col-span-10" store={input1} />
+            <Button class="col-span-1" store={searchBtn}>
+              搜索
+            </Button>
+            <Button class="col-span-1" store={resetBtn}>
+              重置
+            </Button>
           </div>
+          <Button class="mt-4" store={syncAllTVBtn}>
+            更新所有电视剧
+          </Button>
           <div class="mt-4">
-            <ContextMenu store={contextMenu}>
-              <div class="space-y-4">
-                <For each={response()}>
-                  {(tv) => {
-                    const {
-                      id,
-                      name,
-                      overview,
-                      poster_path,
-                      first_air_date,
-                      tips,
-                      need_bind,
-                      sync_task,
-                    } = tv;
-                    return (
-                      <div
-                        class="card cursor-pointer"
-                        onContextMenu={(
-                          event: MouseEvent & { currentTarget: HTMLDivElement }
-                        ) => {
-                          event.stopPropagation();
-                          event.preventDefault();
-                          const { x, y } = event;
-                          tvSelection.select(tv);
-                          contextMenu.show({ x, y });
-                        }}
-                      >
-                        <div class="flex">
-                          <LazyImage
-                            class="mr-4 w-[120px] object-fit"
-                            src={poster_path}
-                            alt={name}
-                          />
-                          <div class="flex-1">
-                            <h2 class="text-2xl">{name}</h2>
-                            <div class="mt-2">
-                              <p class="">{overview}</p>
-                              <p class="">{first_air_date}</p>
+            <div class="space-y-4">
+              <For each={response()}>
+                {(tv) => {
+                  const {
+                    id,
+                    name,
+                    overview,
+                    poster_path,
+                    first_air_date,
+                    popularity,
+                    tips,
+                    need_bind,
+                    sync_task,
+                    cur_episode_count,
+                    episode_count,
+                  } = tv;
+                  return (
+                    <div
+                      class="rounded-md border border-slate-300 bg-white shadow-sm"
+                      // onContextMenu={(event: MouseEvent & { currentTarget: HTMLDivElement }) => {
+                      //   event.stopPropagation();
+                      //   event.preventDefault();
+                      //   const { x, y } = event;
+                      //   tvSelection.select(tv);
+                      //   contextMenu.show({ x, y });
+                      // }}
+                    >
+                      <div class="flex">
+                        <div class="overflow-hidden mr-2 rounded-sm">
+                          <LazyImage class="w-[180px] object-fit" src={poster_path} alt={name} />
+                        </div>
+                        <div class="flex-1 p-4">
+                          <h2 class="text-2xl text-slate-800">{name}</h2>
+                          <div class="mt-2 overflow-hidden text-ellipsis">
+                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</p>
+                          </div>
+                          <div class="flex items-center space-x-4 mt-2">
+                            <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
+                              <Calendar class="w-4 h-4 text-slate-800" />
+                              <div>{first_air_date}</div>
                             </div>
-                            <For each={tips}>
+                            <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
+                              <Award class="w-4 h-4" />
+                              <div>{popularity}</div>
+                            </div>
+                            <Show when={cur_episode_count === episode_count}>
+                              <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                <Smile class="w-4 h-4" />
+                                <div>全{episode_count}集</div>
+                              </div>
+                            </Show>
+                            <Show when={cur_episode_count !== episode_count}>
+                              <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                <Send class="w-4 h-4" />
+                                <div>
+                                  {cur_episode_count}/{episode_count}
+                                </div>
+                              </div>
+                            </Show>
+                            <Show when={tips.length}>
+                              <div class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500">
+                                <Info class="w-4 h-4" />
+                                <div>{tips.length}个问题</div>
+                              </div>
+                            </Show>
+                          </div>
+                          {/* <For each={tips}>
                               {(tip) => {
                                 return <div>{tip}</div>;
                               }}
-                            </For>
-                            <div class="space-x-2">
-                              <Button store={profileBtn.bind(tv)}>详情</Button>
-                              <Show when={need_bind}>
-                                <Button store={addSyncTaskBtn.bind(tv)}>
-                                  创建同步任务
-                                </Button>
-                              </Show>
-                              <Show when={sync_task}>
-                                <Button store={execSyncTaskBtn.bind(tv)}>
-                                  执行同步任务
-                                </Button>
-                              </Show>
-                            </div>
+                            </For> */}
+                          <div class="space-x-2 mt-6">
+                            <Button store={profileBtn.bind(tv)}>详情</Button>
+                            <Show when={need_bind}>
+                              <Button store={addSyncTaskBtn.bind(tv)}>创建更新任务</Button>
+                            </Show>
+                            <Show when={sync_task}>
+                              <Button store={execSyncTaskBtn.bind(tv)}>更新</Button>
+                            </Show>
                           </div>
                         </div>
                       </div>
-                    );
-                  }}
-                </For>
-              </div>
-            </ContextMenu>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
           </div>
         </div>
       </div>
       <TMDBSearcherDialog store={dialog} />
-      <Modal store={addSyncTaskDialog}>
-        <div class="flex items-center space-x-2">
-          <Input store={sharedResourceUrlInput} />
-          <Button store={sharedResourceBtn}>查询</Button>
+      <Dialog store={addSyncTaskDialog}>
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-9">
+            <Input store={sharedResourceUrlInput} />
+          </div>
+          <div class="col-span-3 grid">
+            <Button store={sharedResourceBtn}>确定</Button>
+          </div>
         </div>
         <div>
-          <For each={resourceState().files}>
+          <For each={folders()}>
             {(file) => {
-              const { name, file_id } = file;
+              const { file_name, file_id } = file;
               return (
-                <div
-                  class="py-4 cursor-pointer"
-                  onClick={() => {
-                    folderSelection.select({
-                      url: sharedResource.url,
-                      name,
-                      file_id,
-                    });
-                  }}
-                >
-                  {name}
+                <div class="flex items-center py-4 space-x-2">
+                  <div>{file_name}</div>
+                  <button
+                    class="cursor-pointer"
+                    onClick={() => {
+                      if (!tvSelection.value) {
+                        app.tip({ text: ["请先选择电视剧"] });
+                        return;
+                      }
+                      addFileSyncTask.run({
+                        tv_id: tvSelection.value.id,
+                        url: sharedResourceUrlInput.value,
+                        target_file_id: file_id,
+                      });
+                    }}
+                  >
+                    选择该文件夹
+                  </button>
                 </div>
               );
             }}
           </For>
         </div>
-        <div>
-          <div class="text-xl">资源转存记录</div>
-          <Show when={!!folders().dataSource.length}>
-            <For each={folders().dataSource}>
-              {(folder) => {
-                const { url, name } = folder;
-                return (
-                  <div
-                    class="py-4 cursor-pointer"
-                    onClick={() => {
-                      folderSelection.select(folder);
-                    }}
-                  >
-                    {name}
-                  </div>
-                );
-              }}
-            </For>
-          </Show>
-        </div>
-      </Modal>
+      </Dialog>
     </>
   );
 };

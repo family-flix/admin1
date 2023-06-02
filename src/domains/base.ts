@@ -52,13 +52,15 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     // const error = new Error();
     // const lineNumber = error.stack.split("\n")[2].trim().split(" ")[1];
     // console.log(error.stack.split("\n"));
-    return [
+    const texts = [
       `%c CORE %c ${this.name} %c`,
       "color:white;background:#dfa639;border-top-left-radius:2px;border-bottom-left-radius:2px;",
       "color:white;background:#19be6b;border-top-right-radius:2px;border-bottom-right-radius:2px;",
       "color:#19be6b;",
       ...args,
     ];
+    console.log(...texts);
+    return texts;
   }
   error(...args: unknown[]) {
     if (!this.debug) {
@@ -72,16 +74,10 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
       ...args
     );
   }
-  off<Key extends keyof BaseDomainEvents<Events>>(
-    event: Key,
-    handler: Handler<BaseDomainEvents<Events>[Key]>
-  ) {
+  off<Key extends keyof BaseDomainEvents<Events>>(event: Key, handler: Handler<BaseDomainEvents<Events>[Key]>) {
     this._emitter.off(event, handler);
   }
-  on<Key extends keyof BaseDomainEvents<Events>>(
-    event: Key,
-    handler: Handler<BaseDomainEvents<Events>[Key]>
-  ) {
+  on<Key extends keyof BaseDomainEvents<Events>>(event: Key, handler: Handler<BaseDomainEvents<Events>[Key]>) {
     const unlisten = () => {
       this.listeners = this.listeners.filter((l) => l !== unlisten);
       this.off(event, handler);
@@ -90,10 +86,7 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     this._emitter.on(event, handler);
     return unlisten;
   }
-  emit<Key extends keyof BaseDomainEvents<Events>>(
-    event: Key,
-    value?: BaseDomainEvents<Events>[Key]
-  ) {
+  emit<Key extends keyof BaseDomainEvents<Events>>(event: Key, value?: BaseDomainEvents<Events>[Key]) {
     this._emitter.emit(event, value);
   }
   tip(content: { icon?: unknown; text: string[] }) {
@@ -129,8 +122,7 @@ export function applyMixins(derivedCtor: any, constructors: any[]) {
       Object.defineProperty(
         derivedCtor.prototype,
         name,
-        Object.getOwnPropertyDescriptor(baseCtor.prototype, name) ||
-          Object.create(null)
+        Object.getOwnPropertyDescriptor(baseCtor.prototype, name) || Object.create(null)
       );
     });
   });

@@ -103,26 +103,28 @@ export const TVProfilePage: ViewComponent = (props) => {
             <div class="relative">
               <div
                 class=""
-                style={{
-                  "background-image": `url('${profile().backdrop_path}')`,
-                  "background-size": "auto",
-                  // backgroundPosition: "left calc((50vw - 170px) - 340px) top",
-                }}
+                style={
+                  {
+                    // "background-image": `url('${profile().backdrop_path}')`,
+                    // "background-size": "auto",
+                    // backgroundPosition: "left calc((50vw - 170px) - 340px) top",
+                  }
+                }
               >
                 <div
-                  style={{
-                    background:
-                      "linear-gradient(to right, rgba(52.5, 157.5, 157.5, 1) calc((50vw - 170px) - 340px), rgba(52.5, 157.5, 157.5, 0.84) 50%, rgba(52.5, 157.5, 157.5, 0.84) 100%)",
-                  }}
+                // style={{
+                //   background:
+                //     "linear-gradient(to right, rgba(52.5, 157.5, 157.5, 1) calc((50vw - 170px) - 340px), rgba(52.5, 157.5, 157.5, 0.84) 50%, rgba(52.5, 157.5, 157.5, 0.84) 100%)",
+                // }}
                 >
                   {/* <div class="absolute z-2 inset-0 backdrop-blur-lg w-full h-full" /> */}
                   <div class="relative z-3">
-                    <div class="flex items-center">
+                    <div class="flex">
                       <LazyImage
                         class="overflow-hidden w-[240px] rounded-lg mr-4 object-cover"
                         src={profile().poster_path}
                       />
-                      <div class="flex-1">
+                      <div class="flex-1 mt-4">
                         <h2 class="text-5xl">{profile().name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
                         <div class="mt-2">{profile().overview}</div>
@@ -131,35 +133,33 @@ export const TVProfilePage: ViewComponent = (props) => {
                   </div>
                 </div>
               </div>
-              <div class="relative z-3">
+              <div class="relative z-3 mt-4">
                 <div class="space-x-4">
                   <Button store={btn1}>搜索 TMDB</Button>
                   {/* <TVFormDialog trigger={<Button>修改</Button>} /> */}
                 </div>
-                <div class="mt-8 space-y-4 ">
+                <div class="mt-4 space-y-4">
                   <For each={profile().seasons}>
                     {(season) => {
                       const { name, overview, episodes } = season;
                       return (
-                        <div>
-                          <div>{name}</div>
-                          <div>{overview}</div>
-                          <For each={episodes}>
-                            {(episode) => {
-                              const { id, name, overview } = episode;
-                              return (
-                                <div
-                                  class="p-4 rounded-sm cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-                                  // onContextMenu={() => {
-                                  //   cur_episode_ref.current = episode;
-                                  // }}
-                                >
-                                  <p class="text-2xl">{name}</p>
-                                  <p class="">{overview}</p>
-                                </div>
-                              );
-                            }}
-                          </For>
+                        <div class="rounded border border-slate-400">
+                          <div class="p-4 bg-slate-300">
+                            <div class="text-2xl">{name}</div>
+                          </div>
+                          <div class="space-y-1 px-4">
+                            <For each={episodes}>
+                              {(episode) => {
+                                const { id, name, overview } = episode;
+                                return (
+                                  <div class="py-2">
+                                    <p class="text-lg">{name}</p>
+                                    <p class="">{overview}</p>
+                                  </div>
+                                );
+                              }}
+                            </For>
+                          </div>
                         </div>
                       );
                     }}

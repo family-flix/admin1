@@ -2,16 +2,15 @@ import { JSX } from "solid-js/jsx-runtime";
 
 import { Application } from "@/domains/app";
 import { NavigatorCore } from "@/domains/navigator";
-import { ViewCore } from "@/domains/view";
+import { RouteViewCore } from "@/domains/route_view";
+import { BizError } from "@/domains/error";
 
 export type Resp<T> = {
   data: T extends null ? null : T;
-  error: T extends null ? Error : null;
+  error: T extends null ? BizError : null;
 };
 export type Result<T> = Resp<T> | Resp<null>;
-export type UnpackedResult<T> = NonNullable<
-  T extends Resp<infer U> ? (U extends null ? U : U) : T
->;
+export type UnpackedResult<T> = NonNullable<T extends Resp<infer U> ? (U extends null ? U : U) : T>;
 /** 构造一个结果对象 */
 export const Result = {
   /** 构造成功结果 */
@@ -23,15 +22,21 @@ export const Result = {
     return result;
   },
   /** 构造失败结果 */
-  Err: <T>(message: string | Error | Result<null>) => {
+  Err: <T>(message: string | BizError | Error | Result<null>, code?: string | number, data: unknown = null) => {
     const result = {
-      data: null,
+      data,
+      code,
       error: (() => {
         if (typeof message === "string") {
-          return new Error(message);
+          const e = new BizError(message, code, data);
+          return e;
+        }
+        if (message instanceof BizError) {
+          return message;
         }
         if (typeof message === "object") {
-          return message;
+          const e = new BizError((message as Error).message, code, data);
+          return e;
         }
         const r = message as Result<null>;
         return r.error;
@@ -64,14 +69,9 @@ export type ListResponse<T> = {
   list: T[];
 };
 
-export type RequestedResource<T extends (...args: any[]) => any> =
-  UnpackedResult<Unpacked<ReturnType<T>>>;
+export type RequestedResource<T extends (...args: any[]) => any> = UnpackedResult<Unpacked<ReturnType<T>>>;
 
-export type ViewComponent = (props: {
-  app: Application;
-  router: NavigatorCore;
-  view: ViewCore;
-}) => JSX.Element;
+export type ViewComponent = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => JSX.Element;
 
 export type Rect = {
   width: number;
@@ -86,11 +86,5 @@ export type Rect = {
 };
 
 export interface JSONArray extends Array<JSONValue> {}
-export type JSONValue =
-  | string
-  | number
-  | boolean
-  | JSONObject
-  | JSONArray
-  | null;
+export type JSONValue = string | number | boolean | JSONObject | JSONArray | null;
 export type JSONObject = { [Key in string]?: JSONValue };

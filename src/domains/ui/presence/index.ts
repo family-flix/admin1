@@ -43,7 +43,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 之前是否可见状态 */
   private prevPresent = false;
-  styles: CSSStyleDeclaration;
+  // styles: CSSStyleDeclaration;
   animationName = "none";
   // private state = "unmounted";
 
@@ -57,7 +57,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     super(options);
   }
 
-  calc(present) {
+  calc() {
     // const styles = this.styles;
     // const wasPresent = this.prevPresent;
     // const hasPresentChanged = wasPresent !== present;
@@ -92,9 +92,9 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     return this.state.open;
     // return ["mounted", "unmountSuspended"].includes(this.state);
   }
-  setStyles(styles: CSSStyleDeclaration) {
-    this.styles = styles;
-  }
+  // setStyles(styles: CSSStyleDeclaration) {
+  //   this.styles = styles;
+  // }
   show() {
     this.log("show");
     // this.calc(true);
@@ -114,11 +114,9 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
         return;
       }
       this.unmount();
-    }, 800);
+    }, 120);
   }
-  send(
-    event: "UNMOUNT" | "ANIMATION_OUT" | "MOUNT" | "ANIMATION_END" | "MOUNT"
-  ) {
+  send(event: "UNMOUNT" | "ANIMATION_OUT" | "MOUNT" | "ANIMATION_END" | "MOUNT") {
     // this.log("send", event, this.state);
     // const nextState = PresenceEventMap[this.state][event];
     // this.state = nextState;
@@ -129,11 +127,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 将 DOM 从页面卸载 */
   unmount() {
-    console.log(
-      "[]PresenceCore - destroy",
-      this.state.open,
-      this.state.unmounted
-    );
+    console.log("[]PresenceCore - destroy", this.state.open, this.state.unmounted);
     if (this.state.open) {
       // this.emit(Events.Show);
       return;

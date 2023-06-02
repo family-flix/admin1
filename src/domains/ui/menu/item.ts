@@ -1,3 +1,6 @@
+/**
+ * @file 菜单项
+ */
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
@@ -20,47 +23,63 @@ type TheTypesOfEvents = {
   [Events.Blur]: void;
   [Events.Click]: void;
 };
-type MenuItemState = {
-  label: string;
-  /** 有子菜单并且子菜单展示了 */
-  open: boolean;
-  disabled: boolean;
-  focused: boolean;
-};
+
 type MenuItemProps = {
+  /** 菜单文案 */
   label: string;
-  disabled: boolean;
+  /** 菜单图标 */
+  icon?: unknown;
+  /** 菜单快捷键 */
+  shortcut?: string;
+  /** 菜单是否禁用 */
+  disabled?: boolean;
   /** 子菜单 */
   menu?: MenuCore;
   /** 点击后的回调 */
   onClick?: () => void;
 };
-const defaultMenuItemState: MenuItemState = {
-  label: "",
-  open: false,
-  disabled: false,
-  focused: false,
+type MenuItemState = MenuItemProps & {
+  /** 有子菜单并且子菜单展示了 */
+  open: boolean;
+  /** 是否聚焦 */
+  focused: boolean;
 };
 
 export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   name = "MenuItemCore";
   debug = true;
 
-  state: MenuItemState = { ...defaultMenuItemState };
-
   label: string;
+  icon?: unknown;
+  shortcut?: string;
   /** 子菜单 */
   menu: MenuCore | null = null;
 
+  state: MenuItemState = {
+    label: "",
+    icon: null,
+    shortcut: "",
+    open: false,
+    disabled: false,
+    focused: false,
+  };
+
   _enter = false;
 
-  constructor(options: Partial<{ name: string } & MenuItemProps> = {}) {
+  constructor(options: Partial<{ name: string }> & MenuItemProps) {
     super(options);
 
-    const { label, disabled = false, menu, onClick } = options;
-    this.state.label = label;
-    this.state.disabled = disabled;
+    const { label, icon, shortcut, disabled = false, menu, onClick } = options;
+
     this.label = label;
+    this.icon = icon;
+    this.shortcut = shortcut;
+
+    this.state.label = label;
+    this.state.icon = icon;
+    this.state.shortcut = shortcut;
+    this.state.disabled = disabled;
+
     if (menu) {
       this.menu = menu;
       menu.onShow(() => {

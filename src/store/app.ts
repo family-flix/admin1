@@ -34,6 +34,7 @@ export const app = new Application({
   },
 });
 
+// @ts-ignore
 ListCore.commonProcessor = (originalResponse) => {
   if (originalResponse.error) {
     return {
@@ -42,17 +43,20 @@ ListCore.commonProcessor = (originalResponse) => {
       pageSize: 20,
       total: 0,
       noMore: false,
-      error: new Error(`${originalResponse.error.message}`),
+      empty: false,
+      error: new Error(`${(originalResponse.error as unknown as Error).message}`),
     };
   }
   try {
     const data = originalResponse.data || originalResponse;
+    // @ts-ignore
     const { list, page, page_size, total, no_more } = data;
     const result = {
       dataSource: list,
       page,
       pageSize: page_size,
       total,
+      empty: false,
       noMore: false,
     };
     if (total <= page_size * page) {
@@ -60,6 +64,9 @@ ListCore.commonProcessor = (originalResponse) => {
     }
     if (no_more !== undefined) {
       result.noMore = no_more;
+    }
+    if (list.length === 0 && page >= 1) {
+      result.empty = true;
     }
     return result;
   } catch (error) {
@@ -73,5 +80,3 @@ ListCore.commonProcessor = (originalResponse) => {
     };
   }
 };
-// bind(_app);
-// export const app = _app;

@@ -4,19 +4,9 @@
 import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
-import {
-  episode_to_chinese_num,
-  relative_time_from_now,
-  season_to_chinese_num,
-} from "@/utils";
+import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils";
 import { request } from "@/utils/request";
-import {
-  ListResponse,
-  RequestedResource,
-  Result,
-  Unpacked,
-  UnpackedResult,
-} from "@/types";
+import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 
 /**
  * 获取电视剧列表
@@ -31,6 +21,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
       overview: string;
       poster_path: string;
       first_air_date: string;
+      popularity: string;
       episode_count: number;
       season_count: number;
       cur_episode_count: number;
@@ -67,9 +58,7 @@ export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 /**
  * tv 列表中的元素
  */
-export type PartialSearchedTVFromTMDB = UnpackedResult<
-  Unpacked<ReturnType<typeof search_tv_in_tmdb>>
->["list"][number];
+export type PartialSearchedTVFromTMDB = UnpackedResult<Unpacked<ReturnType<typeof search_tv_in_tmdb>>>["list"][number];
 export type PartialSearchedTV = Omit<
   PartialSearchedTVFromTMDB,
   "id" | "search_tv_in_tmdb_then_save" | "original_country"
@@ -109,9 +98,7 @@ export async function fetch_unknown_tv_list(params: FetchParams) {
     }),
   });
 }
-export type UnknownTVItem = RequestedResource<
-  typeof fetch_unknown_tv_list
->["list"][0];
+export type UnknownTVItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
 
 /**
  * 获取未识别的影视剧详情
@@ -136,18 +123,14 @@ export function fetch_unknown_tv_profile(body: { id: string }) {
     }[];
   }>(`/api/admin/unknown_tv/${id}`);
 }
-export type UnknownTVProfile = RequestedResource<
-  typeof fetch_unknown_tv_profile
->;
+export type UnknownTVProfile = RequestedResource<typeof fetch_unknown_tv_profile>;
 
 /**
  * 在 TMDB 搜索影视剧
  * @param params
  * @returns
  */
-export async function search_tv_in_tmdb(
-  params: FetchParams & { keyword: string }
-) {
+export async function search_tv_in_tmdb(params: FetchParams & { keyword: string }) {
   const { keyword, page, pageSize, ...rest } = params;
   return request.get<
     ListResponse<{
@@ -166,17 +149,12 @@ export async function search_tv_in_tmdb(
   });
 }
 
-export type MatchedTVOfTMDB = RequestedResource<
-  typeof search_tv_in_tmdb
->["list"][0];
+export type MatchedTVOfTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"][0];
 
 /**
  * 给指定 tv 绑定一个 tmdb 的搜索结果
  */
-export async function bind_searched_tv_for_tv(
-  id: string,
-  body: MatchedTVOfTMDB
-) {
+export async function bind_searched_tv_for_tv(id: string, body: MatchedTVOfTMDB) {
   return request.post(`/api/admin/tv/update_profile/${id}`, body);
 }
 
@@ -264,11 +242,7 @@ export async function fetch_aliyun_drive_files(body: {
   return r;
 }
 
-export async function fetch_shared_files(body: {
-  url: string;
-  file_id: string;
-  next_marker: string;
-}) {
+export async function fetch_shared_files(body: { url: string; file_id: string; next_marker: string }) {
   const { url, file_id, next_marker } = body;
   const r = await request.get<{
     items: {
@@ -284,18 +258,12 @@ export async function fetch_shared_files(body: {
   }>("/api/admin/shared_files", { url, file_id, next_marker });
   return r;
 }
-export type AliyunFolderItem = RequestedResource<
-  typeof fetch_shared_files
->["items"][0];
+export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["items"][0];
 
 /**
  * 获取云盘文件临平
  */
-export async function fetch_drive_files(body: {
-  drive_id: string;
-  file_id: string;
-  name: string;
-}) {
+export async function fetch_drive_files(body: { drive_id: string; file_id: string; name: string }) {
   const { drive_id, file_id, name } = body;
   return request.get(`/api/admin/aliyun/files/${file_id}`, { name, drive_id });
 }
@@ -320,10 +288,7 @@ export async function patch_added_files(body: {
  * @returns
  */
 export function find_folders_has_same_name(body: { name: string }) {
-  return request.get<{ name: string; file_id: string }>(
-    "/api/admin/shared_file/find_folder_has_same_name",
-    body
-  );
+  return request.get<{ name: string; file_id: string }>("/api/admin/shared_file/find_folder_has_same_name", body);
 }
 export type FolderItem = RequestedResource<typeof find_folders_has_same_name>;
 
@@ -353,10 +318,7 @@ export async function check_has_same_name_tv(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.post<null | TVItem>(
-    "/api/admin/shared_file/check_same_name",
-    body
-  );
+  return request.post<null | TVItem>("/api/admin/shared_file/check_same_name", body);
 }
 
 /**
@@ -382,11 +344,7 @@ export function parse_video_file_name(body: { name: string; keys?: string[] }) {
 /**
  * 获取可以建立同步任务的文件夹转存记录
  */
-export function fetch_folder_can_add_sync_task(body: {
-  page: number;
-  page_size: number;
-  name?: string[];
-}) {
+export function fetch_folder_can_add_sync_task(body: { page: number; page_size: number; name?: string[] }) {
   const { page, page_size, name } = body;
   return request.post<
     ListResponse<{
@@ -401,9 +359,7 @@ export function fetch_folder_can_add_sync_task(body: {
     name,
   });
 }
-export type FolderCanAddingSyncTaskItem = RequestedResource<
-  typeof fetch_folder_can_add_sync_task
->["list"][number];
+export type FolderCanAddingSyncTaskItem = RequestedResource<typeof fetch_folder_can_add_sync_task>["list"][number];
 
 /**
  * 执行一次分享资源的同步任务
@@ -412,5 +368,26 @@ export type FolderCanAddingSyncTaskItem = RequestedResource<
  */
 export function run_file_sync_task_of_tv(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/tv/sync/${id}`);
+  return request.get<{ job_id: string }>(`/api/admin/tv/sync/${id}`);
+}
+
+/**
+ * 添加分享资源的同步任务
+ * @param body
+ * @returns
+ */
+export function add_file_sync_task_of_tv(body: { tv_id: string; url: string; target_file_id?: string }) {
+  const { tv_id, url, target_file_id } = body;
+  return request.post<{}>(`/api/admin/shared_file_sync/add`, {
+    tv_id,
+    url,
+    target_file_id,
+  });
+}
+
+/**
+ * 执行所有电视剧同步任务
+ */
+export function run_all_file_sync_tasks() {
+  return request.get("/api/admin/shared_file_sync/run");
 }

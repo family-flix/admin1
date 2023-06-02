@@ -1,12 +1,4 @@
-import {
-  JSX,
-  Show,
-  createContext,
-  createSignal,
-  onCleanup,
-  onMount,
-  useContext,
-} from "solid-js";
+import { JSX, Show, createContext, createSignal, onCleanup, onMount, useContext } from "solid-js";
 import { Portal as PortalPrimitive } from "solid-js/web";
 
 import { SelectCore } from "@/domains/ui/select";
@@ -19,57 +11,62 @@ import { SelectWrapCore } from "@/domains/ui/select/wrap";
 import { app } from "@/store/app";
 import { cn } from "@/utils";
 
-import * as Popper from "./popper";
-import * as Collection from "./collection";
-import { DismissableLayer } from "./dismissable-layer";
+import * as PopperPrimitive from "@/packages/ui/popper";
+import { DismissableLayer } from "@/packages/ui/dismissable-layer";
+import * as Collection from "@/packages/ui/collection";
 
 const SELECTION_KEYS = [" ", "Enter"];
 
 const SelectContext = createContext<SelectCore>();
 const SelectContentContext = createContext<SelectCore>();
 const SelectNativeOptionContext = createContext<SelectCore>();
-const SelectRoot = (
-  props: { store: SelectCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const SelectRoot = (props: { store: SelectCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return (
-    <Popper.Root store={store.popper}>
+    <PopperPrimitive.Root store={store.popper}>
       <SelectContext.Provider value={store}>
         <Collection.Provider store={store.collection}>
-          <SelectNativeOptionContext.Provider value={store}>
-            {props.children}
-          </SelectNativeOptionContext.Provider>
+          <SelectNativeOptionContext.Provider value={store}>{props.children}</SelectNativeOptionContext.Provider>
         </Collection.Provider>
       </SelectContext.Provider>
-    </Popper.Root>
+    </PopperPrimitive.Root>
   );
 };
 
-const SelectTrigger = (props: { class?: string; children: JSX.Element }) => {
-  let $button: HTMLButtonElement;
-  const store = useContext(SelectContext);
+const SelectTrigger = (props: { store: SelectCore } & JSX.HTMLAttributes<HTMLElement>) => {
+  const { store } = props;
+
+  let $button: HTMLButtonElement | undefined = undefined;
+  // const store = useContext(SelectContext);
 
   const [state, setState] = createSignal(store.state);
+
+  onMount(() => {
+    const $_button = $button;
+    if (!$_button) {
+      return;
+    }
+    const trigger = new SelectTriggerCore({
+      $node: () => $_button,
+      getRect() {
+        return $_button.getBoundingClientRect();
+      },
+      getStyles() {
+        return window.getComputedStyle($_button);
+      },
+    });
+    store.setTrigger(trigger);
+  });
   store.onStateChange((nextState) => {
     setState(nextState);
   });
-  const trigger = new SelectTriggerCore({
-    $node: () => $button,
-    getRect() {
-      return $button.getBoundingClientRect();
-    },
-    getStyles() {
-      return window.getComputedStyle($button);
-    },
-  });
-  store.setTrigger(trigger);
 
   const open = () => state().open;
   const required = () => state().required;
   const disabled = () => state().disabled;
 
   return (
-    <Popper.Anchor store={store.popper}>
+    <PopperPrimitive.Anchor store={store.popper}>
       <button
         ref={$button}
         class={props.class}
@@ -98,14 +95,11 @@ const SelectTrigger = (props: { class?: string; children: JSX.Element }) => {
       >
         {props.children}
       </button>
-    </Popper.Anchor>
+    </PopperPrimitive.Anchor>
   );
 };
 
-const SelectValue = (props: {
-  placeholder?: string;
-  children?: JSX.Element;
-}) => {
+const SelectValue = (props: { store: SelectValueCore } & JSX.HTMLAttributes<HTMLElement>) => {
   let $value: HTMLSpanElement;
   const select = useContext(SelectContext);
   const [state, setState] = createSignal(select.state);
@@ -125,8 +119,7 @@ const SelectValue = (props: {
   });
   select.setValue(valueCore);
 
-  const showPlaceholder = () =>
-    state().value === undefined && props.placeholder !== undefined;
+  const showPlaceholder = () => state().value === undefined && props.placeholder !== undefined;
 
   return (
     <span ref={$value} style={{ "pointer-events": "none" }}>
@@ -183,11 +176,7 @@ const SelectContent = (props: {
   );
 };
 
-const SelectContentImpl = (props: {
-  store: SelectCore;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const SelectContentImpl = (props: { store: SelectCore; class?: string; children: JSX.Element }) => {
   const { store } = props;
   let $content: HTMLDivElement;
 
@@ -216,10 +205,7 @@ const SelectContentImpl = (props: {
   //   console.log("SelectContent mounted", $content);
   // });
 
-  const SelectPosition =
-    store.position === "popper"
-      ? SelectPopperPosition
-      : SelectItemAlignedPosition;
+  const SelectPosition = store.position === "popper" ? SelectPopperPosition : SelectItemAlignedPosition;
 
   return (
     <SelectContentContext.Provider value={store}>
@@ -331,7 +317,7 @@ const SelectPopperPosition = (
 ) => {
   const store = useContext(SelectContext);
   return (
-    <Popper.Content
+    <PopperPrimitive.Content
       ref={props.ref}
       role={props.role}
       class={props.class}
@@ -342,7 +328,7 @@ const SelectPopperPosition = (
       store={store.popper}
     >
       {props.children}
-    </Popper.Content>
+    </PopperPrimitive.Content>
   );
 };
 
@@ -405,11 +391,7 @@ const SelectLabel = (props: { class?: string; children: JSX.Element }) => {
 };
 
 const SelectItemContext = createContext<SelectItemCore>();
-const SelectItem = (props: {
-  value?: string;
-  class?: string;
-  children: JSX.Element;
-}) => {
+const SelectItem = (props: { value?: string; class?: string; children: JSX.Element }) => {
   const { value } = props;
 
   let $item: HTMLDivElement;
@@ -517,24 +499,17 @@ const SelectItemText = (props: { children: JSX.Element }) => {
     <>
       <span ref={$node}>{props.children}</span>
       <Show when={selected()}>
-        <PortalPrimitive mount={select.value.$node()}>
-          {props.children}
-        </PortalPrimitive>
+        <PortalPrimitive mount={select.value.$node()}>{props.children}</PortalPrimitive>
       </Show>
     </>
   );
 };
 
-const SelectItemIndicator = (props: {
-  class?: string;
-  children: JSX.Element;
-}) => {
+const SelectItemIndicator = (props: { class?: string; children: JSX.Element }) => {
   const item = useContext(SelectItemContext);
   const [state, setState] = createSignal(item.state);
   item.onStateChange((nextState) => {
-    console.log(
-      ...item.log("item.onStateChange", item.value, nextState.selected)
-    );
+    console.log(...item.log("item.onStateChange", item.value, nextState.selected));
     setState(nextState);
   });
 
@@ -549,38 +524,25 @@ const SelectItemIndicator = (props: {
   );
 };
 
-const SelectScrollUpButton = (props: {
-  class?: string;
-  children: JSX.Element;
-}) => {
+const SelectScrollUpButton = (props: { class?: string; children: JSX.Element }) => {
   const canScrollUp = () => true;
   return (
     <Show when={canScrollUp()}>
-      <SelectScrollButtonImpl class={props.class}>
-        {props.children}
-      </SelectScrollButtonImpl>
+      <SelectScrollButtonImpl class={props.class}>{props.children}</SelectScrollButtonImpl>
     </Show>
   );
 };
 
-const SelectScrollDownButton = (props: {
-  class?: string;
-  children: JSX.Element;
-}) => {
+const SelectScrollDownButton = (props: { class?: string; children: JSX.Element }) => {
   const canScrollDown = () => true;
   return (
     <Show when={canScrollDown()}>
-      <SelectScrollButtonImpl class={props.class}>
-        {props.children}
-      </SelectScrollButtonImpl>
+      <SelectScrollButtonImpl class={props.class}>{props.children}</SelectScrollButtonImpl>
     </Show>
   );
 };
 
-const SelectScrollButtonImpl = (props: {
-  class?: string;
-  children: JSX.Element;
-}) => {
+const SelectScrollButtonImpl = (props: { class?: string; children: JSX.Element }) => {
   return (
     <div
       class={props.class}
@@ -602,7 +564,7 @@ const SelectSeparator = (props: { class?: string }) => {
 
 const SelectArrow = () => {
   const store = useContext(SelectContext);
-  return <Popper.Arrow store={store.popper}></Popper.Arrow>;
+  return <PopperPrimitive.Arrow store={store.popper}></PopperPrimitive.Arrow>;
 };
 
 const BubbleSelect = (props: { children: JSX.Element }) => {

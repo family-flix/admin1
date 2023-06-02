@@ -75,15 +75,7 @@ export async function fetchDrives(params: FetchParams) {
     page,
     page_size,
     list: list.map((item) => {
-      const {
-        id,
-        name,
-        avatar,
-        user_name,
-        total_size,
-        used_size,
-        root_folder_id,
-      } = item;
+      const { id, name, avatar, user_name, total_size, used_size, root_folder_id } = item;
       return {
         id,
         name: name || user_name,
@@ -119,8 +111,7 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { id, name, avatar, nick_name, user_name, total_size, used_size } =
-    r.data;
+  const { id, name, avatar, nick_name, user_name, total_size, used_size } = r.data;
   return Result.Ok({
     id,
     /** 网盘名称 */
@@ -143,15 +134,9 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
  * @param {string} body.drive_id 要索引的云盘 id
  * @param {string} [body.target_folder] 要索引的云盘内指定文件夹 id
  */
-export async function analysisDrive(body: {
-  drive_id: string;
-  target_folder?: string;
-}) {
+export async function analysisDrive(body: { drive_id: string; target_folder?: string }) {
   const { drive_id: aliyun_drive_id, target_folder } = body;
-  return request.get<{ async_task_id: string }>(
-    `/api/admin/drive/analysis/${aliyun_drive_id}`,
-    { target_folder }
-  );
+  return request.get<{ job_id: string }>(`/api/admin/drive/analysis/${aliyun_drive_id}`, { target_folder });
 }
 
 /**
@@ -161,9 +146,7 @@ export async function analysisDrive(body: {
  */
 export async function analysisDriveQuickly(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get<{ async_task_id: string }>(
-    `/api/admin/drive/analysis_quickly/${drive_id}`
-  );
+  return request.get<{ job_id: string }>(`/api/admin/drive/analysis_quickly/${drive_id}`);
 }
 
 /**
@@ -173,9 +156,7 @@ export async function analysisDriveQuickly(body: { drive_id: string }) {
  */
 export async function fetchDriveProfile(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get<{ id: string; root_folder_id: string }>(
-    `/api/admin/drive/${drive_id}`
-  );
+  return request.get<{ id: string; root_folder_id: string }>(`/api/admin/drive/${drive_id}`);
 }
 export type AliyunDriveProfile = RequestedResource<typeof fetchDriveProfile>;
 
@@ -218,10 +199,7 @@ export async function exportDriveInfo(body: { drive_id: string }) {
  * @param {string} body.drive_id 云盘 id
  * @param {string} body.root_folder_id 云盘根目录id
  */
-export async function set_drive_root_file_id(body: {
-  drive_id: string;
-  root_folder_id: string;
-}) {
+export async function set_drive_root_file_id(body: { drive_id: string; root_folder_id: string }) {
   const { root_folder_id: root_folder_id, drive_id } = body;
   return request.post<void>(`/api/admin/drive/root_folder/${drive_id}`, {
     root_folder_id,
@@ -234,10 +212,7 @@ export async function set_drive_root_file_id(body: {
  * @param {string} body.drive 云盘 id
  * @param {string} body.refresh_token 新的 refresh_token 值
  */
-export async function setAliyunDriveRefreshToken(values: {
-  refresh_token: string;
-  drive_id: string;
-}) {
+export async function setAliyunDriveRefreshToken(values: { refresh_token: string; drive_id: string }) {
   const { refresh_token, drive_id } = values;
   return request.post<void>(`/api/admin/drive/token/${drive_id}`, {
     refresh_token,
@@ -291,11 +266,7 @@ export async function fetchDriveFiles(body: {
  * @param {string} body.name 新文件夹名称
  * @param {string} [body.parent_file_id='root'] 父文件夹id
  */
-export async function addFolderInDrive(body: {
-  drive_id: string;
-  name: string;
-  parent_file_id?: string;
-}) {
+export async function addFolderInDrive(body: { drive_id: string; name: string; parent_file_id?: string }) {
   const { drive_id, name, parent_file_id = "root" } = body;
   return request.post<void>(`/api/admin/drive/files/add/${drive_id}`, {
     name,

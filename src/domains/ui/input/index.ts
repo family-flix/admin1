@@ -72,7 +72,7 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     this.state.disabled = false;
     this.emit(Events.StateChange, { ...this.state });
   }
-  empty() {
+  clear() {
     this.state.value = "";
     this.emit(Events.StateChange, { ...this.state });
   }

@@ -4,12 +4,7 @@
 import { createSignal, For } from "solid-js";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import {
-  bind_searched_tv_for_tv,
-  fetch_unknown_tv_list,
-  UnknownTVItem,
-} from "@/services";
-// import { scrape_tv } from "@/domains/tv/services";
+import { bind_searched_tv_for_tv, fetch_unknown_tv_list, UnknownTVItem } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ContextMenuCore } from "@/domains/ui/context-menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
@@ -19,7 +14,7 @@ import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
-import { Modal } from "@/components/SingleModal";
+import { Dialog } from "@/components/ui/dialog";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { InputCore } from "@/domains/ui/input";
@@ -80,9 +75,9 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
 
   return (
     <>
-      <div class="min-h-screen">
-        <div class="">
-          <h2 class="h2">未识别的影视剧</h2>
+      <div class="">
+        <h1 class="text-2xl">未识别的影视剧</h1>
+        <div class="mt-8">
           <div>
             <div class="grid grid-cols-6 gap-2">
               <ContextMenu store={contextMenu}>
