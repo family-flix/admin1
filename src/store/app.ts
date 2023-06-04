@@ -34,6 +34,10 @@ export const app = new Application({
   },
 });
 
+app.onClickLink(({ href }) => {
+  router.push(href);
+});
+
 // @ts-ignore
 ListCore.commonProcessor = (originalResponse) => {
   if (originalResponse.error) {

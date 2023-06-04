@@ -24,7 +24,7 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   });
   const profileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      router.push(`/task/${task.id}`);
+      router.push(`/home/task/${task.id}`);
     },
   });
   const refreshBtn = new ButtonCore({
@@ -63,10 +63,10 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
     <div>
       <h1 class="text-2xl">任务列表</h1>
       <div class="mt-8">
-        <Button class="space-x-1" store={refreshBtn}>
-          <RotateCw class="w-4 h-4" />
+        <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+          刷新
         </Button>
-        <div class="space-y-8 mt-8 divide-y-2">
+        <div class="space-y-8 mt-8">
           <For each={dataSource()}>
             {(task, i) => {
               const { id, desc, unique_id, created, status, statusText } = task;

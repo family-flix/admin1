@@ -1,16 +1,16 @@
 /**
  * @file 电视剧详情
  */
+import { For, Show, createSignal, onMount } from "solid-js";
+
 import { RequestedResource, Result, ViewComponent } from "@/types";
 import { request } from "@/utils/request";
 import { Button } from "@/components/ui/button";
-import { TVFormDialog } from "@/components/TVForm/dialog";
 import { LazyImage } from "@/components/LazyImage";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { bind_searched_tv_for_tv } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
-import { For, Show, createSignal, onMount } from "solid-js";
 import { ButtonCore } from "@/domains/ui/button";
 
 async function fetch_tv_profile(body: { tv_id: string }) {
@@ -122,12 +122,12 @@ export const TVProfilePage: ViewComponent = (props) => {
                     <div class="flex">
                       <LazyImage
                         class="overflow-hidden w-[240px] rounded-lg mr-4 object-cover"
-                        src={profile().poster_path}
+                        src={profile()?.poster_path ?? undefined}
                       />
                       <div class="flex-1 mt-4">
-                        <h2 class="text-5xl">{profile().name}</h2>
+                        <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
-                        <div class="mt-2">{profile().overview}</div>
+                        <div class="mt-2">{profile()?.overview}</div>
                       </div>
                     </div>
                   </div>
@@ -139,7 +139,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                   {/* <TVFormDialog trigger={<Button>修改</Button>} /> */}
                 </div>
                 <div class="mt-4 space-y-4">
-                  <For each={profile().seasons}>
+                  <For each={profile()?.seasons}>
                     {(season) => {
                       const { name, overview, episodes } = season;
                       return (
@@ -169,10 +169,7 @@ export const TVProfilePage: ViewComponent = (props) => {
             </div>
           </Show>
         </div>
-        <TMDBSearcherDialog
-          store={dialog}
-          // default_value={profile?.name}
-        />
+        <TMDBSearcherDialog store={dialog} />
       </div>
     </>
   );

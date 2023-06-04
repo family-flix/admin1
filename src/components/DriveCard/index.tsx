@@ -26,45 +26,74 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   const [values, setValues] = createSignal(drive.values);
   const [folderColumns, setFolderColumns] = createSignal(drive.folderColumns);
 
-  const foldersModal = new DialogCore();
-  const createFolderModal = new DialogCore();
-  const refreshTokenModal = new DialogCore();
+  const foldersModal = new DialogCore({
+    onOk() {
+      drive.setRootFolder();
+      foldersModal.hide();
+    },
+  });
+  const createFolderModal = new DialogCore({
+    async onOk() {
+      const r = await drive.addFolder();
+      if (r.error) {
+        app.tip({ text: ["新增文件夹失败", r.error.message] });
+        return;
+      }
+      createFolderModal.hide();
+    },
+  });
+  const refreshTokenModal = new DialogCore({
+    title: "修改 refresh token",
+    onOk() {
+      drive.submitRefreshToken();
+    },
+  });
   const dropdown = new DropdownMenuCore({
     items: [
       new MenuItemCore({
         label: "签到",
         icon: <Apple class="mr-2 w-4 h-4" />,
-        onClick() {
-          drive.checkIn();
+        async onClick() {
+          await drive.checkIn();
           dropdown.hide();
         },
       }),
       new MenuItemCore({
         label: "导出",
         icon: <Download class="mr-2 w-4 h-4" />,
-        onClick() {
-          drive.export();
+        async onClick() {
+          await drive.export();
+          dropdown.hide();
         },
       }),
-      new MenuItemCore({
-        label: "刷新",
-        icon: <RefreshCcw class="mr-2 w-4 h-4" />,
-        onClick() {
-          drive.refresh();
-        },
-      }),
+      // new MenuItemCore({
+      //   label: "刷新",
+      //   icon: <RefreshCcw class="mr-2 w-4 h-4" />,
+      //   onClick() {
+      //     drive.refresh();
+      //   },
+      // }),
       new MenuItemCore({
         label: "修改 refresh_token",
         icon: <Edit3 class="mr-2 w-4 h-4" />,
         onClick() {
+          refreshTokenModal.show();
           dropdown.hide();
         },
       }),
     ],
   });
   const progress = new ProgressCore({ value: drive.state.used_percent });
-  const input1 = new InputCore();
-  const input2 = new InputCore();
+  const input1 = new InputCore({
+    onChange(v) {
+      drive.inputNewFolderName(v);
+    },
+  });
+  const input2 = new InputCore({
+    onChange(v) {
+      drive.setRefreshToken(v);
+    },
+  });
   const analysisBtn = new ButtonCore({
     onClick() {
       if (!drive.state.initialized) {
@@ -87,32 +116,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       checkInBtn.setLoading(false);
     },
   });
-  foldersModal.onOk(() => {
-    drive.setRootFolder();
-    foldersModal.hide();
-  });
-  foldersModal.onCancel(() => {
-    foldersModal.hide();
-  });
-  createFolderModal.onOk(async () => {
-    const r = await drive.addFolder();
-    if (r.error) {
-      return;
-    }
-    createFolderModal.hide();
-  });
-  createFolderModal.onCancel(() => {
-    createFolderModal.hide();
-  });
-  refreshTokenModal.onOk(() => {
-    drive.submitRefreshToken();
-  });
-  input1.onChange((v) => {
-    drive.inputNewFolderName(v);
-  });
-  input2.onChange((v) => {
-    drive.setRefreshToken(v);
-  });
+
   drive.onStateChange((nextState) => {
     setState(nextState);
   });
@@ -137,7 +141,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   // const drive_ref = useRef(new Drive({ id }));
 
   return (
-    <div class="relative p-4 bg-white rounded-xl">
+    <div class="relative p-4 bg-white rounded-xl border border-1">
       <div>
         <div class="">
           <div class="absolute top-2 right-2">
@@ -156,13 +160,13 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
                 {used_size()}/{total_size()}
               </div>
               <div class="flex items-center mt-4 space-x-2">
-                <Button variant="subtle" size="sm" store={analysisBtn}>
+                <Button store={analysisBtn}>
                   <Show when={loading()}>
                     <Loader class="w-4 h-4 animate-spin" />
                   </Show>
                   索引
                 </Button>
-                <Button variant="subtle" size="sm" store={checkInBtn}>
+                <Button variant="subtle" store={checkInBtn}>
                   刷新
                 </Button>
               </div>

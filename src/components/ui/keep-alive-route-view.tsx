@@ -7,8 +7,6 @@ import { RouteViewCore } from "@/domains/route_view";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
 
-import { PageView } from "./scroll-view";
-
 const scrollView = new ScrollViewCore();
 
 export function KeepAliveRouteView(
@@ -32,12 +30,13 @@ export function KeepAliveRouteView(
 
   return (
     <div
-      class={cn("absolute left-0 top-0 w-full h-full", props.class)}
-      classList={{
-        block: mounted(),
-        hidden: !mounted(),
-      }}
+      class={props.class}
+      // classList={{
+      //   block: mounted(),
+      //   hidden: !mounted(),
+      // }}
       style={{
+        display: mounted() ? "block" : "none",
         "z-index": index,
       }}
       data-state={visible() ? "open" : "closed"}

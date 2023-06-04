@@ -44,14 +44,15 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     showFooter: true,
   };
 
-  constructor(options: Partial<{ name } & TMDBSearcherDialogProps> = {}) {
+  constructor(options: Partial<{ name: string } & TMDBSearcherDialogProps> = {}) {
     super(options);
 
-    const { footer = true, okBtn, cancelBtn, onOk, onCancel } = options;
+    const { footer = true, onOk, onCancel } = options;
     this.dialog = new DialogCore({
+      title: "搜索电视剧",
+      footer,
       onOk: () => {
-        // this.emit(Events.Ok, { value: this.tmdb.state.cur });
-        if (onOk) {
+        if (onOk && this.tmdb.state.cur) {
           onOk(this.tmdb.state.cur);
         }
       },
@@ -63,6 +64,9 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     this.tmdb.list.onStateChange((nextState) => {
       this.state.list = nextState;
       this.emit(Events.StateChange, { ...this.state });
+    });
+    this.tmdb.onTip((msg) => {
+      this.tip(msg);
     });
   }
 

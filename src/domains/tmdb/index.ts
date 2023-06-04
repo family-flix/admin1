@@ -28,6 +28,7 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   form: FormCore<{}>;
   input: InputCore;
   searchBtn: ButtonCore;
+  resetBtn: ButtonCore;
 
   state: TMDBSearcherState = {
     cur: null,
@@ -38,18 +39,30 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
     super(options);
 
     this.form = new FormCore<{}>();
-    this.input = new InputCore();
+    this.input = new InputCore({
+      placeholder: "请输入电视剧名称",
+    });
     this.searchBtn = new ButtonCore({
       onClick: () => {
         if (!this.input.value) {
+          this.tip({ text: ["请输入查询关键字"] });
           return;
         }
         this.list.search({ keyword: this.input.value });
       },
     });
+    this.resetBtn = new ButtonCore({
+      onClick: () => {
+        this.input.clear();
+        this.list.clear();
+      },
+    });
     this.list.onStateChange((nextState) => {
       this.state.response = nextState;
       this.emit(Events.StateChange, { ...this.state });
+    });
+    this.list.onLoadingChange((loading) => {
+      this.searchBtn.setLoading(loading);
     });
   }
 

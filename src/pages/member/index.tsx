@@ -160,7 +160,7 @@ export const MemberManagePage: ViewComponent = (props) => {
                   return (
                     <div class="card">
                       <div class="flex items-center">
-                        <div class="flex items-center justify-center w-12 h-12 bg-white rounded-full mr-2">
+                        <div class="flex items-center justify-center w-12 h-12 bg-slate-300 rounded-full mr-2">
                           <div class="text-3xl text-slate-500">{remark.slice(0, 1).toUpperCase()}</div>
                         </div>
                         <div>

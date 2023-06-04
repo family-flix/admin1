@@ -2,7 +2,7 @@
  * @file 仅负责路由的核心类
  *
  */
-
+import qs from "qs";
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
@@ -14,6 +14,10 @@ enum Events {
   Reload,
   Start,
   PathnameChange,
+  /** 销毁所有页面并跳转至指定页面 */
+  Relaunch,
+  /** ???? */
+  RedirectToHome,
 }
 type TheTypesOfEvents = {
   [Events.PathnameChange]: {
@@ -21,18 +25,19 @@ type TheTypesOfEvents = {
     type: RouteAction;
   };
   [Events.PushState]: {
-    from?: string;
+    from: string | null;
     path: string;
     pathname: string;
   };
   [Events.ReplaceState]: {
-    from?: string;
+    from: string | null;
     path: string;
     pathname: string;
   };
   [Events.Back]: void;
   [Events.Reload]: void;
   [Events.Start]: RouteLocation;
+  [Events.Relaunch]: void;
 };
 type RouteLocation = {
   host: string;
@@ -56,11 +61,11 @@ type RouteConfigure = {
 };
 
 export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
-  name = "NavigatorCore";
+  _name = "NavigatorCore";
   debug = false;
 
   /** 当前 pathname */
-  pathname: string;
+  pathname: string = "/";
   /** 发生跳转前的 pathname */
   prevPathname: string | null = null;
   /** 当前路由的 query */
@@ -70,13 +75,21 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   prevHistories: { pathname: string }[] = [];
   histories: { pathname: string }[] = [];
   /** 当前访问地址 */
-  url: string;
+  // url: string;
   location: Partial<RouteLocation> = {};
 
   /** router 基础信息 */
-  host: string;
-  protocol: string;
-  origin: string;
+  // host: string;
+  // protocol: string;
+  origin: string = "";
+
+  _pending: {
+    pathname: string;
+    type: RouteAction;
+  } = {
+    pathname: "/",
+    type: "initialize",
+  };
 
   /** 启动路由监听 */
   async start(location: RouteLocation) {
@@ -86,16 +99,18 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.log("start, current pathname is", pathname);
     // this.setSomething(location);
     this.setPathname(pathname);
-    // const query = buildQuery(href);
+    const query = buildQuery(href);
+    this.query = query;
     this.histories = [
       {
         pathname,
       },
     ];
-    this.emit(Events.PathnameChange, {
+    this._pending = {
       pathname,
       type: "initialize",
-    });
+    };
+    this.emit(Events.PathnameChange, { ...this._pending });
   }
 
   private setPrevPathname(p: string) {
@@ -121,10 +136,11 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
       path: `${this.origin}${targetPathname}`,
       pathname: targetPathname,
     });
-    this.emit(Events.PathnameChange, {
+    this._pending = {
       pathname: targetPathname,
       type: "push",
-    });
+    };
+    this.emit(Events.PathnameChange, { ...this._pending });
   }
   replace = async (targetPathname: string) => {
     this.log("replace", targetPathname, this.pathname);
@@ -140,10 +156,11 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
       path: `${this.origin}${targetPathname}`,
       pathname: targetPathname,
     });
-    this.emit(Events.PathnameChange, {
+    this._pending = {
       pathname: targetPathname,
-      type: "replace",
-    });
+      type: "push",
+    };
+    this.emit(Events.PathnameChange, { ...this._pending });
   };
   back = () => {
     this.emit(Events.Back);
@@ -151,7 +168,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   reload = () => {
     this.emit(Events.Reload);
   };
-  /** 外部路由改变，作出响应 */
+  /** 外部路由改变（点击浏览器前进、后退），作出响应 */
   handlePopState({ type, pathname }: { type: string; pathname: string }) {
     this.log("pathname change", type, pathname);
     if (type !== "popstate") {
@@ -169,7 +186,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
       }
       return false;
     })();
-    this.emit(Events.PathnameChange, {
+    this._pending = {
       pathname,
       type: (() => {
         if (isForward) {
@@ -177,7 +194,8 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
         }
         return "back";
       })(),
-    });
+    };
+    this.emit(Events.PathnameChange, { ...this._pending });
     // forward
     if (isForward) {
       this.setPrevPathname(this.pathname);
@@ -188,7 +206,14 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     }
     // back
     if (this.histories.length === 1) {
-      this.replace("/home");
+      this.emit(Events.Relaunch);
+      // const targetPathname = "/home/index";
+      // this.emit(Events.ReplaceState, {
+      //   from: this.prevPathname,
+      //   path: `${this.origin}${targetPathname}`,
+      //   pathname: targetPathname,
+      // });
+      // this.replace("/home/index");
       return;
     }
     // var confirmationMessage = "您的输入还未完成，确认放弃吗？";
@@ -214,14 +239,25 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     return this.on(Events.ReplaceState, handler);
   }
   onReload(handler: Handler<TheTypesOfEvents[Events.Reload]>) {
-    this.on(Events.Reload, handler);
+    return this.on(Events.Reload, handler);
   }
   onPathnameChange(handler: Handler<TheTypesOfEvents[Events.PathnameChange]>) {
-    this.on(Events.PathnameChange, handler);
+    return this.on(Events.PathnameChange, handler);
   }
   onBack(handler: Handler<TheTypesOfEvents[Events.Back]>) {
-    this.on(Events.Back, handler);
+    return this.on(Events.Back, handler);
+  }
+  onRelaunch(handler: Handler<TheTypesOfEvents[Events.Relaunch]>) {
+    return this.on(Events.Relaunch, handler);
   }
 }
 
 export type RouteAction = "initialize" | "push" | "replace" | "back" | "forward";
+
+function buildQuery(path: string) {
+  const [, search] = path.split("?");
+  if (!search) {
+    return {} as Record<string, string>;
+  }
+  return qs.parse(search) as Record<string, string>;
+}

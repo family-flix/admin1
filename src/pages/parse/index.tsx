@@ -46,7 +46,7 @@ export const VideoParsingPage: ViewComponent = (props) => {
   view.onShow(() => {
     console.log("parse show");
   });
-  view.onHide(() => {
+  view.onHidden(() => {
     console.log("parse hide");
   });
 

@@ -12,7 +12,7 @@ export const HomePage: ViewComponent = (props) => {
   view.onShow(() => {
     console.log("home page show");
   });
-  view.onHide(() => {
+  view.onHidden(() => {
     console.log("home page hide");
   });
   app.onDrivesChange((nextDrives) => {

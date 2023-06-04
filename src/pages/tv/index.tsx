@@ -2,7 +2,7 @@
  * @file 电视剧列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, Calendar, Info, Send, Smile, X } from "lucide-solid";
+import { Award, Bell, BellPlus, BookOpen, Calendar, Info, Send, Smile, X } from "lucide-solid";
 
 import {
   add_file_sync_task_of_tv,
@@ -207,10 +207,7 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<TVItem>({
     onClick(record) {
-      if (record === null) {
-        return;
-      }
-      router.push(`/tv/${record.id}`);
+      router.push(`/home/tv/${record.id}`);
     },
   });
   const syncAllTVRequest = new RequestCore(run_all_file_sync_tasks, {
@@ -342,12 +339,22 @@ export const TVManagePage: ViewComponent = (props) => {
                               }}
                             </For> */}
                           <div class="space-x-2 mt-6">
-                            <Button store={profileBtn.bind(tv)}>详情</Button>
+                            <Button store={profileBtn.bind(tv)} variant="subtle" icon={<BookOpen class="w-4 h-4" />}>
+                              详情
+                            </Button>
                             <Show when={need_bind}>
-                              <Button store={addSyncTaskBtn.bind(tv)}>创建更新任务</Button>
+                              <Button
+                                store={addSyncTaskBtn.bind(tv)}
+                                variant="subtle"
+                                icon={<BellPlus class="w-4 h-4" />}
+                              >
+                                创建更新任务
+                              </Button>
                             </Show>
                             <Show when={sync_task}>
-                              <Button store={execSyncTaskBtn.bind(tv)}>更新</Button>
+                              <Button store={execSyncTaskBtn.bind(tv)} variant="subtle" icon={<Bell class="w-4 h-4" />}>
+                                更新
+                              </Button>
                             </Show>
                           </div>
                         </div>
@@ -356,6 +363,14 @@ export const TVManagePage: ViewComponent = (props) => {
                   );
                 }}
               </For>
+            </div>
+            <div
+              class="mt-4 text-center text-slate-500 cursor-pointer"
+              onClick={() => {
+                list.loadMore();
+              }}
+            >
+              加载更多
             </div>
           </div>
         </div>

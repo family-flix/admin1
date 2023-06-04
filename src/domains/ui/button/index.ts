@@ -81,13 +81,22 @@ export class ButtonCore<T = unknown> extends BaseDomain<TheTypesOfEvents<T>> {
   }
 }
 
-export class ButtonInListCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
+type ButtonInListProps<T = unknown> = {
+  onClick: (record: T) => void;
+};
+
+type TheTypesInListOfEvents<T> = {
+  [Events.Click]: T;
+  [Events.StateChange]: ButtonState;
+};
+
+export class ButtonInListCore<T> extends BaseDomain<TheTypesInListOfEvents<T>> {
   /** 列表中一类多个按钮 */
   btns: ButtonCore<T>[] = [];
   /** 按钮点击后，该值被设置为触发点击的那个按钮 */
   cur: ButtonCore<T> | null = null;
 
-  constructor(options: Partial<{ name: string } & ButtonProps<T>> = {}) {
+  constructor(options: Partial<{ name: string } & ButtonInListProps<T>> = {}) {
     super(options);
 
     const { onClick } = options;
@@ -107,7 +116,7 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     const btn = new ButtonCore<T>({
       onClick: (record) => {
         this.cur = btn;
-        this.emit(Events.Click, record);
+        this.emit(Events.Click, record!);
       },
     });
     btn.bind(v);
@@ -130,10 +139,10 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.cur.setLoading(loading);
   }
 
-  onClick(handler: Handler<TheTypesOfEvents<T>[Events.Click]>) {
+  onClick(handler: Handler<TheTypesInListOfEvents<T>[Events.Click]>) {
     this.on(Events.Click, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
+  onStateChange(handler: Handler<TheTypesInListOfEvents<T>[Events.StateChange]>) {
     this.on(Events.StateChange, handler);
   }
 }

@@ -21,12 +21,14 @@ enum Events {
   Keydown,
   EscapeKeyDown,
   ClickLink,
+  Show,
+  Hidden,
   // 该怎么处理？
   DrivesChange,
 }
 type TheTypesOfEvents = {
   [Events.Ready]: void;
-  // [Events.Tip]: { icon?: string; text: string[] };
+  // [EventsUserCore{ icon?: string; text: string[] };
   [Events.Error]: Error;
   [Events.Login]: {};
   [Events.Logout]: void;
@@ -46,6 +48,8 @@ type TheTypesOfEvents = {
     href: string;
   };
   [Events.Blur]: void;
+  [Events.Show]: void;
+  [Events.Hidden]: void;
   [Events.DrivesChange]: Drive[];
 };
 
@@ -64,6 +68,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     width: 0,
     height: 0,
   };
+  safeArea = false;
   Events = Events;
 
   // @todo 怎么才能更方便地拓展 Application 类，给其添加许多的额外属性还能有类型提示呢？
@@ -94,6 +99,24 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.user = user;
     this.router = router;
     this.cache = cache;
+
+    const { availHeight, availWidth } = window.screen;
+    if (window.navigator.userAgent.match(/iphone/i)) {
+      const matched = [
+        // iphonex iphonexs iphone12mini
+        "375-812",
+        // iPhone XS Max iPhone XR
+        "414-896",
+        // iPhone pro max iPhone14Plus
+        "428-926",
+        // iPhone 12/pro 13/14  753
+        "390-844",
+        // iPhone 14Pro
+        "393-852",
+        // iPhone 14ProMax
+        "430-932",
+      ].includes(`${availWidth}-${availHeight}`);
+    }
   }
   /** 启动应用 */
   async start() {
@@ -106,7 +129,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
         return Result.Err(r.error);
       }
     }
-    this.emitReady();
+    this.emit(Events.Ready);
     // console.log("[]Application - before start");
     return Result.Ok(null);
   }
@@ -114,6 +137,9 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   vibrate() {}
   setSize(size: { width: number; height: number }) {
     this.size = size;
+  }
+  setTitle(title: string): void {
+    throw new Error("请实现 setTitle 方法");
   }
   getComputedStyle(el: HTMLElement): CSSStyleDeclaration {
     throw new Error("请实现 getComputedStyle 方法");
@@ -125,7 +151,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     throw new Error("请实现 enablePointer 方法");
   }
   /** 平台相关的全局事件 */
-  keydown({ key }) {
+  keydown({ key }: { key: string }) {
     if (key === "Escape") {
       this.escape();
     }
@@ -157,13 +183,14 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.drives = r.data;
     this.emit(Events.DrivesChange, r.data);
   }
+
+  onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
+    this.on(Events.DrivesChange, handler);
+  }
   /* ----------------
    * Lifetime
    * ----------------
    */
-  emitReady = () => {
-    this.emit(Events.Ready);
-  };
   onReady(handler: Handler<TheTypesOfEvents[Events.Ready]>) {
     this.on(Events.Ready, handler);
   }
@@ -176,6 +203,12 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   }
   onBlur(handler: Handler<TheTypesOfEvents[Events.Blur]>) {
     this.on(Events.Blur, handler);
+  }
+  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
+    return this.on(Events.Show, handler);
+  }
+  onHidden(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
+    return this.on(Events.Hidden, handler);
   }
   onClickLink(handler: Handler<TheTypesOfEvents[Events.ClickLink]>) {
     this.on(Events.ClickLink, handler);
@@ -191,14 +224,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
    * Event
    * ----------------
    */
-  /** 向 app 发送错误，该错误会作为全屏错误遮挡所有内容 */
-  emitError = (error: Error) => {
-    this.emit(Events.Error, error);
-  };
   onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
     this.on(Events.Error, handler);
-  }
-  onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
-    this.on(Events.DrivesChange, handler);
   }
 }

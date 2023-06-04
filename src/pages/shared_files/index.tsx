@@ -27,11 +27,7 @@ import { ChevronRight, Folder } from "lucide-solid";
 
 export const SharedFilesTransferPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, router, view } = props;
-  const [state, setState] = createSignal({
-    url: "",
-    paths: [],
-    files: [],
-  });
+
   const tabs = new TabsCore();
   const modal1 = new DialogCore();
   const tvProfile = new TVProfileCore();
@@ -113,14 +109,16 @@ export const SharedFilesTransferPage = (props: { app: Application; router: Navig
   view.onShow(() => {
     console.log("shared files show");
   });
-  view.onHide(() => {
+  view.onHidden(() => {
     console.log("shared files hide");
   });
   onMount(() => {
     app.fetchDrives();
   });
 
-  const url = () => state().url;
+  const [state, setState] = createSignal(sharedResource.state);
+
+  // const url = () => state().url;
   const paths = () => state().paths;
   const files = () => state().files;
 

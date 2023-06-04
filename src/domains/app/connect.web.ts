@@ -1,10 +1,13 @@
 import { Application } from "@/domains/app";
 
-export function bind(app: Application) {
+export function connect(app: Application) {
   const { router } = app;
   const ownerDocument = globalThis.document;
   app.getComputedStyle = (el: HTMLElement) => {
     return window.getComputedStyle(el);
+  };
+  app.setTitle = (title: string) => {
+    document.title = title;
   };
   window.addEventListener("DOMContentLoaded", () => {
     // 1
@@ -35,12 +38,39 @@ export function bind(app: Application) {
       width: innerWidth,
       height: innerHeight,
     };
+    console.log("resize", size);
     // app.emit(app.Events.Resize, { width: innerWidth, height: innerHeight });
     app.resize(size);
   });
   window.addEventListener("blur", () => {
     app.emit(app.Events.Blur);
   });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      app.emit(app.Events.Hidden);
+      return;
+    }
+    app.emit(app.Events.Show);
+  });
+
+  const { availHeight, availWidth } = window.screen;
+  if (window.navigator.userAgent.match(/iphone/i)) {
+    const matched = [
+      // iphonex iphonexs iphone12mini
+      "375-812",
+      // iPhone XS Max iPhone XR
+      "414-896",
+      // iPhone pro max iPhone14Plus
+      "428-926",
+      // iPhone 12/pro 13/14  753
+      "390-844",
+      // iPhone 14Pro
+      "393-852",
+      // iPhone 14ProMax
+      "430-932",
+    ].includes(`${availWidth}-${availHeight}`);
+    app.safeArea = !!matched;
+  }
   ownerDocument.addEventListener("keydown", (event) => {
     const { key } = event;
     app.keydown({ key });
@@ -67,6 +97,7 @@ export function bind(app: Application) {
     }
     const t = target as HTMLElement;
     const href = t.getAttribute("href");
+    console.log('[CORE]app/connect - link a', href);
     if (!href) {
       return;
     }
@@ -91,7 +122,7 @@ export function bind(app: Application) {
       {
         from,
       },
-      null,
+      "",
       path
     );
   });
@@ -101,7 +132,7 @@ export function bind(app: Application) {
       {
         from,
       },
-      null,
+      "",
       path
     );
   });

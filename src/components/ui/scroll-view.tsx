@@ -1,34 +1,19 @@
 /**
  * @file 可滚动容器，支持下拉刷新、滚动监听等
  */
-import { createSignal, onMount, JSX, children } from "solid-js";
-
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { Dynamic } from "solid-js/web";
+import { JSX } from "solid-js/jsx-runtime";
+import { createSignal, onMount } from "solid-js";
 import { ArrowDown, ArrowUp, Loader2 } from "lucide-solid";
 
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { cn } from "@/utils";
+
 export const ScrollView = (
-  props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivElement>
+  props: {
+    store: ScrollViewCore;
+  } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
-  const { store, children } = props;
-
-  const [state, setState] = createSignal(store.state);
-
-  store.onStateChange((nextState) => {
-    setState(nextState);
-  });
-
-  return (
-    <Root class={props.class}>
-      <Content store={store}>{children}</Content>
-    </Root>
-  );
-};
-
-export const PageView = (
-  props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivElement>
-) => {
-  const { store, children } = props;
+  const { store, ...restProps } = props;
 
   const [state, setState] = createSignal(store.state);
 
@@ -37,71 +22,74 @@ export const PageView = (
   });
 
   const options = {
+    pending: () => null,
     pulling: () => (
-      <div class="flex items-center justify-center">
+      <div class="flex items-center justify-center space-x-2">
         <ArrowDown width={18} height={18} />
         <div>下拉刷新</div>
       </div>
     ),
     releasing: () => (
-      <div class="flex items-center justify-center">
+      <div class="flex items-center justify-center space-x-2">
         <ArrowUp width={18} height={18} />
         <div>松手刷新</div>
       </div>
     ),
     refreshing: () => (
-      <div class="flex items-center justify-center">
-        <Loader2 width={18} height={18} />
+      <div class="flex items-center justify-center space-x-2">
+        <Loader2 class="animate animate-spin" width={18} height={18} />
         <div>正在刷新</div>
       </div>
     ),
   };
+  //   const step = () => state().step;
+  // const { step } = state();
   const step = () => state().step;
+  const Component = options[step()];
 
   return (
-    <Root 
-    // class="overflow-hidden fixed inset-0 w-screen h-screen"
-    >
-      {/* <Indicator store={store}>
+    <Root class={cn("relative", props.class)} {...restProps}>
+      <Indicator store={store}>
         <div class="flex items-center justify-center h-[80px]">
-          <Dynamic component={options[step()]} />
+          <Component />
         </div>
-      </Indicator> */}
-      <Content
-        store={store}
-        // class="absolute inset-0 max-h-screen overflow-y-auto"
-      >
-        {children}
+      </Indicator>
+      <Content store={store} class="absolute inset-0 max-h-screen overflow-y-auto hide-scroll">
+        {props.children}
       </Content>
     </Root>
   );
 };
 
-const Root = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
-  return <div class={props.class}>{props.children}</div>;
+const Root = (props: {} & JSX.HTMLAttributes<HTMLDivElement>) => {
+  const { ...restProps } = props;
+  return <div {...restProps}>{props.children}</div>;
 };
-const Indicator = (
-  props: {
-    store: ScrollViewCore;
-  } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Indicator = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   const [state, setState] = createSignal(store.state);
   store.onStateChange((nextState) => {
     setState(nextState);
   });
   store.enablePullToRefresh();
+  //   const top = () => state().top - 60;
   const top = () => state().top - 60;
 
   return (
-    <div style={{ transform: `translateY(${top()}px)` }}>{props.children}</div>
+    <div
+      style={{
+        transform: `translateY(${top()}px)`,
+      }}
+    >
+      {props.children}
+    </div>
   );
 };
-const Content = (
-  props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Content = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivElement>) => {
   const { store } = props;
-  let $page: HTMLDivElement;
+  //   let $page: HTMLDivElement;
+  // const $page = useRef<HTMLDivElement>(null);
+  let $page: HTMLDivElement | undefined = undefined;
 
   const [state, setState] = createSignal(store.state);
 
@@ -109,6 +97,9 @@ const Content = (
     setState(nextState);
   });
   onMount(() => {
+    if (!$page) {
+      return;
+    }
     const { clientWidth, clientHeight, scrollHeight } = $page;
     store.setRect({
       width: clientWidth,
@@ -117,6 +108,7 @@ const Content = (
     });
   });
 
+  //   const top = () => state().top;
   const top = () => state().top;
 
   return (
@@ -125,11 +117,13 @@ const Content = (
       class={props.class}
       style={{ transform: `translateY(${top()}px)` }}
       onTouchStart={(event) => {
+        // console.log('start');
         const { pageX, pageY } = event.touches[0];
         const position = { x: pageX, y: pageY };
         store.startPull(position);
       }}
       onTouchMove={(event) => {
+        // console.log("move");
         const { pageX, pageY } = event.touches[0];
         const position = {
           x: pageX,
@@ -141,6 +135,9 @@ const Content = (
         store.endPulling();
       }}
       onScroll={(event) => {
+        if (!$page) {
+          return;
+        }
         store.setRect({
           contentHeight: $page.scrollHeight,
         });

@@ -427,6 +427,13 @@ export class ListCore<T extends Record<string, unknown>> extends BaseDomain<TheT
     this.emit(Events.StateChange, { ...this.response });
     return Result.Ok({ ...this.response });
   };
+  clear() {
+    this.response = {
+      ...DEFAULT_RESPONSE,
+    };
+    this.params = { ...DEFAULT_PARAMS };
+    this.emit(Events.StateChange, { ...this.response });
+  }
   /**
    * 移除列表中的多项（用在删除场景）
    * @param {T[]} items 要删除的元素列表
