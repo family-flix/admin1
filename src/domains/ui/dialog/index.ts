@@ -66,9 +66,16 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
     if (onOk) {
       this.onOk(onOk);
     }
-    if (onCancel) {
-      this.onCancel(onCancel);
-    }
+    this.onCancel(
+      (() => {
+        if (onCancel) {
+          return onCancel;
+        }
+        return () => {
+          this.hide();
+        };
+      })()
+    );
     this.present.onShow(async () => {
       this.state.open = true;
       this.emit(Events.VisibleChange, true);
@@ -101,6 +108,10 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   }
   cancel() {
     this.emit(Events.Cancel);
+  }
+  setTitle(title: string) {
+    this.state.title = title;
+    this.emit(Events.StateChange, { ...this.state });
   }
 
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {

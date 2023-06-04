@@ -148,7 +148,11 @@ const Submit = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLButtonElem
 const Cancel = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLButtonElement>) => {
   const { store } = props;
 
-  return <Button store={store.cancelBtn}>{props.children}</Button>;
+  return (
+    <Button variant="subtle" store={store.cancelBtn}>
+      {props.children}
+    </Button>
+  );
 };
 
 function getState(open: boolean) {

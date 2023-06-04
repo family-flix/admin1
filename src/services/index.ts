@@ -206,7 +206,7 @@ export function add_member(body: { remark: string }) {
  * @returns
  */
 export function create_member_auth_link(body: { id: string }) {
-  return request.post<{ id: string }>("/api/admin/member_link/add", body);
+  return request.post<{ id: string }>("/api/admin/member/token/add", body);
 }
 
 /**
@@ -390,4 +390,13 @@ export function add_file_sync_task_of_tv(body: { tv_id: string; url: string; tar
  */
 export function run_all_file_sync_tasks() {
   return request.get("/api/admin/shared_file_sync/run");
+}
+
+/**
+ * 删除指定成员
+ * @returns
+ */
+export function delete_member(body: { id: string }) {
+  const { id } = body;
+  return request.get(`/api/admin/member/delete/${id}`);
 }

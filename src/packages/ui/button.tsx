@@ -38,7 +38,7 @@ function Root<T = unknown>(
   );
 }
 
-function Prefix<T = unknown>(props: { store: ButtonCore<T> } & JSX.HTMLAttributes<HTMLSpanElement>) {
+function Loading<T = unknown>(props: { store: ButtonCore<T> } & JSX.HTMLAttributes<HTMLSpanElement>) {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
@@ -50,6 +50,20 @@ function Prefix<T = unknown>(props: { store: ButtonCore<T> } & JSX.HTMLAttribute
   const loading = () => state().loading;
 
   return <Show when={loading()}>{props.children}</Show>;
+}
+
+function Prefix<T = unknown>(props: { store: ButtonCore<T> } & JSX.HTMLAttributes<HTMLSpanElement>) {
+  const { store } = props;
+
+  const [state, setState] = createSignal(store.state);
+
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+
+  const loading = () => state().loading;
+
+  return <Show when={!loading()}>{props.children}</Show>;
 }
 
 function Text<T = unknown>(props: { store: ButtonCore<T> } & JSX.HTMLAttributes<HTMLSpanElement>) {
@@ -66,4 +80,4 @@ function Text<T = unknown>(props: { store: ButtonCore<T> } & JSX.HTMLAttributes<
   return <span class={props.class}>{props.children}</span>;
 }
 
-export { Root, Text, Prefix };
+export { Root, Text, Loading, Prefix };

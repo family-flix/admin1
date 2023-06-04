@@ -7,6 +7,7 @@ import { Loader } from "lucide-solid";
 
 import { ButtonCore } from "@/domains/ui/button";
 import * as ButtonPrimitive from "@/packages/ui/button";
+import { Show } from "@/packages/ui/show";
 import { cn } from "@/utils";
 
 const buttonVariants = cva(
@@ -38,6 +39,7 @@ const buttonVariants = cva(
 function Button<T = unknown>(
   props: {
     store: ButtonCore<T>;
+    icon?: JSX.Element;
   } & VariantProps<typeof buttonVariants> &
     JSX.HTMLAttributes<HTMLButtonElement>
 ) {
@@ -45,9 +47,12 @@ function Button<T = unknown>(
 
   return (
     <ButtonPrimitive.Root store={store} class={buttonVariants({ variant, size, class: cn(props.class, "space-x-2") })}>
-      <ButtonPrimitive.Prefix store={store}>
-        <Loader class="animation animate-spin" width={12} height={12} />
-      </ButtonPrimitive.Prefix>
+      <Show when={props.icon}>
+        <ButtonPrimitive.Prefix store={store}>{props.icon}</ButtonPrimitive.Prefix>
+      </Show>
+      <ButtonPrimitive.Loading store={store}>
+        <Loader class="animation animate-spin w-4 h-4" />
+      </ButtonPrimitive.Loading>
       <ButtonPrimitive.Text store={store}>{props.children}</ButtonPrimitive.Text>
     </ButtonPrimitive.Root>
   );
