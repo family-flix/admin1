@@ -7,6 +7,8 @@ import { Handler } from "mitt";
 import { BaseDomain } from "@/domains/base";
 import { ListCore } from "@/domains/list";
 import { fetch_job_profile } from "@/domains/job/services";
+import { RequestCore } from "@/domains/client";
+import { TaskStatus } from "@/constants";
 import { Result } from "@/types";
 
 import {
@@ -22,8 +24,8 @@ import {
   addFolderInDrive,
   checkInDrive,
   analysisDriveQuickly,
+  deleteDrive,
 } from "./services";
-import { TaskStatus } from "@/constants";
 
 enum Events {
   StateChange,
@@ -63,10 +65,46 @@ type DriveFile = {
 type DriveState = DriveItem & {
   loading: boolean;
 };
-const helper = new ListCore<DriveItem>(fetchDrives);
+const helper = new ListCore(new RequestCore(fetchDrives));
 export class Drive extends BaseDomain<TheTypesOfEvents> {
+  /** 网盘列表辅助类 */
+  static ListHelper = {
+    response: ListCore.defaultResponse,
+    async init() {
+      const r = await helper.init();
+      if (r.error) {
+        return Result.Err(r.error);
+      }
+      return Result.Ok(
+        r.data.dataSource.map((drive) => {
+          const d = new Drive({
+            ...drive,
+            loading: false,
+          });
+          return d;
+        })
+      );
+    },
+    async refresh() {
+      const r = await helper.refresh();
+      if (r.error) {
+        return Result.Err(r.error);
+      }
+      return Result.Ok(
+        r.data.dataSource.map((drive) => {
+          const d = new Drive({
+            ...drive,
+            loading: false,
+          });
+          return d;
+        })
+      );
+    },
+  };
+
   /** 网盘id */
   id: string;
+  name: string;
   /** 刮削状态轮询定时器 */
   timer: NodeJS.Timer | null = null;
   /** 网盘状态 */
@@ -93,26 +131,6 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   };
   /** 文件夹列表 */
   folderColumns: (DriveFolder | DriveFile)[][] = [];
-
-  /** 网盘列表辅助类 */
-  static ListHelper = {
-    response: ListCore.defaultResponse,
-    async init() {
-      const r = await helper.init();
-      if (r.error) {
-        return Result.Err(r.error);
-      }
-      return Result.Ok(
-        r.data.dataSource.map((drive) => {
-          const d = new Drive({
-            ...drive,
-            loading: false,
-          });
-          return d;
-        })
-      );
-    },
-  };
 
   constructor(options: DriveState) {
     super(options);
@@ -185,10 +203,20 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   async export() {
     const r = await exportDriveInfo({ drive_id: this.id });
     if (r.error) {
-      this.emit(Events.Error, r.error);
-      return;
+      const msg = this.tip({ text: ["导出失败", r.error.message] });
+      return Result.Err(msg);
     }
     this.tip({ text: ["网盘信息已复制到剪贴板"] });
+    return Result.Ok(null);
+  }
+  async delete() {
+    const r = await deleteDrive({ drive_id: this.id });
+    if (r.error) {
+      const msg = this.tip({ text: ["删除失败", r.error.message] });
+      return Result.Err(msg);
+    }
+    this.tip({ text: ["删除成功"] });
+    return Result.Ok(null);
   }
   /** 更新云盘基本信息 */
   async update() {
@@ -238,7 +266,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       root_folder_id: root_folder_id,
       drive_id: this.id,
     });
-    this.values.root_folder_id = null;
+    this.values.root_folder_id = null ?? undefined;
     if (r.error) {
       const text = this.tip({ text: ["设置索引根目录失败", r.error.message] });
       return Result.Err(text);
@@ -263,10 +291,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       drive_id: this.id,
     });
     if (r.error) {
-      this.tip({ text: ["更新失败", r.error.message] });
+      this.tip({ text: ["修改 refresh_token 失败", r.error.message] });
       return Result.Err(r.error);
     }
-    this.tip({ text: ["更新成功"] });
+    this.tip({ text: ["修改 refresh_token 成功"] });
     return Result.Ok(null);
   }
   /** 获取该网盘内的文件/文件夹列表 */

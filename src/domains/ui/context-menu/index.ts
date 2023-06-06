@@ -45,7 +45,7 @@ export class ContextMenuCore extends BaseDomain<TheTypeOfEvent> {
     });
   }
 
-  show(position?: Partial<{ x: number; y: number }>) {
+  show(position: Partial<{ x: number; y: number }> = {}) {
     const { x, y } = position;
     this.updateReference({
       ...this.menu.popper.reference,

@@ -7,9 +7,7 @@ import { ListResponse, RequestedResource } from "@/types";
  * @param params
  * @returns
  */
-export async function search_tv_in_tmdb(
-  params: FetchParams & { keyword: string }
-) {
+export async function search_tv_in_tmdb(params: FetchParams & { keyword: string }) {
   const { keyword, page, pageSize, ...rest } = params;
   return request.get<
     ListResponse<{
@@ -28,6 +26,4 @@ export async function search_tv_in_tmdb(
     page_size: pageSize,
   });
 }
-export type TheTVInTMDB = RequestedResource<
-  typeof search_tv_in_tmdb
->["list"][0];
+export type TheTVInTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"][0];

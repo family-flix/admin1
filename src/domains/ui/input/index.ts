@@ -26,7 +26,7 @@ type InputProps = {
 };
 
 export class InputCore extends BaseDomain<TheTypesOfEvents> {
-  _defaultValue: string;
+  _defaultValue: string | undefined;
   value = "";
   state = {
     value: "",
@@ -39,14 +39,18 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     super(options);
 
     const { name, defaultValue, placeholder, type, onChange } = options;
-    this.name = name;
+    if (name) {
+      this._name = name;
+    }
     if (placeholder) {
       this.state.placeholder = placeholder;
     }
     if (type) {
       this.state.type = type;
     }
-    this._defaultValue = defaultValue;
+    if (defaultValue !== undefined) {
+      this._defaultValue = defaultValue;
+    }
     if (defaultValue) {
       this.value = defaultValue;
       this.state.value = defaultValue;
@@ -78,7 +82,9 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
-    this.state.value = this._defaultValue;
+    if (this._defaultValue !== undefined) {
+      this.state.value = this._defaultValue;
+    }
     this.emit(Events.StateChange, { ...this.state });
   }
 

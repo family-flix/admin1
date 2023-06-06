@@ -16,7 +16,7 @@ export const DEFAULT_RESPONSE: Response<any> = {
   initial: true,
   noMore: false,
   loading: false,
-  refreshing: undefined,
+  refreshing: null,
   empty: false,
   error: null,
 };

@@ -21,11 +21,10 @@ type FormProps = {
   fields: InputInterface[];
 };
 
-export class FormCore<T extends Record<string, unknown>> extends BaseDomain<
-  TheTypesOfEvents<T>
-> {
+export class FormCore<T extends Record<string, unknown>> extends BaseDomain<TheTypesOfEvents<T>> {
   fields: InputInterface[] = [];
   state: FormState<T> = {
+    // @ts-ignore
     values: {},
   };
 
@@ -35,19 +34,18 @@ export class FormCore<T extends Record<string, unknown>> extends BaseDomain<
     const { fields = [] } = options;
     for (let i = 0; i < fields.length; i += 1) {
       const field = fields[i];
-      field.onChange((v) => {
+      field.onChange((v: string) => {
         this.setValue(field.name, v);
       });
     }
     this.fields = fields;
   }
   setValue(name: string, value: unknown) {
+    // @ts-ignore
     this.state.values[name] = value;
     this.emit(Events.StateChange, { ...this.state });
   }
-  setFieldsValue(nextValues) {
-    
-  }
+  // setFieldsValue(nextValues) {}
   input<Key extends keyof T>(key: Key, value: T[Key]) {
     this.state.values[key] = value;
     this.emit(Events.Input, value);

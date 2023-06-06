@@ -10,9 +10,7 @@ import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { Rect } from "@/types";
 
-export const ContextMenu = (
-  props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+export const ContextMenu = (props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
@@ -32,9 +30,7 @@ export const ContextMenu = (
             {(item) => {
               const { label } = item;
               if (item.menu) {
-                return (
-                  <ItemWithSub menu={store.menu} store={item}></ItemWithSub>
-                );
+                return <ItemWithSub menu={store.menu} store={item}></ItemWithSub>;
               }
               return (
                 <Item class="DropdownMenuItem" store={item}>
@@ -57,11 +53,11 @@ const ItemWithSub = (
 ) => {
   const { menu, store: item } = props;
   const [itemState, setItemState] = createSignal(item.state);
-  const [state, setState] = createSignal(item.menu.state);
+  const [state, setState] = createSignal(item.menu!.state);
   item.onStateChange((nextState) => {
     setItemState(nextState);
   });
-  item.menu.onStateChange((nextState) => {
+  item.menu!.onStateChange((nextState) => {
     setState(nextState);
   });
 
@@ -69,20 +65,20 @@ const ItemWithSub = (
   const label = () => itemState().label;
 
   return (
-    <Sub subMenu={item.menu}>
+    <Sub subMenu={item.menu!}>
       <SubTrigger class="DropdownMenuSubTrigger" parent={menu} item={item}>
         {label()}
         <div class="RightSlot">
           <ChevronRight width={15} height={15} />
         </div>
       </SubTrigger>
-      <Portal store={item.menu}>
-        <SubContent class="DropdownMenuSubContent" store={item.menu}>
+      <Portal store={item.menu!}>
+        <SubContent class="DropdownMenuSubContent" store={item.menu!}>
           <For each={items()}>
             {(ii) => {
               const { label } = ii;
               if (ii.menu) {
-                return <ItemWithSub menu={item.menu} store={ii}></ItemWithSub>;
+                return <ItemWithSub menu={item.menu!} store={ii}></ItemWithSub>;
               }
               return (
                 <Item class="DropdownMenuItem" store={ii}>
@@ -110,18 +106,20 @@ const Root = (
 /**
  * 点击展示菜单
  */
-const Trigger = (
-  props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Trigger = (props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store: contextMenu } = props;
   // const store = useContext(ContextMenuContext);
-  let $span: HTMLSpanElement;
+  let $span: HTMLSpanElement | undefined;
 
   onMount(() => {
+    const $$span = $span;
+    if (!$$span) {
+      return;
+    }
     contextMenu.setReference({
       getRect() {
         // console.log("[ContextMenuTrigger]get reference rect", $span);
-        const rect = $span.getBoundingClientRect();
+        const rect = $$span.getBoundingClientRect();
         return rect;
         // const { width, height, left, top, x, y } = rect;
         // return {
@@ -142,10 +140,14 @@ const Trigger = (
       style={{ "-webkit-touch-callout": "none" }}
       onContextMenu={(event) => {
         event.preventDefault();
+        const $$span = $span;
+        if (!$$span) {
+          return;
+        }
         const { pageX: x, pageY: y } = event;
         contextMenu.updateReference({
           getRect() {
-            const size = $span.getBoundingClientRect();
+            const size = $$span.getBoundingClientRect();
             const { top, left, right, bottom } = size;
             return {
               // 会基于鼠标位置和 reference 宽高计算气泡位置，这里给的宽高，就是离鼠标有多远距离
@@ -179,15 +181,11 @@ const Trigger = (
     </span>
   );
 };
-const Portal = (
-  props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Portal = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return <Menu.Portal store={store}>{props.children}</Menu.Portal>;
 };
-const Content = (
-  props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Content = (props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return (
     <Menu.Content class={props.class} store={store.menu}>
@@ -201,9 +199,7 @@ const Group = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
 const Label = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <Menu.Label class={props.class}>{props.children}</Menu.Label>;
 };
-const Item = (
-  props: { store: MenuItemCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Item = (props: { store: MenuItemCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return (
     <Menu.Item class={props.class} store={store}>
@@ -214,9 +210,7 @@ const Item = (
 const Separator = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <Menu.Separator class={props.class}></Menu.Separator>;
 };
-const Arrow = (
-  props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Arrow = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   return (
@@ -225,9 +219,7 @@ const Arrow = (
     </Menu.Arrow>
   );
 };
-const Sub = (
-  props: { subMenu: MenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Sub = (props: { subMenu: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { subMenu } = props;
   return <Menu.Sub store={subMenu}>{props.children}</Menu.Sub>;
 };
@@ -244,9 +236,7 @@ const SubTrigger = (
     </Menu.SubTrigger>
   );
 };
-const SubContent = (
-  props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const SubContent = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return (
     <Menu.SubContent class={props.class} store={store}>
@@ -266,17 +256,4 @@ const SubContent = (
 // const Sub = ContextMenuSub;
 // const SubTrigger = ContextMenuSubTrigger;
 // const SubContent = ContextMenuSubContent;
-export {
-  Root,
-  Trigger,
-  Portal,
-  Content,
-  Group,
-  Label,
-  Item,
-  Separator,
-  Arrow,
-  Sub,
-  SubTrigger,
-  SubContent,
-};
+export { Root, Trigger, Portal, Content, Group, Label, Item, Separator, Arrow, Sub, SubTrigger, SubContent };

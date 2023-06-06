@@ -1,11 +1,7 @@
-import { FetchParams } from "@/domains/list";
-import { RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
+import { FetchParams } from "@/domains/list/typing";
+import { JSONObject, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { request } from "@/utils/request";
-import {
-  episode_to_chinese_num,
-  parse_filename_for_video,
-  season_to_chinese_num,
-} from "@/utils";
+import { episode_to_chinese_num, parse_filename_for_video, season_to_chinese_num } from "@/utils";
 
 /**
  * 获取电视剧列表
@@ -30,9 +26,7 @@ export async function fetch_tv_list(params: FetchParams) {
 /**
  * 电视剧列表中的简略电视剧信息
  */
-export type PartialTVRecord = UnpackedResult<
-  Unpacked<ReturnType<typeof fetch_tv_list>>
->[0];
+export type PartialTVRecord = UnpackedResult<Unpacked<ReturnType<typeof fetch_tv_list>>>[0];
 
 /**
  * 获取电视剧及包含的剧集详情
@@ -80,8 +74,7 @@ export async function fetch_tv_and_episodes_profile(params: { tv_id: string }) {
       if (r.data.first_episode === null) {
         return null;
       }
-      const { id, file_id, parent_file_id, file_name, season, episode } =
-        r.data.first_episode;
+      const { id, file_id, parent_file_id, file_name, season, episode } = r.data.first_episode;
       const d = {
         id,
         file_id,
@@ -113,25 +106,17 @@ export async function fetch_tv_and_episodes_profile(params: { tv_id: string }) {
   });
 }
 /** 电视剧详情 */
-export type TVAndEpisodesProfile = UnpackedResult<
-  Unpacked<ReturnType<typeof fetch_tv_and_episodes_profile>>
->;
+export type TVAndEpisodesProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_tv_and_episodes_profile>>>;
 
 /**
  * 获取和该 episode 属于同一季的所有影片，但是以文件夹结构返回
  * @param episode
  */
-export async function fetch_folders_in_special_season(options: {
-  tv_id: string;
-  season: string;
-}) {
+export async function fetch_folders_in_special_season(options: { tv_id: string; season: string }) {
   const { tv_id, season } = options;
-  const r = await request.get<TVAndEpisodesProfile["folders"]>(
-    `/api/tv/folders/${tv_id}`,
-    {
-      season,
-    }
-  );
+  const r = await request.get<TVAndEpisodesProfile["folders"]>(`/api/tv/folders/${tv_id}`, {
+    season,
+  });
   if (r.error) {
     return r;
   }
@@ -158,10 +143,7 @@ export async function fetch_folders_in_special_season(options: {
  * @param options
  * @returns
  */
-export function fetch_first_episode_of_season(options: {
-  tv_id: string;
-  season?: string;
-}) {
+export function fetch_first_episode_of_season(options: { tv_id: string; season?: string }) {
   const { tv_id, season } = options;
   return request.get<{
     id: string;
@@ -217,17 +199,12 @@ export async function fetch_episode_profile(params: { id: string }) {
     }[];
   }>(`/api/episode/${id}`);
 }
-export type EpisodeProfile = UnpackedResult<
-  Unpacked<ReturnType<typeof fetch_episode_profile>>
->;
+export type EpisodeProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_episode_profile>>>;
 
 /**
  * 获取指定 tv、指定 season 下的所有影片
  */
-export async function fetch_episodes(params: {
-  tv_id: string;
-  season: string;
-}) {
+export async function fetch_episodes(params: { tv_id: string; season: string }) {
   const { tv_id, season } = params;
   return request.get<
     {
@@ -249,11 +226,7 @@ export async function fetch_episodes(params: {
 /**
  * 获取影片播放地址
  */
-export async function fetch_episode_play_url(params: {
-  tv_id: string;
-  season: string;
-  episode: string;
-}) {
+export async function fetch_episode_play_url(params: { tv_id: string; season: string; episode: string }) {
   console.log("[]fetch_episode_play_url params", params);
   const { tv_id, season, episode } = params;
   const resp = await request.get<
@@ -312,10 +285,7 @@ export async function fetch_play_history_of_tv(params: { tv_id: string }) {
 }
 export type TVPlayHistory = RequestedResource<typeof fetch_play_history_of_tv>;
 
-export function update_searched_tv_of_tv(
-  tv_id: string,
-  body: Record<string, unknown>
-) {
+export function update_searched_tv_of_tv(tv_id: string, body: JSONObject) {
   return request.post(`/api/tv/update/${tv_id}`, body);
 }
 

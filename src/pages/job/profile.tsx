@@ -83,21 +83,21 @@ export const TaskProfilePage: ViewComponent = (props) => {
     <div class="">
       <Show when={!!profile()}>
         <div>
-          <h1 class="text-3xl">{profile().desc}</h1>
+          <h1 class="text-3xl">{profile()!.desc}</h1>
           <div class="flex items-center space-x-4">
             <div class="flex items-center space-x-1">
               <Calendar class="w-4 h-4" />
-              <div>{profile().created}</div>
+              <div>{profile()!.created}</div>
             </div>
-            <p>{profile().statusText}</p>
+            <p>{profile()!.statusText}</p>
           </div>
         </div>
-        <Show when={profile().status === TaskStatus.Running}>
+        <Show when={profile()!.status === TaskStatus.Running}>
           <Button store={pauseBtn}>暂停任务</Button>
         </Show>
         <div class="divider-x-2"></div>
         <div class="mt-8">
-          <Article nodes={profile().content} />
+          <Article nodes={profile()!.content} />
         </div>
       </Show>
     </div>

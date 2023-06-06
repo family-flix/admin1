@@ -22,7 +22,7 @@ import { SelectionCore } from "@/domains/cur";
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
-  const list = new ListCore<MemberItem>(fetch_members);
+  const list = new ListCore(new RequestCore(fetch_members));
   const memberSelect = new SelectionCore<MemberItem>();
   const generateToken = new RequestCore(create_member_auth_link, {
     onLoading(loading) {

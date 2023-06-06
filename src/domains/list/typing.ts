@@ -3,7 +3,13 @@
  */
 import { JSONObject } from "@/types";
 
-export interface OriginalResponse extends JSONObject {}
+export type OriginalResponse = {
+  list: unknown[];
+} & {
+  data: {
+    list: unknown[];
+  };
+};
 /**
  * 查询参数
  */

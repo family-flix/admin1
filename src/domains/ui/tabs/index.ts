@@ -20,7 +20,6 @@ type TabsState = {
 };
 export class TabsCore extends BaseDomain<TheTypesOfEvents> {
   roving: RovingFocusCore;
-  presence: PresenceCore;
   prevContent: {
     id: number;
     value: string;
@@ -56,11 +55,7 @@ export class TabsCore extends BaseDomain<TheTypesOfEvents> {
     this.prevContent = matchedContent;
     this.emit(Events.ValueChange, value);
   }
-  appendContent(content: {
-    id: number;
-    value: string;
-    presence: PresenceCore;
-  }) {
+  appendContent(content: { id: number; value: string; presence: PresenceCore }) {
     if (this.contents.includes(content)) {
       return;
     }

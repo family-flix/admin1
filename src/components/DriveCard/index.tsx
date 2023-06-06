@@ -2,7 +2,7 @@
  * @file 云盘卡片
  */
 import { For, Show, createSignal } from "solid-js";
-import { MoreHorizontal, Loader, Apple, ArrowBigDown, RefreshCcw, Edit3, Download } from "lucide-solid";
+import { MoreHorizontal, Loader, Apple, ArrowBigDown, RefreshCcw, Edit3, Download, Coffee, Trash } from "lucide-solid";
 
 import { Application } from "@/domains/app";
 import { Drive } from "@/domains/drive";
@@ -42,10 +42,22 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       createFolderModal.hide();
     },
   });
+  const confirmDeleteDriveDialog = new DialogCore({
+    async onOk() {
+      await drive.delete();
+      confirmDeleteDriveDialog.hide();
+      app.refreshDrives();
+    },
+  });
   const refreshTokenModal = new DialogCore({
     title: "修改 refresh token",
-    onOk() {
-      drive.submitRefreshToken();
+    async onOk() {
+      refreshTokenModal.okBtn.setLoading(true);
+      const r = await drive.submitRefreshToken();
+      refreshTokenModal.okBtn.setLoading(false);
+      if (!r.error) {
+        refreshTokenModal.hide();
+      }
     },
   });
   const dropdown = new DropdownMenuCore({
@@ -66,13 +78,15 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
           dropdown.hide();
         },
       }),
-      // new MenuItemCore({
-      //   label: "刷新",
-      //   icon: <RefreshCcw class="mr-2 w-4 h-4" />,
-      //   onClick() {
-      //     drive.refresh();
-      //   },
-      // }),
+      new MenuItemCore({
+        label: "删除",
+        icon: <Trash class="mr-2 w-4 h-4" />,
+        async onClick() {
+          confirmDeleteDriveDialog.setTitle(`删除云盘 ${drive.name}`);
+          confirmDeleteDriveDialog.show();
+          dropdown.hide();
+        },
+      }),
       new MenuItemCore({
         label: "修改 refresh_token",
         icon: <Edit3 class="mr-2 w-4 h-4" />,
@@ -84,12 +98,12 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
     ],
   });
   const progress = new ProgressCore({ value: drive.state.used_percent });
-  const input1 = new InputCore({
+  const newFolderNameInput = new InputCore({
     onChange(v) {
       drive.inputNewFolderName(v);
     },
   });
-  const input2 = new InputCore({
+  const refreshTokenInput = new InputCore({
     onChange(v) {
       drive.setRefreshToken(v);
     },
@@ -104,7 +118,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       drive.startScrape();
     },
   });
-  const button3 = new ButtonCore({
+  const showAddingFolderDialogBtn = new ButtonCore({
     onClick() {
       createFolderModal.show();
     },
@@ -118,6 +132,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   });
 
   drive.onStateChange((nextState) => {
+    analysisBtn.setLoading(nextState.loading);
     setState(nextState);
   });
   drive.onValuesChange((nextValues) => {
@@ -136,7 +151,6 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   const used_size = () => state().used_size;
   const total_size = () => state().total_size;
   const used_percent = () => state().used_percent;
-  const loading = () => state().loading;
 
   // const drive_ref = useRef(new Drive({ id }));
 
@@ -155,15 +169,12 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
             <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" src={avatar()} alt={name()} />
             <div>
               <div class="text-xl">{name()}</div>
-              <div class="flex items-center space-x-2">
-                <Progress class="" store={progress} />
+              <Progress class="mt-2" store={progress} />
+              <div class="mt-2">
                 {used_size()}/{total_size()}
               </div>
               <div class="flex items-center mt-4 space-x-2">
-                <Button store={analysisBtn}>
-                  <Show when={loading()}>
-                    <Loader class="w-4 h-4 animate-spin" />
-                  </Show>
+                <Button store={analysisBtn} variant="subtle" icon={<Coffee class="w-4 h-4" />}>
                   索引
                 </Button>
                 <Button variant="subtle" store={checkInBtn}>
@@ -181,7 +192,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
           fallback={
             <div class="position">
               <div class="flex items-center justify-center">
-                <Button store={button3}>添加文件夹</Button>
+                <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
               </div>
             </div>
           }
@@ -223,11 +234,15 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       </Dialog>
       <Dialog title="添加文件夹" store={createFolderModal}>
         <div>
-          <Input store={input1} />
+          <Input store={newFolderNameInput} />
         </div>
       </Dialog>
       <Dialog title="修改 refresh_token" store={refreshTokenModal}>
-        <Input store={input2} />
+        <Input store={refreshTokenInput} />
+      </Dialog>
+      <Dialog title="删除云盘" store={confirmDeleteDriveDialog}>
+        <div>删除云盘后可能导致电视剧无法观看等问题</div>
+        <div class="mt-2">确认删除该云盘吗？</div>
       </Dialog>
     </div>
   );

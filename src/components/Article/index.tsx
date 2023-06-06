@@ -8,7 +8,7 @@ import {
   ArticleSectionNode,
   ArticleTextNode,
 } from "@/domains/article";
-import { For } from "solid-js";
+import { For, JSX } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 export function Article(props: { nodes: ArticleCore["children"] }) {
@@ -68,7 +68,7 @@ export function ArticleHead(props: { node: ArticleHeadNode }) {
     node: { text, level, color },
   } = props;
 
-  const elements = {
+  const elements: Record<number, JSX.Element> = {
     1: (
       <h1 class="text-3xl border border-b" style={{ color }}>
         {text}
@@ -86,11 +86,8 @@ export function ArticleHead(props: { node: ArticleHeadNode }) {
     ),
   };
 
-  return (
-    <>
-      <Dynamic component={elements[level]} />
-    </>
-  );
+  // @ts-ignore
+  return <Dynamic component={elements[level]} />;
 }
 
 export function ArticleText(props: { node: ArticleTextNode }) {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
@@ -161,8 +162,7 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
     item.onDestroy(() => {
       this.items = this.items.filter((i) => i !== item);
     });
-    const findFirstValidItem =
-      !this._findFirstValidItem && !this.state.disabled;
+    const findFirstValidItem = !this._findFirstValidItem && !this.state.disabled;
     if (findFirstValidItem) {
       this._findFirstValidItem = true;
     }
@@ -235,10 +235,7 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
       const minContentWidth = this.reference.width + leftDelta;
       const contentWidth = Math.max(minContentWidth, contentRect.width);
       const rightEdge = app.size.width - CONTENT_MARGIN;
-      const clampedLeft = clamp(left, [
-        CONTENT_MARGIN,
-        rightEdge - contentWidth,
-      ]);
+      const clampedLeft = clamp(left, [CONTENT_MARGIN, rightEdge - contentWidth]);
       wrapStyles.minWidth = minContentWidth;
       wrapStyles.left = clampedLeft;
     } else {
@@ -248,10 +245,7 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
       const minContentWidth = this.reference.width + rightDelta;
       const contentWidth = Math.max(minContentWidth, contentRect.width);
       const leftEdge = window.innerWidth - CONTENT_MARGIN;
-      const clampedRight = clamp(right, [
-        CONTENT_MARGIN,
-        leftEdge - contentWidth,
-      ]);
+      const clampedRight = clamp(right, [CONTENT_MARGIN, leftEdge - contentWidth]);
       wrapStyles.minWidth = minContentWidth;
       wrapStyles.right = clampedRight;
     }
@@ -264,39 +258,24 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
     const contentStyles = this.content.getStyles();
     const contentBorderTopWidth = parseInt(contentStyles.borderTopWidth, 10);
     const contentPaddingTop = parseInt(contentStyles.paddingTop, 10);
-    const contentBorderBottomWidth = parseInt(
-      contentStyles.borderBottomWidth,
-      10
-    );
+    const contentBorderBottomWidth = parseInt(contentStyles.borderBottomWidth, 10);
     const contentPaddingBottom = parseInt(contentStyles.paddingBottom, 10);
     const fullContentHeight = contentBorderTopWidth + contentPaddingTop + itemsHeight + contentPaddingBottom + contentBorderBottomWidth; // prettier-ignore
-    const minContentHeight = Math.min(
-      this.selectedItem.offsetHeight * 5,
-      fullContentHeight
-    );
+    const minContentHeight = Math.min(this.selectedItem.offsetHeight * 5, fullContentHeight);
     const viewportStyles = this.viewport.getStyles();
     const viewportPaddingTop = parseInt(viewportStyles.paddingTop, 10);
     const viewportPaddingBottom = parseInt(viewportStyles.paddingBottom, 10);
-    const topEdgeToTriggerMiddle =
-      triggerRect.top + triggerRect.height / 2 - CONTENT_MARGIN;
+    const topEdgeToTriggerMiddle = triggerRect.top + triggerRect.height / 2 - CONTENT_MARGIN;
     const triggerMiddleToBottomEdge = availableHeight - topEdgeToTriggerMiddle;
     const selectedItemHalfHeight = this.selectedItem.offsetHeight / 2;
-    const itemOffsetMiddle =
-      this.selectedItem.offsetTop + selectedItemHalfHeight;
-    const contentTopToItemMiddle =
-      contentBorderTopWidth + contentPaddingTop + itemOffsetMiddle;
-    const itemMiddleToContentBottom =
-      fullContentHeight - contentTopToItemMiddle;
-    const willAlignWithoutTopOverflow =
-      contentTopToItemMiddle <= topEdgeToTriggerMiddle;
+    const itemOffsetMiddle = this.selectedItem.offsetTop + selectedItemHalfHeight;
+    const contentTopToItemMiddle = contentBorderTopWidth + contentPaddingTop + itemOffsetMiddle;
+    const itemMiddleToContentBottom = fullContentHeight - contentTopToItemMiddle;
+    const willAlignWithoutTopOverflow = contentTopToItemMiddle <= topEdgeToTriggerMiddle;
     if (willAlignWithoutTopOverflow) {
-      const isLastItem =
-        this.selectedItem === this.items[this.items.length - 1];
+      const isLastItem = this.selectedItem === this.items[this.items.length - 1];
       wrapStyles.bottom = 0;
-      const viewportOffsetBottom =
-        this.content.clientHeight -
-        this.viewport.offsetTop -
-        this.viewport.offsetHeight;
+      const viewportOffsetBottom = this.content.clientHeight - this.viewport.offsetTop - this.viewport.offsetHeight;
       const clampedTriggerMiddleToBottomEdge = Math.max(
         triggerMiddleToBottomEdge,
         selectedItemHalfHeight +

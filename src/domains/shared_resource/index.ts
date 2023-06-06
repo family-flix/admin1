@@ -65,7 +65,7 @@ type SharedResourceProps = {
 
 export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   /** 分享链接 */
-  url: string;
+  url?: string;
   /** 当前展示的文件夹列表所属的文件夹 id */
   file_id: string = "";
   /** 用来获取当前文件夹下一页的标志 */
@@ -108,6 +108,9 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     if (this.loading) {
       return Result.Err(new Error("正在加载中"));
     }
+    if (!this.url) {
+      return Result.Err(new Error("请先指定分享链接"));
+    }
     this.loading = true;
     const r = await fetch_shared_files({
       url: this.url,
@@ -137,6 +140,9 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.Tip, "仅文件夹可点击");
       return;
     }
+    if (!this.url) {
+      return Result.Err(new Error("请先指定分享链接"));
+    }
     this.next_marker = "";
     const existing_index = this.paths.findIndex((p) => p.file_id === file_id);
     const r = await this._fetch(file_id);
@@ -165,6 +171,9 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     return Result.Ok(null);
   }
   async loadMore() {
+    if (!this.url) {
+      return Result.Err(new Error("请先指定分享链接"));
+    }
     const r = await this._fetch(this.file_id);
     if (r.error) {
       this.emit(Events.Tip, r.error.message);
@@ -188,11 +197,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   /**
    * 将分享文件夹和网盘内同名文件夹进行关联
    */
-  async bindFolderInDrive(file: {
-    file_id: string;
-    name: string;
-    type?: "file" | "folder";
-  }) {
+  async bindFolderInDrive(file: { file_id: string; name: string; type?: "file" | "folder" }) {
     const { file_id, name, type } = file;
     if (!this.url) {
       this.tip({ text: ["请先输入分享链接"] });
@@ -239,14 +244,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["没有同名影视剧"] });
       return;
     }
-    const {
-      id,
-      name: n,
-      original_name,
-      poster_path,
-      overview,
-      first_air_date,
-    } = r.data;
+    const { id, name: n, original_name, poster_path, overview, first_air_date } = theTVHasSameName;
     this.emit(Events.ShowTVProfile, {
       id,
       name: n || original_name,
@@ -265,7 +263,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       const msg = this.tip({ text: ["请先指定分享链接"] });
       return Result.Err(msg);
     }
-    if (!this.selectFolder) {
+    if (!this.selectedFolder) {
       const msg = this.tip({ text: ["请先指定转存文件"] });
       return Result.Err(new Error(msg));
     }

@@ -12,6 +12,7 @@ export enum Events {
   Logout,
   /** 身份凭证失效 */
   Expired,
+  StateChange,
 }
 type TheTypesOfEvents = {
   [Events.Tip]: string[];
@@ -19,42 +20,55 @@ type TheTypesOfEvents = {
   [Events.Login]: UserState & { token: string };
   [Events.Logout]: void;
   [Events.Expired]: void;
+  [Events.StateChange]: UserState;
 };
-type UserState = {
-  id: string;
-  username: string;
-  avatar: string;
-};
+
 type UserProps = {
   id: string;
   username: string;
   avatar: string;
   token: string;
 };
+type UserState = UserProps & {
+  // id: string;
+  // username: string;
+  // avatar: string;
+  // token: string;
+};
 
 export class UserCore extends BaseDomain<TheTypesOfEvents> {
   name = "UserCore";
   debug = false;
 
-  state: UserState = {
-    id: "",
-    username: "Anonymous",
-    avatar: "",
-  };
-  isLogin: boolean = false;
+  id: string = "";
+  username: string = "Anonymous";
+  avatar: string = "";
   token: string = "";
+  isLogin: boolean = false;
+
+  get state(): UserState {
+    return {
+      id: this.id,
+      username: this.username,
+      avatar: this.avatar,
+      token: this.token,
+    };
+  }
   values: Partial<{ email: string; password: string }> = {};
 
   static Events = Events;
 
-  constructor(options: Partial<{ name: string } & UserProps> = {}) {
+  constructor(options: Partial<{ name: string }> & UserProps) {
     super(options);
 
+    if (!options) {
+      return;
+    }
     const { id, username, avatar, token } = options;
     // this.log("constructor", initialUser);
-    this.state.id = id;
-    this.state.username = username;
-    this.state.username = avatar;
+    this.id = id;
+    this.username = username;
+    this.avatar = avatar;
     this.isLogin = !!token;
     this.token = token;
   }
@@ -91,20 +105,26 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.values = {};
     this.isLogin = true;
-    this.state = r.data;
-    this.token = r.data.token;
+    const { id, username, avatar, token } = r.data;
+    this.id = id;
+    this.username = username;
+    this.avatar = avatar;
+    this.token = token;
     this.emit(Events.Login, { ...this.state, token: this.token });
     return Result.Ok(r.data);
   }
   /** 退出登录 */
-  logout() {}
+  logout() {
+    this.isLogin = false;
+    this.emit(Events.Logout);
+  }
   async register() {
     const { email, password } = this.values;
     if (!email) {
-      return Result.Err("Missing email");
+      return Result.Err("缺少邮箱");
     }
     if (!password) {
-      return Result.Err("Missing password");
+      return Result.Err("缺少密码");
     }
     return Result.Ok(null);
   }
@@ -120,10 +140,13 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
-    this.on(Events.Error, handler);
+    return this.on(Events.Error, handler);
   }
   onLogin(handler: Handler<TheTypesOfEvents[Events.Login]>) {
-    this.on(Events.Login, handler);
+    return this.on(Events.Login, handler);
+  }
+  onLogout(handler: Handler<TheTypesOfEvents[Events.Logout]>) {
+    this.on(Events.Logout, handler);
   }
   onExpired(handler: Handler<TheTypesOfEvents[Events.Expired]>) {
     return this.on(Events.Expired, handler);

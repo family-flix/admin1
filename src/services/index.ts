@@ -389,7 +389,7 @@ export function add_file_sync_task_of_tv(body: { tv_id: string; url: string; tar
  * 执行所有电视剧同步任务
  */
 export function run_all_file_sync_tasks() {
-  return request.get("/api/admin/shared_file_sync/run");
+  return request.get("/api/admin/shared_file_sync/sync");
 }
 
 /**

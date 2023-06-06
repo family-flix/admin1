@@ -2,13 +2,10 @@ import { JSX, onCleanup } from "solid-js";
 
 import { FocusScopeCore } from "@/domains/ui/focus-scope";
 
-const FocusScopeRoot = (props: {
-  store: FocusScopeCore;
-  children: JSX.Element;
-}) => {
+const FocusScopeRoot = (props: { store: FocusScopeCore; children: JSX.Element }) => {
   const { store } = props;
 
-  let $node: HTMLDivElement;
+  let $node: HTMLDivElement | undefined;
 
   store.onFocusin(() => {
     focus($node);
@@ -51,19 +48,13 @@ function focus(element?: FocusableTarget | null, { select = false } = {}) {
     // NOTE: we prevent scrolling on focus, to minimize jarring transitions for users
     element.focus({ preventScroll: true });
     // only select if its not the same element, it supports selection and we need to select
-    if (
-      element !== previouslyFocusedElement &&
-      isSelectableInput(element) &&
-      select
-    ) {
+    if (element !== previouslyFocusedElement && isSelectableInput(element) && select) {
       element.select();
     }
   }
 }
 
-function isSelectableInput(
-  element: unknown
-): element is FocusableTarget & { select: () => void } {
+function isSelectableInput(element: unknown): element is FocusableTarget & { select: () => void } {
   return element instanceof HTMLInputElement && "select" in element;
 }
 

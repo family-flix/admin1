@@ -13,9 +13,9 @@ type TheTypesOfEvents = {
 };
 
 export class ProgressCore extends BaseDomain<TheTypesOfEvents> {
-  _value: number;
+  _value: number | null;
+  _label: string | undefined;
   _max: number;
-  _label: string;
 
   constructor(options: {
     value?: number | null | undefined;
@@ -23,11 +23,7 @@ export class ProgressCore extends BaseDomain<TheTypesOfEvents> {
     getValueLabel?: (value: number, max: number) => string;
   }) {
     super();
-    const {
-      value: valueProp,
-      max: maxProp,
-      getValueLabel = defaultGetValueLabel,
-    } = options;
+    const { value: valueProp, max: maxProp, getValueLabel = defaultGetValueLabel } = options;
     const max = isValidMaxNumber(maxProp) ? maxProp : DEFAULT_MAX;
     this._max = max;
     const value = isValidValueNumber(valueProp, max) ? valueProp : null;
@@ -63,15 +59,8 @@ function defaultGetValueLabel(value: number, max: number) {
   return `${Math.round((value / max) * 100)}%`;
 }
 
-function getProgressState(
-  value: number | undefined | null,
-  maxValue: number
-): ProgressState {
-  return value == null
-    ? "indeterminate"
-    : value === maxValue
-    ? "complete"
-    : "loading";
+function getProgressState(value: number | undefined | null, maxValue: number): ProgressState {
+  return value == null ? "indeterminate" : value === maxValue ? "complete" : "loading";
 }
 
 function isNumber(value: any): value is number {

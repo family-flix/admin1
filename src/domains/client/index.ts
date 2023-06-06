@@ -24,7 +24,6 @@ type TheTypesOfEvents<T> = {
   [Events.Failed]: BizError;
   [Events.Completed]: void;
 };
-type Service<T, V> = (params: V) => Promise<Result<T>>;
 type RequestState = {};
 type RequestProps<T> = {
   onSuccess: (v: T) => void;
@@ -44,8 +43,8 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
 
   /** 原始 service 函数 */
   private _service: T;
-  /** 是否处于请求中 */
-  pending = false;
+  /** 处于请求中的 promise */
+  pending: ReturnType<T> | null = null;
   /** 调用 prepare 方法暂存的参数 */
   args: Parameters<T> | null = null;
   /** 请求的响应 */
@@ -77,23 +76,27 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
   }
   /** 执行 service 函数 */
   async run(...args: Parameters<T>) {
-    if (this.pending) {
-      return;
+    if (this.pending !== null) {
+      const r = await this.pending;
+      const d = r.data;
+      return Result.Ok(d);
     }
     this.args = args;
-    this.pending = true;
-    this.emit(Events.LoadingChange, this.pending);
+    this.emit(Events.LoadingChange, true);
     this.emit(Events.BeforeRequest);
-    const [r] = await Promise.all([this._service(...args), sleep(1000)]);
-    this.pending = false;
-    this.emit(Events.LoadingChange, this.pending);
+    const pending = this._service(...args) as ReturnType<T>;
+    this.pending = pending;
+    const [r] = await Promise.all([pending, sleep(1000)]);
+    this.emit(Events.LoadingChange, false);
     this.emit(Events.Completed);
     if (r.error) {
       this.emit(Events.Failed, r.error);
-      return;
+      return Result.Err(r.error);
     }
     this.response = r.data;
-    this.emit(Events.Success, r.data as UnpackedResult<Unpacked<ReturnType<T>>>);
+    const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
+    this.emit(Events.Success, d);
+    return Result.Ok(d);
   }
   /** 使用当前参数再请求一次 */
   reload() {

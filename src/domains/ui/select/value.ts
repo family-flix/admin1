@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { BaseDomain } from "@/domains/base";
 
 enum Events {}

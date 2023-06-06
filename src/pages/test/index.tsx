@@ -5,17 +5,14 @@ import { FormCore } from "@/domains/ui/form";
 import { InputCore } from "@/domains/ui/input";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { PageView } from "@/components/ui/scroll-view";
+// import { PageView } from "@/components/ui/scroll-view";
 import * as Form from "@/components/ui/form";
 import { sleep } from "@/utils";
 import { Input } from "@/components/ui/input";
 import { FormFieldCore } from "@/domains/ui/form/field";
 import { Button } from "@/components/ui/button";
 
-export const TestPage = (props: {
-  app: Application;
-  router: NavigatorCore;
-}) => {
+export const TestPage = (props: { app: Application; router: NavigatorCore }) => {
   const { app, router } = props;
 
   const store = new ScrollViewCore();
@@ -27,7 +24,7 @@ export const TestPage = (props: {
     label: "名称",
   });
   const form = new FormCore({
-    fields: [input1],
+    fields: [],
   });
   store.onPullToRefresh(async () => {
     console.log("onRefreshing");
@@ -45,28 +42,23 @@ export const TestPage = (props: {
   });
 
   return (
-    <PageView store={store}>
-      <div class="p-4 bg-white">
-        <div>测试哈哈</div>
-        <button
-          onClick={() => {
-            // store.startPullToRefresh();
-            form.submit();
-          }}
-        >
-          refresh
-        </button>
-        <Form.Root store={form}>
-          <Form.Field store={field1}>
-            <Input store={input1} />
-          </Form.Field>
-          <Form.Submit store={form}>
-            <Button>提交</Button>
-          </Form.Submit>
-        </Form.Root>
-        <div style={{ height: "1200px" }}></div>
-      </div>
-      {/* <TMDBSearcherDialog store={dialog} /> */}
-    </PageView>
+    <div class="p-4 bg-white">
+      <div>测试哈哈</div>
+      <button
+        onClick={() => {
+          // store.startPullToRefresh();
+          form.submit();
+        }}
+      >
+        refresh
+      </button>
+      <Form.Root store={form}>
+        <Form.Field store={field1}>
+          <Input store={input1} />
+        </Form.Field>
+        <Form.Submit store={form}>{/* <Button>提交</Button> */}</Form.Submit>
+      </Form.Root>
+      <div style={{ height: "1200px" }}></div>
+    </div>
   );
 };

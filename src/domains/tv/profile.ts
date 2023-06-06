@@ -26,20 +26,22 @@ type TVProfileProps = {
 };
 
 export class TVProfileCore extends BaseDomain<TheTypesOfEvents> {
-  id: string;
+  // id: string;
 
   state: TVProfileState | null = null;
 
   constructor(options: Partial<{} & TVProfileProps> = {}) {
     super(options);
     const { id, name, poster: posterPath, overview, firstAirDate } = options;
-    this.state = {
-      id,
-      name,
-      poster: posterPath,
-      overview,
-      firstAirDate,
-    };
+    // this.id = id;
+    // this.name = id;
+    // this.state = {
+    //   id,
+    //   name,
+    //   poster: posterPath,
+    //   overview,
+    //   firstAirDate,
+    // };
   }
   set(profile: TVProfileState) {
     this.state = profile;

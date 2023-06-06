@@ -9,6 +9,14 @@ export function connect(app: Application) {
   app.setTitle = (title: string) => {
     document.title = title;
   };
+  app.copy = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+  };
   window.addEventListener("DOMContentLoaded", () => {
     // 1
     const { innerWidth, innerHeight } = window;
@@ -97,7 +105,7 @@ export function connect(app: Application) {
     }
     const t = target as HTMLElement;
     const href = t.getAttribute("href");
-    console.log('[CORE]app/connect - link a', href);
+    console.log("[CORE]app/connect - link a", href);
     if (!href) {
       return;
     }

@@ -7,10 +7,7 @@ import { BaseDomain } from "@/domains/base";
 import { UserCore } from "@/domains/user";
 import { find_recommended_pathname } from "@/utils";
 
-import {
-  EpisodeResolutionTypes,
-  EpisodeResolutionTypeTexts,
-} from "./constants";
+import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";
 import {
   TVAndEpisodesProfile,
   EpisodeProfile,
@@ -39,14 +36,14 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
   /** 发生的错误 */
   // error: Error | null = null;
 
-  user: UserCore;
+  user: UserCore | null = null;
 
   state: TVState = {};
 
   constructor(options: Partial<{ name: string } & TVProps> = {}) {
     super(options);
     const { id } = options;
-    this.id = id;
+    // this.id = id;
   }
   public get cur_episode() {
     if (this._cur_episode === null) {
@@ -68,10 +65,10 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
 
   async init(id: string) {
     this.id = id;
-    if (!this.user.isLogin) {
-      this.tip({ text: ["请先登录"] });
-      return;
-    }
+    // if (!this.user.isLogin) {
+    //   this.tip({ text: ["请先登录"] });
+    //   return;
+    // }
     const resp = await this.fetch_profile();
     if (resp.error) {
       this.tip({ text: ["获取详情失败", resp.error.message] });
@@ -108,7 +105,7 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
   async fetch_profile() {
     const resp = await fetch_tv_and_episodes_profile({ tv_id: this.id });
     if (resp.error) {
-      this.error = resp.error;
+      // this.error = resp.error;
       return resp;
     }
     this._info = {
@@ -139,11 +136,7 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     const { seasons, folders } = this._info;
-    const {
-      id: cur_episode_id,
-      season: season_of_cur_episode,
-      parent_paths,
-    } = this._cur_episode;
+    const { id: cur_episode_id, season: season_of_cur_episode, parent_paths } = this._cur_episode;
     if (!folders) {
       this.tip({ text: ["没有更多影片了"] });
       return;
@@ -171,9 +164,7 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["已经是最后一集了"] });
       return;
     }
-    const cur_season_index = seasons.findIndex(
-      (s) => s == season_of_cur_episode
-    );
+    const cur_season_index = seasons.findIndex((s) => s == season_of_cur_episode);
     if (cur_season_index === -1) {
       this.tip({ text: ["已经是最后一集了"] });
       return;
@@ -192,11 +183,7 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     const { seasons, folders } = this._info;
-    const {
-      id: cur_episode_id,
-      season: season_of_cur_episode,
-      parent_paths,
-    } = this._cur_episode;
+    const { id: cur_episode_id, season: season_of_cur_episode, parent_paths } = this._cur_episode;
     if (!folders) {
       this.tip({ text: ["没有更多影片了"] });
       return;
@@ -224,9 +211,7 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["已经是第一集了"] });
       return;
     }
-    const cur_season_index = seasons.findIndex(
-      (s) => s == season_of_cur_episode
-    );
+    const cur_season_index = seasons.findIndex((s) => s == season_of_cur_episode);
     if (cur_season_index === -1) {
       this.tip({ text: ["已经是第一集了"] });
       return;
@@ -260,13 +245,9 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     this._info.folders = episodes_same_season_res.data;
-    const recommended_path = find_recommended_pathname(
-      this._info.folders.map((f) => f.parent_paths)
-    );
+    const recommended_path = find_recommended_pathname(this._info.folders.map((f) => f.parent_paths));
     const matched_folder = (() => {
-      const matched = this._info.folders.find(
-        (f) => f.parent_paths === recommended_path
-      );
+      const matched = this._info.folders.find((f) => f.parent_paths === recommended_path);
       if (!matched) {
         return this._info.folders[0];
       }
@@ -311,13 +292,13 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
     }
     const { current_time, duration } = params;
     // console.log("[DOMAIN]TVPlay - update_play_progress", params, user.is_login);
-    if (this.user.isLogin) {
-      update_play_history({
-        tv_id: this.id,
-        episode_id: this._cur_episode.id,
-        current_time,
-        duration,
-      });
-    }
+    // if (this.user.isLogin) {
+    //   update_play_history({
+    //     tv_id: this.id,
+    //     episode_id: this._cur_episode.id,
+    //     current_time,
+    //     duration,
+    //   });
+    // }
   }
 }

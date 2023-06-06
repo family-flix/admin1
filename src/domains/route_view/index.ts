@@ -280,6 +280,10 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.subViews.push(view);
     this.emit(Events.ViewsChange, [...this.subViews]);
   }
+  replaceSubViews(views: RouteViewCore[]) {
+    this.subViews = views;
+    this.emit(Events.ViewsChange, [...this.subViews]);
+  }
   removeSubView(view: RouteViewCore) {
     if (!this.subViews.includes(view)) {
       return;

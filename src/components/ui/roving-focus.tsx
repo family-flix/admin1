@@ -16,9 +16,7 @@ const RovingFocusGroup = (
   return (
     <Collection.Provider store={store.collection}>
       <Collection.Slot>
-        <RovingFocusGroupImpl store={store}>
-          {props.children}
-        </RovingFocusGroupImpl>
+        <RovingFocusGroupImpl store={store}>{props.children}</RovingFocusGroupImpl>
       </Collection.Slot>
     </Collection.Provider>
   );
@@ -56,7 +54,7 @@ const RovingFocusGroupImpl = (
 };
 
 const RovingFocusGroupItem = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
-  const store = useContext(RovingFocusContext);
+  const store = useContext(RovingFocusContext)!;
   const [state, setState] = createSignal(store.state);
 
   store.onStateChange((nextState) => {
@@ -75,7 +73,7 @@ const RovingFocusGroupItem = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return (
     <Collection.Item>
       <span
-        tabIndex={isCurrentTabStop ? 0 : -1}
+        tabIndex={isCurrentTabStop() ? 0 : -1}
         data-orientation={orientation()}
         onMouseDown={() => {
           store.focusItem(id);

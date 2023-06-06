@@ -57,6 +57,8 @@ export class ArticleSectionNode extends BaseDomain<TheTypesOfEvents> {
 
     const { children } = values;
     this.values = values;
+    this.type = ArticleNodeType.Section;
+    this.children = children;
   }
 
   to_json() {
@@ -85,6 +87,7 @@ export class ArticleLineNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { children, color, value } = values;
+    this.type = ArticleNodeType.Line;
     this.children = children;
     this.color = color;
     this.value = value;
@@ -119,6 +122,7 @@ export class ArticleHeadNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { level, text, color } = values;
+    this.type = ArticleNodeType.Head;
     this.color = color;
     this.text = text;
     this.level = level;
@@ -149,6 +153,7 @@ export class ArticleTextNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { text, color } = values;
+    this.type = ArticleNodeType.Text;
     this.text = text;
     this.color = color;
     this.values = values;
@@ -177,6 +182,7 @@ export class ArticleLinkNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { text, href } = values;
+    this.type = ArticleNodeType.Link;
     this.text = text;
     this.href = href;
     this.values = values;
@@ -203,6 +209,7 @@ export class ArticleListNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { children } = values;
+    this.type = ArticleNodeType.List;
     this.children = children;
     this.values = values;
   }
@@ -227,6 +234,7 @@ export class ArticleListItemNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { children } = values;
+    this.type = ArticleNodeType.ListItem;
     this.children = children;
     this.values = values;
   }
@@ -251,6 +259,7 @@ export class ArticleCardNode extends BaseDomain<TheTypesOfEvents> {
     super();
 
     const { value } = values;
+    this.type = ArticleNodeType.Card;
     this.value = value;
     this.values = values;
   }

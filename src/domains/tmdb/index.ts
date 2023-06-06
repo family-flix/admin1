@@ -8,6 +8,7 @@ import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 
 import { TheTVInTMDB, search_tv_in_tmdb } from "./services";
+import { RequestCore } from "../client";
 
 enum Events {
   Select,
@@ -24,7 +25,7 @@ interface TMDBSearcherState {
 type TMDBSearcherProps = {};
 
 export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
-  list: ListCore<TheTVInTMDB> = new ListCore<TheTVInTMDB>(search_tv_in_tmdb);
+  list = new ListCore(new RequestCore(search_tv_in_tmdb));
   form: FormCore<{}>;
   input: InputCore;
   searchBtn: ButtonCore;

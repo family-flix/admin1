@@ -3,33 +3,25 @@ import { JSX } from "solid-js";
 import { FormCore } from "@/domains/ui/form";
 import { FormFieldCore } from "@/domains/ui/form/field";
 
-function Root<T>(
-  props: { store: FormCore<T> } & JSX.HTMLAttributes<HTMLElement>
-) {
+function Root<T extends Record<string, unknown>>(props: { store: FormCore<T> } & JSX.HTMLAttributes<HTMLElement>) {
   return props.children;
 }
 
-const Field = (
-  props: { store: FormFieldCore } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Field = (props: { store: FormFieldCore } & JSX.HTMLAttributes<HTMLElement>) => {
   return props.children;
 };
 
-const Label = (
-  props: { store: FormCore<unknown> } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Label = <T extends Record<string, unknown>>(props: { store: FormCore<T> } & JSX.HTMLAttributes<HTMLElement>) => {
   return props.children;
 };
 
-const Message = (
-  props: { store: FormCore<unknown> } & JSX.HTMLAttributes<HTMLElement>
-) => {
-  return props.children;
-};
-
-function Control<T>(
+const Message = <T extends Record<string, unknown>>(
   props: { store: FormCore<T> } & JSX.HTMLAttributes<HTMLElement>
-) {
+) => {
+  return props.children;
+};
+
+function Control<T extends Record<string, unknown>>(props: { store: FormCore<T> } & JSX.HTMLAttributes<HTMLElement>) {
   return (
     <input
       onChange={(
@@ -54,7 +46,7 @@ function Control<T>(
   );
 }
 
-function Submit<T>(
+function Submit<T extends Record<string, unknown>>(
   props: { store: FormCore<T> } & JSX.HTMLAttributes<HTMLButtonElement>
 ) {
   const { store } = props;

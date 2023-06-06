@@ -147,13 +147,16 @@ const PopperArrow = (
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
   // const { arrowX, arrowY, baseSide, placedSide, shouldHideArrow } = state;
-  let $arrow: HTMLSpanElement;
+  let $arrow: HTMLSpanElement | undefined;
 
   const off = store.onStateChange((nextState) => {
     setState(nextState);
   });
 
   onMount(() => {
+    if (!$arrow) {
+      return;
+    }
     store.setArrow($arrow.getBoundingClientRect());
   });
   onCleanup(() => {

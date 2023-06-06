@@ -18,11 +18,15 @@ user.onTip((msg) => {
 user.onLogin((profile) => {
   cache.set("user", profile);
   // @todo 应该记住 redirect
-  router.push("/home");
+  router.push("/home/index");
+});
+user.onLogout(() => {
+  cache.clear("user");
+  router.push("/login");
 });
 user.onExpired(() => {
   cache.clear("user");
-  router.replace("/auth/login");
+  router.replace("/login");
 });
 
 export const app = new Application({
@@ -38,22 +42,19 @@ app.onClickLink(({ href }) => {
   router.push(href);
 });
 
-// @ts-ignore
-ListCore.commonProcessor = (originalResponse) => {
-  if (originalResponse.error) {
-    return {
-      dataSource: [],
-      page: 1,
-      pageSize: 20,
-      total: 0,
-      noMore: false,
-      empty: false,
-      error: new Error(`${(originalResponse.error as unknown as Error).message}`),
-    };
-  }
+ListCore.commonProcessor = <T>(
+  originalResponse: any
+): {
+  dataSource: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  empty: boolean;
+  noMore: boolean;
+  error: Error | null;
+} => {
   try {
     const data = originalResponse.data || originalResponse;
-    // @ts-ignore
     const { list, page, page_size, total, no_more } = data;
     const result = {
       dataSource: list,
@@ -62,6 +63,7 @@ ListCore.commonProcessor = (originalResponse) => {
       total,
       empty: false,
       noMore: false,
+      error: null,
     };
     if (total <= page_size * page) {
       result.noMore = true;
@@ -80,6 +82,7 @@ ListCore.commonProcessor = (originalResponse) => {
       pageSize: 20,
       total: 0,
       noMore: false,
+      empty: false,
       error: new Error(`${(error as Error).message}`),
     };
   }

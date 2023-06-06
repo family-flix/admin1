@@ -193,18 +193,14 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     });
   }
   checkNeedHideSubMenu(item: MenuItemCore) {
-    clearTimeout(this.hideSubTimer);
+    if (this.hideSubTimer) {
+      clearTimeout(this.hideSubTimer);
+    }
     this.hideSubTimer = null;
     if (this.maybeHideSub === false) {
       return;
     }
-    console.log(
-      ...this.log(
-        "leaveMenu check need hide subMenu",
-        this.curSub,
-        this.inSubMenu
-      )
-    );
+    console.log(...this.log("leaveMenu check need hide subMenu", this.curSub, this.inSubMenu));
     // this.emit(Events.LeaveMenu);
     // 直接从有 SubMenu 的 MenuItem 离开，不到其他 MenuItem 场景下，也要关闭 SubMenu
     if (this.curSub && !this.inSubMenu) {

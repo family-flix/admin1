@@ -2,6 +2,7 @@
  * @file 索引后没有找到匹配信息的电视剧（后面称为「未知电视剧」）
  */
 import { createSignal, For } from "solid-js";
+import { Brush } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { bind_searched_tv_for_tv, fetch_unknown_tv_list, UnknownTVItem } from "@/services";
@@ -18,25 +19,32 @@ import { Dialog } from "@/components/ui/dialog";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { InputCore } from "@/domains/ui/input";
+import { Button } from "@/components/ui/button";
+import { ButtonInListCore } from "@/domains/ui/button";
 
 export const UnknownTVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
   const cur = new SelectionCore<UnknownTVItem>();
-  const unknownTVList = new ListCore<UnknownTVItem>(fetch_unknown_tv_list);
+  const unknownTVList = new ListCore(new RequestCore(fetch_unknown_tv_list));
   const dialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
-      if (cur.isEmpty()) {
-        app.tip({ text: ["请先选择未匹配的电视剧"] });
+      if (!cur.value) {
+        app.tip({ text: ["请先选择未识别的电视剧"] });
         return;
       }
       const { id } = cur.value;
-      bindSearchedTVForTV.run(id, searched_tv);
+      bindProfileForTV.run(id, searched_tv);
     },
   });
-  const bindSearchedTVForTV = new RequestCore(bind_searched_tv_for_tv, {
+  const selectMatchedProfileBtn = new ButtonInListCore<UnknownTVItem>({
+    onClick(record) {
+      cur.select(record);
+      dialog.show();
+    },
+  });
+  const bindProfileForTV = new RequestCore(bind_searched_tv_for_tv, {
     onLoading(loading) {
-      console.log("set loading", loading);
       dialog.okBtn.setLoading(loading);
     },
     onFailed(error) {
@@ -80,29 +88,34 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
         <div class="mt-8">
           <div>
             <div class="grid grid-cols-6 gap-2">
-              <ContextMenu store={contextMenu}>
-                <For each={dataSource()}>
-                  {(file) => {
-                    const { id, name } = file;
-                    return (
-                      <div
-                        class="w-[152px] p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600"
-                        onClick={async () => {
-                          router.push(`/admin/unknown_tv/${id}`);
-                        }}
-                        onContextMenu={(event: MouseEvent) => {
-                          // event.stopPropagation();
-                          event.preventDefault();
-                          // const { pageX, pageY } = event;
-                          cur.select(file);
-                        }}
-                      >
-                        <FolderCard type="folder" name={name} />
+              <For each={dataSource()}>
+                {(file) => {
+                  const { id, name } = file;
+                  return (
+                    <div
+                      class="w-[152px] rounded"
+                      // onClick={async () => {
+                      //   router.push(`/admin/unknown_tv/${id}`);
+                      // }}
+                      // onContextMenu={(event: MouseEvent) => {
+                      //   event.preventDefault();
+                      //   cur.select(file);
+                      // }}
+                    >
+                      <FolderCard type="folder" name={name} />
+                      <div class="flex justify-center mt-2">
+                        <Button
+                          class="block box-content"
+                          store={selectMatchedProfileBtn.bind(file)}
+                          icon={<Brush class="w-4 h-4" />}
+                        >
+                          修改
+                        </Button>
                       </div>
-                    );
-                  }}
-                </For>
-              </ContextMenu>
+                    </div>
+                  );
+                }}
+              </For>
             </div>
           </div>
         </div>

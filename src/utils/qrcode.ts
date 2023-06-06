@@ -371,7 +371,7 @@ class QR8bitByte {
       } else {
         byteArray[0] = code;
       }
-
+      // @ts-ignore
       this.parsedData.push(byteArray);
     }
 
@@ -1009,40 +1009,40 @@ function _onMakeImage() {
  * @param {Function} fSuccess Occurs if it supports Data URI
  * @param {Function} fFail Occurs if it doesn't support Data URI
  */
-function _safeSetDataURI(fSuccess: Function, fFail?: Function) {
-  const self = this;
-  self._fFail = fFail;
-  self._fSuccess = fSuccess;
+// function _safeSetDataURI(fSuccess: Function, fFail?: Function) {
+//   const self = this;
+//   self._fFail = fFail;
+//   self._fSuccess = fSuccess;
 
-  // Check it just once
-  if (self._bSupportDataURI === null) {
-    const el = document.createElement("img");
-    const fOnError = function () {
-      self._bSupportDataURI = false;
+//   // Check it just once
+//   if (self._bSupportDataURI === null) {
+//     const el = document.createElement("img");
+//     const fOnError = function () {
+//       self._bSupportDataURI = false;
 
-      if (self._fFail) {
-        self._fFail.call(self);
-      }
-    };
-    const fOnSuccess = function () {
-      self._bSupportDataURI = true;
+//       if (self._fFail) {
+//         self._fFail.call(self);
+//       }
+//     };
+//     const fOnSuccess = function () {
+//       self._bSupportDataURI = true;
 
-      if (self._fSuccess) {
-        self._fSuccess.call(self);
-      }
-    };
+//       if (self._fSuccess) {
+//         self._fSuccess.call(self);
+//       }
+//     };
 
-    el.onabort = fOnError;
-    el.onerror = fOnError;
-    el.onload = fOnSuccess;
-    el.src =
-      "data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="; // the Image contains 1px data.
-  } else if (self._bSupportDataURI === true && self._fSuccess) {
-    self._fSuccess.call(self);
-  } else if (self._bSupportDataURI === false && self._fFail) {
-    self._fFail.call(self);
-  }
-}
+//     el.onabort = fOnError;
+//     el.onerror = fOnError;
+//     el.onload = fOnSuccess;
+//     el.src =
+//       "data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="; // the Image contains 1px data.
+//   } else if (self._bSupportDataURI === true && self._fSuccess) {
+//     self._fSuccess.call(self);
+//   } else if (self._bSupportDataURI === false && self._fFail) {
+//     self._fFail.call(self);
+//   }
+// }
 
 type CanvasDrawingOptions = {
   width: number;
@@ -1081,7 +1081,7 @@ class CanvasDrawing {
    * 绘制 logo
    */
   async drawLogo(img: string) {
-    const ctx = this._oDrawing._oContext;
+    const ctx = this._oContext;
     return new Promise((resolve, reject) => {
       const image = document.createElement("img");
       image.src = img;
@@ -1107,7 +1107,6 @@ class CanvasDrawing {
   draw(oQRCode: QRCodeModel) {
     const { _oContext } = this;
     const { _htOption } = this;
-
     const nCount = oQRCode.getModuleCount();
     const nWidth = _htOption.width / nCount;
     const nHeight = _htOption.height / nCount;
@@ -1125,25 +1124,21 @@ class CanvasDrawing {
         _oContext.lineWidth = 1;
         _oContext.fillStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;
         _oContext.fillRect(nLeft, nTop, nWidth, nHeight);
-
-        // 안티 앨리어싱 방지 처리
         _oContext.strokeRect(Math.floor(nLeft) + 0.5, Math.floor(nTop) + 0.5, nRoundedWidth, nRoundedHeight);
-
         _oContext.strokeRect(Math.ceil(nLeft) - 0.5, Math.ceil(nTop) - 0.5, nRoundedWidth, nRoundedHeight);
       }
     }
-
     this._bIsPainted = true;
   }
 
   /**
    * Make the image from Canvas if the browser supports Data URI.
    */
-  makeImage() {
-    if (this._bIsPainted) {
-      _safeSetDataURI.call(this, _onMakeImage);
-    }
-  }
+  // makeImage() {
+  //   if (this._bIsPainted) {
+  //     _safeSetDataURI.call(this, _onMakeImage);
+  //   }
+  // }
 
   /**
    * Return whether the QRCode is painted or not
@@ -1281,7 +1276,6 @@ class QRCode {
       correctLevel: QRErrorCorrectLevel.H,
       text: "",
     };
-
     const options: Partial<QrcodeOptions> = (() => {
       if (typeof vOption === "string") {
         return {
@@ -1290,17 +1284,14 @@ class QRCode {
       }
       return vOption || {};
     })();
-
     // Overwrites options
     for (const key in options) {
       // @ts-ignore
       this._htOption[key] = options[key];
     }
-
     // if (this._htOption.useSVG) {
     //     CanvasDrawing = svgDrawer;
     // }
-
     this._android = _getAndroid();
     this._oQRCode = null;
     this._oDrawing = new CanvasDrawing(this._htOption);
@@ -1324,7 +1315,6 @@ class QRCode {
     if (logo !== undefined) {
       await this._oDrawing.drawLogo.call(this, logo);
     }
-
     return this._oDrawing._elCanvas.toDataURL();
   }
 
@@ -1335,11 +1325,11 @@ class QRCode {
    *
    * @private
    */
-  makeImage() {
-    if (typeof this._oDrawing.makeImage === "function") {
-      this._oDrawing.makeImage();
-    }
-  }
+  // makeImage() {
+  //   if (typeof this._oDrawing.makeImage === "function") {
+  //     this._oDrawing.makeImage();
+  //   }
+  // }
 
   /**
    * Clear the QRCode
@@ -1350,7 +1340,6 @@ class QRCode {
 }
 
 const instance = new QRCode();
-
 const generateQrcode = instance.makeCode.bind(instance);
 
 export default generateQrcode;

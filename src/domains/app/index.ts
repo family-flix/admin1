@@ -138,8 +138,13 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   setSize(size: { width: number; height: number }) {
     this.size = size;
   }
+  /** 设置页面 title */
   setTitle(title: string): void {
     throw new Error("请实现 setTitle 方法");
+  }
+  /** 复制文本到粘贴板 */
+  copy(text: string) {
+    throw new Error("请实现 copy 方法");
   }
   getComputedStyle(el: HTMLElement): CSSStyleDeclaration {
     throw new Error("请实现 getComputedStyle 方法");
@@ -180,8 +185,17 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["获取网盘失败", r.error.message] });
       return;
     }
-    this.drives = r.data;
-    this.emit(Events.DrivesChange, r.data);
+    this.drives = [...r.data];
+    this.emit(Events.DrivesChange, [...r.data]);
+  }
+  async refreshDrives() {
+    const r = await Drive.ListHelper.refresh();
+    if (r.error) {
+      this.tip({ text: ["获取网盘失败", r.error.message] });
+      return;
+    }
+    this.drives = [...r.data];
+    this.emit(Events.DrivesChange, [...r.data]);
   }
 
   onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {

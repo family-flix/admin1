@@ -86,9 +86,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
 
-  setRect(
-    rect: Partial<{ width: number; height: number; contentHeight: number }>
-  ) {
+  setRect(rect: Partial<{ width: number; height: number; contentHeight: number }>) {
     this.rect = {
       ...this.rect,
       ...rect,
@@ -143,19 +141,12 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     const distThreshold = 60;
     const distMax = 80;
     const distResisted =
-      resistanceFunction(this.pullToRefresh.dist / distThreshold) *
-      Math.min(distMax, this.pullToRefresh.dist);
+      resistanceFunction(this.pullToRefresh.dist / distThreshold) * Math.min(distMax, this.pullToRefresh.dist);
     this.pullToRefresh.distResisted = distResisted;
-    if (
-      this.pullToRefresh.state === "pulling" &&
-      distResisted > distThreshold
-    ) {
+    if (this.pullToRefresh.state === "pulling" && distResisted > distThreshold) {
       this.pullToRefresh.state = "releasing";
     }
-    if (
-      this.pullToRefresh.state === "releasing" &&
-      distResisted <= distThreshold
-    ) {
+    if (this.pullToRefresh.state === "releasing" && distResisted <= distThreshold) {
       this.pullToRefresh.state = "pulling";
     }
     this.state.top = distResisted;
@@ -192,7 +183,8 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
   scroll(event: { scrollTop: number }) {
     const { scrollTop } = event;
     this.emit(Events.Scroll, { scrollTop });
-    if (scrollTop + this.rect.height + 120 >= this.rect.contentHeight) {
+    const { height = 0, contentHeight = 0 } = this.rect;
+    if (scrollTop + height + 120 >= contentHeight) {
       if (this._reachBottom === false) {
         this.emit(Events.ReachBottom);
       }

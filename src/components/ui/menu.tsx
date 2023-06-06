@@ -263,13 +263,13 @@ const SubTrigger = (
 ) => {
   const { store: item } = props;
 
-  let $item: HTMLDivElement;
+  let $item: HTMLDivElement | undefined;
   // const store = useContext(MenuSubContext);
 
   // 既然在 SubTrigger 里面了，传入的 item 必然有 item.menu。但是为了避免可能的错误，还是用 ?. 处理
   item.menu?.popper.setReference({
     getRect() {
-      const rect = $item.getBoundingClientRect();
+      const rect = $item!.getBoundingClientRect();
       return rect;
       // console.log(...item.menu.popper.log("get reference rect", $item, rect));
       // const { left, top, width, height, x, y } = rect;
@@ -288,7 +288,7 @@ const SubTrigger = (
   });
 
   return (
-    <Anchor store={item.menu}>
+    <Anchor store={item.menu!}>
       <ItemImpl ref={$item} class={props.class} store={item}>
         {props.children}
       </ItemImpl>
@@ -299,7 +299,7 @@ const SubTrigger = (
 // const MenuSubContentContext = createContext<MenuCore>();
 const SubContent = (
   props: {
-    store?: MenuCore;
+    store: MenuCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
@@ -405,9 +405,9 @@ function isPointerInGraceArea(event: PointerEvent, area?: Polygon) {
   return isPointInPolygon(cursorPos, area);
 }
 
-function whenMouse<E>(handler) {
-  return (event) => (event.pointerType === "mouse" ? handler(event) : undefined);
-}
+// function whenMouse<E>(handler) {
+//   return (event) => (event.pointerType === "mouse" ? handler(event) : undefined);
+// }
 
 // const Root = MenuRoot;
 // const Anchor = MenuAnchor;

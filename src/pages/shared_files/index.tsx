@@ -2,6 +2,7 @@
  * @file 分享文件转存
  */
 import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
+import { ChevronRight, Folder } from "lucide-solid";
 
 import { NavigatorCore } from "@/domains/navigator";
 import { RouteViewCore } from "@/domains/route_view";
@@ -18,12 +19,10 @@ import { FolderCard } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { ContextMenu } from "@/components/ui/context-menu";
-import { TVCard } from "@/components/TVCard";
 import * as Tabs from "@/components/ui/tabs";
 import { cn } from "@/utils";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
-import { ChevronRight, Folder } from "lucide-solid";
 
 export const SharedFilesTransferPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, router, view } = props;
@@ -204,9 +203,6 @@ export const SharedFilesTransferPage = (props: { app: Application; router: Navig
           <div>测试02 - content</div>
         </Tabs.Content>
       </Tabs.Root> */}
-      <Dialog title="同名影视剧" store={modal1}>
-        <TVCard store={tvProfile} />
-      </Dialog>
       {/* <Modal
           title="文件夹"
           visible={drive_folder_visible}

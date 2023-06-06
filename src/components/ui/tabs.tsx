@@ -32,7 +32,7 @@ const TabsRoot = (
 
 const TabsList = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   // const { store } = props;
-  const store = useContext(TabsContext);
+  const store = useContext(TabsContext)!;
 
   const [state, setState] = createSignal(store.state);
   store.onStateChange((nextState) => {
@@ -56,7 +56,7 @@ const TabsTrigger = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { value } = props;
-  const store = useContext(TabsContext);
+  const store = useContext(TabsContext)!;
 
   return (
     <RovingFocusGroup.Item>
@@ -88,7 +88,7 @@ const TabsContent = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { value } = props;
-  const store = useContext(TabsContext);
+  const store = useContext(TabsContext)!;
 
   const presence = new PresenceCore();
   const [state, setState] = createSignal(store.state);
@@ -114,7 +114,7 @@ const TabsContent = (
     <Presence store={presence}>
       <div
         class={props.class}
-        data-state={isSelected ? "active" : "inactive"}
+        data-state={isSelected() ? "active" : "inactive"}
         data-orientation={orientation()}
         role="tabpanel"
         // aria-labelledby={triggerId}

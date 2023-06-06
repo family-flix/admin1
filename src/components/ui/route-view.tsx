@@ -19,7 +19,7 @@ export function RouteView(props: { store: RouteViewCore } & JSX.HTMLAttributes<H
   const mounted = () => state().mounted;
 
   effect(() => {
-    console.log("RouteView", store.name, visible(), mounted());
+    console.log("RouteView", store._name, visible(), mounted());
   });
 
   return (

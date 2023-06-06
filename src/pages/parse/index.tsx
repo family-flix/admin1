@@ -53,10 +53,11 @@ export const VideoParsingPage: ViewComponent = (props) => {
   const [info, setInfo] = createSignal<ParsedVideoInfo | null>(null);
 
   const keys = () => {
-    if (info() === null) {
+    const i = info();
+    if (i === null) {
       return [];
     }
-    const keys = Object.keys(info()) as VideoKeys[];
+    const keys = Object.keys(i) as VideoKeys[];
     return keys;
   };
 
@@ -78,7 +79,7 @@ export const VideoParsingPage: ViewComponent = (props) => {
           <div class="mt-4">
             <For each={keys()}>
               {(k) => {
-                const v = () => info()[k];
+                const v = () => info()![k];
                 return (
                   <div class="flex align-middle">
                     <div class="align-left min-w-[114px]">{VIDEO_KEY_NAME_MAP[k]}</div>

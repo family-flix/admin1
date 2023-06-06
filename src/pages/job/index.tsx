@@ -1,6 +1,6 @@
 import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { Ban, CheckCircle, Recycle, RotateCw, Timer } from "lucide-solid";
+import { Ban, Bug, Bus, CheckCircle, ParkingCircle, Recycle, RotateCw, Timer } from "lucide-solid";
 
 import { ListCore } from "@/domains/list";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { TaskStatus } from "@/constants";
 export const TaskListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, view, router } = props;
 
-  const helper = new ListCore<JobItem>(fetch_job_list, {});
+  const helper = new ListCore(new RequestCore(fetch_job_list), {});
   const pauseJob = new RequestCore(pause_job);
   const pauseJobBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
@@ -81,11 +81,11 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
                     </div>
                   </div>
                   <div class="space-x-2">
-                    <Button store={profileBtn.bind(task)} size="default" variant="default">
+                    <Button store={profileBtn.bind(task)} icon={<Bus class="w-4 h-4" />} variant="subtle">
                       详情
                     </Button>
                     <Show when={status === TaskStatus.Running}>
-                      <Button store={pauseJobBtn.bind(task)} size="default" variant="default">
+                      <Button store={pauseJobBtn.bind(task)} icon={<ParkingCircle class="w-4 h-4" />} variant="subtle">
                         停止任务
                       </Button>
                     </Show>

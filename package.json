@@ -3,11 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3003",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 3003"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.195",
     "@types/node": "^18.15.11",
     "@types/qs": "^6.9.7",
     "autoprefixer": "^10.4.14",

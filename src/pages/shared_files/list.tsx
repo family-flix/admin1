@@ -8,7 +8,8 @@ import { FetchParams } from "@/domains/list/typing";
 import { NavigatorCore } from "@/domains/navigator";
 import { request } from "@/utils/request";
 import { relative_time_from_now } from "@/utils";
-import { JSONObject, ListResponse, RequestedResource } from "@/types";
+import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
+import { RequestCore } from "@/domains/client";
 
 async function fetch_shared_files_histories(body: FetchParams) {
   const r = await request.get<
@@ -20,9 +21,9 @@ async function fetch_shared_files_histories(body: FetchParams) {
     }>
   >("/api/shared_file/list", body as unknown as JSONObject);
   if (r.error) {
-    return r;
+    return Result.Err(r.error);
   }
-  return {
+  return Result.Ok({
     ...r.data,
     list: r.data.list.map((f) => {
       const { created, ...rest } = f;
@@ -31,18 +32,14 @@ async function fetch_shared_files_histories(body: FetchParams) {
         created: relative_time_from_now(created),
       };
     }),
-  };
+  });
 }
-type SharedFileHistory = RequestedResource<
-  typeof fetch_shared_files_histories
->["list"][0];
+type SharedFileHistory = RequestedResource<typeof fetch_shared_files_histories>["list"][0];
 
 export const SharedFilesHistoryPage = (props: { router: NavigatorCore }) => {
   const { router } = props;
-  const [response, setResponse] = createSignal(
-    ListCore.defaultResponse<SharedFileHistory>()
-  );
-  const helper = new ListCore<SharedFileHistory>(fetch_shared_files_histories);
+  const [response, setResponse] = createSignal(ListCore.defaultResponse<SharedFileHistory>());
+  const helper = new ListCore(new RequestCore(fetch_shared_files_histories));
   helper.onStateChange((nextState) => {
     setResponse(nextState);
   });

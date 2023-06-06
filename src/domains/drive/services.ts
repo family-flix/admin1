@@ -54,8 +54,6 @@ export async function fetchDrives(params: FetchParams) {
       id: string;
       /** 云盘自定义名称 */
       name: string;
-      /** 这个是一定存在的 */
-      user_name: string;
       /** 头像 */
       avatar: string;
       /** 云盘已使用大小 */
@@ -75,10 +73,10 @@ export async function fetchDrives(params: FetchParams) {
     page,
     page_size,
     list: list.map((item) => {
-      const { id, name, avatar, user_name, total_size, used_size, root_folder_id } = item;
+      const { id, name, avatar, total_size, used_size, root_folder_id } = item;
       return {
         id,
-        name: name || user_name,
+        name,
         avatar,
         total_size: bytes_to_size(total_size),
         used_size: bytes_to_size(used_size),

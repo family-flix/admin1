@@ -2,14 +2,14 @@
  * @file 后台/首页布局
  */
 import { For, JSX, createSignal } from "solid-js";
-import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch } from "lucide-solid";
+import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch, LogOut } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { KeepAliveRouteView } from "@/components/ui/keep-alive-route-view";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
-import { cn } from "@/utils";
+import { cn, sleep } from "@/utils";
 import {
   homeFilenameParsingPage,
   homeIndexPage,
@@ -20,6 +20,8 @@ import {
   homeTransferPage,
   homeUnknownTVListPage,
 } from "@/store/views";
+import { Button } from "@/components/ui/button";
+import { ButtonCore } from "@/domains/ui/button";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -27,7 +29,16 @@ export const HomeLayout: ViewComponent = (props) => {
   const dialog = new TMDBSearcherDialogCore({
     footer: false,
   });
+  const logoutBtn = new ButtonCore({
+    async onClick() {
+      logoutBtn.setLoading(true);
+      app.user.logout();
+      await sleep(2000);
+      logoutBtn.setLoading(false);
+    },
+  });
 
+  const [pathname, setPathname] = createSignal(router.pathname);
   const [subViews, setSubViews] = createSignal(view.subViews);
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
@@ -80,6 +91,7 @@ export const HomeLayout: ViewComponent = (props) => {
   });
   router.onPathnameChange(({ pathname, type }) => {
     console.log("[LAYOUT]home/layout - router.onPathnameChange", view.state.visible, view.state.layered);
+    setPathname(pathname);
     if (view.state.layered) {
       return;
     }
@@ -91,7 +103,9 @@ export const HomeLayout: ViewComponent = (props) => {
   view.checkMatch(router._pending);
   app.user.validate();
 
-  const menus = [
+  // const pathname = router.pathname;
+
+  const menus = () => [
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
@@ -160,18 +174,25 @@ export const HomeLayout: ViewComponent = (props) => {
   return (
     <>
       <div class="flex w-full h-full">
-        <div class="w-[248px] py-8 pt-4 pl-2 border border-r-slate-300">
-          <div class="space-y-1 p-2 h-full rounded-xl self-start">
-            <For each={menus}>
-              {(menu) => {
-                const { icon, text, link, onClick } = menu;
-                return (
-                  <Menu icon={icon} link={link} onClick={onClick}>
-                    {text}
-                  </Menu>
-                );
-              }}
-            </For>
+        <div class="w-[248px] py-8 pt-4 pl-2 pr-2 border border-r-slate-300">
+          <div class="flex flex-col justify-between h-full">
+            <div class="flex-1 space-y-1 p-2 h-full rounded-xl self-start">
+              <For each={menus()}>
+                {(menu) => {
+                  const { icon, text, link, onClick } = menu;
+                  return (
+                    <Menu icon={icon} highlight={pathname() === link} link={link} onClick={onClick}>
+                      {text}
+                    </Menu>
+                  );
+                }}
+              </For>
+            </div>
+            <div class="flex justify-center h-[68rpx]">
+              <Button class="" store={logoutBtn} variant="subtle" icon={<LogOut class="w-4 h-4" />}>
+                退出登录
+              </Button>
+            </div>
           </div>
         </div>
         <div class="flex-1">
@@ -217,7 +238,7 @@ function Menu(
     <div
       class={cn(
         "flex items-center px-4 py-2 space-x-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-300",
-        props.highlight ? "bg-slate-100" : ""
+        props.highlight ? "bg-slate-200" : ""
       )}
       onClick={props.onClick}
     >

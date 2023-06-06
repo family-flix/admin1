@@ -89,32 +89,17 @@ function Application() {
     const prevView = rootView.curView;
     rootView.prevView = prevView;
     rootView.curView = subView;
-    if (!rootView.subViews.includes(subView)) {
-      rootView.appendSubView(subView);
-    }
     subView.show();
-    // setTimeout(() => {
-    //   subView.checkMatch(router._pending);
-    // }, 200);
     if (prevView) {
-      if (router._pending.type === "back") {
-        prevView.hide();
-        subView.uncovered();
-        return;
-      }
-      prevView.layered();
-      // prevView.layered();
-      // prevView.state.layered = true;
-      // setTimeout(() => {
-      //   rootView.prevView = null;
-      //   rootView.removeSubView(prevView);
-      // }, 120);
+      prevView.hide();
     }
+    rootView.replaceSubViews([subView]);
   });
   rootView.onNotFound(() => {
     console.log("[Application]rootView.onNotFound");
-    rootView.curView = homeLayout;
-    rootView.appendSubView(homeLayout);
+    rootView.curView = loginPage;
+    rootView.curView.show();
+    rootView.appendSubView(loginPage);
   });
   router.onPathnameChange(({ pathname, type }) => {
     // router.log("[]Application - pathname change", pathname);
