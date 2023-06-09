@@ -127,4 +127,5 @@ export interface ListProps<T> {
    * 额外的默认 response
    */
   extraDefaultResponse?: Record<string, unknown>;
+  onLoadingChange?: (loading: boolean) => void;
 }

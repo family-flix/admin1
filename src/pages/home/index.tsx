@@ -2,7 +2,7 @@
  * @file 管理后台首页
  */
 import { createSignal, For, onMount, Show } from "solid-js";
-import { HardDrive } from "lucide-solid";
+import { HardDrive, RotateCcw } from "lucide-solid";
 
 import { DriveCard } from "@/components/DriveCard";
 import { ViewComponent } from "@/types";
@@ -51,6 +51,13 @@ export const HomePage: ViewComponent = (props) => {
   const driveTokenInput = new InputCore({
     placeholder: "请输入",
   });
+  const refreshBtn = new ButtonCore({
+    async onClick() {
+      refreshBtn.setLoading(true);
+      await app.refreshDrives();
+      refreshBtn.setLoading(false);
+    },
+  });
 
   const [drives, setDrives] = createSignal(app.drives);
 
@@ -72,10 +79,16 @@ export const HomePage: ViewComponent = (props) => {
     <div class="">
       <h1 class="text-2xl">云盘列表</h1>
       <div class="mt-8">
-        <Button store={addingDriveBtn} icon={<HardDrive class="w-4 h-4" />}>
-          新增云盘
-        </Button>
-        <div class="grid grid-cols-3 gap-2 mt-4">
+        <div class="space-x-2">
+          <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
+            刷新
+          </Button>
+          <Button store={addingDriveBtn} icon={<HardDrive class="w-4 h-4" />}>
+            新增云盘
+          </Button>
+        </div>
+        {/* <div class="w-4 h-4 bg-red-800 sm:bg-black lg:bg-green-800 xl:bg-blue-800"></div> */}
+        <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
           <For each={drives()}>
             {(drive) => {
               return <DriveCard app={app} store={drive} />;

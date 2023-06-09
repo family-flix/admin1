@@ -29,16 +29,16 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
 
   constructor(
     options: Partial<{
-      name: string;
+      _name: string;
       items: MenuItemCore[];
     }> = {}
   ) {
     super(options);
 
-    const { items = [] } = options;
+    const { _name, items = [] } = options;
     this.state.items = items;
-    this.listenItems(items);
-    this.menu = new MenuCore({ items });
+    // this.listenItems(items);
+    this.menu = new MenuCore({ items, _name: _name ? `${_name}__menu` : "menu-in-dropdown" });
     this.menu.onHide(() => {
       // console.log("menu is hidden");
       this.menu.reset();
@@ -103,14 +103,28 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   setItems(items: MenuItemCore[]) {
-    this.state.items = items;
-    this.items = items;
-    this.listenItems(items);
-    this.emit(Events.StateChange, {
-      ...this.state,
-    });
+    // this.state.items = items;
+    // this.items = items;
+    // this.listenItems(items);
+    // this.emit(Events.StateChange, {
+    //   ...this.state,
+    // });
   }
-  toggle() {
+  toggle(position: Partial<{ x: number; y: number }>) {
+    if (position) {
+      const { x, y } = position;
+      this.menu.popper.updateReference({
+        // @ts-ignore
+        getRect() {
+          return {
+            width: 8,
+            height: 8,
+            x,
+            y,
+          };
+        },
+      });
+    }
     this.menu.toggle();
   }
   hide() {

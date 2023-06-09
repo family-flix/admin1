@@ -9,6 +9,8 @@ import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
 import { Result } from "@/types";
 
+NavigatorCore.prefix = "/admin";
+
 const cache = new LocalCache();
 const router = new NavigatorCore();
 const user = new UserCore(cache.get("user"));
@@ -17,7 +19,6 @@ user.onTip((msg) => {
 });
 user.onLogin((profile) => {
   cache.set("user", profile);
-  // @todo 应该记住 redirect
   router.push("/home/index");
 });
 user.onLogout(() => {
@@ -37,7 +38,6 @@ export const app = new Application({
     return Result.Ok(null);
   },
 });
-
 app.onClickLink(({ href }) => {
   router.push(href);
 });

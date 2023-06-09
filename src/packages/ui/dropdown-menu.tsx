@@ -1,16 +1,13 @@
 /**
  * @file 下拉菜单
  */
-import { createSignal, onCleanup, JSX } from "solid-js";
+import { createSignal, onCleanup, JSX, onMount } from "solid-js";
 
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { MenuCore } from "@/domains/ui/menu";
-import { cn } from "@/utils";
-
 import * as MenuPrimitive from "@/packages/ui/menu";
 
-// const DropdownMenuContext = createContext<DropdownMenuCore>();
 const Root = (
   props: {
     store: DropdownMenuCore;
@@ -18,9 +15,9 @@ const Root = (
 ) => {
   const { store } = props;
 
-  onCleanup(() => {
-    store.unmount();
-  });
+  // onCleanup(() => {
+  //   store.unmount();
+  // });
 
   return (
     <MenuPrimitive.Root class={props.class} store={store.menu}>
@@ -86,7 +83,6 @@ const Portal = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext(DropdownMenuContext);
 
   return (
     <MenuPrimitive.Portal class={props.class} store={store}>
@@ -105,12 +101,8 @@ const Content = (
 ) => {
   const { store } = props;
 
-  // onCleanup(() => {
-  //   console.log("DropdownMenu is cleanup");
-  // });
-
   return (
-    <MenuPrimitive.Content class={cn(props.class)} store={store.menu}>
+    <MenuPrimitive.Content store={store.menu} class={props.class}>
       {props.children}
     </MenuPrimitive.Content>
   );
@@ -185,7 +177,6 @@ const Sub = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext(DropdownMenuContext);
 
   return (
     <MenuPrimitive.Sub class={props.class} store={store}>
@@ -199,12 +190,14 @@ const Sub = (
  * -----------------------------------------------------------------------------------------------*/
 const SubTrigger = (
   props: {
-    parent: MenuCore;
     store: MenuItemCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext(DropdownMenuContext);
+
+  onMount(() => {
+    store.log("[COMPONENT]SubTrigger - mounted");
+  });
 
   return (
     <MenuPrimitive.SubTrigger class={props.class} store={store}>
@@ -222,7 +215,6 @@ const SubContent = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext()
 
   return (
     <MenuPrimitive.SubContent store={store} class={props.class}>

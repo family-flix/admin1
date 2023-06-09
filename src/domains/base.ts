@@ -33,13 +33,13 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
 
   constructor(
     params: Partial<{
-      name: string;
+      _name: string;
       debug: boolean;
     }> = {}
   ) {
-    const { name, debug } = params;
-    if (name) {
-      this._name = name;
+    const { _name, debug } = params;
+    if (_name) {
+      this._name = _name;
     }
   }
   uid() {

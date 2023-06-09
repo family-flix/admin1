@@ -43,17 +43,17 @@ const SelectTrigger = (props: { store: SelectCore } & JSX.HTMLAttributes<HTMLEle
   const [state, setState] = createSignal(store.state);
 
   onMount(() => {
-    const $_button = $button;
-    if (!$_button) {
+    const $$button = $button;
+    if (!$$button) {
       return;
     }
     const trigger = new SelectTriggerCore({
-      $node: () => $_button,
+      $node: () => $$button,
       getRect() {
-        return $_button.getBoundingClientRect();
+        return $$button.getBoundingClientRect();
       },
       getStyles() {
-        return window.getComputedStyle($_button);
+        return window.getComputedStyle($$button);
       },
     });
     store.setTrigger(trigger);

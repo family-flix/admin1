@@ -7,8 +7,6 @@ import qs from "qs";
 import { JSONObject, Result } from "@/types";
 import { app } from "@/store/app";
 
-import dayjs from "dayjs";
-
 const client = axios.create({
   timeout: 6000,
   // baseURL: "https://api.funzm.com",

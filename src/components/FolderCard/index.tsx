@@ -3,7 +3,7 @@
  */
 import { JSX } from "solid-js/jsx-runtime";
 
-import { LazyImage } from "@/components/LazyImage";
+import { LazyImage } from "@/components/ui/image";
 
 export const FolderCard = (
   props: {
@@ -12,10 +12,10 @@ export const FolderCard = (
     thumbnail?: string;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
-  const { type, name, thumbnail, ...rest } = props;
+  const { type, name, thumbnail } = props;
   return (
-    <div class="flex flex-col items-center" {...rest}>
-      <div class="flex items-center w-[100px] h-[100px]">
+    <div class="flex flex-col items-center">
+      <div class="flex items-center h-[80px]">
         <LazyImage
           class="max-w-full max-h-full object-contain"
           src={(() => {
@@ -29,10 +29,7 @@ export const FolderCard = (
           })()}
         />
       </div>
-      <div
-        title={name}
-        class="mt-2 text-center break-all whitespace-pre-wrap truncate line-clamp-2"
-      >
+      <div title={name} class="mt-2 text-center break-all whitespace-pre-wrap truncate line-clamp-2">
         {name}
       </div>
     </div>

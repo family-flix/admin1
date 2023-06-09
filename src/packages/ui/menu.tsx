@@ -30,7 +30,6 @@ const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
  * -----------------------------------------------------------------------------------------------*/
 const Anchor = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
-  // const store = useContext(MenuContext);
 
   return (
     <Popper.Anchor class={props.class} store={store.popper}>
@@ -48,10 +47,6 @@ const Portal = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext(MenuContentContext);
-  // onCleanup(() => {
-  //   console.log("[MenuPortal]onCleanup");
-  // });
 
   return (
     <Presence store={store.presence}>
@@ -69,13 +64,6 @@ const Content = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext(MenuContext);
-  // onMount(() => {
-  //   console.log("[]MenuContent onMounted");
-  // });
-  // onCleanup(() => {
-  //   console.log("[MenuContent]onCleanup");
-  // });
 
   return (
     <Presence store={store.presence}>
@@ -106,13 +94,10 @@ const ContentImpl = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // onCleanup(() => {
-  //   console.log("[MenuContentImpl]onCleanup");
-  // });
 
   return (
     <DismissableLayer store={store.layer}>
-      <Popper.Content class={props.class} store={store.popper}>
+      <Popper.Content store={store.popper} class={props.class}>
         {props.children}
       </Popper.Content>
     </DismissableLayer>
@@ -145,13 +130,7 @@ const Item = (
   const { store } = props;
 
   return (
-    <ItemImpl
-      class={props.class}
-      store={store}
-      onClick={() => {
-        store.click();
-      }}
-    >
+    <ItemImpl class={props.class} store={store}>
       {props.children}
     </ItemImpl>
   );
@@ -161,7 +140,7 @@ const ItemImpl = (
     store: MenuItemCore;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
-  const { store: item, ...restProps } = props;
+  const { store: item } = props;
   let $item: HTMLDivElement;
   const [state, setState] = createSignal(item.state);
   item.onStateChange((nextState) => {
@@ -204,13 +183,20 @@ const ItemImpl = (
         if (event.pointerType !== "mouse") {
           return;
         }
+        if (!item.state.disabled) {
+          event.currentTarget.focus();
+        }
         item.move();
       }}
       onPointerLeave={(event) => {
         if (event.pointerType !== "mouse") {
           return;
         }
+        event.currentTarget.blur();
         item.leave();
+      }}
+      onClick={() => {
+        item.click();
       }}
       onFocus={() => {
         item.focus();
@@ -218,7 +204,6 @@ const ItemImpl = (
       onBlur={() => {
         item.blur();
       }}
-      {...restProps}
     >
       {props.children}
     </div>
@@ -254,33 +239,29 @@ const Sub = (
 const SubTrigger = (
   props: {
     store: MenuItemCore;
+    onMounted?: (el: HTMLDivElement) => void;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
   const { store: item } = props;
 
   let $item: HTMLDivElement | undefined = undefined;
-  // const store = useContext(MenuSubContext);
 
-  // 既然在 SubTrigger 里面了，传入的 item 必然有 item.menu。但是为了避免可能的错误，还是用 ?. 处理
   onMount(() => {
-    const $_item = $item;
-    if (!$_item) {
+    item.log("[COMPONENT]MenuSubTrigger - mount");
+    const $$item = $item;
+    if (!$$item) {
       return;
     }
-    item.menu!.popper.setReference({
+    if (!item.menu) {
+      return;
+    }
+    if (props.onMounted) {
+      props.onMounted($$item);
+    }
+    item.menu.popper.setReference({
       getRect() {
-        const rect = $_item.getBoundingClientRect();
+        const rect = $$item.getBoundingClientRect();
         return rect;
-        // console.log(...item.menu.popper.log("get reference rect", $item, rect));
-        // const { left, top, width, height, x, y } = rect;
-        // return {
-        //   left,
-        //   top,
-        //   width,
-        //   height,
-        //   x,
-        //   y,
-        // } as Rect;
       },
     });
   });

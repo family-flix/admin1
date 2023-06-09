@@ -3,7 +3,7 @@
  */
 import { For, JSX, createSignal } from "solid-js";
 
-import { LazyImage } from "@/components/LazyImage";
+import { LazyImage } from "@/components/ui/image";
 import * as Form from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

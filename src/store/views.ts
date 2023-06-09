@@ -12,7 +12,9 @@ import { MemberManagePage } from "@/pages/member";
 import { VideoParsingPage } from "@/pages/parse";
 import { TVProfilePage } from "@/pages/tv/profile";
 import { HomeLayout } from "@/pages/home/layout";
-// import { EmptyLayout } from "@/layouts/outer";
+import { NavigatorCore } from "@/domains/navigator";
+
+RouteViewCore.prefix = NavigatorCore.prefix;
 
 export const rootView = new RouteViewCore({ title: "ROOT", component: "div" });
 export const homeLayout = new RouteViewCore({
@@ -63,7 +65,7 @@ export const loginPage = new RouteViewCore({
   title: "登录",
   component: LoginPage,
 });
-// const testView = new RouteViewCore({
-//   title: "测试",
-//   component: TestPage,
-// });
+export const testPage = new RouteViewCore({
+  title: "测试",
+  component: TestPage,
+});

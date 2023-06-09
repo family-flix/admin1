@@ -11,6 +11,7 @@ import {
   AliyunFolderItem,
   save_shared_files,
 } from "./services";
+import { sleep } from "@/utils";
 
 enum Events {
   /** 输入分享链接 */
@@ -106,22 +107,25 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   async _fetch(file_id: string) {
     this.file_id = file_id;
     if (this.loading) {
-      return Result.Err(new Error("正在加载中"));
+      return Result.Err("正在加载中");
     }
     if (!this.url) {
-      return Result.Err(new Error("请先指定分享链接"));
+      return Result.Err("请先指定分享链接");
     }
     this.loading = true;
-    const r = await fetch_shared_files({
-      url: this.url,
-      file_id,
-      next_marker: this.next_marker,
-    });
+    const [r] = await Promise.all([
+      fetch_shared_files({
+        url: this.url,
+        file_id,
+        next_marker: this.next_marker,
+      }),
+      sleep(1200),
+    ]);
     this.loading = false;
     if (r.error) {
       return Result.Err(r.error);
     }
-    return r;
+    return Result.Ok(r.data);
   }
   reset() {
     this.paths = [];
@@ -137,18 +141,23 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   ) {
     const { file_id = "root", name = "分享文件", type = "folder" } = file;
     if (type === "file") {
-      this.emit(Events.Tip, "仅文件夹可点击");
-      return;
+      const msg = this.tip({
+        text: ["仅文件夹可点击"],
+      });
+      return Result.Err(msg);
     }
     if (!this.url) {
-      return Result.Err(new Error("请先指定分享链接"));
+      const msg = this.tip({
+        text: ["请先指定分享链接"],
+      });
+      return Result.Err(msg);
     }
     this.next_marker = "";
     const existing_index = this.paths.findIndex((p) => p.file_id === file_id);
     const r = await this._fetch(file_id);
     if (r.error) {
-      this.emit(Events.Tip, r.error.message);
-      return;
+      const msg = this.tip({ text: ["获取资源失败", r.error.message] });
+      return Result.Err(msg);
     }
     (() => {
       if (this.paths.length === 0) {
@@ -172,7 +181,8 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   }
   async loadMore() {
     if (!this.url) {
-      return Result.Err(new Error("请先指定分享链接"));
+      const msg = this.tip({ text: ["请先指定分享链接"] });
+      return Result.Err(msg);
     }
     const r = await this._fetch(this.file_id);
     if (r.error) {
@@ -189,10 +199,11 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   }
   bindSelectedFolderInDrive() {
     if (this.selectedFolder === null) {
-      this.tip({ text: ["请先选择要关联的文件夹"] });
-      return;
+      const msg = this.tip({ text: ["请先选择要关联的文件夹"] });
+      return Result.Err(msg);
     }
     this.bindFolderInDrive(this.selectedFolder);
+    return Result.Ok(null);
   }
   /**
    * 将分享文件夹和网盘内同名文件夹进行关联

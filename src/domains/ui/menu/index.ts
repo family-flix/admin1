@@ -41,7 +41,7 @@ type MenuProps = {
 };
 
 export class MenuCore extends BaseDomain<TheTypesOfEvents> {
-  name = "MenuCore";
+  _name = "MenuCore";
   debug = true;
 
   popper: PopperCore;
@@ -57,24 +57,28 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   constructor(
     options: Partial<
       {
-        name: string;
+        _name: string;
       } & MenuProps
     > = {}
   ) {
     super(options);
-
-    const { name, items = [], side, align, strategy } = options;
+    const { _name, items = [], side, align, strategy } = options;
+    if (_name) {
+      this._name = _name;
+    }
     this.state.items = items;
     this.items = items;
-    this.listenItems(items);
+
     this.popper = new PopperCore({
       side,
       align,
       strategy,
-      name: name ? `${name}-popper` : "MenuCore",
+      _name: _name ? `${_name}__popper` : "menu__popper",
     });
     this.presence = new PresenceCore();
     this.layer = new DismissableLayerCore();
+
+    this.listenItems(items);
 
     this.popper.onEnter(() => {
       this.emit(Events.EnterMenu);
@@ -122,12 +126,13 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     // this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
-    console.log(...this.log("hide"));
+    // this.log("hide");
     this.presence.hide();
     this.emit(Events.Hidden);
     this.emit(Events.StateChange, { ...this.state });
   }
   listenItems(items: MenuItemCore[]) {
+    this.log("listen items", items);
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       item.onEnter(() => {
@@ -167,7 +172,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
         this.curSub = subMenu;
       });
       subMenu.onEnter(() => {
-        console.log(...this.log("sub.onEnter"));
+        this.log("sub.onEnter");
         this.inSubMenu = true;
       });
       subMenu.onLeave(() => {
@@ -185,6 +190,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   setItems(items: MenuItemCore[]) {
+    this.log("set items", items);
     this.state.items = items;
     this.items = items;
     this.listenItems(items);
@@ -200,7 +206,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     if (this.maybeHideSub === false) {
       return;
     }
-    console.log(...this.log("leaveMenu check need hide subMenu", this.curSub, this.inSubMenu));
+    // this.log("leaveMenu check need hide subMenu", this.curSub, this.inSubMenu);
     // this.emit(Events.LeaveMenu);
     // 直接从有 SubMenu 的 MenuItem 离开，不到其他 MenuItem 场景下，也要关闭 SubMenu
     if (this.curSub && !this.inSubMenu) {
@@ -208,7 +214,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   reset() {
-    console.log("[]MenuCore - reset", this.items);
+    // console.log("[]MenuCore - reset", this.items);
     this.inSubMenu = false;
     this.curItem = null;
     this.curSub = null;
@@ -235,54 +241,25 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.reset();
   }
 
-  handlers: Handler[] = [];
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.Show, handler);
   }
   onHide(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.Hidden, handler);
   }
   onEnterItem(handler: Handler<TheTypesOfEvents[Events.EnterItem]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.EnterItem, handler);
   }
   onLeaveItem(handler: Handler<TheTypesOfEvents[Events.LeaveItem]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.LeaveItem, handler);
   }
   onEnter(handler: Handler<TheTypesOfEvents[Events.EnterMenu]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.EnterMenu, handler);
   }
   onLeave(handler: Handler<TheTypesOfEvents[Events.LeaveMenu]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.LeaveMenu, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    // if (this.handlers.includes(handler)) {
-    //   return () => {};
-    // }
-    // this.handlers.push(handler);
     return this.on(Events.StateChange, handler);
   }
 

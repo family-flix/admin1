@@ -132,11 +132,15 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   /** 文件夹列表 */
   folderColumns: (DriveFolder | DriveFile)[][] = [];
 
-  constructor(options: DriveState) {
+  constructor(options: Partial<{ _name: string }> & DriveState) {
     super(options);
-    const { id, name } = options;
+
+    const { _name, id, name } = options;
     this.id = id;
     this.name = name;
+    if (_name) {
+      this._name = _name;
+    }
     this.state = options;
   }
 
@@ -229,9 +233,26 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     this.tip({ text: ["更新云盘信息成功"] });
     return Result.Ok("更新云盘信息成功");
   }
+  async _refresh() {
+    const r = await refreshDriveProfile({ drive_id: this.id });
+    if (r.error) {
+      // this.tip({ text: ["刷新失败", r.error.message] });
+      return Result.Err(r.error);
+    }
+    const { user_name, avatar, used_size, total_size, used_percent } = r.data;
+    // this.tip({ text: ["刷新成功"] });
+    return Result.Ok({
+      avatar,
+      user_name,
+      used_size,
+      total_size,
+      used_percent,
+    });
+    // this.emit(Events.StateChange, { ...this.state });
+  }
   /** 刷新网盘基本信息 */
   async refresh() {
-    const r = await refreshDriveProfile({ drive_id: this.id });
+    const r = await this._refresh();
     if (r.error) {
       this.tip({ text: ["刷新失败", r.error.message] });
       return;
@@ -399,8 +420,21 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["签到失败", r.error.message] });
       return;
     }
+    const r2 = await this._refresh();
+    if (r2.error) {
+      this.tip({ text: ["刷新失败", r2.error.message] });
+      return;
+    }
+    const { user_name, avatar, used_size, total_size, used_percent } = r2.data;
+    this.state = Object.assign({}, this.state, {
+      avatar,
+      user_name,
+      used_size,
+      total_size,
+      used_percent,
+    });
+    this.emit(Events.StateChange, { ...this.state });
     this.tip({ text: ["签到成功"] });
-    this.refresh();
   }
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {

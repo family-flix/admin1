@@ -96,7 +96,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   //   this.styles = styles;
   // }
   show() {
-    this.log("show");
+    // this.log("show");
     // this.calc(true);
     this.state.open = true;
     this.state.mounted = true;

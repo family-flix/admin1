@@ -6,7 +6,7 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { RequestedResource, Result, ViewComponent } from "@/types";
 import { request } from "@/utils/request";
 import { Button } from "@/components/ui/button";
-import { LazyImage } from "@/components/LazyImage";
+import { LazyImage } from "@/components/ui/image";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { bind_searched_tv_for_tv } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";

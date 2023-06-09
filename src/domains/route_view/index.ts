@@ -59,7 +59,7 @@ type RouteViewState = {
   layered: boolean;
 };
 type RouteViewProps = {
-  prefix?: string;
+  // prefix?: string;
   title: string;
   component: unknown;
   keepAlive?: boolean;
@@ -67,11 +67,11 @@ type RouteViewProps = {
 
 export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   static Events = Events;
+  static prefix: string | null = null;
 
   _name = "ViewCore";
   debug = true;
   id = this.uid();
-  prefix: string | null;
   /** 配置信息 */
   configs: {
     /** 路由匹配规则 */
@@ -111,10 +111,10 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
 
   constructor(options: Partial<{ name: string }> & RouteViewProps) {
     super(options);
-    const { prefix = null, title, component, keepAlive = false } = options;
+    const { title, component, keepAlive = false } = options;
     this.title = title;
     this._name = title;
-    this.prefix = prefix;
+    // this.prefix = prefix;
     this.component = component;
     this.configs = [];
     // this.keepAlive = keepAlive;
@@ -143,7 +143,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 判断给定的 pathname 是否有匹配的内容 */
   async checkMatch({ pathname, type }: { pathname: string; type: RouteAction }) {
-    console.log(...this.log("checkMatch - ", this.title, pathname, this.configs, this.subViews));
+    // console.log(...this.log("checkMatch - ", this.title, pathname, this.configs, this.subViews));
     if (this.configs.length === 0) {
       return Result.Err("未配置子视图");
     }
@@ -178,7 +178,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     const query = buildQuery(targetPathname);
     matchedSubView.query = query;
     matchedSubView.params = params;
-    console.log(...this.log("match", matchedSubView._name));
+    // console.log(...this.log("match", matchedSubView._name));
     this.emit(Events.Match, matchedSubView);
     // this.setSubViews(matchedSubView, {
     //   pathname,
@@ -192,7 +192,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.prevView = prevView;
     this.curView = view;
     this.subViews = [view];
-    console.log("[Navigator]relaunch - prev view", prevView?._name, view._name);
+    // console.log("[Navigator]relaunch - prev view", prevView?._name, view._name);
     if (prevView) {
       prevView.hide();
     }
@@ -208,7 +208,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       params: Record<string, string>;
     }
   ) {
-    this.log("setSubViews", this.title, subView);
+    // this.log("setSubViews", this.title, subView);
     const { pathname, type, query, params } = extra;
     const prevView = this.curView;
     this.curView = subView;
@@ -242,7 +242,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       }
       return cloneViews;
     })();
-    this.log("next sub views", nextSubViews);
+    // this.log("next sub views", nextSubViews);
     (() => {
       if (type === "back") {
         if (prevView) {
@@ -260,11 +260,11 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       for (let i = 0; i < nextSubViews.length; i += 1) {
         const v = nextSubViews[i];
         if (v === subView) {
-          this.log(this.title, "show subView", v.title);
+          // this.log(this.title, "show subView", v.title);
           v.show();
           continue;
         }
-        this.log(this.title, "hide subView", v.title);
+        // this.log(this.title, "hide subView", v.title);
         // if (!this.keepAlive) {
         //   v.hide();
         // }
@@ -293,6 +293,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 添加子视图 */
   register(path: string, configFactory: () => RouteViewCore) {
+    const realPath = `${RouteViewCore.prefix}${path}`;
     const existing = this.configs.find((config) => {
       return config.path === path;
     });
@@ -300,11 +301,11 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       return this;
     }
     const keys: ParamConfigure[] = [];
-    const regexp = pathToRegexp(path, keys);
+    const regexp = pathToRegexp(realPath, keys);
     this.configs.push({
       regexp,
       keys,
-      path,
+      path: realPath,
       config: configFactory,
     });
     return this;
@@ -339,7 +340,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 主动隐藏视图 */
   hide() {
-    console.log("[ROUTE_VIEW]hide", this._name, this.state.visible);
+    // console.log("[ROUTE_VIEW]hide", this._name, this.state.visible);
     if (this.state.visible === false) {
       return;
     }
@@ -364,8 +365,6 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.isMounted = false;
     this.emit(Events.Unmounted);
   }
-  /** 销毁自身 */
-  // destroy() {}
 
   onStart(handler: Handler<TheTypesOfEvents[Events.Start]>) {
     return this.on(Events.Start, handler);

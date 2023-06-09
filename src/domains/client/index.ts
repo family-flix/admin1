@@ -79,6 +79,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     if (this.pending !== null) {
       const r = await this.pending;
       const d = r.data;
+      this.pending = null;
       return Result.Ok(d);
     }
     this.args = args;
@@ -89,6 +90,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     const [r] = await Promise.all([pending, sleep(1000)]);
     this.emit(Events.LoadingChange, false);
     this.emit(Events.Completed);
+    this.pending = null;
     if (r.error) {
       this.emit(Events.Failed, r.error);
       return Result.Err(r.error);

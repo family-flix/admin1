@@ -20,15 +20,6 @@ export const Presence = (
   store.onStateChange((nextState) => {
     setState(nextState);
   });
-  // store.onShow(() => {
-  //   console.log(1);
-  // });
-  // store.onHidden(() => {
-  //   console.log(2);
-  // });
-  // store.onDestroy(() => {
-  //   console.log(3);
-  // });
 
   const open = () => state().open;
   const mounted = () => state().mounted;

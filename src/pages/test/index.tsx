@@ -1,64 +1,101 @@
-import { Application } from "@/domains/app";
-import { NavigatorCore } from "@/domains/navigator";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { FormCore } from "@/domains/ui/form";
-import { InputCore } from "@/domains/ui/input";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-// import { PageView } from "@/components/ui/scroll-view";
-import * as Form from "@/components/ui/form";
-import { sleep } from "@/utils";
-import { Input } from "@/components/ui/input";
-import { FormFieldCore } from "@/domains/ui/form/field";
-import { Button } from "@/components/ui/button";
+import { FolderInput, MoreHorizontal } from "lucide-solid";
 
-export const TestPage = (props: { app: Application; router: NavigatorCore }) => {
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
+import { MenuItemCore } from "@/domains/ui/menu/item";
+import { MenuCore } from "@/domains/ui/menu";
+import { ViewComponent } from "@/types";
+import { For, JSX, onMount } from "solid-js";
+
+export const TestPage: ViewComponent = (props) => {
   const { app, router } = props;
 
-  const store = new ScrollViewCore();
-  const dialog = new TMDBSearcherDialogCore();
-  const input1 = new InputCore({
-    name: "name",
+  const dropdownMenu = new DropdownMenuCore({
+    _name: "shared-resource-dropdown",
+    items: [
+      // new MenuItemCore({
+      //   label: "查找同名文件夹并建立关联",
+      //   onClick() {
+      //     sharedResource.bindSelectedFolderInDrive();
+      //   },
+      // }),
+      // new MenuItemCore({
+      //   label: "检查同名文件夹",
+      //   icon: <Search class="w-4 h-4" />,
+      //   onClick() {
+      //     // sharedResource.findTheTVHasSameNameWithSelectedFolder();
+      //   },
+      // }),
+      new MenuItemCore({
+        label: "转存到默认网盘",
+        // onClick() {
+        //   sharedResource.transferSelectedFolderToDrive(app.drives[0]);
+        // },
+      }),
+      new MenuItemCore({
+        _name: "transfer-to",
+        label: "转存到",
+        icon: <FolderInput class="w-4 h-4" />,
+        menu: new MenuCore({
+          _name: "sub-menus",
+          side: "right",
+          align: "start",
+          items: [
+            new MenuItemCore({
+              label: "123",
+            }),
+            new MenuItemCore({
+              label: "456",
+            }),
+            new MenuItemCore({
+              label: "789",
+            }),
+          ],
+        }),
+      }),
+    ],
   });
-  const field1 = new FormFieldCore({
-    label: "名称",
-  });
-  const form = new FormCore({
-    fields: [],
-  });
-  store.onPullToRefresh(async () => {
-    console.log("onRefreshing");
-    await sleep(1200);
-    store.stopPullToRefresh();
-  });
-  store.onReachBottom(() => {
-    console.log("reach bottom");
-  });
-  store.onScroll((scrollTop) => {
-    console.log("scroll", scrollTop);
-  });
-  form.onSubmit((values) => {
-    console.log(values);
-  });
+
+  const values = [
+    {
+      name: "1",
+    },
+    {
+      name: "2",
+    },
+    {
+      name: "3",
+    },
+    {
+      name: "4",
+    },
+  ];
 
   return (
     <div class="p-4 bg-white">
-      <div>测试哈哈</div>
-      <button
-        onClick={() => {
-          // store.startPullToRefresh();
-          form.submit();
+      {/* <For each={values}>
+        {(v) => {
+          const { name } = v;
+          return <InnerElm name={name}>{name}</InnerElm>;
         }}
-      >
-        refresh
-      </button>
-      <Form.Root store={form}>
-        <Form.Field store={field1}>
-          <Input store={input1} />
-        </Form.Field>
-        <Form.Submit store={form}>{/* <Button>提交</Button> */}</Form.Submit>
-      </Form.Root>
+      </For> */}
+
+      <DropdownMenu store={dropdownMenu}>
+        <div class="ml-20 inline-block cursor-pointer">
+          <MoreHorizontal class="w-6 h-6 text-gray-600" />
+        </div>
+      </DropdownMenu>
       <div style={{ height: "1200px" }}></div>
     </div>
   );
 };
+
+function InnerElm(props: { name: string } & JSX.HTMLAttributes<HTMLDivElement>) {
+  const { name } = props;
+
+  onMount(() => {
+    console.log("inner elm mounted", name);
+  });
+
+  return <div>{name}</div>;
+}

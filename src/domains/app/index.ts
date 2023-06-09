@@ -23,6 +23,7 @@ enum Events {
   ClickLink,
   Show,
   Hidden,
+  StateChange,
   // 该怎么处理？
   DrivesChange,
 }
@@ -50,17 +51,28 @@ type TheTypesOfEvents = {
   [Events.Blur]: void;
   [Events.Show]: void;
   [Events.Hidden]: void;
+  [Events.StateChange]: ApplicationState;
   [Events.DrivesChange]: Drive[];
+};
+
+type ApplicationProps = {
+  user: UserCore;
+  router: NavigatorCore;
+  cache: LocalCache;
+  beforeReady?: () => Promise<Result<null>>;
+  onReady?: () => void;
+};
+type ApplicationState = {
+  ready: boolean;
 };
 
 export class Application extends BaseDomain<TheTypesOfEvents> {
   user: UserCore;
   router: NavigatorCore;
   cache: LocalCache;
-  lifetimes: Partial<{
-    beforeReady: () => Promise<Result<null>>;
-    onReady: () => void;
-  }> = {};
+
+  lifetimes: Pick<ApplicationProps, "beforeReady" | "onReady">;
+
   size: {
     width: number;
     height: number;
@@ -76,19 +88,15 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   /** 网盘列表 */
   drives: Drive[] = [];
 
-  state: Partial<{
-    ready: boolean;
-  }> = {};
+  _ready: boolean = false;
 
-  static Events = Events;
+  get state(): ApplicationState {
+    return {
+      ready: this._ready,
+    };
+  }
 
-  constructor(
-    options: {
-      user: UserCore;
-      router: NavigatorCore;
-      cache: LocalCache;
-    } & Application["lifetimes"]
-  ) {
+  constructor(options: ApplicationProps) {
     super();
 
     const { user, router, cache, beforeReady, onReady } = options;
@@ -99,24 +107,23 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.user = user;
     this.router = router;
     this.cache = cache;
-
-    const { availHeight, availWidth } = window.screen;
-    if (window.navigator.userAgent.match(/iphone/i)) {
-      const matched = [
-        // iphonex iphonexs iphone12mini
-        "375-812",
-        // iPhone XS Max iPhone XR
-        "414-896",
-        // iPhone pro max iPhone14Plus
-        "428-926",
-        // iPhone 12/pro 13/14  753
-        "390-844",
-        // iPhone 14Pro
-        "393-852",
-        // iPhone 14ProMax
-        "430-932",
-      ].includes(`${availWidth}-${availHeight}`);
-    }
+    // const { availHeight, availWidth } = window.screen;
+    // if (window.navigator.userAgent.match(/iphone/i)) {
+    //   const matched = [
+    //     // iphonex iphonexs iphone12mini
+    //     "375-812",
+    //     // iPhone XS Max iPhone XR
+    //     "414-896",
+    //     // iPhone pro max iPhone14Plus
+    //     "428-926",
+    //     // iPhone 12/pro 13/14  753
+    //     "390-844",
+    //     // iPhone 14Pro
+    //     "393-852",
+    //     // iPhone 14ProMax
+    //     "430-932",
+    //   ].includes(`${availWidth}-${availHeight}`);
+    // }
   }
   /** 启动应用 */
   async start() {
@@ -129,7 +136,9 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
         return Result.Err(r.error);
       }
     }
+    this._ready = true;
     this.emit(Events.Ready);
+    this.emit(Events.StateChange, { ...this.state });
     // console.log("[]Application - before start");
     return Result.Ok(null);
   }
@@ -197,7 +206,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.drives = [...r.data];
     this.emit(Events.DrivesChange, [...r.data]);
   }
-
   onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
     this.on(Events.DrivesChange, handler);
   }
@@ -206,17 +214,17 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
    * ----------------
    */
   onReady(handler: Handler<TheTypesOfEvents[Events.Ready]>) {
-    this.on(Events.Ready, handler);
+    return this.on(Events.Ready, handler);
   }
   /** 平台相关全局事件 */
   onPopState(handler: Handler<TheTypesOfEvents[Events.PopState]>) {
-    this.on(Events.PopState, handler);
+    return this.on(Events.PopState, handler);
   }
   onResize(handler: Handler<TheTypesOfEvents[Events.Resize]>) {
-    this.on(Events.Resize, handler);
+    return this.on(Events.Resize, handler);
   }
   onBlur(handler: Handler<TheTypesOfEvents[Events.Blur]>) {
-    this.on(Events.Blur, handler);
+    return this.on(Events.Blur, handler);
   }
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
     return this.on(Events.Show, handler);
@@ -225,13 +233,16 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     return this.on(Events.Hidden, handler);
   }
   onClickLink(handler: Handler<TheTypesOfEvents[Events.ClickLink]>) {
-    this.on(Events.ClickLink, handler);
+    return this.on(Events.ClickLink, handler);
   }
   onKeydown(handler: Handler<TheTypesOfEvents[Events.Keydown]>) {
-    this.on(Events.Keydown, handler);
+    return this.on(Events.Keydown, handler);
   }
   onEscapeKeyDown(handler: Handler<TheTypesOfEvents[Events.EscapeKeyDown]>) {
-    this.on(Events.EscapeKeyDown, handler);
+    return this.on(Events.EscapeKeyDown, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
   }
   /**
    * ----------------
@@ -239,6 +250,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
    * ----------------
    */
   onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
-    this.on(Events.Error, handler);
+    return this.on(Events.Error, handler);
   }
 }

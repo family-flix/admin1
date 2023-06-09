@@ -2,6 +2,17 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
+import {
+  Edit2,
+  Gem,
+  Instagram,
+  QrCode as QrCodeIcon,
+  RotateCcw,
+  ShieldAlert,
+  ShieldClose,
+  UserPlus,
+  UserX,
+} from "lucide-solid";
 
 import { add_member, create_member_auth_link, delete_member, fetch_members, MemberItem } from "@/services";
 import { Button } from "@/components/ui/button";
@@ -14,7 +25,6 @@ import { InputCore } from "@/domains/ui/input";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
-import { Edit2, Gem, Instagram, QrCode as QrCodeIcon, ShieldAlert, ShieldClose, UserPlus, UserX } from "lucide-solid";
 import { Popover } from "@/components/ui/popover";
 import { Qrcode } from "@/components/Qrcode";
 import { SelectionCore } from "@/domains/cur";
@@ -22,7 +32,11 @@ import { SelectionCore } from "@/domains/cur";
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
-  const list = new ListCore(new RequestCore(fetch_members));
+  const list = new ListCore(new RequestCore(fetch_members), {
+    onLoadingChange(loading) {
+      refreshBtn.setLoading(loading);
+    },
+  });
   const memberSelect = new SelectionCore<MemberItem>();
   const generateToken = new RequestCore(create_member_auth_link, {
     onLoading(loading) {
@@ -68,6 +82,11 @@ export const MemberManagePage: ViewComponent = (props) => {
   const button1 = new ButtonCore({
     onClick() {
       addMemberDialog.show();
+    },
+  });
+  const refreshBtn = new ButtonCore({
+    onClick() {
+      list.refresh();
     },
   });
   const profileBtn = new ButtonInListCore<MemberItem>({
@@ -135,7 +154,7 @@ export const MemberManagePage: ViewComponent = (props) => {
 
   const [response, setResponse] = createSignal(list.response);
   list.onStateChange((nextState) => {
-    console.log("list ", nextState);
+    // console.log("list ", nextState);
     setResponse(nextState);
   });
 
@@ -143,15 +162,21 @@ export const MemberManagePage: ViewComponent = (props) => {
 
   const dataSource = () => response().dataSource;
   const empty = () => response().empty;
+  const noMore = () => response().noMore;
 
   return (
     <>
       <div class="min-h-full">
         <h1 class="text-2xl">成员列表</h1>
         <div class="mt-8">
-          <Button store={button1} icon={<UserPlus class="w-4 h-4" />}>
-            新增成员
-          </Button>
+          <div class="space-x-2">
+            <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
+              刷新
+            </Button>
+            <Button store={button1} icon={<UserPlus class="w-4 h-4" />}>
+              新增成员
+            </Button>
+          </div>
           <Show when={!empty()}>
             <div class="space-y-8 mt-8">
               <For each={dataSource()}>
@@ -210,16 +235,16 @@ export const MemberManagePage: ViewComponent = (props) => {
                                   <div class="space-y-2">
                                     {[
                                       {
-                                        prefix: "https://pc-t.funzm.com/home?token=",
+                                        prefix: "/admin/home/index?token=",
                                         qrcode: false,
                                       },
                                       {
-                                        prefix: "https://h5-t.funzm.com/home/index?token=",
+                                        prefix: "/mobile/home/index?token=",
                                         qrcode: true,
                                       },
                                     ].map((config) => {
                                       const { prefix, qrcode } = config;
-                                      const url = `${prefix}${id}`;
+                                      const url = `${router.origin}${prefix}${id}`;
                                       return (
                                         <div class="flex">
                                           <Show when={qrcode}>
@@ -231,7 +256,9 @@ export const MemberManagePage: ViewComponent = (props) => {
                                               used ? "line-through" : ""
                                             )}
                                           >
-                                            {url}
+                                            <a href={url} target="_blank">
+                                              {url}
+                                            </a>
                                           </div>
                                         </div>
                                       );
@@ -248,6 +275,16 @@ export const MemberManagePage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
+            <Show when={!noMore()}>
+              <div
+                class="mt-4 text-center text-slate-500 cursor-pointer"
+                onClick={() => {
+                  list.loadMore();
+                }}
+              >
+                加载更多
+              </div>
+            </Show>
           </Show>
         </div>
       </div>

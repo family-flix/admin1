@@ -68,25 +68,24 @@ export function ArticleHead(props: { node: ArticleHeadNode }) {
     node: { text, level, color },
   } = props;
 
-  const elements: Record<number, JSX.Element> = {
-    1: (
-      <h1 class="text-3xl border border-b" style={{ color }}>
+  const elements: Record<number, () => JSX.Element> = {
+    1: () => (
+      <h1 class="text-2xl" style={{ color }}>
         {text}
       </h1>
     ),
-    2: (
-      <h2 class="text-2xl border border-b" style={{ color }}>
+    2: () => (
+      <h2 class="text-xl" style={{ color }}>
         {text}
       </h2>
     ),
-    3: (
-      <h3 class="text-xl border border-b" style={{ color }}>
+    3: () => (
+      <h3 class="text-lg" style={{ color }}>
         {text}
       </h3>
     ),
   };
 
-  // @ts-ignore
   return <Dynamic component={elements[level]} />;
 }
 

@@ -2,7 +2,7 @@
  * @file 电视剧列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, Bell, BellPlus, BookOpen, Calendar, Check, Info, Send, Smile, X } from "lucide-solid";
+import { Award, Bell, BellPlus, BookOpen, Calendar, Check, Info, RotateCw, Send, Smile, X } from "lucide-solid";
 
 import {
   add_file_sync_task_of_tv,
@@ -23,7 +23,7 @@ import { MenuItemCore } from "@/domains/ui/menu/item";
 import { ContextMenu } from "@/components/ui/context-menu";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
-import { LazyImage } from "@/components/LazyImage";
+import { LazyImage } from "@/components/ui/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
@@ -37,7 +37,13 @@ import { JobCore } from "@/domains/job";
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
-  const list = new ListCore(new RequestCore(fetch_tv_list));
+  const list = new ListCore(new RequestCore(fetch_tv_list), {
+    onLoadingChange(loading) {
+      searchBtn.setLoading(loading);
+      resetBtn.setLoading(loading);
+      refreshBtn.setLoading(loading);
+    },
+  });
   const tvSelection = new SelectionCore<TVItem>();
   const folderSelection = new SelectionCore<{
     url: string;
@@ -249,6 +255,11 @@ export const TVManagePage: ViewComponent = (props) => {
       syncAllTVRequest.run();
     },
   });
+  const refreshBtn = new ButtonCore({
+    onClick() {
+      list.refresh();
+    },
+  });
 
   const [state, setState] = createSignal(list.response);
   const [folders, setFolders] = createSignal<
@@ -270,14 +281,23 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   list.init();
 
-  const response = () => state().dataSource;
+  const dataSource = () => state().dataSource;
+  const noMore = () => state().noMore;
 
   return (
     <>
       <div class="">
         <h1 class="text-2xl">电视剧列表</h1>
         <div class="mt-8">
-          <div class="grid grid-cols-12 gap-2">
+          <div>
+            <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+              刷新
+            </Button>
+            {/* <Button class="mt-4" store={syncAllTVBtn}>
+            更新所有电视剧
+          </Button> */}
+          </div>
+          <div class="grid grid-cols-12 gap-2 mt-4">
             <Input class="col-span-10" store={input1} />
             <Button class="col-span-1" store={searchBtn}>
               搜索
@@ -286,12 +306,9 @@ export const TVManagePage: ViewComponent = (props) => {
               重置
             </Button>
           </div>
-          {/* <Button class="mt-4" store={syncAllTVBtn}>
-            更新所有电视剧
-          </Button> */}
           <div class="mt-4">
             <div class="space-y-4">
-              <For each={response()}>
+              <For each={dataSource()}>
                 {(tv) => {
                   const {
                     id,
@@ -387,14 +404,16 @@ export const TVManagePage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            <div
-              class="mt-4 text-center text-slate-500 cursor-pointer"
-              onClick={() => {
-                list.loadMore();
-              }}
-            >
-              加载更多
-            </div>
+            <Show when={!noMore()}>
+              <div
+                class="mt-4 text-center text-slate-500 cursor-pointer"
+                onClick={() => {
+                  list.loadMore();
+                }}
+              >
+                加载更多
+              </div>
+            </Show>
           </div>
         </div>
       </div>

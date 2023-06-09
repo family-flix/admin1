@@ -18,9 +18,9 @@ export function RouteView(props: { store: RouteViewCore } & JSX.HTMLAttributes<H
   const visible = () => state().visible;
   const mounted = () => state().mounted;
 
-  effect(() => {
-    console.log("RouteView", store._name, visible(), mounted());
-  });
+  // effect(() => {
+  //   console.log("RouteView", store._name, visible(), mounted());
+  // });
 
   return (
     <Show when={mounted()}>

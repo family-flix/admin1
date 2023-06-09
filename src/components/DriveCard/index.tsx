@@ -10,7 +10,7 @@ import { ProgressCore } from "@/domains/ui/progress";
 import { DialogCore } from "@/domains/ui/dialog";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
-import { LazyImage } from "@/components/LazyImage";
+import { LazyImage } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -44,7 +44,9 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   });
   const confirmDeleteDriveDialog = new DialogCore({
     async onOk() {
+      confirmDeleteDriveDialog.okBtn.setLoading(true);
       await drive.delete();
+      confirmDeleteDriveDialog.okBtn.setLoading(false);
       confirmDeleteDriveDialog.hide();
       app.refreshDrives();
     },
@@ -60,16 +62,20 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       }
     },
   });
+  const checkInItem = new MenuItemCore({
+    label: "签到",
+    icon: <Apple class="mr-2 w-4 h-4" />,
+    async onClick() {
+      // this.disable(<Loader class="w-4 h-4" />);
+      checkInItem.disable();
+      await drive.checkIn();
+      checkInItem.enable();
+      dropdown.hide();
+    },
+  });
   const dropdown = new DropdownMenuCore({
     items: [
-      new MenuItemCore({
-        label: "签到",
-        icon: <Apple class="mr-2 w-4 h-4" />,
-        async onClick() {
-          await drive.checkIn();
-          dropdown.hide();
-        },
-      }),
+      checkInItem,
       new MenuItemCore({
         label: "导出",
         icon: <Download class="mr-2 w-4 h-4" />,

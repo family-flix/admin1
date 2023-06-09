@@ -54,7 +54,7 @@ const Content = (
     store: PopperCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store } = props;
+  const { store, ref } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
 
@@ -91,6 +91,7 @@ const Content = (
         props.ref = el;
       }}
       role={props.role}
+      // data-state={props['data-state']}
       class={cn("popper__content", props.class)}
       data-side={placedSide()}
       data-align={placedAlign()}
@@ -155,11 +156,11 @@ const Arrow = (
   });
 
   onMount(() => {
-    const $_arrow = $arrow;
-    if (!$_arrow) {
+    const $$arrow = $arrow;
+    if (!$$arrow) {
       return;
     }
-    store.setArrow($_arrow.getBoundingClientRect());
+    store.setArrow($$arrow.getBoundingClientRect());
   });
   //   onCleanup(() => {
   //     off();

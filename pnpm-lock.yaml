@@ -21,7 +21,6 @@ specifiers:
   tailwind-merge: ^1.12.0
   tailwindcss: ^3.3.1
   tailwindcss-animate: ^1.0.5
-  tapable: ^2.2.1
   typescript: ^4.9.5
   vite: ^4.2.0
   vite-plugin-solid: ^2.7.0
@@ -42,7 +41,6 @@ dependencies:
   solid-js: registry.npmmirror.com/solid-js/1.7.3
   tailwind-merge: registry.npmmirror.com/tailwind-merge/1.12.0
   tailwindcss-animate: registry.npmmirror.com/tailwindcss-animate/1.0.5_tailwindcss@3.3.1
-  tapable: registry.npmmirror.com/tapable/2.2.1
 
 devDependencies:
   '@types/lodash': registry.npmmirror.com/@types/lodash/4.14.195
@@ -2260,13 +2258,6 @@ packages:
       sucrase: registry.npmmirror.com/sucrase/3.32.0
     transitivePeerDependencies:
       - ts-node
-
-  registry.npmmirror.com/tapable/2.2.1:
-    resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/tapable/-/tapable-2.2.1.tgz}
-    name: tapable
-    version: 2.2.1
-    engines: {node: '>=6'}
-    dev: false
 
   registry.npmmirror.com/thenify-all/1.6.0:
     resolution: {integrity: sha512-RNxQH/qI8/t3thXJDwcstUO4zeqo64+Uy/+sNVRBx4Xn2OX+OZ9oP+iJnNFqplFra2ZUVeKCSa2oVWi3T4uVmA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/thenify-all/-/thenify-all-1.6.0.tgz}

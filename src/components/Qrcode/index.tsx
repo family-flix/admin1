@@ -5,8 +5,8 @@ import generateQrcode from "@/utils/qrcode";
 export function Qrcode(
   props: {
     text: string;
-//     width: number;
-//     height: number;
+    //     width: number;
+    //     height: number;
     logo?: string;
   } & JSX.HTMLAttributes<HTMLImageElement>
 ) {
@@ -21,5 +21,5 @@ export function Qrcode(
     setUrl(nextUrl);
   });
 
-  return <img class={props.class} style={props.style} src={url()} {...restProps} />;
+  return <img class={props.class} style={props.style} src={url()} />;
 }

@@ -1,11 +1,13 @@
 import debounce from "lodash/fp/debounce";
 
+const GLOBAL_KEY = "a_global";
+
 export class LocalCache {
   _values: Record<string, unknown> = {};
 
   constructor() {
     // @todo localStorage 是端相关 API，应该在外部传入
-    this._values = JSON.parse(localStorage.getItem("global") || "{}");
+    this._values = JSON.parse(localStorage.getItem(GLOBAL_KEY) || "{}");
   }
 
   get values() {
@@ -17,13 +19,13 @@ export class LocalCache {
   }
 
   set = debounce(100, (key: string, values: unknown) => {
-    console.log('cache set', key, values);
+    // console.log("cache set", key, values);
     const nextValues = {
       ...this._values,
       [key]: values,
     };
     this._values = nextValues;
-    localStorage.setItem("global", JSON.stringify(this._values));
+    localStorage.setItem(GLOBAL_KEY, JSON.stringify(this._values));
   }) as (key: string, value: unknown) => void;
 
   get<T>(key: string, defaultValue?: T) {
@@ -44,6 +46,6 @@ export class LocalCache {
     };
     delete nextValues[key];
     this._values = { ...nextValues };
-    localStorage.setItem("global", JSON.stringify(this._values));
+    localStorage.setItem(GLOBAL_KEY, JSON.stringify(this._values));
   }
 }

@@ -54,7 +54,12 @@ type TheTypesOfEvents = {
   [Events.Leave]: void;
   [Events.StateChange]: PopperState;
 };
-
+type PopperProps = {
+  side: Side;
+  align: Align;
+  strategy: "fixed" | "absolute";
+  middleware: Middleware[];
+};
 type PopperState = {
   strategy: Strategy;
   x: number;
@@ -116,21 +121,12 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   _enter = false;
   _focus = false;
 
-  constructor(
-    options: Partial<{
-      name: string;
-      side: Side;
-      align: Align;
-      strategy: "fixed" | "absolute";
-      middleware: Middleware[];
-    }> = {}
-  ) {
+  constructor(options: Partial<{ _name: string }> & Partial<PopperProps> = {}) {
     super(options);
 
-    const { name, side = "bottom", align = "center", strategy = "fixed", middleware = [] } = options;
-    if (name) {
-      this._name = name;
-      // this.name = name;
+    const { _name, side = "bottom", align = "center", strategy = "fixed", middleware = [] } = options;
+    if (_name) {
+      this._name = _name;
     }
     this.strategy = strategy;
     this.placement = (side + (align !== "center" ? "-" + align : "")) as Placement;
@@ -139,11 +135,11 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 基准元素加载完成 */
   setReference(reference: { getRect: () => Rect }) {
-    console.log("setReference", this.reference, reference, this._name);
+    this.log("setReference", this.reference, reference);
     if (this.reference !== null) {
       return;
     }
-    console.log("[PopperCore]setReference", reference);
+    this.log("[PopperCore]setReference", reference);
     this.reference = reference;
     this.state.reference = true;
     this.emit(Events.ReferenceMounted, reference);
@@ -151,10 +147,10 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 更新基准元素（右键菜单时会用到这个方法） */
   updateReference(reference: { getRect: () => Rect }) {
-    console.log("updateReference", this.reference);
-    if (this.reference === null) {
-      return;
-    }
+    this.log("updateReference", this.reference);
+    // if (this.reference === null) {
+    //   return;
+    // }
     this.reference = reference;
   }
   removeReference() {
@@ -202,7 +198,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
       placedAlign,
       reference: true,
     };
-    console.log(...this.log("place - before emit placed", { x, y }));
+    // console.log(...this.log("place - before emit placed", { x, y }));
     this.emit(Events.StateChange, {
       ...this.state,
     });

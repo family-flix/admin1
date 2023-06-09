@@ -5,10 +5,9 @@ import { For, createContext, createSignal, onMount, JSX } from "solid-js";
 import { ChevronRight } from "lucide-solid";
 
 import { ContextMenuCore } from "@/domains/ui/context-menu";
-import * as Menu from "@/components/ui/menu";
+import * as Menu from "@/packages/ui/menu";
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
-import { Rect } from "@/types";
 
 export const ContextMenu = (props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;

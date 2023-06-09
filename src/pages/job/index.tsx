@@ -16,7 +16,18 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   const { app, view, router } = props;
 
   const helper = new ListCore(new RequestCore(fetch_job_list), {});
-  const pauseJob = new RequestCore(pause_job);
+  const pauseJob = new RequestCore(pause_job, {
+    onLoading(loading) {
+      pauseJobBtn.setLoading(loading);
+    },
+    onFailed: (err) => {
+      app.tip({ text: ["中止任务失败", err.message] });
+    },
+    onSuccess: () => {
+      app.tip({ text: ["中止任务成功"] });
+      helper.refresh();
+    },
+  });
   const pauseJobBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
       pauseJob.run(task.id);
@@ -39,13 +50,6 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   const [response, setResponse] = createSignal(helper.response);
   helper.onStateChange((nextState) => {
     setResponse(nextState);
-  });
-  pauseJob.onFailed((err) => {
-    app.tip({ text: ["中止任务失败", err.message] });
-  });
-  pauseJob.onSuccess(() => {
-    app.tip({ text: ["中止任务成功"] });
-    helper.refresh();
   });
 
   const statusIcons: Record<TaskStatus, () => JSX.Element> = {

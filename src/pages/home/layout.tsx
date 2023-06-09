@@ -2,7 +2,7 @@
  * @file 后台/首页布局
  */
 import { For, JSX, createSignal } from "solid-js";
-import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch, LogOut } from "lucide-solid";
+import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch, LogOut, Settings } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
@@ -22,6 +22,9 @@ import {
 } from "@/store/views";
 import { Button } from "@/components/ui/button";
 import { ButtonCore } from "@/domains/ui/button";
+import { NavigatorCore } from "@/domains/navigator";
+import { DialogCore } from "@/domains/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -37,14 +40,26 @@ export const HomeLayout: ViewComponent = (props) => {
       logoutBtn.setLoading(false);
     },
   });
+  const settingsDialog = new DialogCore({
+    title: "配置",
+  });
+  const settingsBtn = new ButtonCore({
+    onClick() {
+      settingsDialog.show();
+    },
+  });
 
   const [pathname, setPathname] = createSignal(router.pathname);
   const [subViews, setSubViews] = createSignal(view.subViews);
+  // const [curSubView, setCurSubView] = createSignal(view.curView);
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
   });
+  // view.onCurViewChange((nextCurView) => {
+  //   setCurSubView(nextCurView);
+  // });
   view.onMatched((subView) => {
-    console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
+    // console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
     if (subView === view.curView) {
       return;
     }
@@ -65,9 +80,9 @@ export const HomeLayout: ViewComponent = (props) => {
         homeTransferPage,
         homeFilenameParsingPage,
       ].includes(view.prevView);
-      console.log("[LAYOUT]home/layout - check need remove subView", view.prevView._name, isMenusPage);
+      // console.log("[LAYOUT]home/layout - check need remove subView", view.prevView._name, isMenusPage);
       if (!isMenusPage) {
-        console.log("[LAYOUT]home/layout - remove subView", view.prevView._name);
+        // console.log("[LAYOUT]home/layout - remove subView", view.prevView._name);
         view.prevView.hide();
         view.removeSubView(view.prevView);
         return;
@@ -84,13 +99,19 @@ export const HomeLayout: ViewComponent = (props) => {
   // 因为 home layout 和 playing page 是共存的，所以切换到 playing page 时，home layout 也会检查是否匹配，结果是不匹配
   // 所以给 home layout 加了个 index
   view.onNotFound(() => {
-    console.log("[LAYOUT]home/layout - view.onNotFound", view.subViews);
-    // view.appendSubView(aView);
-    // view.curView = aView;
-    // view.curView.show();
+    // console.log("[LAYOUT]home/layout - view.onNotFound", view.subViews, view.state.visible, view.state.layered);
+    if (view.state.layered) {
+      return;
+    }
+    if (!view.state.visible) {
+      return;
+    }
+    view.curView = homeIndexPage;
+    view.curView.show();
+    view.appendSubView(view.curView);
   });
   router.onPathnameChange(({ pathname, type }) => {
-    console.log("[LAYOUT]home/layout - router.onPathnameChange", view.state.visible, view.state.layered);
+    // console.log("[LAYOUT]home/layout - router.onPathnameChange", view.state.visible, view.state.layered);
     setPathname(pathname);
     if (view.state.layered) {
       return;
@@ -131,7 +152,7 @@ export const HomeLayout: ViewComponent = (props) => {
       // },
     },
     {
-      text: "日志",
+      text: "任务",
       icon: <Bot class="w-6 h-6" />,
       link: "/home/task",
       // onClick() {
@@ -175,22 +196,30 @@ export const HomeLayout: ViewComponent = (props) => {
     <>
       <div class="flex w-full h-full">
         <div class="w-[248px] py-8 pt-4 pl-2 pr-2 border border-r-slate-300">
-          <div class="flex flex-col justify-between h-full">
-            <div class="flex-1 space-y-1 p-2 h-full rounded-xl self-start">
+          <div class="flex flex-col justify-between h-full w-full">
+            <div class="flex-1 space-y-1 p-2 w-full h-full rounded-xl self-start">
               <For each={menus()}>
                 {(menu) => {
                   const { icon, text, link, onClick } = menu;
                   return (
-                    <Menu icon={icon} highlight={pathname() === link} link={link} onClick={onClick}>
+                    <Menu
+                      icon={icon}
+                      highlight={pathname() === `${NavigatorCore.prefix}${link}`}
+                      link={link}
+                      onClick={onClick}
+                    >
                       {text}
                     </Menu>
                   );
                 }}
               </For>
             </div>
-            <div class="flex justify-center h-[68rpx]">
+            <div class="flex justify-center space-x-2 h-[68rpx]">
               <Button class="" store={logoutBtn} variant="subtle" icon={<LogOut class="w-4 h-4" />}>
                 退出登录
+              </Button>
+              <Button class="" store={settingsBtn} variant="subtle" icon={<Settings class="w-4 h-4" />}>
+                设置
               </Button>
             </div>
           </div>
@@ -223,6 +252,7 @@ export const HomeLayout: ViewComponent = (props) => {
         </div>
       </div>
       <TMDBSearcherDialog store={dialog} />
+      <Dialog store={settingsDialog}>敬请期待</Dialog>
     </>
   );
 };

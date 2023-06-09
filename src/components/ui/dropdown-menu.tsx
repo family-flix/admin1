@@ -24,37 +24,44 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
 
   return (
     <DropdownMenuPrimitive.Root store={store}>
-      <DropdownMenuPrimitive.Trigger store={store}>{props.children}</DropdownMenuPrimitive.Trigger>
+      <DropdownMenuPrimitive.Trigger class="inline-block" store={store}>
+        {props.children}
+      </DropdownMenuPrimitive.Trigger>
       <DropdownMenuPrimitive.Portal store={store.menu}>
         <DropdownMenuPrimitive.Content
           class={cn(
-            "z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white p-1 text-slate-700 shadow-md animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400",
+            "z-50 min-w-[8rem] w-56 overflow-hidden rounded-md border-2 border-slate-100 bg-white p-1 text-slate-700 shadow-md dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400",
             props.class
           )}
           store={store}
         >
           <For each={items()}>
             {(item) => {
-              if (item.menu) {
-                return <ItemWithSubMenu menu={item.menu} store={item} />;
-              }
               return (
-                <DropdownMenuPrimitive.Item
-                  class={cn(
-                    "relative flex cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm font-medium outline-none  data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-700",
-                    // "pl-8"
-                    "focus:bg-slate-100"
-                  )}
-                  store={item}
+                <Show
+                  when={!!item.menu}
+                  fallback={
+                    <DropdownMenuPrimitive.Item
+                      class={cn(
+                        "relative flex cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm font-medium outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-700",
+                        "focus:bg-slate-100"
+                      )}
+                      store={item}
+                    >
+                      <Show when={!!item.icon}>
+                        <div class="mr-2">{item.icon as Element}</div>
+                      </Show>
+                      {item.label}
+                      <Show when={item.shortcut}>{item.shortcut}</Show>
+                    </DropdownMenuPrimitive.Item>
+                  }
                 >
-                  <Show when={!!item.icon}>{item.icon as Element}</Show>
-                  {item.label}
-                  <Show when={item.shortcut}>{item.shortcut}</Show>
-                </DropdownMenuPrimitive.Item>
+                  <ItemWithSubMenu subMenu={item.menu!} store={item} />
+                </Show>
               );
             }}
           </For>
-          {/* <DropdownMenuArrow class="DropdownMenuArrow" /> */}
+          <DropdownMenuPrimitive.Arrow store={store} />
         </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>
     </DropdownMenuPrimitive.Root>
@@ -63,11 +70,11 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
 
 const ItemWithSubMenu = (
   props: {
-    menu: MenuCore;
+    subMenu: MenuCore;
     store: MenuItemCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store: item, menu: subMenu } = props;
+  const { store: item, subMenu } = props;
 
   const [itemState, setItemState] = createSignal(item.state);
   const [state, setState] = createSignal(subMenu.state);
@@ -81,18 +88,23 @@ const ItemWithSubMenu = (
 
   const items = () => state().items;
   const label = () => itemState().label;
+  const icon = () => itemState().icon as JSX.Element;
 
   return (
     <DropdownMenuPrimitive.Sub store={subMenu}>
       <DropdownMenuPrimitive.SubTrigger
         class={cn(
-          "flex cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm font-medium outline-none focus:bg-slate-100 data-[state=open]:bg-slate-100 dark:focus:bg-slate-700 dark:data-[state=open]:bg-slate-700",
-          // "pl-8",
+          "flex cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm font-medium outline-none focus:bg-slate-100 data-[highlighted]:bg-slate-100 data-[state=open]:bg-slate-100 dark:focus:bg-slate-700 dark:data-[state=open]:bg-slate-700",
+          {
+            "pl-8": !!icon(),
+          },
           props.class
         )}
-        parent={subMenu}
         store={item}
       >
+        <Show when={!!icon()}>
+          <div class="mr-2">{icon()}</div>
+        </Show>
         {label()}
         <div class="ml-auto h-4 w-4">
           <ChevronRight width={15} height={15} />
@@ -101,24 +113,23 @@ const ItemWithSubMenu = (
       <DropdownMenuPrimitive.Portal store={subMenu}>
         <DropdownMenuPrimitive.SubContent
           class={cn(
-            "z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white p-1 text-slate-700 shadow-md animate-in slide-in-from-left-1 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400",
+            "z-50 min-w-[8rem] overflow-hidden rounded-md border-2 border-slate-100 bg-white p-1 text-slate-700 shadow-md dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400",
             props.class
           )}
           store={subMenu}
         >
           <For each={items()}>
-            {(ii) => {
-              const { label } = ii;
-              if (ii.menu) {
-                return <ItemWithSubMenu menu={subMenu} store={ii}></ItemWithSubMenu>;
+            {(subMenuItem) => {
+              const { label } = subMenuItem;
+              if (subMenuItem.menu) {
+                return <ItemWithSubMenu subMenu={subMenuItem.menu} store={subMenuItem}></ItemWithSubMenu>;
               }
               return (
                 <DropdownMenuPrimitive.Item
                   class={cn(
                     "relative flex cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-700"
-                    // "pl-8"
                   )}
-                  store={ii}
+                  store={subMenuItem}
                 >
                   {label}
                 </DropdownMenuPrimitive.Item>

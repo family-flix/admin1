@@ -62,8 +62,7 @@ export const ScrollView = (
 };
 
 const Root = (props: {} & JSX.HTMLAttributes<HTMLDivElement>) => {
-  const { ...restProps } = props;
-  return <div {...restProps}>{props.children}</div>;
+  return <div>{props.children}</div>;
 };
 const Indicator = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;

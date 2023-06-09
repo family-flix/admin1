@@ -46,7 +46,7 @@ type MenuItemState = MenuItemProps & {
 };
 
 export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
-  name = "MenuItemCore";
+  _name = "MenuItemCore";
   debug = true;
 
   label: string;
@@ -66,14 +66,17 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
 
   _enter = false;
 
-  constructor(options: Partial<{ name: string }> & MenuItemProps) {
+  constructor(options: Partial<{ _name: string }> & MenuItemProps) {
     super(options);
 
-    const { label, icon, shortcut, disabled = false, menu, onClick } = options;
+    const { _name, label, icon, shortcut, disabled = false, menu, onClick } = options;
 
     this.label = label;
     this.icon = icon;
     this.shortcut = shortcut;
+    if (_name) {
+      this._name = _name;
+    }
 
     this.state.label = label;
     this.state.icon = icon;
@@ -92,12 +95,20 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
       });
     }
     if (onClick) {
-      this.onClick(onClick);
+      this.onClick(onClick.bind(this));
     }
+  }
+  setIcon(icon: unknown) {
+    this.state.icon = icon;
+    this.emit(Events.StateChange, { ...this.state });
   }
   /** 禁用指定菜单项 */
   disable() {
     this.state.disabled = true;
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  enable() {
+    this.state.disabled = false;
     this.emit(Events.StateChange, { ...this.state });
   }
   /** 鼠标进入菜单项 */
@@ -150,6 +161,9 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   click() {
+    if (this.state.disabled) {
+      return;
+    }
     this.emit(Events.Click);
   }
   reset() {

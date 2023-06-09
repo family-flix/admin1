@@ -132,7 +132,7 @@ export class ListCore<
       throw new Error("fetch must be a instance of RequestCore");
     }
 
-    const { debug, rowKey = "id", beforeRequest, processor, extraDefaultResponse } = options;
+    const { debug, rowKey = "id", beforeRequest, processor, extraDefaultResponse, onLoadingChange } = options;
     this.debug = !!debug;
     this.rowKey = rowKey;
     this.originalFetch = fetch;
@@ -156,6 +156,9 @@ export class ListCore<
     this.extraResponse = {
       ...extraDefaultResponse,
     };
+    if (onLoadingChange) {
+      this.onLoadingChange(onLoadingChange);
+    }
     this.initialize(options);
   }
   private initialize = (options: ListProps<T>) => {

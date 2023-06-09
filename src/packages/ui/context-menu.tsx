@@ -4,7 +4,7 @@
 import { onMount, JSX } from "solid-js";
 
 import { ContextMenuCore } from "@/domains/ui/context-menu";
-import * as Menu from "@/components/ui/menu";
+import * as Menu from "@/packages/ui/menu";
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 

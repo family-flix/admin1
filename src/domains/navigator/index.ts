@@ -61,6 +61,7 @@ type RouteConfigure = {
 };
 
 export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
+  static prefix: string | null = null;
   _name = "NavigatorCore";
   debug = false;
 
@@ -92,24 +93,28 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   };
 
   /** 启动路由监听 */
-  async start(location: RouteLocation) {
+  async prepare(location: RouteLocation) {
     // console.log("[DOMAIN]router - start");
     const { pathname, href, origin, host, protocol } = location;
-    this.origin = origin;
-    this.log("start, current pathname is", pathname);
-    // this.setSomething(location);
     this.setPathname(pathname);
+    this.origin = origin;
+    // this.pathname = pathname;
     const query = buildQuery(href);
     this.query = query;
+    this._pending = {
+      pathname,
+      type: "initialize",
+    };
+    // this.log("start, current pathname is", pathname);
+  }
+  start() {
+    const { pathname } = this._pending;
+    this.setPathname(pathname);
     this.histories = [
       {
         pathname,
       },
     ];
-    this._pending = {
-      pathname,
-      type: "initialize",
-    };
     this.emit(Events.PathnameChange, { ...this._pending });
   }
 
@@ -121,43 +126,58 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 跳转到指定路由 */
   async push(targetPathname: string) {
-    this.log("push", targetPathname, this.prevPathname);
-    if (this.pathname === targetPathname) {
-      this.error("cur pathname has been", targetPathname);
+    // this.log("push", targetPathname, this.prevPathname);
+    // const realTargetPathname = ;
+    // const query = buildQuery(realTargetPathname);
+    const r = new URL(
+      (() => {
+        const p = `${NavigatorCore.prefix}${targetPathname}`;
+        if (p.includes("http")) {
+          return p;
+        }
+        return `${this.origin}${p}`;
+      })()
+    );
+    const { pathname: realTargetPathname, href } = r;
+    const query = buildQuery(href);
+    this.query = query;
+    if (this.pathname === realTargetPathname) {
+      console.log("cur pathname has been", targetPathname);
       return;
     }
     const prevPathname = this.pathname;
     this.setPrevPathname(prevPathname);
-    this.setPathname(targetPathname);
-    this.histories.push({ pathname: targetPathname });
+    this.setPathname(realTargetPathname);
+    this.histories.push({ pathname: realTargetPathname });
     this.emit(Events.PushState, {
       from: this.prevPathname,
       // 这里似乎不用 this.origin，只要是 / 开头的，就会拼接在后面
-      path: `${this.origin}${targetPathname}`,
-      pathname: targetPathname,
+      path: `${this.origin}${realTargetPathname}`,
+      pathname: realTargetPathname,
     });
     this._pending = {
-      pathname: targetPathname,
+      pathname: realTargetPathname,
       type: "push",
     };
     this.emit(Events.PathnameChange, { ...this._pending });
   }
   replace = async (targetPathname: string) => {
-    this.log("replace", targetPathname, this.pathname);
-    if (targetPathname === this.pathname) {
+    const realTargetPathname = NavigatorCore.prefix + targetPathname;
+    // this.log("replace", targetPathname, this.pathname);
+    if (this.pathname === realTargetPathname) {
       return;
     }
     this.setPrevPathname(this.pathname);
-    this.setPathname(targetPathname);
-    this.histories[this.histories.length - 1] = { pathname: targetPathname };
+    this.setPathname(realTargetPathname);
+    this.histories[this.histories.length - 1] = { pathname: realTargetPathname };
     this.emit(Events.ReplaceState, {
       from: this.prevPathname,
       //       title,
-      path: `${this.origin}${targetPathname}`,
-      pathname: targetPathname,
+      path: `${this.origin}${realTargetPathname}`,
+      pathname: realTargetPathname,
     });
     this._pending = {
-      pathname: targetPathname,
+      pathname: realTargetPathname,
       type: "push",
     };
     this.emit(Events.PathnameChange, { ...this._pending });
@@ -170,11 +190,14 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   };
   /** 外部路由改变（点击浏览器前进、后退），作出响应 */
   handlePopState({ type, pathname }: { type: string; pathname: string }) {
-    this.log("pathname change", type, pathname);
+    // this.log("pathname change", type, pathname);
     if (type !== "popstate") {
       return;
     }
     const targetPathname = pathname;
+    const prevPathname = this.pathname;
+    this.setPrevPathname(prevPathname);
+    this.setPathname(targetPathname);
     const isForward = (() => {
       if (this.prevHistories.length === 0) {
         return false;

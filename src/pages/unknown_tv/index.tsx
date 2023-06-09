@@ -1,8 +1,8 @@
 /**
  * @file 索引后没有找到匹配信息的电视剧（后面称为「未知电视剧」）
  */
-import { createSignal, For } from "solid-js";
-import { Brush } from "lucide-solid";
+import { createSignal, For, Show } from "solid-js";
+import { Brush, List, RotateCw } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { bind_searched_tv_for_tv, fetch_unknown_tv_list, UnknownTVItem } from "@/services";
@@ -20,13 +20,17 @@ import { DialogCore } from "@/domains/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { InputCore } from "@/domains/ui/input";
 import { Button } from "@/components/ui/button";
-import { ButtonInListCore } from "@/domains/ui/button";
+import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 
 export const UnknownTVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
   const cur = new SelectionCore<UnknownTVItem>();
-  const unknownTVList = new ListCore(new RequestCore(fetch_unknown_tv_list));
+  const list = new ListCore(new RequestCore(fetch_unknown_tv_list), {
+    onLoadingChange(loading) {
+      refreshBtn.setLoading(loading);
+    },
+  });
   const dialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
       if (!cur.value) {
@@ -43,6 +47,11 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
       dialog.show();
     },
   });
+  const refreshBtn = new ButtonCore({
+    onClick() {
+      list.refresh();
+    },
+  });
   const bindProfileForTV = new RequestCore(bind_searched_tv_for_tv, {
     onLoading(loading) {
       dialog.okBtn.setLoading(loading);
@@ -53,7 +62,7 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
-      unknownTVList.refresh();
+      list.refresh();
     },
   });
   const contextMenu = new ContextMenuCore({
@@ -71,22 +80,34 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
     app.tip(msg);
   });
 
-  const [response, setResponse] = createSignal(unknownTVList.response);
+  const [response, setResponse] = createSignal(list.response);
 
-  unknownTVList.onStateChange((nextState) => {
+  list.onStateChange((nextState) => {
     setResponse(nextState);
   });
 
-  unknownTVList.init();
+  list.init();
 
   const dataSource = () => response().dataSource;
+  const empty = () => response().empty;
+  const noMore = () => response().noMore;
 
   return (
     <>
       <div class="">
         <h1 class="text-2xl">未识别的影视剧</h1>
         <div class="mt-8">
+          <div class="space-x-2">
+            <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+              刷新
+            </Button>
+          </div>
           <div>
+            <Show when={empty()}>
+              <div class="w-full h-[240px] center flex items-center justify-center">
+                <div class="text-slate-500 text-xl">列表为空</div>
+              </div>
+            </Show>
             <div class="grid grid-cols-6 gap-2">
               <For each={dataSource()}>
                 {(file) => {
@@ -117,6 +138,16 @@ export const UnknownTVManagePage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
+            <Show when={!noMore()}>
+              <div
+                class="mt-4 text-center text-slate-500 cursor-pointer"
+                onClick={() => {
+                  list.loadMore();
+                }}
+              >
+                加载更多
+              </div>
+            </Show>
           </div>
         </div>
       </div>
