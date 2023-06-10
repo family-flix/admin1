@@ -22,6 +22,7 @@ import {
   rootView,
   loginPage,
   testPage,
+  registerPage,
 } from "./store/views";
 
 import "./style.css";
@@ -103,14 +104,16 @@ function Application() {
     rootView.replaceSubViews([subView]);
   });
   rootView.onNotFound(() => {
-    if (app.user.isLogin) {
-      rootView.curView = homeLayout;
-      rootView.curView.show();
-      rootView.appendSubView(rootView.curView);
-      return;
-    }
     // console.log("[Application]rootView.onNotFound");
-    rootView.curView = loginPage;
+    rootView.curView = (() => {
+      if (app.user.isLogin) {
+        return homeLayout;
+      }
+      if (app.user.needRegister) {
+        return registerPage;
+      }
+      return loginPage;
+    })();
     rootView.curView.show();
     rootView.appendSubView(rootView.curView);
   });

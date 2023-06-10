@@ -40,7 +40,7 @@ export class TVCore extends BaseDomain<TheTypesOfEvents> {
 
   state: TVState = {};
 
-  constructor(options: Partial<{ name: string } & TVProps> = {}) {
+  constructor(options: Partial<{ _name: string } & TVProps> = {}) {
     super(options);
     const { id } = options;
     // this.id = id;

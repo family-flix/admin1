@@ -8,6 +8,7 @@ import { LocalCache } from "@/domains/app/cache";
 import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
 import { Result } from "@/types";
+import { has_admin } from "@/services";
 
 NavigatorCore.prefix = "/admin";
 
@@ -35,6 +36,16 @@ export const app = new Application({
   router,
   cache,
   async beforeReady() {
+    if (!user.isLogin) {
+      const r = await has_admin();
+      if (r.error) {
+        return Result.Ok(null);
+      }
+      const { existing } = r.data;
+      if (!existing) {
+        user.needRegister = true;
+      }
+    }
     return Result.Ok(null);
   },
 });

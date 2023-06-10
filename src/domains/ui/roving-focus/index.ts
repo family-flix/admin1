@@ -33,10 +33,10 @@ export class RovingFocusCore extends BaseDomain<TheTypesOfEvents> {
     dir: "ltr",
   };
 
-  constructor(options: Partial<{ name: string }> = {}) {
+  constructor(options: Partial<{ _name: string }> = {}) {
     super(options);
 
-    const { name } = options;
+    const { _name } = options;
     this.collection = new CollectionCore();
   }
 
@@ -62,14 +62,10 @@ export class RovingFocusCore extends BaseDomain<TheTypesOfEvents> {
   onItemShiftTab(handler: Handler<TheTypesOfEvents[Events.ItemShiftTab]>) {
     this.on(Events.ItemShiftTab, handler);
   }
-  onFocusableItemAdd(
-    handler: Handler<TheTypesOfEvents[Events.FocusableItemAdd]>
-  ) {
+  onFocusableItemAdd(handler: Handler<TheTypesOfEvents[Events.FocusableItemAdd]>) {
     this.on(Events.FocusableItemAdd, handler);
   }
-  onFocusableItemRemove(
-    handler: Handler<TheTypesOfEvents[Events.FocusableItemRemove]>
-  ) {
+  onFocusableItemRemove(handler: Handler<TheTypesOfEvents[Events.FocusableItemRemove]>) {
     this.on(Events.FocusableItemRemove, handler);
   }
 }

@@ -48,7 +48,7 @@ export const ScrollView = (
   const Component = options[step()];
 
   return (
-    <Root class={cn("relative", props.class)} {...restProps}>
+    <Root class={cn("relative", props.class)}>
       <Indicator store={store}>
         <div class="flex items-center justify-center h-[80px]">
           <Component />
@@ -62,7 +62,7 @@ export const ScrollView = (
 };
 
 const Root = (props: {} & JSX.HTMLAttributes<HTMLDivElement>) => {
-  return <div>{props.children}</div>;
+  return <div class={props.class}>{props.children}</div>;
 };
 const Indicator = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;

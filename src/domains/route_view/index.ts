@@ -109,7 +109,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     layered: false,
   };
 
-  constructor(options: Partial<{ name: string }> & RouteViewProps) {
+  constructor(options: Partial<{ _name: string }> & RouteViewProps) {
     super(options);
     const { title, component, keepAlive = false } = options;
     this.title = title;

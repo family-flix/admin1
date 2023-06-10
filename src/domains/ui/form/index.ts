@@ -28,7 +28,7 @@ export class FormCore<T extends Record<string, unknown>> extends BaseDomain<TheT
     values: {},
   };
 
-  constructor(options: Partial<{ name: string } & FormProps> = {}) {
+  constructor(options: Partial<{ _name: string } & FormProps> = {}) {
     super(options);
 
     const { fields = [] } = options;

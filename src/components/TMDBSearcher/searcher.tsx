@@ -82,7 +82,7 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
           </div>
         </div>
       </div>
-      <div class="">
+      <div class="relative">
         <ScrollView store={scrollView} class="relative overflow-y-auto h-[480px] p-2 space-y-4">
           <For each={dataSource()}>
             {(tv) => {

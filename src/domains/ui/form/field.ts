@@ -16,6 +16,7 @@ type FormFieldState = {
 };
 type FormFieldProps = {
   label: string;
+  name: string;
 };
 
 export class FormFieldCore extends BaseDomain<TheTypesOfEvents> {
@@ -23,7 +24,7 @@ export class FormFieldCore extends BaseDomain<TheTypesOfEvents> {
     label: "",
   };
 
-  constructor(options: Partial<{ name: string } & FormFieldProps> = {}) {
+  constructor(options: Partial<{ _name: string } & FormFieldProps> = {}) {
     super(options);
 
     const { name, label } = options;

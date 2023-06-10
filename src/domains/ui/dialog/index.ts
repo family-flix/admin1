@@ -55,7 +55,7 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
     title: "",
   };
 
-  constructor(options: Partial<{ name: string } & DialogProps> = {}) {
+  constructor(options: Partial<{ _name: string } & DialogProps> = {}) {
     super(options);
 
     const { title, footer = true, onOk, onCancel } = options;

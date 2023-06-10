@@ -28,7 +28,7 @@ export class ButtonCore<T = unknown> extends BaseDomain<TheTypesOfEvents<T>> {
     disabled: false,
   };
 
-  constructor(options: Partial<{ name: string } & ButtonProps<T>> = {}) {
+  constructor(options: Partial<{ _name: string } & ButtonProps<T>> = {}) {
     super(options);
 
     this.cur = new SelectionCore();
@@ -96,7 +96,7 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesInListOfEvents<T>> {
   /** 按钮点击后，该值被设置为触发点击的那个按钮 */
   cur: ButtonCore<T> | null = null;
 
-  constructor(options: Partial<{ name: string } & ButtonInListProps<T>> = {}) {
+  constructor(options: Partial<{ _name: string } & ButtonInListProps<T>> = {}) {
     super(options);
 
     const { onClick } = options;

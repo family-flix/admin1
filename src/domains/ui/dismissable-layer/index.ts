@@ -30,7 +30,7 @@ export class DismissableLayerCore extends BaseDomain<TheTypesOfEvents> {
 
   state: DismissableLayerState = {};
 
-  constructor(options: Partial<{ name: string }> = {}) {
+  constructor(options: Partial<{ _name: string }> = {}) {
     super(options);
 
     app.onEscapeKeyDown(() => {

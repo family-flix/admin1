@@ -6,7 +6,6 @@ import { request } from "@/utils/request";
  * @returns
  */
 export async function login(body: { email: string; password: string }) {
-  console.log("[]login params", body);
   return request.post<{
     id: string;
     username: string;
@@ -17,6 +16,24 @@ export async function login(body: { email: string; password: string }) {
     // created: string;
     token: string;
   }>("/api/admin/user/login", body);
+}
+
+/**
+ * 用户登录
+ * @param body
+ * @returns
+ */
+export async function register(body: { email: string; password: string }) {
+  return request.post<{
+    id: string;
+    username: string;
+    // name: string;
+    // email: string;
+    avatar: string;
+    verified: string;
+    // created: string;
+    token: string;
+  }>("/api/admin/user/register", body);
 }
 
 export async function logout(body: { email: string; password: string }) {

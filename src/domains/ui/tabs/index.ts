@@ -37,7 +37,7 @@ export class TabsCore extends BaseDomain<TheTypesOfEvents> {
     dir: "ltr",
   };
 
-  constructor(options: Partial<{ name: string }> = {}) {
+  constructor(options: Partial<{ _name: string }> = {}) {
     super(options);
 
     this.roving = new RovingFocusCore();

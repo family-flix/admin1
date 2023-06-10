@@ -36,7 +36,7 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
     response: this.list.response,
   };
 
-  constructor(options: Partial<{ name: string } & TMDBSearcherProps> = {}) {
+  constructor(options: Partial<{ _name: string } & TMDBSearcherProps> = {}) {
     super(options);
 
     this.form = new FormCore<{}>();

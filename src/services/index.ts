@@ -400,3 +400,10 @@ export function delete_member(body: { id: string }) {
   const { id } = body;
   return request.get(`/api/admin/member/delete/${id}`);
 }
+
+/**
+ * 是否已经有管理员
+ */
+export function has_admin() {
+  return request.get<{ existing: boolean }>(`/api/admin/user/existing`);
+}

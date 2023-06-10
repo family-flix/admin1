@@ -9,7 +9,6 @@ import { app } from "@/store/app";
 
 const client = axios.create({
   timeout: 6000,
-  // baseURL: "https://api.funzm.com",
 });
 type RequestClient = {
   get: <T>(url: string, query?: JSONObject) => Promise<Result<T>>;

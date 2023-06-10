@@ -110,7 +110,7 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     //   ...this.state,
     // });
   }
-  toggle(position: Partial<{ x: number; y: number }>) {
+  toggle(position?: Partial<{ x: number; y: number }>) {
     if (position) {
       const { x, y } = position;
       this.menu.popper.updateReference({

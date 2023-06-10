@@ -53,7 +53,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     unmounted: false,
   };
 
-  constructor(options: Partial<{ name: string }> = {}) {
+  constructor(options: Partial<{ _name: string }> = {}) {
     super(options);
   }
 

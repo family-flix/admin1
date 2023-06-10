@@ -44,7 +44,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     showFooter: true,
   };
 
-  constructor(options: Partial<{ name: string } & TMDBSearcherDialogProps> = {}) {
+  constructor(options: Partial<{ _name: string } & TMDBSearcherDialogProps> = {}) {
     super(options);
 
     const { footer = true, onOk, onCancel } = options;

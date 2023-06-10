@@ -47,7 +47,7 @@ export class ToastCore extends BaseDomain<TheTypesOfEvents> {
     texts: [],
   };
 
-  constructor(options: Partial<{ name: string } & ToastProps> = {}) {
+  constructor(options: Partial<{ _name: string } & ToastProps> = {}) {
     super(options);
 
     const { delay } = options;

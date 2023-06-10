@@ -35,7 +35,7 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     type: "string",
   };
 
-  constructor(options: Partial<{ name: string } & InputProps> = {}) {
+  constructor(options: Partial<{ _name: string } & InputProps> = {}) {
     super(options);
 
     const { name, defaultValue, placeholder, type, onChange } = options;

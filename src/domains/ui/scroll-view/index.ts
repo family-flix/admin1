@@ -74,7 +74,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     scrollTop: 0,
   };
 
-  constructor(options: Partial<{ name: string } & ScrollViewProps> = {}) {
+  constructor(options: Partial<{ _name: string } & ScrollViewProps> = {}) {
     super(options);
 
     const { onScroll, onReachBottom } = options;

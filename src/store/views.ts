@@ -13,6 +13,7 @@ import { VideoParsingPage } from "@/pages/parse";
 import { TVProfilePage } from "@/pages/tv/profile";
 import { HomeLayout } from "@/pages/home/layout";
 import { NavigatorCore } from "@/domains/navigator";
+import { RegisterPage } from "@/pages/register";
 
 RouteViewCore.prefix = NavigatorCore.prefix;
 
@@ -64,6 +65,10 @@ export const homeMemberListPage = new RouteViewCore({
 export const loginPage = new RouteViewCore({
   title: "登录",
   component: LoginPage,
+});
+export const registerPage = new RouteViewCore({
+  title: "注册",
+  component: RegisterPage,
 });
 export const testPage = new RouteViewCore({
   title: "测试",

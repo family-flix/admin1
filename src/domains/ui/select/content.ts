@@ -2,14 +2,17 @@ import { BaseDomain } from "@/domains/base";
 
 enum Events {}
 type TheTypesOfEvents = {};
+type SelectContentProps = {
+  $node: () => HTMLElement;
+  getStyles: () => CSSStyleDeclaration;
+  getRect: () => DOMRect;
+};
 export class SelectContentCore extends BaseDomain<TheTypesOfEvents> {
   constructor(
     options: Partial<{
-      name: string;
-      $node: () => HTMLElement;
-      getStyles: () => CSSStyleDeclaration;
-      getRect: () => DOMRect;
-    }> = {}
+      _name: string;
+    }> &
+      Partial<SelectContentProps> = {}
   ) {
     super(options);
     const { $node, getStyles, getRect } = options;

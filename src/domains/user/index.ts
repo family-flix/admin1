@@ -3,7 +3,7 @@ import { Handler } from "mitt";
 import { Result } from "@/types";
 import { BaseDomain } from "@/domains/base";
 
-import { fetch_user_profile, login, validate } from "./services";
+import { fetch_user_profile, login, register, validate } from "./services";
 
 export enum Events {
   Tip,
@@ -45,6 +45,7 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
   avatar: string = "";
   token: string = "";
   isLogin: boolean = false;
+  needRegister = false;
 
   get state(): UserState {
     return {
@@ -58,7 +59,7 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
 
   static Events = Events;
 
-  constructor(options: Partial<{ name: string }> & UserProps) {
+  constructor(options: Partial<{ _name: string }> & UserProps) {
     super(options);
 
     if (!options) {
@@ -121,12 +122,27 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
   async register() {
     const { email, password } = this.values;
     if (!email) {
-      return Result.Err("缺少邮箱");
+      const msg = this.tip({ text: ["请输入邮箱"] });
+      return Result.Err(msg);
     }
     if (!password) {
-      return Result.Err("缺少密码");
+      const msg = this.tip({ text: ["请输入密码"] });
+      return Result.Err(msg);
     }
-    return Result.Ok(null);
+    const r = await register({ email, password });
+    if (r.error) {
+      this.tip({ text: ["注册失败", r.error.message] });
+      return Result.Err(r.error);
+    }
+    this.values = {};
+    this.isLogin = true;
+    const { id, username, avatar, token } = r.data;
+    this.id = id;
+    this.username = username;
+    this.avatar = avatar;
+    this.token = token;
+    this.emit(Events.Login, { ...this.state, token: this.token });
+    return Result.Ok(r.data);
   }
   async fetchProfile() {
     if (!this.isLogin) {
