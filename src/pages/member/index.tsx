@@ -235,7 +235,7 @@ export const MemberManagePage: ViewComponent = (props) => {
                                   <div class="space-y-2">
                                     {[
                                       {
-                                        prefix: "/admin/home/index?token=",
+                                        prefix: "/pc/home/index?token=",
                                         qrcode: false,
                                       },
                                       {

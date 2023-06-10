@@ -159,7 +159,7 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
     item.onLeave(() => {
       this.focus();
     });
-    item.onDestroy(() => {
+    item.onUnmounted(() => {
       this.items = this.items.filter((i) => i !== item);
     });
     const findFirstValidItem = !this._findFirstValidItem && !this.state.disabled;

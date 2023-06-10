@@ -107,7 +107,7 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
   onTip(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Tip]>) {
     return this.on(BaseEvents.Tip, handler);
   }
-  onDestroy(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Destroy]>) {
+  onUnmounted(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Destroy]>) {
     return this.on(BaseEvents.Destroy, handler);
   }
 

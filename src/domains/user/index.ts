@@ -83,7 +83,9 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
   async validate() {
     const r = await validate(this.token);
     if (r.error) {
-      this.emit(Events.Expired);
+      if (r.error.code === 900) {
+        this.emit(Events.Expired);
+      }
       return Result.Err(r.error);
     }
     return Result.Ok(null);

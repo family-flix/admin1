@@ -18,23 +18,47 @@ import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
+import { SelectionCore } from "@/domains/cur";
 
 export const DriveCard = (props: { app: Application; store: Drive }) => {
   const { app, store: drive } = props;
 
   const [state, setState] = createSignal(drive.state);
-  const [values, setValues] = createSignal(drive.values);
   const [folderColumns, setFolderColumns] = createSignal(drive.folderColumns);
+  const folderSelect = new SelectionCore<{ file_id: string; name: string }>({
+    onChange(v) {
+      setSelectedFolder(v);
+    },
+  });
+  const [selectedFolder, setSelectedFolder] = createSignal(folderSelect.value);
 
   const foldersModal = new DialogCore({
-    onOk() {
-      drive.setRootFolder();
+    title: "设置索引根目录",
+    async onOk() {
+      if (folderSelect.value === null) {
+        app.tip({ text: ["请先选择文件夹"] });
+        return;
+      }
+      const r = await drive.setRootFolder(folderSelect.value.file_id);
+      folderSelect.clear();
+      if (r.error) {
+        app.tip({ text: ["设置索引目录失败", r.error.message] });
+        return;
+      }
+      app.tip({ text: ["设置索引目录成功"] });
       foldersModal.hide();
+    },
+    onUnmounted() {
+      folderSelect.clear();
+      drive.clearFolderColumns();
     },
   });
   const createFolderModal = new DialogCore({
+    title: "新增索引目录",
     async onOk() {
+      createFolderModal.okBtn.setLoading(true);
       const r = await drive.addFolder();
+      createFolderModal.okBtn.setLoading(false);
       if (r.error) {
         app.tip({ text: ["新增文件夹失败", r.error.message] });
         return;
@@ -141,12 +165,9 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
     analysisBtn.setLoading(nextState.loading);
     setState(nextState);
   });
-  drive.onValuesChange((nextValues) => {
-    setValues(nextValues);
-  });
   drive.onFolderColumnChange((nextFolderColumns) => {
     console.log("[COMPONENT]onFolderColumnChange", nextFolderColumns);
-    setFolderColumns(nextFolderColumns);
+    setFolderColumns([...nextFolderColumns]);
   });
   drive.onTip((texts) => {
     app.tip(texts);
@@ -192,9 +213,11 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
         </div>
       </div>
       <Dialog title={name()} store={foldersModal}>
-        <div class="text-center">请先选择一个文件夹作为索引根目录</div>
+        <Show when={selectedFolder()} fallback={<div class="text-center">请先选择一个文件夹作为索引根目录</div>}>
+          <div>当前选择了 {selectedFolder()?.name}</div>
+        </Show>
         <Show
-          when={folderColumns().length > 0}
+          when={folderColumns().length > 1}
           fallback={
             <div class="position">
               <div class="flex items-center justify-center">
@@ -205,23 +228,24 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
         >
           <div class="flex space-x-2">
             <For each={folderColumns()}>
-              {(column) => {
+              {(column, x) => {
                 return (
-                  <Show when={column.length > 0} fallback={<div>该文件夹没有文件</div>}>
+                  <Show when={column.length > 0} fallback={<div class="mt-2 text-slate-500">该文件夹没有文件</div>}>
                     <div class="px-2 border-r-2">
                       <For each={column}>
-                        {(folder) => {
-                          const { file_id, name } = folder;
+                        {(folder, y) => {
+                          const { file_id, name, selected } = folder;
                           return (
                             <div>
                               <div
-                                class="p-2 cursor-pointer hover:bg-slate-300"
+                                class="p-2 cursor-pointer rounded-sm hover:bg-slate-300"
                                 classList={{
-                                  "bg-slate-200": file_id === values().root_folder_id,
+                                  "bg-slate-200": selected,
                                 }}
                                 onClick={() => {
-                                  drive.inputRootFolder(folder);
-                                  drive.fetch(folder);
+                                  folderSelect.select(folder);
+                                  // drive.select(folder, [x(), y()]);
+                                  drive.fetch(folder, x());
                                 }}
                               >
                                 {name}

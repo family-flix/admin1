@@ -10,14 +10,14 @@ enum Events {
   PresentChange,
   Show,
   Hidden,
-  Destroy,
+  Unmounted,
 }
 type TheTypesOfEvents = {
   [Events.StateChange]: PresenceState;
   [Events.PresentChange]: boolean;
   [Events.Show]: void;
   [Events.Hidden]: void;
-  [Events.Destroy]: void;
+  [Events.Unmounted]: void;
 };
 const PresenceEventMap = {
   mounted: {
@@ -133,7 +133,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     this.state.mounted = false;
-    this.emit(Events.Destroy);
+    this.emit(Events.Unmounted);
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
@@ -150,8 +150,8 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   onHidden(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
     return this.on(Events.Hidden, handler);
   }
-  onDestroy(handler: Handler<TheTypesOfEvents[Events.Destroy]>) {
-    return this.on(Events.Destroy, handler);
+  onUnmounted(handler: Handler<TheTypesOfEvents[Events.Unmounted]>) {
+    return this.on(Events.Unmounted, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);

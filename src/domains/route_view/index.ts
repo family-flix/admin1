@@ -372,9 +372,6 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   onReady(handler: Handler<TheTypesOfEvents[Events.Ready]>) {
     return this.on(Events.Ready, handler);
   }
-  onMounted(handler: Handler<TheTypesOfEvents[Events.Mounted]>) {
-    return this.on(Events.Mounted, handler);
-  }
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
     return this.on(Events.Show, handler);
   }

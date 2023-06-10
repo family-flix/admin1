@@ -49,6 +49,7 @@ export function updateAliyunDrive(id: string, body: JSONObject) {
  * 获取阿里云盘列表
  */
 export async function fetchDrives(params: FetchParams) {
+  const { page, pageSize, ...restParams } = params;
   const resp = await request.get<
     ListResponse<{
       id: string;
@@ -63,11 +64,15 @@ export async function fetchDrives(params: FetchParams) {
       /** 索引根目录 */
       root_folder_id?: string;
     }>
-  >("/api/admin/drive/list", params);
+  >("/api/admin/drive/list", {
+    page,
+    page_size: pageSize,
+    ...restParams,
+  });
   if (resp.error) {
     return Result.Err(resp.error);
   }
-  const { total, page, page_size, list } = resp.data;
+  const { total, page_size, list } = resp.data;
   return Result.Ok({
     total,
     page,

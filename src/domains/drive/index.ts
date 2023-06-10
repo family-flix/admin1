@@ -111,7 +111,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   state: DriveState;
   /** 表单值 */
   values: Partial<{
-    root_folder_id: string;
+    // root_folder_id: string;
     refresh_token: string;
     folder_name: string;
   }> = {};
@@ -130,7 +130,11 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     nextMarker: "",
   };
   /** 文件夹列表 */
-  folderColumns: (DriveFolder | DriveFile)[][] = [];
+  folderColumns: ({
+    selected?: boolean;
+  } & (DriveFolder | DriveFile))[][] = [];
+  /** 当前选中的文件夹 */
+  selectedFolderPos?: number[];
 
   constructor(options: Partial<{ _name: string }> & DriveState) {
     super(options);
@@ -269,31 +273,31 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   /** 输入网盘根目录 id */
-  inputRootFolder(folder: { file_id: string }) {
-    const { file_id } = folder;
-    this.values.root_folder_id = file_id;
-    this.emit(Events.ValuesChange, {
-      ...this.values,
-    });
-  }
+  // inputRootFolder(folder: { file_id: string }) {
+  //   const { file_id } = folder;
+  //   this.values.root_folder_id = file_id;
+  //   this.emit(Events.ValuesChange, {
+  //     ...this.values,
+  //   });
+  // }
   /** 设置网盘索引根目录 */
-  async setRootFolder() {
-    const { root_folder_id } = this.values;
-    if (!root_folder_id) {
-      const text = this.tip({ text: ["缺少 root_folder_id 参数"] });
-      return Result.Err(text);
-    }
+  async setRootFolder(file_id: string) {
+    // const { root_folder_id } = this.values;
+    // if (!root_folder_id) {
+    //   const text = this.tip({ text: ["缺少 root_folder_id 参数"] });
+    //   return Result.Err(text);
+    // }
     const r = await set_drive_root_file_id({
-      root_folder_id: root_folder_id,
+      root_folder_id: file_id,
       drive_id: this.id,
     });
-    this.values.root_folder_id = null ?? undefined;
+    // this.values.root_folder_id = null ?? undefined;
     if (r.error) {
-      const text = this.tip({ text: ["设置索引根目录失败", r.error.message] });
-      return Result.Err(text);
+      // const text = this.tip({ text: ["设置索引根目录失败", r.error.message] });
+      return Result.Err(r.error);
     }
     this.state.initialized = true;
-    this.tip({ text: ["更新成功"] });
+    // this.tip({ text: ["更新成功"] });
     this.emit(Events.StateChange, { ...this.state });
     return Result.Ok(null);
   }
@@ -323,8 +327,8 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     const { file_id, name } = folder;
     // this.file_id = file_id;
     if (this.list.loading) {
-      this.tip({ text: ["正在请求..."] });
-      // return Result.;
+      // this.tip({ text: ["正在请求..."] });
+      return Result.Err("正在请求...");
     }
     const body = (() => {
       return {
@@ -339,38 +343,79 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     const r = await fetchDriveFiles(body);
     this.list.loading = false;
     if (r.error) {
-      return r;
+      return Result.Err(r.error);
     }
-    return r;
+    const { items, next_marker } = r.data;
+    return Result.Ok({
+      items,
+      next_marker,
+    });
   }
   async fetch(folder: { file_id: string; name: string }, index = 0) {
-    const { file_id = "root", name = "文件" } = folder;
+    console.log("[DOMAIN]Drive - fetch", index);
+    const { file_id, name } = folder;
     this.list.nextMarker = "";
-
     const r = await this._fetch(folder);
     if (r.error) {
       this.tip({ text: ["获取文件列表失败", r.error.message] });
       return;
     }
+    const { items, next_marker } = r.data;
+    this.list.nextMarker = next_marker;
     // 初始化
     if (this.folderColumns.length === 0) {
-      this.folderColumns = [[{ file_id, name, children: [] }]];
+      this.folderColumns = [
+        [
+          {
+            file_id,
+            name,
+          },
+        ],
+        r.data.items,
+      ];
       this.emit(Events.FoldersChange, [...this.folderColumns]);
       return;
     }
-    this.list.nextMarker = r.data.next_marker;
     this.folderColumns = (() => {
-      const existingFolder = this.folderColumns[index].find((p) => p.file_id === file_id);
+      // const existingFolder = this.folderColumns[index].find((p) => p.file_id === file_id);
       // console.log("[]before modify folder columns", this.folderColumns, r.data.items, index);
-      if (existingFolder) {
-      }
+      // if (existingFolder) {
+      // }
       if (index === 0) {
-        return this.folderColumns.concat([r.data.items]);
+        return [this.folderColumns[0]].concat([items]);
       }
-      const parentColumns = this.folderColumns.slice(0, index);
-      return parentColumns.concat([r.data.items]);
+      const parentColumns = this.folderColumns.slice(0, index + 1);
+      // console.log(parentColumns);
+      return parentColumns.concat([items]);
     })();
+    for (let i = 0; i < this.folderColumns.length; i += 1) {
+      const column = this.folderColumns[i];
+      for (let j = 0; j < column.length; j += 1) {
+        const f = column[j];
+        f.selected = false;
+      }
+    }
+    if (this.selectedFolderPos) {
+      const [x, y] = this.selectedFolderPos;
+      const matched = this.folderColumns[x][y];
+      matched.selected = true;
+    }
     this.emit(Events.FoldersChange, [...this.folderColumns]);
+  }
+  clearFolderColumns() {
+    // console.log("clearFolderColumns");
+    this.folderColumns = [];
+    this.emit(Events.FoldersChange, [...this.folderColumns]);
+  }
+  /** 选中文件/文件夹 */
+  select(folder: { file_id: string }, index: number[]) {
+    const { file_id } = folder;
+    // const [x, y] = index;
+    // const selectedFolder = this.folderColumns[x][y];
+    // selectedFolder.selected = true;
+    this.selectedFolderPos = index;
+    // this.emit(Events.FoldersChange, [...this.folderColumns]);
+    // if ()
   }
   async search(keyword: string) {
     // this.list.keyword = keyword;
@@ -417,13 +462,13 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   async checkIn() {
     const r = await checkInDrive({ drive_id: this.id });
     if (r.error) {
-      this.tip({ text: ["签到失败", r.error.message] });
-      return;
+      const msg = this.tip({ text: ["签到失败", r.error.message] });
+      return Result.Err(msg);
     }
     const r2 = await this._refresh();
     if (r2.error) {
-      this.tip({ text: ["刷新失败", r2.error.message] });
-      return;
+      const msg = this.tip({ text: ["刷新失败", r2.error.message] });
+      return Result.Err(msg);
     }
     const { user_name, avatar, used_size, total_size, used_percent } = r2.data;
     this.state = Object.assign({}, this.state, {
@@ -435,6 +480,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     });
     this.emit(Events.StateChange, { ...this.state });
     this.tip({ text: ["签到成功"] });
+    return Result.Ok(null);
   }
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {

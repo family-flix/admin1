@@ -442,7 +442,7 @@ export class ListCore<
     this.response.refreshing = true;
     this.emit(Events.StateChange, { ...this.response });
     const res = await this.fetch({
-      restParams,
+      ...restParams,
       page: 1,
     });
     this.response.refreshing = false;
