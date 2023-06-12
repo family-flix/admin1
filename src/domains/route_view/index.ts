@@ -121,22 +121,25 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
 
     this.presence.onStateChange((nextState) => {
       const { open, mounted } = nextState;
-      if (this.state.visible === false && open) {
+      console.log("[ROUTE_VIEW]this.presence.onStateChange", this._name, this.state.visible, open, mounted);
+      const prevVisible = this.state.visible;
+      this.state.visible = open;
+
+      if (prevVisible === false && open) {
         this.showed();
         // this.emit(Events.Show);
       }
-      if (this.state.visible && open === false) {
+      if (prevVisible && open === false) {
         this.hidden();
         // this.emit(Events.Hidden);
       }
+      this.state.mounted = !!mounted;
       // if (this.state.mounted === false && mounted) {
       //   this.emit(Events.Mounted);
       // }
       // if (this.state.mounted && mounted === false) {
       //   this.emit(Events.Unmounted);
       // }
-      this.state.visible = open;
-      this.state.mounted = !!mounted;
       this.emit(Events.StateChange, { ...this.state });
     });
   }
@@ -280,6 +283,10 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.subViews.push(view);
     this.emit(Events.ViewsChange, [...this.subViews]);
   }
+  // setSubViews(views: RouteViewCore[]) {
+  //   this.subViews = views;
+  //   this.emit(Events.ViewsChange, [...this.subViews]);
+  // }
   replaceSubViews(views: RouteViewCore[]) {
     this.subViews = views;
     this.emit(Events.ViewsChange, [...this.subViews]);
@@ -322,6 +329,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 主动展示视图 */
   show() {
+    // console.log("[ROUTE_VIEW]show", this._name, this.state.visible);
     if (this.state.visible) {
       // 为了让 presence 内部 hide 时判断 mounted 为 true
       this.presence.state.mounted = true;
@@ -332,10 +340,12 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   _showed = false;
   /** 视图被展示 */
   showed() {
+    console.log("[ROUTE_VIEW]showed", this._name, this._showed);
     if (this._showed) {
       return;
     }
     this._showed = true;
+    console.log("[ROUTE_VIEW]emit showed", this._name);
     this.emit(Events.Show);
   }
   /** 主动隐藏视图 */
@@ -371,6 +381,9 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
   onReady(handler: Handler<TheTypesOfEvents[Events.Ready]>) {
     return this.on(Events.Ready, handler);
+  }
+  onMounted(handler: Handler<TheTypesOfEvents[Events.Mounted]>) {
+    return this.on(Events.Mounted, handler);
   }
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
     return this.on(Events.Show, handler);

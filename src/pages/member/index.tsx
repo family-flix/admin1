@@ -24,15 +24,14 @@ import { RequestCore } from "@/domains/client";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { ViewComponent } from "@/types";
-import { cn } from "@/utils";
-import { Popover } from "@/components/ui/popover";
 import { Qrcode } from "@/components/Qrcode";
 import { SelectionCore } from "@/domains/cur";
+import { cn } from "@/utils";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, router } = props;
 
-  const list = new ListCore(new RequestCore(fetch_members), {
+  const memberList = new ListCore(new RequestCore(fetch_members), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
     },
@@ -46,7 +45,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       app.tip({ text: ["生成 token 失败", error.message] });
     },
     onSuccess() {
-      list.refresh();
+      memberList.refresh();
     },
   });
   const addMember = new RequestCore(add_member, {
@@ -59,34 +58,33 @@ export const MemberManagePage: ViewComponent = (props) => {
     },
     onSuccess() {
       addMemberDialog.hide();
-      input1.clear();
-      generateTokenBtn.clear();
-      list.refresh();
+      remarkInput.clear();
+      memberList.refresh();
     },
   });
   const addMemberDialog = new DialogCore({
     title: "新增成员",
     onOk() {
-      if (!input1.value) {
+      if (!remarkInput.value) {
         app.tip({ text: ["请先输入成员备注"] });
         return;
       }
       addMember.run({
-        remark: input1.value,
+        remark: remarkInput.value,
       });
     },
   });
-  const input1 = new InputCore({
+  const remarkInput = new InputCore({
     placeholder: "请输入备注",
   });
-  const button1 = new ButtonCore({
+  const addMemberBtn = new ButtonCore({
     onClick() {
       addMemberDialog.show();
     },
   });
   const refreshBtn = new ButtonCore({
     onClick() {
-      list.refresh();
+      memberList.refresh();
     },
   });
   const profileBtn = new ButtonInListCore<MemberItem>({
@@ -131,7 +129,7 @@ export const MemberManagePage: ViewComponent = (props) => {
     onSuccess() {
       app.tip({ text: ["删除成员成功"] });
       confirmDeleteMemberDialog.hide();
-      list.refresh();
+      memberList.refresh();
     },
     onFailed(error) {
       app.tip({ text: ["删除成员失败", error.message] });
@@ -152,13 +150,13 @@ export const MemberManagePage: ViewComponent = (props) => {
     },
   });
 
-  const [response, setResponse] = createSignal(list.response);
-  list.onStateChange((nextState) => {
+  const [response, setResponse] = createSignal(memberList.response);
+  memberList.onStateChange((nextState) => {
     // console.log("list ", nextState);
     setResponse(nextState);
   });
 
-  list.init();
+  memberList.init();
 
   const dataSource = () => response().dataSource;
   const empty = () => response().empty;
@@ -173,7 +171,7 @@ export const MemberManagePage: ViewComponent = (props) => {
             <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
-            <Button store={button1} icon={<UserPlus class="w-4 h-4" />}>
+            <Button store={addMemberBtn} icon={<UserPlus class="w-4 h-4" />}>
               新增成员
             </Button>
           </div>
@@ -279,7 +277,7 @@ export const MemberManagePage: ViewComponent = (props) => {
               <div
                 class="mt-4 text-center text-slate-500 cursor-pointer"
                 onClick={() => {
-                  list.loadMore();
+                  memberList.loadMore();
                 }}
               >
                 加载更多
@@ -289,7 +287,7 @@ export const MemberManagePage: ViewComponent = (props) => {
         </div>
       </div>
       <Dialog title="新增成员" store={addMemberDialog}>
-        <Input store={input1} />
+        <Input store={remarkInput} />
       </Dialog>
       <Dialog title="删除成员" store={confirmDeleteMemberDialog}>
         <div>确认删除该成员吗？</div>

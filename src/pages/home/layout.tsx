@@ -18,7 +18,7 @@ import {
   homeTVProfilePage,
   homeTaskListPage,
   homeTransferPage,
-  homeUnknownTVListPage,
+  homeUnknownMediaLayout,
 } from "@/store/views";
 import { Button } from "@/components/ui/button";
 import { ButtonCore } from "@/domains/ui/button";
@@ -59,7 +59,7 @@ export const HomeLayout: ViewComponent = (props) => {
   //   setCurSubView(nextCurView);
   // });
   view.onMatched((subView) => {
-    // console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
+    console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
     if (subView === view.curView) {
       return;
     }
@@ -74,7 +74,7 @@ export const HomeLayout: ViewComponent = (props) => {
       const isMenusPage = [
         homeIndexPage,
         homeTVListPage,
-        homeUnknownTVListPage,
+        homeUnknownMediaLayout,
         homeTaskListPage,
         homeMemberListPage,
         homeTransferPage,
@@ -122,7 +122,6 @@ export const HomeLayout: ViewComponent = (props) => {
     app.tip(msg);
   });
   view.checkMatch(router._pending);
-  app.user.validate();
 
   // const pathname = router.pathname;
 
@@ -144,9 +143,9 @@ export const HomeLayout: ViewComponent = (props) => {
       // },
     },
     {
-      text: "未识别电视剧",
+      text: "未识别影视剧",
       icon: <EyeOff class="w-6 h-6" />,
-      link: "/home/unknown_tv",
+      link: "/home/unknown_tv/tv",
       // onClick() {
       //   router.push("/home/unknown_tv");
       // },

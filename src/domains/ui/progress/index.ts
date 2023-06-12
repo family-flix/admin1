@@ -46,6 +46,11 @@ export class ProgressCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.ValueChange, v);
     this.emit(Events.StateChange, this.state);
   }
+  update(v: number) {
+    this._value = v;
+    this.emit(Events.ValueChange, v);
+    this.emit(Events.StateChange, this.state);
+  }
 
   onValueChange(handler: Handler<TheTypesOfEvents[Events.ValueChange]>) {
     this.on(Events.ValueChange, handler);

@@ -16,13 +16,15 @@ import {
   homeTransferPage,
   homeTVProfilePage,
   homeTVListPage,
-  homeUnknownTVListPage,
+  homeUnknownMediaLayout,
   homeMemberListPage,
   homeFilenameParsingPage,
   rootView,
   loginPage,
   testPage,
   registerPage,
+  homeUnknownTVPage,
+  homeUnknownSeasonPage,
 } from "./store/views";
 
 import "./style.css";
@@ -48,8 +50,14 @@ homeLayout.register("/home/tv/:id", () => {
 homeLayout.register("/home/tv", () => {
   return homeTVListPage;
 });
+homeUnknownMediaLayout.register("/home/unknown_tv/tv", () => {
+  return homeUnknownTVPage;
+});
+homeUnknownMediaLayout.register("/home/unknown_tv/season", () => {
+  return homeUnknownSeasonPage;
+});
 homeLayout.register("/home/unknown_tv", () => {
-  return homeUnknownTVListPage;
+  return homeUnknownMediaLayout;
 });
 homeLayout.register("/home/members", () => {
   return homeMemberListPage;

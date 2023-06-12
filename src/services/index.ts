@@ -101,6 +101,51 @@ export async function fetch_unknown_tv_list(params: FetchParams) {
 export type UnknownTVItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
 
 /**
+ * 获取无法识别的 tv
+ */
+export async function fetch_unknown_season_list(params: FetchParams) {
+  const { page, pageSize, ...rest } = params;
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      season_number: string;
+    }>
+  >(`/api/admin/unknown_season/list`, {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return r;
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((tv) => {
+      const { id, name, season_number } = tv;
+      return {
+        id,
+        name,
+        season_number,
+      };
+    }),
+  });
+}
+export type UnknownSeasonItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
+
+/**
+ * 更新季数
+ * @param body
+ * @returns
+ */
+export function update_unknown_season_number(body: { id: string; season_number: string }) {
+  const { id, season_number } = body;
+  return request.post<void>(`/api/admin/unknown_season/update/${id}`, {
+    season_number,
+  });
+}
+
+/**
  * 获取未识别的影视剧详情
  * @param body
  */
@@ -389,7 +434,7 @@ export function add_file_sync_task_of_tv(body: { tv_id: string; url: string; tar
  * 执行所有电视剧同步任务
  */
 export function run_all_file_sync_tasks() {
-  return request.get("/api/admin/shared_file_sync/sync");
+  return request.get<{ job_id: string }>("/api/admin/shared_file_sync/sync");
 }
 
 /**

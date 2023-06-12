@@ -157,7 +157,6 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["索引正在进行中..."] });
       return Result.Ok(null);
     }
-    this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
     const r = await (() => {
@@ -172,6 +171,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       this.tip({ text: ["索引失败", r.error.message] });
       return Result.Err(r.error);
     }
+    this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     const { job_id } = r.data;
     this.timer = setInterval(async () => {
       const r = await fetch_job_profile(job_id);
@@ -206,6 +206,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
         }
       }
     }, 3000);
+    return Result.Ok(null);
   }
   /** 导出云盘信息（可直接导入其他网站） */
   async export() {

@@ -38,6 +38,10 @@ export const Result = {
           const e = new BizError((message as Error).message, code, data);
           return e;
         }
+        if (!message) {
+          const e = new BizError("未知错误", code, data);
+          return e;
+        }
         const r = message as Result<null>;
         return r.error;
       })(),

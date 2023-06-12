@@ -63,10 +63,11 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
     super(options);
 
     if (!options) {
+      this.isLogin === false;
       return;
     }
     const { id, username, avatar, token } = options;
-    // this.log("constructor", initialUser);
+    // console.log("initialize", options);
     this.id = id;
     this.username = username;
     this.avatar = avatar;
@@ -81,9 +82,14 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 校验用户凭证是否有效 */
   async validate() {
+    if (!this.token) {
+      this.emit(Events.Expired);
+      return Result.Err("缺少 token");
+    }
     const r = await validate(this.token);
     if (r.error) {
       if (r.error.code === 900) {
+        this.isLogin = false;
         this.emit(Events.Expired);
       }
       return Result.Err(r.error);
@@ -164,7 +170,7 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
     return this.on(Events.Login, handler);
   }
   onLogout(handler: Handler<TheTypesOfEvents[Events.Logout]>) {
-    this.on(Events.Logout, handler);
+    return this.on(Events.Logout, handler);
   }
   onExpired(handler: Handler<TheTypesOfEvents[Events.Expired]>) {
     return this.on(Events.Expired, handler);

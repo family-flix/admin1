@@ -29,7 +29,7 @@ type RequestProps<T> = {
   onSuccess: (v: T) => void;
   onFailed: (error: BizError) => void;
   onCompleted: () => void;
-  onBeforeRequest: () => void;
+  beforeRequest: () => void;
   onLoading: (loading: boolean) => void;
 };
 
@@ -57,7 +57,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
       throw new Error("service must be a function");
     }
     this._service = service;
-    const { onSuccess, onFailed, onCompleted, onLoading, onBeforeRequest } = props;
+    const { onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
     if (onSuccess) {
       this.onSuccess(onSuccess);
     }
@@ -70,8 +70,8 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     if (onLoading) {
       this.onLoadingChange(onLoading);
     }
-    if (onBeforeRequest) {
-      this.onBeforeRequest(onBeforeRequest);
+    if (beforeRequest) {
+      this.beforeRequest(beforeRequest);
     }
   }
   /** 执行 service 函数 */
@@ -97,6 +97,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     }
     this.response = r.data;
     const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
+    console.log('success', d);
     this.emit(Events.Success, d);
     return Result.Ok(d);
   }
@@ -109,22 +110,22 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
   }
 
   onLoadingChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.LoadingChange]>) {
-    this.on(Events.LoadingChange, handler);
+    return this.on(Events.LoadingChange, handler);
   }
-  onBeforeRequest(handler: Handler<TheTypesOfEvents<T>[Events.BeforeRequest]>) {
-    this.on(Events.BeforeRequest, handler);
+  beforeRequest(handler: Handler<TheTypesOfEvents<T>[Events.BeforeRequest]>) {
+    return this.on(Events.BeforeRequest, handler);
   }
   onSuccess(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Success]>) {
-    this.on(Events.Success, handler);
+    return this.on(Events.Success, handler);
   }
   onFailed(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Failed]>) {
-    this.on(Events.Failed, handler);
+    return this.on(Events.Failed, handler);
   }
   /** 建议使用 onFailed */
   onError(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Failed]>) {
-    this.on(Events.Failed, handler);
+    return this.on(Events.Failed, handler);
   }
   onCompleted(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Completed]>) {
-    this.on(Events.Completed, handler);
+    return this.on(Events.Completed, handler);
   }
 }

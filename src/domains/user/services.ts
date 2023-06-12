@@ -1,3 +1,4 @@
+import { Result } from "@/types";
 import { request } from "@/utils/request";
 
 /**
@@ -57,5 +58,9 @@ export async function fetch_user_profile() {
  * 成员通过授权链接访问首页时，验证该链接是否有效
  */
 export async function validate(token: string) {
-  return request.post<{ token: string }>("/api/admin/user/validate", { token });
+  const r = await request.post<{ token: string }>("/api/admin/user/validate", { token });
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  return Result.Ok(r.data);
 }

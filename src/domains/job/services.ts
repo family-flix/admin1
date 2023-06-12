@@ -5,6 +5,7 @@ import { request } from "@/utils/request";
 import { ListResponse, RequestedResource, Result } from "@/types";
 
 import { TaskStatus } from "./constants";
+import { relative_time_from_now } from "@/utils";
 
 /**
  * 获取当前用户所有异步任务
@@ -43,6 +44,7 @@ export async function fetch_job_list(params: FetchParams) {
           return "未知";
         })(),
         created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
+        // created: relative_time_from_now(created),
       };
     }),
   };

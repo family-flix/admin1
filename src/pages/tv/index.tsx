@@ -2,7 +2,20 @@
  * @file 电视剧列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, Bell, BellPlus, BookOpen, Calendar, Check, Info, RotateCw, Send, Smile, X } from "lucide-solid";
+import {
+  ArrowUpCircle,
+  Award,
+  Bell,
+  BellPlus,
+  BookOpen,
+  Calendar,
+  Check,
+  Info,
+  RotateCw,
+  Send,
+  Smile,
+  X,
+} from "lucide-solid";
 
 import {
   add_file_sync_task_of_tv,
@@ -33,6 +46,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { DialogCore } from "@/domains/ui/dialog";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
+import { Popover, PurePopover } from "@/components/ui/popover";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -118,7 +132,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const runFileSyncTask = new RequestCore(run_file_sync_task_of_tv, {
-    onBeforeRequest() {
+    beforeRequest() {
       execSyncTaskBtn.setLoading(true);
     },
     onSuccess(resp) {
@@ -159,25 +173,6 @@ export const TVManagePage: ViewComponent = (props) => {
       // 还要看该电视剧有没有同名的 parsed_tv.file_name，如果没有，弹出所有的 parsed_tv 让用户选
     },
   });
-  // const contextMenu = new ContextMenuCore({
-  //   items: [
-  //     new MenuItemCore({
-  //       label: "修改",
-  //       onClick() {
-  //         dialog.show();
-  //       },
-  //     }),
-  //     new MenuItemCore({
-  //       label: "隐藏",
-  //       onClick() {
-  //         if (tvSelection.value === null) {
-  //           return;
-  //         }
-  //         hiddenTV.run({ id: tvSelection.value.id });
-  //       },
-  //     }),
-  //   ],
-  // });
   const input1 = new InputCore({ placeholder: "请输入名称搜索" });
   const searchBtn = new ButtonCore({
     onClick() {
@@ -240,14 +235,29 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const syncAllTVRequest = new RequestCore(run_all_file_sync_tasks, {
-    onLoading(loading) {
-      syncAllTVBtn.setLoading(loading);
+    beforeRequest() {
+      syncAllTVBtn.setLoading(true);
     },
-    onSuccess() {
-      app.tip({ text: ["同步更新成功"] });
+    async onSuccess(resp) {
+      app.tip({ text: ["开始同步所有电视剧"] });
+      const job_res = await JobCore.New({ id: resp.job_id });
+      if (job_res.error) {
+        app.tip({ text: [job_res.error.message] });
+        return;
+      }
+      const job = job_res.data;
+      job.onFinish(() => {
+        list.refresh();
+        syncAllTVBtn.setLoading(false);
+      });
+      job.onPause(() => {
+        syncAllTVBtn.setLoading(false);
+      });
+      job.wait_finish();
     },
     onFailed(error) {
       app.tip({ text: ["同步更新失败", error.message] });
+      syncAllTVBtn.setLoading(false);
     },
   });
   const syncAllTVBtn = new ButtonCore({
@@ -289,13 +299,13 @@ export const TVManagePage: ViewComponent = (props) => {
       <div class="">
         <h1 class="text-2xl">电视剧列表</h1>
         <div class="mt-8">
-          <div>
+          <div class="flex items-center space-x-2">
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
-            {/* <Button class="mt-4" store={syncAllTVBtn}>
-            更新所有电视剧
-          </Button> */}
+            <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={syncAllTVBtn}>
+              更新所有电视剧
+            </Button>
           </div>
           <div class="grid grid-cols-12 gap-2 mt-4">
             <Input class="col-span-10" store={input1} />
@@ -324,16 +334,7 @@ export const TVManagePage: ViewComponent = (props) => {
                     episode_count,
                   } = tv;
                   return (
-                    <div
-                      class="rounded-md border border-slate-300 bg-white shadow-sm"
-                      // onContextMenu={(event: MouseEvent & { currentTarget: HTMLDivElement }) => {
-                      //   event.stopPropagation();
-                      //   event.preventDefault();
-                      //   const { x, y } = event;
-                      //   tvSelection.select(tv);
-                      //   contextMenu.show({ x, y });
-                      // }}
-                    >
+                    <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                       <div class="flex">
                         <div class="overflow-hidden mr-2 rounded-sm">
                           <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
@@ -367,17 +368,25 @@ export const TVManagePage: ViewComponent = (props) => {
                               </div>
                             </Show>
                             <Show when={tips.length}>
-                              <div class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500">
-                                <Info class="w-4 h-4" />
-                                <div>{tips.length}个问题</div>
-                              </div>
+                              <PurePopover
+                                content={
+                                  <div class="space-y-2">
+                                    <For each={tips}>
+                                      {(tip) => {
+                                        return <div class="text-sm text-slate-800">{tip}</div>;
+                                      }}
+                                    </For>
+                                  </div>
+                                }
+                              >
+                                <div class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500">
+                                  <Info class="w-4 h-4" />
+                                  <div>{tips.length}个问题</div>
+                                </div>
+                              </PurePopover>
                             </Show>
                           </div>
-                          {/* <For each={tips}>
-                              {(tip) => {
-                                return <div>{tip}</div>;
-                              }}
-                            </For> */}
+
                           <div class="space-x-2 mt-6">
                             <Button store={profileBtn.bind(tv)} variant="subtle" icon={<BookOpen class="w-4 h-4" />}>
                               详情

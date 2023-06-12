@@ -56,7 +56,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
       if (r.error) {
         this.state.loading = false;
         this.emit(Events.StateChange, { ...this.state });
-        this.tip({ text: ["获取索引状态失败", r.error.message] });
+        this.tip({ text: ["获取任务状态失败", r.error.message] });
         if (this.timer) {
           clearTimeout(this.timer);
           this.timer = null;
@@ -66,7 +66,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
       const { status, error } = r.data;
       if (status === TaskStatus.Paused) {
         this.state.loading = false;
-        this.tip({ text: error ? ["索引失败", error] : ["索引被中断"] });
+        this.tip({ text: error ? ["任务失败", error] : ["任务被中断"] });
         this.emit(Events.StateChange, { ...this.state });
         this.emit(Events.Pause);
         if (this.timer) {
@@ -77,7 +77,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
       }
       if (status === TaskStatus.Finished) {
         this.state.loading = false;
-        this.tip({ text: error ? ["索引失败", error] : ["索引完成"] });
+        this.tip({ text: error ? ["任务失败", error] : ["任务完成"] });
         this.emit(Events.StateChange, { ...this.state });
         this.emit(Events.Finish);
         if (this.timer) {

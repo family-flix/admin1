@@ -28,6 +28,9 @@ user.onLogout(() => {
 });
 user.onExpired(() => {
   cache.clear("user");
+  app.tip({
+    text: ["token 已过期，请重新登录"],
+  });
   router.replace("/login");
 });
 
@@ -44,8 +47,10 @@ export const app = new Application({
       const { existing } = r.data;
       if (!existing) {
         user.needRegister = true;
+        return Result.Ok(null);
       }
     }
+    await app.user.validate();
     return Result.Ok(null);
   },
 });

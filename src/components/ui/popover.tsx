@@ -2,7 +2,7 @@
  * @file 气泡 组件
  */
 import { Portal } from "solid-js/web";
-import { createContext, createSignal, onCleanup, useContext } from "solid-js";
+import { createContext, onCleanup, useContext } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
 import { X } from "lucide-solid";
 
@@ -20,8 +20,42 @@ export const Popover = (
 ) => {
   const { store, children } = props;
 
-  onCleanup(() => {
-    store.unmount();
+  return (
+    <PopoverRoot store={store}>
+      <PopoverTrigger store={store} class="inline-flex items-center justify-center">
+        {children}
+      </PopoverTrigger>
+      <PopoverPortal store={store}>
+        <PopoverContent
+          store={store}
+          class={cn(
+            "relative rounded-md p-5 w-64 bg-white shadow-lg focus:shadow-md focus:ring-2 focus:ring-violet-700"
+          )}
+        >
+          <div>{props.content}</div>
+          <PopoverClose
+            store={store}
+            class="font-inherit rounded-full h-6 w-6 inline-flex items-center justify-center text-violet-900 absolute top-3 right-3"
+          >
+            <X class="w-4 h-4" />
+          </PopoverClose>
+          <PopoverArrow store={store} class="text-xl fill-white" />
+        </PopoverContent>
+      </PopoverPortal>
+    </PopoverRoot>
+  );
+};
+
+export const PurePopover = (
+  props: {
+    content: JSX.Element;
+  } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { children } = props;
+
+  const store = new PopoverCore({
+    side: "bottom",
+    align: "end",
   });
 
   return (
@@ -50,7 +84,6 @@ export const Popover = (
   );
 };
 
-const PopoverContext = createContext<PopoverCore>();
 const PopoverRoot = (props: { store: PopoverCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store, children } = props;
   // console.log("[COMPONENT]PopoverRoot", store);

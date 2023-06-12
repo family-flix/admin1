@@ -11,11 +11,12 @@ import { Application } from "@/domains/app";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { JobItem, fetch_job_list, pause_job } from "@/domains/job/services";
 import { TaskStatus } from "@/constants";
+import { cn } from "@/utils";
 
 export const TaskListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, view, router } = props;
 
-  const helper = new ListCore(new RequestCore(fetch_job_list), {});
+  const jobList = new ListCore(new RequestCore(fetch_job_list), {});
   const pauseJob = new RequestCore(pause_job, {
     onLoading(loading) {
       pauseJobBtn.setLoading(loading);
@@ -25,7 +26,7 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
     },
     onSuccess: () => {
       app.tip({ text: ["中止任务成功"] });
-      helper.refresh();
+      jobList.refresh();
     },
   });
   const pauseJobBtn = new ButtonInListCore<JobItem>({
@@ -40,15 +41,15 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   });
   const refreshBtn = new ButtonCore({
     onClick() {
-      helper.refresh();
+      jobList.refresh();
     },
   });
-  helper.onLoadingChange((loading) => {
+  jobList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
 
-  const [response, setResponse] = createSignal(helper.response);
-  helper.onStateChange((nextState) => {
+  const [response, setResponse] = createSignal(jobList.response);
+  jobList.onStateChange((nextState) => {
     setResponse(nextState);
   });
 
@@ -58,7 +59,7 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
     [TaskStatus.Running]: () => <Timer class="w-4 h-4" />,
   };
 
-  helper.init();
+  jobList.init();
 
   const dataSource = () => response().dataSource;
   const noMore = () => response().noMore;
@@ -75,13 +76,13 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
             {(task, i) => {
               const { id, desc, unique_id, created, status, statusText } = task;
               return (
-                <div class="space-y-1">
+                <div class={cn("space-y-1")}>
                   <h2 class="text-xl">{desc}</h2>
                   <div class="flex space-x-4">
                     <div>{created}</div>
                     <div class="flex items-center space-x-1">
                       <Dynamic component={statusIcons[status]} />
-                      <div>{statusText}</div>
+                      <div class={cn({})}>{statusText}</div>
                     </div>
                   </div>
                   <div class="space-x-2">
@@ -103,7 +104,7 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
           <div
             class="mt-6 text-center cursor-pointer"
             onClick={() => {
-              helper.loadMore();
+              jobList.loadMore();
             }}
           >
             加载更多

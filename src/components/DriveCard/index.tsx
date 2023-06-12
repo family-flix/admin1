@@ -97,17 +97,30 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       dropdown.hide();
     },
   });
+
+  const exportItem = new MenuItemCore({
+    label: "导出",
+    icon: <Download class="mr-2 w-4 h-4" />,
+    async onClick() {
+      exportItem.disable();
+      await drive.export();
+      exportItem.enable();
+      dropdown.hide();
+    },
+  });
+  const analysisQuicklyItem = new MenuItemCore({
+    label: "仅索引新增",
+    icon: <Coffee class="mr-2 w-4 h-4" />,
+    async onClick() {
+      dropdown.hide();
+      await drive.startScrape(true);
+    },
+  });
   const dropdown = new DropdownMenuCore({
     items: [
       checkInItem,
-      new MenuItemCore({
-        label: "导出",
-        icon: <Download class="mr-2 w-4 h-4" />,
-        async onClick() {
-          await drive.export();
-          dropdown.hide();
-        },
-      }),
+      analysisQuicklyItem,
+      exportItem,
       new MenuItemCore({
         label: "删除",
         icon: <Trash class="mr-2 w-4 h-4" />,
@@ -153,11 +166,12 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       createFolderModal.show();
     },
   });
-  const checkInBtn = new ButtonCore({
+  const refreshBtn = new ButtonCore({
     async onClick() {
-      checkInBtn.setLoading(true);
+      refreshBtn.setLoading(true);
       await drive.refresh();
-      checkInBtn.setLoading(false);
+      progress.update(drive.state.used_percent);
+      refreshBtn.setLoading(false);
     },
   });
 
@@ -177,7 +191,6 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   const name = () => state().name;
   const used_size = () => state().used_size;
   const total_size = () => state().total_size;
-  const used_percent = () => state().used_percent;
 
   // const drive_ref = useRef(new Drive({ id }));
 
@@ -194,7 +207,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
           </div>
           <div class="flex">
             <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" src={avatar()} alt={name()} />
-            <div>
+            <div class="flex-1 pr-12">
               <div class="text-xl">{name()}</div>
               <Progress class="mt-2" store={progress} />
               <div class="mt-2">
@@ -204,7 +217,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
                 <Button store={analysisBtn} variant="subtle" icon={<Coffee class="w-4 h-4" />}>
                   索引
                 </Button>
-                <Button variant="subtle" store={checkInBtn}>
+                <Button variant="subtle" store={refreshBtn}>
                   刷新
                 </Button>
               </div>
