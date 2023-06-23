@@ -25,6 +25,7 @@ import {
   registerPage,
   homeUnknownTVPage,
   homeUnknownSeasonPage,
+  homeMovieListPage,
 } from "./store/views";
 
 import "./style.css";
@@ -49,6 +50,9 @@ homeLayout.register("/home/tv/:id", () => {
 });
 homeLayout.register("/home/tv", () => {
   return homeTVListPage;
+});
+homeLayout.register("/home/movie", () => {
+  return homeMovieListPage;
 });
 homeUnknownMediaLayout.register("/home/unknown_tv/tv", () => {
   return homeUnknownTVPage;

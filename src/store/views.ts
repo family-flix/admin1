@@ -16,6 +16,7 @@ import { NavigatorCore } from "@/domains/navigator";
 import { RegisterPage } from "@/pages/register";
 import { UnknownTVPage } from "@/pages/unknown_tv/tv";
 import { UnknownSeasonPage } from "@/pages/unknown_tv/season";
+import { MovieManagePage } from "@/pages/movie";
 
 RouteViewCore.prefix = NavigatorCore.prefix;
 
@@ -47,6 +48,10 @@ export const homeTransferPage = new RouteViewCore({
 export const homeTVListPage = new RouteViewCore({
   title: "电视剧列表",
   component: TVManagePage,
+});
+export const homeMovieListPage = new RouteViewCore({
+  title: "电影列表",
+  component: MovieManagePage,
 });
 export const homeTVProfilePage = new RouteViewCore({
   title: "电视剧详情",

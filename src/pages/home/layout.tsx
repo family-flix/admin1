@@ -2,7 +2,7 @@
  * @file 后台/首页布局
  */
 import { For, JSX, createSignal } from "solid-js";
-import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch, LogOut, Settings } from "lucide-solid";
+import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch, LogOut, Settings, Tv } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
@@ -136,8 +136,16 @@ export const HomeLayout: ViewComponent = (props) => {
     },
     {
       text: "电视剧",
-      icon: <Film class="w-6 h-6" />,
+      icon: <Tv class="w-6 h-6" />,
       link: "/home/tv",
+      // onClick() {
+      //   router.push("/home/tv");
+      // },
+    },
+    {
+      text: "电影",
+      icon: <Film class="w-6 h-6" />,
+      link: "/home/movie",
       // onClick() {
       //   router.push("/home/tv");
       // },

@@ -69,6 +69,42 @@ export type PartialSearchedTV = Omit<
 };
 
 /**
+ * 获取电视剧列表
+ */
+export async function fetch_movie_list(params: FetchParams & { name: string }) {
+  const { page, pageSize, ...rest } = params;
+  const resp = await request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      air_date: string;
+      popularity: string;
+    }>
+  >("/api/admin/movie/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok({
+    ...resp.data,
+    list: resp.data.list.map((movie) => {
+      const { ...rest } = movie;
+      return {
+        ...rest,
+        // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
+      };
+    }),
+  });
+}
+export type MovieItem = RequestedResource<typeof fetch_movie_list>["list"][number];
+
+/**
  * 获取无法识别的 tv
  */
 export async function fetch_unknown_tv_list(params: FetchParams) {

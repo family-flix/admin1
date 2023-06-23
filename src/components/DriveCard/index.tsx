@@ -2,7 +2,18 @@
  * @file 云盘卡片
  */
 import { For, Show, createSignal } from "solid-js";
-import { MoreHorizontal, Loader, Apple, ArrowBigDown, RefreshCcw, Edit3, Download, Coffee, Trash } from "lucide-solid";
+import {
+  MoreHorizontal,
+  Loader,
+  Apple,
+  ArrowBigDown,
+  RefreshCcw,
+  Edit3,
+  Download,
+  Coffee,
+  Trash,
+  Gift,
+} from "lucide-solid";
 
 import { Application } from "@/domains/app";
 import { Drive } from "@/domains/drive";
@@ -39,7 +50,9 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
         app.tip({ text: ["请先选择文件夹"] });
         return;
       }
+      foldersModal.okBtn.setLoading(true);
       const r = await drive.setRootFolder(folderSelect.value.file_id);
+      foldersModal.okBtn.setLoading(false);
       folderSelect.clear();
       if (r.error) {
         app.tip({ text: ["设置索引目录失败", r.error.message] });
@@ -97,17 +110,32 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       dropdown.hide();
     },
   });
-
+  const receiveRewardsItem = new MenuItemCore({
+    label: "领取所有签到奖品",
+    icon: <Gift class="mr-2 w-4 h-4" />,
+    async onClick() {
+      receiveRewardsItem.disable();
+      await drive.receiveRewards();
+      receiveRewardsItem.enable();
+      dropdown.hide();
+    },
+  });
   const exportItem = new MenuItemCore({
     label: "导出",
     icon: <Download class="mr-2 w-4 h-4" />,
     async onClick() {
       exportItem.disable();
-      await drive.export();
+      const r = await drive.export();
       exportItem.enable();
+      if (r.error) {
+        return;
+      }
+      app.copy(JSON.stringify(r.data));
+      app.tip({ text: ["网盘信息已复制到剪贴板"] });
       dropdown.hide();
     },
   });
+
   const analysisQuicklyItem = new MenuItemCore({
     label: "仅索引新增",
     icon: <Coffee class="mr-2 w-4 h-4" />,
@@ -119,6 +147,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
   const dropdown = new DropdownMenuCore({
     items: [
       checkInItem,
+      receiveRewardsItem,
       analysisQuicklyItem,
       exportItem,
       new MenuItemCore({
@@ -244,7 +273,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
               {(column, x) => {
                 return (
                   <Show when={column.length > 0} fallback={<div class="mt-2 text-slate-500">该文件夹没有文件</div>}>
-                    <div class="px-2 border-r-2">
+                    <div class="px-2 border-r-2 overflow-y-auto max-h-[360px]">
                       <For each={column}>
                         {(folder, y) => {
                           const { file_id, name, selected } = folder;

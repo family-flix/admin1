@@ -25,6 +25,7 @@ import {
   checkInDrive,
   analysisDriveQuickly,
   deleteDrive,
+  receiveCheckInRewardOfDrive,
 } from "./services";
 
 enum Events {
@@ -215,8 +216,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       const msg = this.tip({ text: ["导出失败", r.error.message] });
       return Result.Err(msg);
     }
-    this.tip({ text: ["网盘信息已复制到剪贴板"] });
-    return Result.Ok(null);
+    return Result.Ok(r.data);
   }
   async delete() {
     const r = await deleteDrive({ drive_id: this.id });
@@ -245,6 +245,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       return Result.Err(r.error);
     }
     const { user_name, avatar, used_size, total_size, used_percent } = r.data;
+    console.log("[]percent", used_percent);
     // this.tip({ text: ["刷新成功"] });
     return Result.Ok({
       avatar,
@@ -271,6 +272,20 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       used_percent,
     });
     this.tip({ text: ["刷新成功"] });
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  async receiveRewards() {
+    const r = await receiveCheckInRewardOfDrive({ drive_id: this.id });
+    if (r.error) {
+      this.tip({ text: ["领取失败", r.error.message] });
+      return;
+    }
+    const r2 = await this._refresh();
+    if (r2.error) {
+      this.tip({ text: ["领取成功，请手动刷新页面"] });
+      return;
+    }
+    this.tip({ text: ["领取成功"] });
     this.emit(Events.StateChange, { ...this.state });
   }
   /** 输入网盘根目录 id */

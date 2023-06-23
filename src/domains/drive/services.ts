@@ -83,10 +83,18 @@ export async function fetchDrives(params: FetchParams) {
         id,
         name,
         avatar,
+        /** 网盘总大小 */
         total_size: bytes_to_size(total_size),
+        /** 网盘已使用大小 */
         used_size: bytes_to_size(used_size),
         /** 网盘空间使用百分比 */
-        used_percent: (used_size / total_size) * 100,
+        used_percent: (() => {
+          const percent = (used_size / total_size) * 100;
+          if (percent > 100) {
+            return 100;
+          }
+          return percent;
+        })(),
         /** 是否可以使用（已选择索引根目录） */
         initialized: !!root_folder_id,
       };
@@ -127,7 +135,13 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
     /** 网盘已使用大小 */
     used_size: bytes_to_size(used_size),
     /** 网盘空间使用百分比 */
-    used_percent: (used_size / total_size) * 100,
+    used_percent: (() => {
+      const percent = (used_size / total_size) * 100;
+      if (percent > 100) {
+        return 100;
+      }
+      return percent;
+    })(),
   });
 }
 
@@ -285,4 +299,14 @@ export async function addFolderInDrive(body: { drive_id: string; name: string; p
 export async function checkInDrive(body: { drive_id: string }) {
   const { drive_id } = body;
   return request.get(`/api/admin/drive/check_in/${drive_id}`);
+}
+
+/**
+ * 领取所有签到奖励
+ * @param {object} body
+ * @param {string} body.drive_id 云盘id
+ */
+export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
+  const { drive_id } = body;
+  return request.get(`/api/admin/drive/receive_rewards/${drive_id}`);
 }
