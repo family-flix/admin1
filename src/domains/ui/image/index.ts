@@ -31,8 +31,8 @@ type ImageState = ImageProps & {
   failed: boolean;
   loaded: boolean;
 };
-// const prefix = window.location.origin;
-const prefix = "https://img.funzm.com";
+const prefix = window.location.origin;
+// const prefix = "https://img.funzm.com";
 const DEFAULT_IMAGE1 = prefix + "/placeholder.png";
 
 export class ImageCore extends BaseDomain<TheTypesOfEvents> {

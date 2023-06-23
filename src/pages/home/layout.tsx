@@ -14,8 +14,8 @@ import {
   homeFilenameParsingPage,
   homeIndexPage,
   homeMemberListPage,
+  homeMovieListPage,
   homeTVListPage,
-  homeTVProfilePage,
   homeTaskListPage,
   homeTransferPage,
   homeUnknownMediaLayout,
@@ -74,6 +74,7 @@ export const HomeLayout: ViewComponent = (props) => {
       const isMenusPage = [
         homeIndexPage,
         homeTVListPage,
+        homeMovieListPage,
         homeUnknownMediaLayout,
         homeTaskListPage,
         homeMemberListPage,
