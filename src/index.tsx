@@ -26,6 +26,8 @@ import {
   homeUnknownTVPage,
   homeUnknownSeasonPage,
   homeMovieListPage,
+  homeMovieProfilePage,
+  homeUnknownMoviePage,
 } from "./store/views";
 
 import "./style.css";
@@ -51,6 +53,9 @@ homeLayout.register("/home/tv/:id", () => {
 homeLayout.register("/home/tv", () => {
   return homeTVListPage;
 });
+homeLayout.register("/home/movie/:id", () => {
+  return homeMovieProfilePage;
+});
 homeLayout.register("/home/movie", () => {
   return homeMovieListPage;
 });
@@ -59,6 +64,9 @@ homeUnknownMediaLayout.register("/home/unknown_tv/tv", () => {
 });
 homeUnknownMediaLayout.register("/home/unknown_tv/season", () => {
   return homeUnknownSeasonPage;
+});
+homeUnknownMediaLayout.register("/home/unknown_tv/movie", () => {
+  return homeUnknownMoviePage;
 });
 homeLayout.register("/home/unknown_tv", () => {
   return homeUnknownMediaLayout;

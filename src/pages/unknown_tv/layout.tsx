@@ -28,22 +28,22 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
   });
-  // view.onMatched((subView) => {
-  //   console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
-  //   if (subView === view.curView) {
-  //     return;
-  //   }
-  //   const prevView = view.curView;
-  //   view.prevView = prevView;
-  //   view.curView = subView;
-  //   if (!view.subViews.includes(subView)) {
-  //     view.appendSubView(subView);
-  //   }
-  //   subView.show();
-  //   if (view.prevView) {
-  //     view.prevView.hide();
-  //   }
-  // });
+  view.onMatched((subView) => {
+    console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
+    if (subView === view.curView) {
+      return;
+    }
+    const prevView = view.curView;
+    view.prevView = prevView;
+    view.curView = subView;
+    if (!view.subViews.includes(subView)) {
+      view.appendSubView(subView);
+    }
+    subView.show();
+    if (view.prevView) {
+      view.prevView.hide();
+    }
+  });
   // view.onNotFound(() => {
   //   console.log("not found", view.state.layered, view.state.visible);
   //   if (view.state.layered) {
@@ -56,27 +56,27 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   //   view.curView.show();
   //   view.appendSubView(view.curView);
   // });
-  // router.onPathnameChange(({ pathname, type }) => {
-  //   if (view.state.layered) {
-  //     return;
-  //   }
-  //   if (!view.state.visible) {
-  //     return;
-  //   }
-  //   view.checkMatch({ pathname, type });
-  // });
-  // view.onShow(() => {
-  //   if (view.curView) {
-  //     return;
-  //   }
-  //   view.checkMatch(router._pending);
-  // });
+  router.onPathnameChange(({ pathname, type }) => {
+    if (view.state.layered) {
+      return;
+    }
+    if (!view.state.visible) {
+      return;
+    }
+    view.checkMatch({ pathname, type });
+  });
+  view.onShow(() => {
+    if (view.curView) {
+      return;
+    }
+    view.checkMatch(router._pending);
+  });
 
   return (
-    <>
+    <div class="flex flex-col h-screen">
       <h1 class="text-2xl h-[32px]">未识别的影视剧</h1>
-      <div class="mt-8">
-        {/* <div class="space-x-2 h-[24px]">
+      <div class="flex-1 mt-8">
+        <div class="space-x-2 h-[24px]">
           <div
             class="inline-block px-4 py-2 cursor-pointer"
             onClick={() => {
@@ -93,35 +93,42 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
           >
             季
           </div>
-        </div> */}
-        <div class="flex-1 w-full h-full">
+          <div
+            class="inline-block px-4 py-2 cursor-pointer"
+            onClick={() => {
+              router.push("/home/unknown_tv/movie");
+            }}
+          >
+            电影
+          </div>
+        </div>
+        <div class="mt-8 w-full h-full">
           <div class="relative w-full h-full">
             <For each={subViews()}>
               {(subView, i) => {
                 const PageContent = subView.component as ViewComponent;
                 return (
-                  <div
-                    class={
-                      cn()
-                      // "absolute left-0 top-0 w-full h-full",
-                      // "data-[state=open]:animate-in data-[state=open]:fade-in",
-                      // "data-[state=closed]:animate-out data-[state=closed]:fade-out"
-                    }
-                    // store={subView}
-                    // index={i()}
+                  <KeepAliveRouteView
+                    class={cn(
+                      "absolute left-0 top-0 w-full h-full",
+                      "data-[state=open]:animate-in data-[state=open]:fade-in",
+                      "data-[state=closed]:animate-out data-[state=closed]:fade-out"
+                    )}
+                    store={subView}
+                    index={i()}
                   >
                     <div class="overflow-y-auto w-full h-full">
                       <div class="min-h-full">
                         <PageContent app={app} router={router} view={subView} />
                       </div>
                     </div>
-                  </div>
+                  </KeepAliveRouteView>
                 );
               }}
             </For>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };

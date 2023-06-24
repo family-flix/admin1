@@ -91,9 +91,9 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
   const noMore = () => response().noMore;
 
   return (
-    <div class="mt-8">
+    <div class="">
       <div class="my-4">
-        <Button icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+        <Button icon={<RotateCw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
           刷新季
         </Button>
       </div>

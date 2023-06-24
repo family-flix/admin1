@@ -11,11 +11,13 @@ import { UnknownMediaLayout as UnknownMediaLayout } from "@/pages/unknown_tv/lay
 import { MemberManagePage } from "@/pages/member";
 import { VideoParsingPage } from "@/pages/parse";
 import { TVProfilePage } from "@/pages/tv/profile";
+import { MovieProfilePage } from "@/pages/movie/profile";
 import { HomeLayout } from "@/pages/home/layout";
 import { NavigatorCore } from "@/domains/navigator";
 import { RegisterPage } from "@/pages/register";
 import { UnknownTVPage } from "@/pages/unknown_tv/tv";
 import { UnknownSeasonPage } from "@/pages/unknown_tv/season";
+import { UnknownMoviePage } from "@/pages/unknown_tv/movie";
 import { MovieManagePage } from "@/pages/movie";
 
 RouteViewCore.prefix = NavigatorCore.prefix;
@@ -57,6 +59,10 @@ export const homeTVProfilePage = new RouteViewCore({
   title: "电视剧详情",
   component: TVProfilePage,
 });
+export const homeMovieProfilePage = new RouteViewCore({
+  title: "电影详情",
+  component: MovieProfilePage,
+});
 export const homeUnknownMediaLayout = new RouteViewCore({
   title: "未识别影视剧",
   component: UnknownMediaLayout,
@@ -70,7 +76,11 @@ export const homeUnknownSeasonPage = new RouteViewCore({
   title: "未识别的季",
   component: UnknownSeasonPage,
 });
-homeUnknownMediaLayout.replaceSubViews([homeUnknownTVPage, homeUnknownSeasonPage]);
+export const homeUnknownMoviePage = new RouteViewCore({
+  title: "未识别的电影",
+  component: UnknownMoviePage,
+});
+homeUnknownMediaLayout.replaceSubViews([homeUnknownTVPage, homeUnknownSeasonPage, homeUnknownMoviePage]);
 export const homeFilenameParsingPage = new RouteViewCore({
   title: "文件名解析",
   component: VideoParsingPage,

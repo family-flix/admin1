@@ -135,7 +135,15 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       dropdown.hide();
     },
   });
-
+  const setRootFolderItem = new MenuItemCore({
+    label: "设置索引根目录",
+    icon: <Edit3 class="mr-2 w-4 h-4" />,
+    onClick() {
+      dropdown.hide();
+      foldersModal.show();
+      drive.fetch({ file_id: "root", name: "文件" });
+    },
+  });
   const analysisQuicklyItem = new MenuItemCore({
     label: "仅索引新增",
     icon: <Coffee class="mr-2 w-4 h-4" />,
@@ -150,6 +158,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       receiveRewardsItem,
       analysisQuicklyItem,
       exportItem,
+      setRootFolderItem,
       new MenuItemCore({
         label: "删除",
         icon: <Trash class="mr-2 w-4 h-4" />,
@@ -255,7 +264,7 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
         </div>
       </div>
       <Dialog title={name()} store={foldersModal}>
-        <Show when={selectedFolder()} fallback={<div class="text-center">请先选择一个文件夹作为索引根目录</div>}>
+        <Show when={selectedFolder()} fallback={<div class="text-center">请选择一个文件夹作为索引根目录</div>}>
           <div>当前选择了 {selectedFolder()?.name}</div>
         </Show>
         <Show

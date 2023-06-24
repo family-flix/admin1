@@ -2,7 +2,7 @@
  * @file 电影列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { ArrowUpCircle, Award, BookOpen, Calendar, RotateCw } from "lucide-solid";
+import { Award, BookOpen, Calendar, RotateCw } from "lucide-solid";
 
 import { bind_searched_tv_for_tv, fetch_movie_list, MovieItem } from "@/services";
 import { hidden_tv } from "@/domains/tv/services";
@@ -75,7 +75,7 @@ export const MovieManagePage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<MovieItem>({
     onClick(record) {
-      router.push(`/home/tv/${record.id}`);
+      router.push(`/home/movie/${record.id}`);
     },
   });
   const refreshBtn = new ButtonCore({
@@ -89,9 +89,6 @@ export const MovieManagePage: ViewComponent = (props) => {
   list.onStateChange((nextState) => {
     setState(nextState);
   });
-  // folderCanAddSyncTaskList.onStateChange((nextState) => {
-  //   setFolders(nextState);
-  // });
   list.init();
 
   const dataSource = () => state().dataSource;

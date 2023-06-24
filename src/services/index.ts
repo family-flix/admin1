@@ -137,7 +137,7 @@ export async function fetch_unknown_tv_list(params: FetchParams) {
 export type UnknownTVItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
 
 /**
- * 获取无法识别的 tv
+ * 获取无法识别的季
  */
 export async function fetch_unknown_season_list(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
@@ -168,6 +168,38 @@ export async function fetch_unknown_season_list(params: FetchParams) {
   });
 }
 export type UnknownSeasonItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
+
+/**
+ * 获取无法识别的 tv
+ */
+export async function fetch_unknown_movie_list(params: FetchParams) {
+  const { page, pageSize, ...rest } = params;
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      original_name: string;
+    }>
+  >(`/api/admin/unknown_movie/list`, {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return r;
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((tv) => {
+      const { id, name, original_name } = tv;
+      return {
+        id,
+        name: name || original_name,
+      };
+    }),
+  });
+}
+export type UnknownMovieItem = RequestedResource<typeof fetch_unknown_movie_list>["list"][0];
 
 /**
  * 更新季数
@@ -237,6 +269,13 @@ export type MatchedTVOfTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"
  */
 export async function bind_searched_tv_for_tv(id: string, body: MatchedTVOfTMDB) {
   return request.post(`/api/admin/tv/update_profile/${id}`, body);
+}
+
+/**
+ * 给指定电影绑定一个 tmdb 的搜索结果
+ */
+export async function bind_movie_profile_for_movie(id: string, body: { name: string }) {
+  return request.post(`/api/admin/unknown_movie/update/${id}`, body);
 }
 
 /**

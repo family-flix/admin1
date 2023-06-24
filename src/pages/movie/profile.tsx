@@ -1,9 +1,9 @@
 /**
- * @file 电视剧详情
+ * @file 电影详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
 
-import { RequestedResource, Result, ViewComponent } from "@/types";
+import { RequestedResource, ViewComponent } from "@/types";
 import { request } from "@/utils/request";
 import { Button } from "@/components/ui/button";
 import { LazyImage } from "@/components/ui/image";
@@ -13,8 +13,8 @@ import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
 import { ButtonCore } from "@/domains/ui/button";
 
-async function fetch_tv_profile(body: { tv_id: string }) {
-  const { tv_id } = body;
+async function fetch_movie_profile(body: { movie_id: string }) {
+  const { movie_id } = body;
   const r = await request.get<{
     id: string;
     name: string;
@@ -22,40 +22,26 @@ async function fetch_tv_profile(body: { tv_id: string }) {
     poster_path: null;
     backdrop_path: null;
     original_language: string;
-    first_air_date: string;
-    incomplete: boolean;
-    seasons: {
-      id: string;
-      name: string;
-      overview: string;
-      episodes: {
-        id: string;
-        name: string;
-        overview: string;
-      }[];
+    air_date: string;
+    tmdb_id: number;
+    sources: {
+      file_id: string;
+      file_name: string;
     }[];
-  }>(`/api/admin/tv/${tv_id}`);
+  }>(`/api/admin/movie/${movie_id}`);
   return r;
 }
-type TVProfile = RequestedResource<typeof fetch_tv_profile>;
-async function delete_episode_in_tv(body: { id: string; tv_id: string }) {
-  const { id, tv_id } = body;
-  const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
-  return r;
-}
+type MovieProfile = RequestedResource<typeof fetch_movie_profile>;
 
-export const TVProfilePage: ViewComponent = (props) => {
+export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
-  // const [profile, set_profile] = useState<TVProfile | null>(null);
-  // const [visible, set_visible] = useState(false);
-  // const cur_episode_ref = useRef<TVProfile["episodes"][0] | null>(null);
 
-  const request = new RequestCore(fetch_tv_profile, {
+  const request = new RequestCore(fetch_movie_profile, {
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },
     onSuccess(v) {
-      set_profile(v);
+      setProfile(v);
     },
   });
   const request2 = new RequestCore(bind_searched_tv_for_tv, {
@@ -88,11 +74,11 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
 
-  const [profile, set_profile] = createSignal<TVProfile | null>(null);
+  const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
   onMount(() => {
     const { id } = view.params;
-    request.run({ tv_id: id });
+    request.run({ movie_id: id });
   });
 
   return (
@@ -101,23 +87,8 @@ export const TVProfilePage: ViewComponent = (props) => {
         <div class="">
           <Show when={!!profile()}>
             <div class="relative">
-              <div
-                class=""
-                style={
-                  {
-                    // "background-image": `url('${profile().backdrop_path}')`,
-                    // "background-size": "auto",
-                    // backgroundPosition: "left calc((50vw - 170px) - 340px) top",
-                  }
-                }
-              >
-                <div
-                // style={{
-                //   background:
-                //     "linear-gradient(to right, rgba(52.5, 157.5, 157.5, 1) calc((50vw - 170px) - 340px), rgba(52.5, 157.5, 157.5, 0.84) 50%, rgba(52.5, 157.5, 157.5, 0.84) 100%)",
-                // }}
-                >
-                  {/* <div class="absolute z-2 inset-0 backdrop-blur-lg w-full h-full" /> */}
+              <div class="">
+                <div>
                   <div class="relative z-3">
                     <div class="flex">
                       <LazyImage
@@ -134,31 +105,19 @@ export const TVProfilePage: ViewComponent = (props) => {
                 </div>
               </div>
               <div class="relative z-3 mt-4">
-                <div class="space-x-4">
+                <div class="flex items-center space-x-4">
                   <Button store={btn1}>搜索 TMDB</Button>
-                  {/* <TVFormDialog trigger={<Button>修改</Button>} /> */}
+                  <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
                 </div>
-                <div class="mt-4 space-y-4">
-                  <For each={profile()?.seasons}>
-                    {(season) => {
-                      const { name, overview, episodes } = season;
+                <div class="mt-8 text-2xl">可播放源</div>
+                <div class="mt-4 space-y-2">
+                  <For each={profile()?.sources}>
+                    {(source) => {
+                      const { file_name } = source;
                       return (
-                        <div class="rounded border border-slate-400">
-                          <div class="p-4 bg-slate-300">
-                            <div class="text-2xl">{name}</div>
-                          </div>
-                          <div class="space-y-1 px-4">
-                            <For each={episodes}>
-                              {(episode) => {
-                                const { id, name, overview } = episode;
-                                return (
-                                  <div class="py-2">
-                                    <p class="text-lg">{name}</p>
-                                    <p class="">{overview}</p>
-                                  </div>
-                                );
-                              }}
-                            </For>
+                        <div class="">
+                          <div class="">
+                            <div class="">{file_name}</div>
                           </div>
                         </div>
                       );

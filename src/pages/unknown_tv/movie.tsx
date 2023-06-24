@@ -1,12 +1,12 @@
 /**
- * @file 未识别的电视剧
+ * @file 未识别的电影
  */
 import { For, Show, createSignal } from "solid-js";
 import { Brush, RotateCcw } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
-import { UnknownTVItem, bind_searched_tv_for_tv, fetch_unknown_tv_list } from "@/services";
+import { UnknownMovieItem, bind_movie_profile_for_movie, fetch_unknown_movie_list } from "@/services";
 import { FolderCard } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
@@ -15,10 +15,10 @@ import { ViewComponent } from "@/types";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 
-export const UnknownTVPage: ViewComponent = (props) => {
+export const UnknownMoviePage: ViewComponent = (props) => {
   const { app } = props;
 
-  const list = new ListCore(new RequestCore(fetch_unknown_tv_list), {
+  const list = new ListCore(new RequestCore(fetch_unknown_movie_list), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
     },
@@ -28,14 +28,14 @@ export const UnknownTVPage: ViewComponent = (props) => {
       list.refresh();
     },
   });
-  const cur = new SelectionCore<UnknownTVItem>();
-  const selectMatchedProfileBtn = new ButtonInListCore<UnknownTVItem>({
+  const cur = new SelectionCore<UnknownMovieItem>();
+  const selectMatchedProfileBtn = new ButtonInListCore<UnknownMovieItem>({
     onClick(record) {
       cur.select(record);
-      //       dialog.show();
+      dialog.show();
     },
   });
-  const bindProfileForTV = new RequestCore(bind_searched_tv_for_tv, {
+  const bindProfileForMovie = new RequestCore(bind_movie_profile_for_movie, {
     onLoading(loading) {
       dialog.okBtn.setLoading(loading);
     },
@@ -49,13 +49,14 @@ export const UnknownTVPage: ViewComponent = (props) => {
     },
   });
   const dialog = new TMDBSearcherDialogCore({
+    type: "2",
     onOk(searched_tv) {
       if (!cur.value) {
-        app.tip({ text: ["请先选择未识别的电视剧"] });
+        app.tip({ text: ["请先选择未识别的电影"] });
         return;
       }
       const { id } = cur.value;
-      bindProfileForTV.run(id, searched_tv);
+      bindProfileForMovie.run(id, searched_tv);
     },
   });
 
@@ -75,7 +76,7 @@ export const UnknownTVPage: ViewComponent = (props) => {
     <div>
       <div class="my-4">
         <Button icon={<RotateCcw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
-          刷新电视剧
+          刷新电影
         </Button>
       </div>
       <Show when={empty()}>

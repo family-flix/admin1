@@ -22,6 +22,7 @@ type TMDBSearcherDialogState = {
   showFooter: boolean;
 };
 type TMDBSearcherDialogProps = {
+  type?: "1" | "2";
   /** 是否底部按钮 */
   footer: boolean;
   /** 是否展示确定按钮 */
@@ -33,23 +34,19 @@ type TMDBSearcherDialogProps = {
 };
 
 export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
-  tmdb = new TMDBSearcherCore();
+  tmdb: TMDBSearcherCore;
   dialog: DialogCore;
   okBtn: ButtonCore;
   cancelBtn: ButtonCore;
 
-  state: TMDBSearcherDialogState = {
-    value: null,
-    list: this.tmdb.list.response,
-    showFooter: true,
-  };
+  state: TMDBSearcherDialogState;
 
   constructor(options: Partial<{ _name: string } & TMDBSearcherDialogProps> = {}) {
     super(options);
 
-    const { footer = true, onOk, onCancel } = options;
+    const { type, footer = true, onOk, onCancel } = options;
     this.dialog = new DialogCore({
-      title: "搜索电视剧",
+      title: type === "2" ? "搜索电影" : "搜索电视剧",
       footer,
       onOk: () => {
         if (onOk && this.tmdb.state.cur) {
@@ -58,7 +55,14 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
       },
       onCancel,
     });
-    this.state.showFooter = footer;
+    this.tmdb = new TMDBSearcherCore({
+      type,
+    });
+    this.state = {
+      value: null,
+      list: this.tmdb.list.response,
+      showFooter: footer,
+    };
     this.okBtn = this.dialog.okBtn;
     this.cancelBtn = this.dialog.cancelBtn;
     this.tmdb.list.onStateChange((nextState) => {

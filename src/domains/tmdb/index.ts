@@ -7,7 +7,7 @@ import { FormCore } from "@/domains/ui/form";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 
-import { TheTVInTMDB, search_tv_in_tmdb } from "./services";
+import { TheTVInTMDB, search_media_in_tmdb } from "./services";
 import { RequestCore } from "../client";
 
 enum Events {
@@ -22,15 +22,18 @@ interface TMDBSearcherState {
   response: Response<TheTVInTMDB>;
   cur: TheTVInTMDB | null;
 }
-type TMDBSearcherProps = {};
+type TMDBSearcherProps = {
+  type?: "1" | "2";
+};
 
 export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
-  list = new ListCore(new RequestCore(search_tv_in_tmdb));
+  list = new ListCore(new RequestCore(search_media_in_tmdb));
   form: FormCore<{}>;
   input: InputCore;
   searchBtn: ButtonCore;
   resetBtn: ButtonCore;
 
+  type?: string;
   state: TMDBSearcherState = {
     cur: null,
     response: this.list.response,
@@ -39,9 +42,14 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ _name: string } & TMDBSearcherProps> = {}) {
     super(options);
 
+    const { type } = options;
+    if (type) {
+      this.type = type;
+      this.list.setParams({ type });
+    }
     this.form = new FormCore<{}>();
     this.input = new InputCore({
-      placeholder: "请输入电视剧名称",
+      placeholder: type === "2" ? "请输入电影名称" : "请输入电视剧名称",
     });
     this.searchBtn = new ButtonCore({
       onClick: () => {
