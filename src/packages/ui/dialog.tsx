@@ -58,11 +58,11 @@ const Portal = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLElement>) 
   const { store } = props;
 
   return (
-    <PortalPrimitive>
-      <Presence store={store.present}>
+    <Presence store={store.present}>
+      <PortalPrimitive>
         <div class={props.class}>{props.children}</div>
-      </Presence>
-    </PortalPrimitive>
+      </PortalPrimitive>
+    </Presence>
   );
 };
 

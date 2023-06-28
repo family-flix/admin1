@@ -6,6 +6,7 @@ import { JSX, createSignal } from "solid-js";
 import { ButtonCore } from "@/domains/ui/button";
 
 import { Show } from "./show";
+import { cn } from "@/utils";
 
 function Root<T = unknown>(
   props: {
@@ -25,7 +26,7 @@ function Root<T = unknown>(
 
   return (
     <button
-      class={props.class}
+      class={cn("break-keep whitespace-nowrap", props.class)}
       role="button"
       disabled={disabled()}
       onClick={(event) => {

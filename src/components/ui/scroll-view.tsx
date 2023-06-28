@@ -2,7 +2,7 @@
  * @file 可滚动容器，支持下拉刷新、滚动监听等
  */
 import { JSX } from "solid-js/jsx-runtime";
-import { createSignal, onMount } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 import { ArrowDown, ArrowUp, Loader2 } from "lucide-solid";
 
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
@@ -48,13 +48,15 @@ export const ScrollView = (
   const Component = options[step()];
 
   return (
-    <Root class={cn("relative", props.class)}>
-      <Indicator store={store}>
-        <div class="flex items-center justify-center h-[80px]">
-          <Component />
-        </div>
-      </Indicator>
-      <Content store={store} class="absolute inset-0 max-h-screen overflow-y-auto hide-scroll">
+    <Root class={cn("relative")}>
+      <Show when={state().pullToRefresh}>
+        <Indicator store={store}>
+          <div class="flex items-center justify-center h-[80px]">
+            <Component />
+          </div>
+        </Indicator>
+      </Show>
+      <Content store={store} class={cn("w-full h-full overflow-y-auto hide-scroll", props.class)}>
         {props.children}
       </Content>
     </Root>

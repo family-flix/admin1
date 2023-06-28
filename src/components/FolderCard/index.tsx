@@ -4,6 +4,7 @@
 import { JSX } from "solid-js/jsx-runtime";
 
 import { LazyImage } from "@/components/ui/image";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const FolderCard = (
   props: {
@@ -32,6 +33,17 @@ export const FolderCard = (
       <div title={name} class="mt-2 text-center break-all whitespace-pre-wrap truncate line-clamp-2">
         {name}
       </div>
+    </div>
+  );
+};
+
+export const FolderCardSkeleton = () => {
+  return (
+    <div class="flex flex-col items-center">
+      <div class="flex items-center w-[80px] h-[80px]">
+        <Skeleton class="max-w-full max-h-full object-contain" />
+      </div>
+      <Skeleton class="mt-2 h-[24px] text-center break-all whitespace-pre-wrap truncate line-clamp-2"></Skeleton>
     </div>
   );
 };

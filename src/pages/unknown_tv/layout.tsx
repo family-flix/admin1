@@ -44,19 +44,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
       view.prevView.hide();
     }
   });
-  // view.onNotFound(() => {
-  //   console.log("not found", view.state.layered, view.state.visible);
-  //   if (view.state.layered) {
-  //     return;
-  //   }
-  //   if (!view.state.visible) {
-  //     return;
-  //   }
-  //   view.curView = homeUnknownTVPage;
-  //   view.curView.show();
-  //   view.appendSubView(view.curView);
-  // });
   router.onPathnameChange(({ pathname, type }) => {
+    console.log("[PAGE]unknown_tv/layout - router.onPathnameChange", pathname, view.state.layered, view.state.visible);
     if (view.state.layered) {
       return;
     }
@@ -65,10 +54,11 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
     }
     view.checkMatch({ pathname, type });
   });
+  view.onNotFound(() => {
+    console.log("[PAGE]unknown_tv/layout - view.onNotFound");
+  });
   view.onShow(() => {
-    if (view.curView) {
-      return;
-    }
+    console.log("[PAGE]unknown_tv/layout - view.onShow");
     view.checkMatch(router._pending);
   });
 
@@ -108,20 +98,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               {(subView, i) => {
                 const PageContent = subView.component as ViewComponent;
                 return (
-                  <KeepAliveRouteView
-                    class={cn(
-                      "absolute left-0 top-0 w-full h-full",
-                      "data-[state=open]:animate-in data-[state=open]:fade-in",
-                      "data-[state=closed]:animate-out data-[state=closed]:fade-out"
-                    )}
-                    store={subView}
-                    index={i()}
-                  >
-                    <div class="overflow-y-auto w-full h-full">
-                      <div class="min-h-full">
-                        <PageContent app={app} router={router} view={subView} />
-                      </div>
-                    </div>
+                  <KeepAliveRouteView class={cn("relative")} store={subView} index={i()} immediately={true}>
+                    <PageContent app={app} router={router} view={subView} />
                   </KeepAliveRouteView>
                 );
               }}

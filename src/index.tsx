@@ -1,10 +1,11 @@
 /* @refresh reload */
 import { createSignal, For, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
+import { Loader, Loader2 } from "lucide-solid";
 
 import { app } from "./store/app";
 import { ViewComponent } from "./types";
-import { connect } from "@/domains/app/connect.web";
+import { connect } from "./domains/app/connect.web";
 import { ToastCore } from "./domains/ui/toast";
 import { Toast } from "./components/ui/toast";
 import { RouteView } from "./components/ui/route-view";
@@ -31,7 +32,6 @@ import {
 } from "./store/views";
 
 import "./style.css";
-import { Loader, Loader2 } from "lucide-solid";
 
 const { router } = app;
 

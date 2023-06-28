@@ -5,13 +5,13 @@ import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
-import { PopperCore } from "@/domains/ui/popper";
+import { PopperCore, Align, Side } from "@/domains/ui/popper";
 import { DismissableLayerCore } from "@/domains/ui/dismissable-layer";
 
 const SIDE_OPTIONS = ["top", "right", "bottom", "left"] as const;
 const ALIGN_OPTIONS = ["start", "center", "end"] as const;
-type Align = (typeof ALIGN_OPTIONS)[number];
-type Side = (typeof SIDE_OPTIONS)[number];
+// export type Align = (typeof ALIGN_OPTIONS)[number];
+// export type Side = (typeof SIDE_OPTIONS)[number];
 
 enum Events {
   Show,
@@ -20,6 +20,11 @@ enum Events {
 type TheTypesOfEvents = {
   [Events.Show]: void;
   [Events.Hidden]: void;
+};
+type PopoverProps = {
+  side?: Side;
+  align?: Align;
+  strategy?: "fixed" | "absolute";
 };
 
 export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
@@ -30,16 +35,17 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
   _side: Side;
   _align: Align;
 
-  constructor(config: Partial<{ side: Side; align: Align }> = {}) {
+  constructor(props: { _name?: string } & PopoverProps = {}) {
     super();
 
-    const { side = "bottom", align = "end" } = config;
+    const { side = "bottom", align = "end", strategy } = props;
     this._side = side;
     this._align = align;
 
     this.popper = new PopperCore({
       side,
       align,
+      strategy,
     });
     this.present = new PresenceCore();
     this.layer = new DismissableLayerCore();
@@ -48,26 +54,59 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     });
   }
 
-  state = {
-    visible: false,
-  };
+  visible = false;
+  get state() {
+    return {
+      visible: this.visible,
+    };
+  }
 
   toggle() {
-    const { visible } = this.state;
+    const { visible } = this;
     if (visible) {
       this.hide();
       return;
     }
     this.show();
   }
-  show() {
-    this.state.visible = true;
+  show(position?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    left?: number;
+    top?: number;
+    right?: number;
+    bottom?: number;
+  }) {
+    console.log(this.popper.reference?.getRect());
+    if (position) {
+      this.popper.updateReference({
+        getRect() {
+          const { x = 0, y = 0, width = 0, height = 0, left = 0, top = 0, right = 0, bottom = 0 } = position;
+          return {
+            width,
+            height,
+            x,
+            y,
+            left,
+            top,
+            right,
+            bottom,
+          };
+        },
+      });
+    }
+    this.visible = true;
     this.present.show();
     this.popper.place();
     this.emit(Events.Show);
   }
   hide() {
-    this.state.visible = false;
+    if (this.visible === false) {
+      return;
+    }
+    this.visible = false;
     this.present.hide();
     this.emit(Events.Hidden);
   }

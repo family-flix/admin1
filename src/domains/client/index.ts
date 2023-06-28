@@ -74,6 +74,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
       this.beforeRequest(beforeRequest);
     }
   }
+  token?: unknown;
   /** 执行 service 函数 */
   async run(...args: Parameters<T>) {
     if (this.pending !== null) {
@@ -85,7 +86,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     this.args = args;
     this.emit(Events.LoadingChange, true);
     this.emit(Events.BeforeRequest);
-    const pending = this._service(...args) as ReturnType<T>;
+    const pending = this._service(...args, this.token) as ReturnType<T>;
     this.pending = pending;
     const [r] = await Promise.all([pending, sleep(1000)]);
     this.emit(Events.LoadingChange, false);
@@ -97,7 +98,6 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     }
     this.response = r.data;
     const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
-    console.log('success', d);
     this.emit(Events.Success, d);
     return Result.Ok(d);
   }

@@ -1,10 +1,9 @@
 /**
  *
  */
-import dayjs from "dayjs";
+import { CancelToken } from "axios";
 
 import { FetchParams } from "@/domains/list/typing";
-import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils";
 import { request } from "@/utils/request";
 import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 
@@ -200,17 +199,29 @@ export async function fetch_unknown_movie_list(params: FetchParams) {
   });
 }
 export type UnknownMovieItem = RequestedResource<typeof fetch_unknown_movie_list>["list"][0];
+/**
+ * 删除未知电影
+ * @param body
+ */
+export function delete_unknown_movie(body: { id: string }, token?: CancelToken) {
+  const { id } = body;
+  return request.get(`/api/admin/unknown_movie/delete/${id}`, undefined, token);
+}
 
 /**
  * 更新季数
  * @param body
  * @returns
  */
-export function update_unknown_season_number(body: { id: string; season_number: string }) {
+export function update_unknown_season_number(body: { id: string; season_number: string }, token?: CancelToken) {
   const { id, season_number } = body;
-  return request.post<void>(`/api/admin/unknown_season/update/${id}`, {
-    season_number,
-  });
+  return request.post<void>(
+    `/api/admin/unknown_season/update/${id}`,
+    {
+      season_number,
+    },
+    token
+  );
 }
 
 /**
@@ -268,7 +279,70 @@ export type MatchedTVOfTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"
  * 给指定 tv 绑定一个 tmdb 的搜索结果
  */
 export async function bind_searched_tv_for_tv(id: string, body: MatchedTVOfTMDB) {
-  return request.post(`/api/admin/tv/update_profile/${id}`, body);
+  return request.post(`/api/admin/unknown_tv/update/${id}`, body);
+}
+
+/**
+ * 获取指定电视剧关联的文件列表
+ */
+export async function fetch_files_of_tv(body: { id: string; page: number; page_size: number }) {
+  const { id, page, page_size } = body;
+  return request.get<
+    ListResponse<{
+      file_id: string;
+      file_name: string;
+      parent_paths: string;
+    }>
+  >(`/api/admin/tv/${id}/source`, {
+    page,
+    page_size,
+  });
+}
+
+/**
+ * 获取指定电视剧关联的文件详情
+ */
+export async function fetch_file_profile_of_tv(body: { tv_id: string; id: string }) {
+  const { tv_id, id } = body;
+  const r = await request.get<{
+    id: string;
+    file_id: string;
+    file_name: string;
+    parsed_tv: {
+      id: string;
+      name: string;
+      original_name: string;
+      correct_name: string;
+      file_id: string;
+      file_name: string;
+    };
+  }>(`/api/admin/tv/${tv_id}/source/${id}`);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { file_id, file_name, parsed_tv } = r.data;
+  const { name, original_name, correct_name } = parsed_tv;
+  return Result.Ok({
+    id,
+    file_id,
+    file_name,
+    parsed_tv: {
+      id: parsed_tv.id,
+      name: name || original_name,
+    },
+  });
+}
+
+/**
+ * 删除指定电视剧关联的文件详情
+ */
+export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }) {
+  const { tv_id, id } = body;
+  const r = await request.get<null>(`/api/admin/tv/${tv_id}/parsed_tv/delete/${id}`);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  return Result.Ok(null);
 }
 
 /**
@@ -526,4 +600,53 @@ export function delete_member(body: { id: string }) {
  */
 export function has_admin() {
   return request.get<{ existing: boolean }>(`/api/admin/user/existing`);
+}
+
+export function delete_aliyun_file(body: { file_id: string }) {
+  const { file_id } = body;
+  return request.get(`/api/admin/aliyun/delete/${file_id}`);
+}
+
+export async function fetch_tv_profile(body: { tv_id: string }) {
+  const { tv_id } = body;
+  const r = await request.get<{
+    id: string;
+    name: string;
+    overview: string;
+    poster_path: null;
+    backdrop_path: null;
+    original_language: string;
+    first_air_date: string;
+    incomplete: boolean;
+    seasons: {
+      id: string;
+      name: string;
+      overview: string;
+      episodes: {
+        id: string;
+        name: string;
+        overview: string;
+      }[];
+    }[];
+    sources: {
+      file_id: string;
+      parent_paths: string;
+      file_name: string;
+    }[];
+    parsed_tvs: {
+      id: string;
+      file_id: string | null;
+      file_name: string | null;
+      name: string | null;
+      original_name: string | null;
+      correct_name: string | null;
+    }[];
+  }>(`/api/admin/tv/${tv_id}`);
+  return r;
+}
+export type TVProfile = RequestedResource<typeof fetch_tv_profile>;
+export async function delete_episode_in_tv(body: { id: string; tv_id: string }) {
+  const { id, tv_id } = body;
+  const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
+  return r;
 }

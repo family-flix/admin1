@@ -6,7 +6,7 @@ import { Brush, RotateCcw } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
-import { UnknownTVItem, bind_searched_tv_for_tv, fetch_unknown_tv_list } from "@/services";
+import { UnknownTVItem, bind_searched_tv_for_tv, fetch_tv_list, fetch_unknown_tv_list } from "@/services";
 import { FolderCard } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
@@ -14,6 +14,7 @@ import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { ListView } from "@/components/ListView";
 
 export const UnknownTVPage: ViewComponent = (props) => {
   const { app } = props;
@@ -32,7 +33,7 @@ export const UnknownTVPage: ViewComponent = (props) => {
   const selectMatchedProfileBtn = new ButtonInListCore<UnknownTVItem>({
     onClick(record) {
       cur.select(record);
-      //       dialog.show();
+      dialog.show();
     },
   });
   const bindProfileForTV = new RequestCore(bind_searched_tv_for_tv, {
@@ -72,49 +73,36 @@ export const UnknownTVPage: ViewComponent = (props) => {
   const noMore = () => response().noMore;
 
   return (
-    <div>
+    <div class="px-4">
       <div class="my-4">
         <Button icon={<RotateCcw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
           刷新电视剧
         </Button>
       </div>
-      <Show when={empty()}>
-        <div class="w-full h-[240px] center flex items-center justify-center">
-          <div class="text-slate-500 text-xl">列表为空</div>
-        </div>
-      </Show>
-      <div class="grid grid-cols-6 gap-2">
-        <For each={dataSource()}>
-          {(file) => {
-            const { id, name } = file;
-            return (
-              <div class="w-[152px] rounded">
-                <FolderCard type="folder" name={name} />
-                <div class="flex justify-center mt-2">
-                  <Button
-                    class="block box-content"
-                    variant="subtle"
-                    store={selectMatchedProfileBtn.bind(file)}
-                    icon={<Brush class="w-4 h-4" />}
-                  >
-                    修改
-                  </Button>
+      <ListView store={list}>
+        <div class="grid grid-cols-6 gap-2">
+          <For each={dataSource()}>
+            {(file) => {
+              const { id, name } = file;
+              return (
+                <div class="w-[152px] rounded">
+                  <FolderCard type="folder" name={name} />
+                  <div class="flex justify-center mt-2">
+                    <Button
+                      class="block box-content"
+                      variant="subtle"
+                      store={selectMatchedProfileBtn.bind(file)}
+                      icon={<Brush class="w-4 h-4" />}
+                    >
+                      修改
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            );
-          }}
-        </For>
-      </div>
-      <Show when={!noMore()}>
-        <div
-          class="mt-4 text-center text-slate-500 cursor-pointer"
-          onClick={() => {
-            list.loadMore();
-          }}
-        >
-          加载更多
+              );
+            }}
+          </For>
         </div>
-      </Show>
+      </ListView>
       <TMDBSearcherDialog store={dialog} />
     </div>
   );

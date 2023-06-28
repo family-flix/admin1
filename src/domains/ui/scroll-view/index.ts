@@ -21,14 +21,19 @@ type TheTypesOfEvents = {
   [Events.StateChange]: ScrollViewState;
   [Events.Refreshing]: void;
 };
+type ScrollViewProps = {
+  pullToRefresh?: boolean;
+  onScroll?: (pos: { scrollTop: number }) => void;
+  onReachBottom?: () => void;
+};
 type ScrollViewState = {
   top: number;
-  step: PullToRefreshStep;
+  /** 当前滚动距离顶部的距离 */
   scrollTop: number;
-};
-type ScrollViewProps = {
-  onScroll: (pos: { scrollTop: number }) => void;
-  onReachBottom: () => void;
+  /** 是否支持下拉刷新 */
+  pullToRefresh: boolean;
+  /** 下拉刷新的阶段 */
+  step: PullToRefreshStep;
 };
 
 export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
@@ -48,8 +53,8 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     scrollTop: 0,
     contentHeight: 0,
   };
-  private _canPullToRefresh = false;
-  private _reachBottom = false;
+  canPullToRefresh = false;
+  canReachBottom = false;
   /** 下拉刷新相关的状态信息 */
   pullToRefresh: {
     state: PullToRefreshStep;
@@ -68,16 +73,19 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     dist: 0,
     distResisted: 0,
   };
+
   state: ScrollViewState = {
     top: 0,
     step: "pending",
     scrollTop: 0,
+    pullToRefresh: false,
   };
 
-  constructor(options: Partial<{ _name: string } & ScrollViewProps> = {}) {
+  constructor(options: Partial<{ _name: string }> & ScrollViewProps = {}) {
     super(options);
 
-    const { onScroll, onReachBottom } = options;
+    const { pullToRefresh = false, onScroll, onReachBottom } = options;
+    this.state.pullToRefresh = pullToRefresh;
     if (onScroll) {
       this.onScroll(onScroll);
     }
@@ -95,7 +103,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
   startPull(pos: { x: number; y: number }) {
     const { x, y } = pos;
     const { state } = this.pullToRefresh;
-    if (this._canPullToRefresh === false) {
+    if (this.canPullToRefresh === false) {
       return;
     }
     // 手指在边缘时可能是滑动切换页面
@@ -116,7 +124,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
       onCanPull: () => void;
     }> = {}
   ) {
-    if (this._canPullToRefresh === false) {
+    if (this.canPullToRefresh === false) {
       return;
     }
     const { onCanPull } = lifetimes;
@@ -155,7 +163,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     //     this.emitValuesChange();
   }
   async endPulling() {
-    if (this._canPullToRefresh === false) {
+    if (this.canPullToRefresh === false) {
       return;
     }
     if (["refreshing"].includes(this.pullToRefresh.state)) {
@@ -185,12 +193,12 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Scroll, { scrollTop });
     const { height = 0, contentHeight = 0 } = this.rect;
     if (scrollTop + height + 120 >= contentHeight) {
-      if (this._reachBottom === false) {
+      if (this.canReachBottom === false) {
         this.emit(Events.ReachBottom);
       }
-      this._reachBottom = true;
+      this.canReachBottom = true;
     } else {
-      this._reachBottom = false;
+      this.canReachBottom = false;
     }
     this.rect.scrollTop = scrollTop;
     this.state.scrollTop = scrollTop;
@@ -198,18 +206,18 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 启用下拉刷新 */
   enablePullToRefresh() {
-    this._canPullToRefresh = true;
+    this.canPullToRefresh = true;
   }
   /** 禁用下拉刷新 */
   disablePullToRefresh() {
-    this._canPullToRefresh = false;
+    this.canPullToRefresh = false;
   }
   /**
    * 开始下拉刷新
    * 调用后触发下拉刷新动画，效果与用户手动下拉刷新一致
    */
   startPullToRefresh() {
-    if (this._canPullToRefresh === false) {
+    if (this.canPullToRefresh === false) {
       return;
     }
     this.pullToRefresh.pullStartY = 0;

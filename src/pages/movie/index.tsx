@@ -2,7 +2,7 @@
  * @file 电影列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, BookOpen, Calendar, RotateCw } from "lucide-solid";
+import { Award, BookOpen, Calendar, RotateCw, Search } from "lucide-solid";
 
 import { bind_searched_tv_for_tv, fetch_movie_list, MovieItem } from "@/services";
 import { hidden_tv } from "@/domains/tv/services";
@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ViewComponent } from "@/types";
+import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const MovieManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -92,7 +94,6 @@ export const MovieManagePage: ViewComponent = (props) => {
   list.init();
 
   const dataSource = () => state().dataSource;
-  const noMore = () => state().noMore;
 
   return (
     <>
@@ -104,64 +105,86 @@ export const MovieManagePage: ViewComponent = (props) => {
               刷新
             </Button>
           </div>
-          <div class="grid grid-cols-12 gap-2 mt-4">
-            <Input class="col-span-10" store={input1} />
-            <Button class="col-span-1" store={searchBtn}>
+          <div class="flex items-center space-x-2 mt-4">
+            <Input class="" store={input1} />
+            <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
               搜索
             </Button>
-            <Button class="col-span-1" store={resetBtn}>
+            <Button class="" store={resetBtn}>
               重置
             </Button>
           </div>
           <div class="mt-4">
-            <div class="space-y-4">
-              <For each={dataSource()}>
-                {(tv) => {
-                  const { id, name, overview, poster_path, air_date, popularity } = tv;
-                  return (
-                    <div class="rounded-md border border-slate-300 bg-white shadow-sm">
-                      <div class="flex">
-                        <div class="overflow-hidden mr-2 rounded-sm">
-                          <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
+            <ListView
+              store={list}
+              skeleton={
+                <div>
+                  <div class="rounded-md border border-slate-300 bg-white shadow-sm">
+                    <div class="flex">
+                      <div class="overflow-hidden mr-2 rounded-sm">
+                        <Skeleton class="w-[180px] h-[272px]" />
+                      </div>
+                      <div class="flex-1 p-4">
+                        <Skeleton class="h-[36px] w-[180px]"></Skeleton>
+                        <div class="mt-2 space-y-1">
+                          <Skeleton class="h-[24px] w-[120px]"></Skeleton>
+                          <Skeleton class="h-[24px] w-[240px]"></Skeleton>
                         </div>
-                        <div class="flex-1 p-4">
-                          <h2 class="text-2xl text-slate-800">{name}</h2>
-                          <div class="mt-2 overflow-hidden text-ellipsis">
-                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</p>
-                          </div>
-                          <div class="flex items-center space-x-4 mt-2">
-                            <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
-                              <Calendar class="w-4 h-4 text-slate-800" />
-                              <div>{air_date}</div>
-                            </div>
-                            <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
-                              <Award class="w-4 h-4" />
-                              <div>{popularity}</div>
-                            </div>
-                          </div>
-
-                          <div class="space-x-2 mt-6">
-                            <Button store={profileBtn.bind(tv)} variant="subtle" icon={<BookOpen class="w-4 h-4" />}>
-                              详情
-                            </Button>
-                          </div>
+                        <div class="flex items-center space-x-4 mt-2">
+                          <Skeleton class="w-10 h-6"></Skeleton>
+                          <Skeleton class="w-10 h-6"></Skeleton>
+                          <Skeleton class="w-10 h-6"></Skeleton>
+                        </div>
+                        <div class="flex space-x-2 mt-6">
+                          <Skeleton class="w-24 h-8"></Skeleton>
+                          <Skeleton class="w-24 h-8"></Skeleton>
                         </div>
                       </div>
                     </div>
-                  );
-                }}
-              </For>
-            </div>
-            <Show when={!noMore()}>
-              <div
-                class="mt-4 text-center text-slate-500 cursor-pointer"
-                onClick={() => {
-                  list.loadMore();
-                }}
-              >
-                加载更多
+                  </div>
+                </div>
+              }
+            >
+              <div class="space-y-4">
+                <For each={dataSource()}>
+                  {(tv) => {
+                    const { id, name, overview, poster_path, air_date, popularity } = tv;
+                    return (
+                      <div class="rounded-md border border-slate-300 bg-white shadow-sm">
+                        <div class="flex">
+                          <div class="overflow-hidden mr-2 rounded-sm">
+                            <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
+                          </div>
+                          <div class="flex-1 p-4">
+                            <h2 class="text-2xl text-slate-800">{name}</h2>
+                            <div class="mt-2 overflow-hidden text-ellipsis">
+                              <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
+                                {overview}
+                              </p>
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2">
+                              <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
+                                <Calendar class="w-4 h-4 text-slate-800" />
+                                <div class="break-keep whitespace-nowrap">{air_date}</div>
+                              </div>
+                              <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
+                                <Award class="w-4 h-4" />
+                                <div>{popularity}</div>
+                              </div>
+                            </div>
+                            <div class="space-x-2 mt-6">
+                              <Button store={profileBtn.bind(tv)} variant="subtle" icon={<BookOpen class="w-4 h-4" />}>
+                                详情
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }}
+                </For>
               </div>
-            </Show>
+            </ListView>
           </div>
         </div>
       </div>

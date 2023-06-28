@@ -1,7 +1,7 @@
 /**
  * @file 管理后台首页
  */
-import { createSignal, For, onMount, Show } from "solid-js";
+import { createSignal, For, onMount } from "solid-js";
 import { HardDrive, RotateCcw } from "lucide-solid";
 
 import { DriveCard } from "@/components/DriveCard";
@@ -14,7 +14,10 @@ import { code_get_drive_token } from "@/constants";
 import { Textarea } from "@/components/ui/textarea";
 import { InputCore } from "@/domains/ui/input";
 import { RequestCore } from "@/domains/client";
-import { addAliyunDrive } from "@/domains/drive/services";
+import { addAliyunDrive, fetch_drive_instance_list } from "@/domains/drive/services";
+import { ListView } from "@/components/ListView";
+import { ListCore } from "@/domains/list";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -58,21 +61,22 @@ export const HomePage: ViewComponent = (props) => {
       refreshBtn.setLoading(false);
     },
   });
+  const list = new ListCore(new RequestCore(fetch_drive_instance_list));
 
-  const [drives, setDrives] = createSignal(app.drives);
+  const [driveResponse, setDriveResponse] = createSignal(list.response);
 
+  list.onStateChange((nextState) => {
+    setDriveResponse(nextState);
+  });
   view.onShow(() => {
     console.log("home page show");
   });
   view.onHidden(() => {
     console.log("home page hide");
   });
-  app.onDrivesChange((nextDrives) => {
-    setDrives(nextDrives);
-  });
 
   onMount(() => {
-    app.fetchDrives();
+    list.init();
   });
 
   return (
@@ -87,14 +91,35 @@ export const HomePage: ViewComponent = (props) => {
             新增云盘
           </Button>
         </div>
-        {/* <div class="w-4 h-4 bg-red-800 sm:bg-black lg:bg-green-800 xl:bg-blue-800"></div> */}
-        <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
-          <For each={drives()}>
-            {(drive) => {
-              return <DriveCard app={app} store={drive} />;
-            }}
-          </For>
-        </div>
+        <ListView
+          store={list}
+          skeleton={
+            <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
+              <div class="relative p-4 bg-white rounded-xl border border-1">
+                <div class="flex">
+                  <Skeleton class="w-16 h-16 mr-4 rounded"></Skeleton>
+                  <div class="flex-1 pr-12">
+                    <Skeleton class="h-[24px]"></Skeleton>
+                    <Skeleton class="mt-2 h-[18px]"></Skeleton>
+                    <Skeleton class="mt-2 h-[24px]"></Skeleton>
+                    <div class="flex items-center mt-4 space-x-2">
+                      <Skeleton class="w-[56px] h-[28px]"></Skeleton>
+                      <Skeleton class="w-[56px] h-[28px]"></Skeleton>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
+            <For each={driveResponse().dataSource}>
+              {(drive) => {
+                return <DriveCard app={app} store={drive} />;
+              }}
+            </For>
+          </div>
+        </ListView>
       </div>
       <Dialog store={addingDriveDialog}>
         <div class="p-4">

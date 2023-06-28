@@ -4,15 +4,15 @@
 import { For, Show, createSignal } from "solid-js";
 import {
   MoreHorizontal,
-  Loader,
   Apple,
-  ArrowBigDown,
-  RefreshCcw,
   Edit3,
   Download,
   Coffee,
   Trash,
   Gift,
+  FolderSearch,
+  RefreshCcw,
+  RefreshCw,
 } from "lucide-solid";
 
 import { Application } from "@/domains/app";
@@ -252,10 +252,10 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
                 {used_size()}/{total_size()}
               </div>
               <div class="flex items-center mt-4 space-x-2">
-                <Button store={analysisBtn} variant="subtle" icon={<Coffee class="w-4 h-4" />}>
+                <Button store={analysisBtn} variant="subtle" icon={<FolderSearch class="w-4 h-4" />}>
                   索引
                 </Button>
-                <Button variant="subtle" store={refreshBtn}>
+                <Button variant="subtle" store={refreshBtn} icon={<RefreshCw class="w-4 h-4" />}>
                   刷新
                 </Button>
               </div>

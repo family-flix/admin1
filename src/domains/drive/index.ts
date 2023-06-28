@@ -9,6 +9,7 @@ import { ListCore } from "@/domains/list";
 import { fetch_job_profile } from "@/domains/job/services";
 import { RequestCore } from "@/domains/client";
 import { TaskStatus } from "@/constants";
+import { sleep } from "@/utils";
 import { Result } from "@/types";
 
 import {
@@ -62,6 +63,9 @@ type DriveFolder = {
 type DriveFile = {
   file_id: string;
   name: string;
+};
+type DriveProps = DriveItem & {
+  loading?: boolean;
 };
 type DriveState = DriveItem & {
   loading: boolean;
@@ -137,7 +141,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   /** 当前选中的文件夹 */
   selectedFolderPos?: number[];
 
-  constructor(options: Partial<{ _name: string }> & DriveState) {
+  constructor(options: Partial<{ _name: string }> & DriveProps) {
     super(options);
 
     const { _name, id, name } = options;
@@ -146,7 +150,10 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     if (_name) {
       this._name = _name;
     }
-    this.state = options;
+    this.state = {
+      ...options,
+      loading: false,
+    };
   }
 
   /**
@@ -321,13 +328,14 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
   setRefreshToken(token: string) {
     this.values.refresh_token = token;
   }
+  refreshTokenRequest = new RequestCore(setAliyunDriveRefreshToken);
   /** 提交网盘 refresh_token */
   async submitRefreshToken() {
     const { refresh_token } = this.values;
     if (!refresh_token) {
       return Result.Err("缺少 refresh_token 参数");
     }
-    const r = await setAliyunDriveRefreshToken({
+    const r = await this.refreshTokenRequest.run({
       refresh_token,
       drive_id: this.id,
     });

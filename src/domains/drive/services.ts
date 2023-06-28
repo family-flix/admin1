@@ -5,6 +5,7 @@ import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 import { bytes_to_size } from "@/utils";
 import { request } from "@/utils/request";
+import { Drive } from ".";
 
 async function parseJSONStr<T extends JSONObject>(json: string) {
   try {
@@ -72,11 +73,12 @@ export async function fetchDrives(params: FetchParams) {
   if (resp.error) {
     return Result.Err(resp.error);
   }
-  const { total, page_size, list } = resp.data;
+  const { total, page_size, list, no_more } = resp.data;
   return Result.Ok({
     total,
     page,
     page_size,
+    no_more,
     list: list.map((item) => {
       const { id, name, avatar, total_size, used_size, root_folder_id } = item;
       return {
@@ -102,6 +104,23 @@ export async function fetchDrives(params: FetchParams) {
   });
 }
 export type DriveItem = RequestedResource<typeof fetchDrives>["list"][0];
+
+export async function fetch_drive_instance_list(params: FetchParams) {
+  const r = await fetchDrives(params);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { total, page, page_size, no_more, list } = r.data;
+  return Result.Ok({
+    total,
+    page,
+    page_size,
+    no_more,
+    list: list.map((drive) => {
+      return new Drive(drive);
+    }),
+  });
+}
 
 /**
  * 刷新云盘信息

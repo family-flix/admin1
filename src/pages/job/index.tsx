@@ -12,6 +12,8 @@ import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { JobItem, fetch_job_list, pause_job } from "@/domains/job/services";
 import { TaskStatus } from "@/constants";
 import { cn } from "@/utils";
+import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const TaskListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, view, router } = props;
@@ -71,45 +73,57 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
         <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
           刷新
         </Button>
-        <div class="space-y-8 mt-8">
-          <For each={dataSource()}>
-            {(task, i) => {
-              const { id, desc, unique_id, created, status, statusText } = task;
-              return (
-                <div class={cn("space-y-1")}>
-                  <h2 class="text-xl">{desc}</h2>
-                  <div class="flex space-x-4">
-                    <div>{created}</div>
-                    <div class="flex items-center space-x-1">
-                      <Dynamic component={statusIcons[status]} />
-                      <div class={cn({})}>{statusText}</div>
+        <ListView
+          store={jobList}
+          skeleton={
+            <div class="space-y-8 mt-8">
+              <div class={cn("space-y-1")}>
+                <Skeleton class="w-[240px] h-8"></Skeleton>
+                <div class="flex space-x-4">
+                  <Skeleton class="w-[320px] h-4"></Skeleton>
+                </div>
+                <div class="flex space-x-2">
+                  <Skeleton class="w-24 h-8"></Skeleton>
+                  <Skeleton class="w-24 h-8"></Skeleton>
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <div class="space-y-8 mt-8">
+            <For each={dataSource()}>
+              {(task, i) => {
+                const { id, desc, unique_id, created, status, statusText } = task;
+                return (
+                  <div class={cn("space-y-1")}>
+                    <h2 class="text-xl">{desc}</h2>
+                    <div class="flex space-x-4">
+                      <div>{created}</div>
+                      <div class="flex items-center space-x-1">
+                        <Dynamic component={statusIcons[status]} />
+                        <div class={cn({})}>{statusText}</div>
+                      </div>
+                    </div>
+                    <div class="space-x-2">
+                      <Button store={profileBtn.bind(task)} icon={<Bus class="w-4 h-4" />} variant="subtle">
+                        详情
+                      </Button>
+                      <Show when={status === TaskStatus.Running}>
+                        <Button
+                          store={pauseJobBtn.bind(task)}
+                          icon={<ParkingCircle class="w-4 h-4" />}
+                          variant="subtle"
+                        >
+                          停止任务
+                        </Button>
+                      </Show>
                     </div>
                   </div>
-                  <div class="space-x-2">
-                    <Button store={profileBtn.bind(task)} icon={<Bus class="w-4 h-4" />} variant="subtle">
-                      详情
-                    </Button>
-                    <Show when={status === TaskStatus.Running}>
-                      <Button store={pauseJobBtn.bind(task)} icon={<ParkingCircle class="w-4 h-4" />} variant="subtle">
-                        停止任务
-                      </Button>
-                    </Show>
-                  </div>
-                </div>
-              );
-            }}
-          </For>
-        </div>
-        <Show when={!noMore()}>
-          <div
-            class="mt-6 text-center cursor-pointer"
-            onClick={() => {
-              jobList.loadMore();
-            }}
-          >
-            加载更多
+                );
+              }}
+            </For>
           </div>
-        </Show>
+        </ListView>
       </div>
     </div>
   );

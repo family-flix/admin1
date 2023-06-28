@@ -33,6 +33,8 @@ enum Events {
   /** 鼠标离开内容区 */
   Leave,
   StateChange,
+  /** 父容器改变 */
+  ContainerChange,
 }
 type TheTypesOfEvents = {
   [Events.FloatingMounted]: {
@@ -49,6 +51,7 @@ type TheTypesOfEvents = {
     // x: number;
     // y: number;
   };
+  [Events.ContainerChange]: Node;
   [Events.Placed]: PopperState;
   [Events.Enter]: void;
   [Events.Leave]: void;
@@ -103,6 +106,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     // width: number;
     // height: number;
   } | null = null;
+  container: Node | null = null;
   arrow: {
     width: number;
     height: number;
@@ -124,7 +128,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ _name: string }> & Partial<PopperProps> = {}) {
     super(options);
 
-    const { _name, side = "bottom", align = "center", strategy = "fixed", middleware = [] } = options;
+    const { _name, side = "bottom", align = "center", strategy = "absolute", middleware = [] } = options;
     if (_name) {
       this._name = _name;
     }
@@ -170,6 +174,10 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   /** 箭头加载完成 */
   setArrow(arrow: PopperCore["arrow"]) {
     this.arrow = arrow;
+  }
+  setContainer(container: Node) {
+    this.container = container;
+    this.emit(Events.ContainerChange, container);
   }
   setConfig(config: { placement?: Placement; strategy?: Strategy }) {}
   /** 计算浮动元素位置 */
@@ -322,14 +330,17 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   onFloatingMounted(handler: Handler<TheTypesOfEvents[Events.FloatingMounted]>) {
     return this.on(Events.FloatingMounted, handler);
   }
+  onContainerChange(handler: Handler<TheTypesOfEvents[Events.ContainerChange]>) {
+    return this.on(Events.ContainerChange, handler);
+  }
   onEnter(handler: Handler<TheTypesOfEvents[Events.Enter]>) {
-    this.on(Events.Enter, handler);
+    return this.on(Events.Enter, handler);
   }
   onLeave(handler: Handler<TheTypesOfEvents[Events.Leave]>) {
-    this.on(Events.Leave, handler);
+    return this.on(Events.Leave, handler);
   }
   onPlaced(handler: Handler<TheTypesOfEvents[Events.Placed]>) {
-    this.on(Events.Placed, handler);
+    return this.on(Events.Placed, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);

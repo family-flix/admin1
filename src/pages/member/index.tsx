@@ -2,17 +2,7 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
-import {
-  Edit2,
-  Gem,
-  Instagram,
-  QrCode as QrCodeIcon,
-  RotateCcw,
-  ShieldAlert,
-  ShieldClose,
-  UserPlus,
-  UserX,
-} from "lucide-solid";
+import { Edit2, Gem, QrCode as QrCodeIcon, RotateCcw, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
 import { add_member, create_member_auth_link, delete_member, fetch_members, MemberItem } from "@/services";
 import { Button } from "@/components/ui/button";
@@ -27,6 +17,8 @@ import { ViewComponent } from "@/types";
 import { Qrcode } from "@/components/Qrcode";
 import { SelectionCore } from "@/domains/cur";
 import { cn } from "@/utils";
+import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -175,7 +167,35 @@ export const MemberManagePage: ViewComponent = (props) => {
               新增成员
             </Button>
           </div>
-          <Show when={!empty()}>
+          <ListView
+            store={memberList}
+            skeleton={
+              <div class="space-y-8 mt-8">
+                <div class="card">
+                  <div class="flex items-center">
+                    <Skeleton class="w-12 h-12 rounded-full mr-2"></Skeleton>
+                    <Skeleton class="w-36 h-8"></Skeleton>
+                  </div>
+                  <div class="mt-4">
+                    <div class="flex space-x-2">
+                      <Skeleton class="w-24 h-10"></Skeleton>
+                      <Skeleton class="w-24 h-10"></Skeleton>
+                      <Skeleton class="w-24 h-10"></Skeleton>
+                    </div>
+                    <div class="mt-4 space-y-8">
+                      <div class="space-y-2">
+                        <Skeleton class="w-[480px] h-6 mr-4"></Skeleton>
+                        <div class="flex">
+                          <Skeleton class="w-[120px] h-[120px] mr-4"></Skeleton>
+                          <Skeleton class="w-[360px] h-6 mr-4"></Skeleton>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          >
             <div class="space-y-8 mt-8">
               <For each={dataSource()}>
                 {(member) => {
@@ -273,17 +293,7 @@ export const MemberManagePage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            <Show when={!noMore()}>
-              <div
-                class="mt-4 text-center text-slate-500 cursor-pointer"
-                onClick={() => {
-                  memberList.loadMore();
-                }}
-              >
-                加载更多
-              </div>
-            </Show>
-          </Show>
+          </ListView>
         </div>
       </div>
       <Dialog title="新增成员" store={addMemberDialog}>

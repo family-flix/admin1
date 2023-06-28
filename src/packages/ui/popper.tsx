@@ -1,5 +1,5 @@
 /**
- * @file 气泡 组件
+ * @file 最原始的气泡组件
  * 仅负责计算气泡位置，不负责显隐
  */
 import { JSX, createSignal, onMount } from "solid-js";
@@ -7,10 +7,9 @@ import { JSX, createSignal, onMount } from "solid-js";
 import { PopperCore } from "@/domains/ui/popper";
 import { cn } from "@/utils";
 
-import { Arrow as PrimitiveArrow } from "./arrow";
+import { Arrow as ArrowPrimitive } from "./arrow";
 
-const Root = (props: { store: PopperCore } & JSX.HTMLAttributes<HTMLElement>) => {
-  // const { store } = props;
+const Root = (props: { store?: PopperCore } & JSX.HTMLAttributes<HTMLElement>) => {
   return props.children;
 };
 
@@ -54,7 +53,7 @@ const Content = (
     store: PopperCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store, ref } = props;
+  const { store, class: className, ref, ...restProps } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
 
@@ -82,6 +81,7 @@ const Content = (
 
   return (
     <div
+      {...restProps}
       ref={(el) => {
         $content = el;
         if (typeof props.ref === "function") {
@@ -91,10 +91,6 @@ const Content = (
         props.ref = el;
       }}
       role={props.role}
-      // data-state={props['data-state']}
-      class={cn("popper__content", props.class)}
-      data-side={placedSide()}
-      data-align={placedAlign()}
       style={{
         position: strategy(),
         left: 0,
@@ -120,7 +116,9 @@ const Content = (
       }}
     >
       <div
-        class={cn("popper__content-child")}
+        {...restProps}
+        class={cn("popper__content", props.class)}
+        // class={cn("popper__content-child")}
         data-side={placedSide()}
         data-align={placedAlign()}
         // style={{
@@ -145,7 +143,6 @@ const Arrow = (
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
   const { store } = props;
-  // const store = useContext(PopperContext);
   // const { arrowX, arrowY, baseSide, placedSide, shouldHideArrow } = state;
   let $arrow: HTMLSpanElement | undefined = undefined;
 
@@ -162,9 +159,6 @@ const Arrow = (
     }
     store.setArrow($$arrow.getBoundingClientRect());
   });
-  //   onCleanup(() => {
-  //     off();
-  //   });
 
   const baseSide = () => OPPOSITE_SIDE[state().placedSide];
   const placedSide = () => state().placedSide;
@@ -193,7 +187,7 @@ const Arrow = (
         // visibility: shouldHideArrow ? "hidden" : undefined,
       }}
     >
-      <PrimitiveArrow />
+      <ArrowPrimitive />
     </span>
   );
 };

@@ -1,7 +1,7 @@
 /**
  * @file 电视剧列表
  */
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import {
   ArrowUpCircle,
   Award,
@@ -12,6 +12,7 @@ import {
   Check,
   Info,
   RotateCw,
+  Search,
   Send,
   Smile,
   X,
@@ -31,9 +32,6 @@ import { hidden_tv } from "@/domains/tv/services";
 import { ListCore } from "@/domains/list";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
-import { ContextMenuCore } from "@/domains/ui/context-menu";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { ContextMenu } from "@/components/ui/context-menu";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
 import { LazyImage } from "@/components/ui/image";
@@ -47,9 +45,16 @@ import { DialogCore } from "@/domains/ui/dialog";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { Popover, PurePopover } from "@/components/ui/popover";
+import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
+import { PopoverCore } from "@/domains/ui/popover";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
 export const TVManagePage: ViewComponent = (props) => {
-  const { app, router } = props;
+  const { app, router, view } = props;
+
+  let $page: HTMLDivElement | undefined;
 
   const list = new ListCore(new RequestCore(fetch_tv_list), {
     onLoadingChange(loading) {
@@ -108,6 +113,10 @@ export const TVManagePage: ViewComponent = (props) => {
       }[];
       setFolders(folders);
     },
+  });
+  const tipPopover = new PopoverCore({
+    // side: "right",
+    align: "end",
   });
   const folderSelectBtn = new ButtonInListCore<{ file_name: string; file_id: string }>({
     onClick(record) {
@@ -270,6 +279,9 @@ export const TVManagePage: ViewComponent = (props) => {
       list.refresh();
     },
   });
+  const scrollView = new ScrollViewCore({
+    pullToRefresh: false,
+  });
 
   const [state, setState] = createSignal(list.response);
   const [folders, setFolders] = createSignal<
@@ -279,6 +291,7 @@ export const TVManagePage: ViewComponent = (props) => {
     }[]
   >([]);
   const [resourceState, setResourceState] = createSignal(sharedResource.state);
+  const [tips, setTips] = createSignal<string[]>([]);
 
   list.onStateChange((nextState) => {
     setState(nextState);
@@ -289,143 +302,175 @@ export const TVManagePage: ViewComponent = (props) => {
   sharedResource.onStateChange((nextState) => {
     setResourceState(nextState);
   });
-  list.init();
+  scrollView.onScroll(() => {
+    tipPopover.hide();
+  });
+  view.onShow(() => {
+    list.init();
+  });
 
   const dataSource = () => state().dataSource;
-  const noMore = () => state().noMore;
 
   return (
     <>
-      <div class="">
-        <h1 class="text-2xl">电视剧列表</h1>
-        <div class="mt-8">
-          <div class="flex items-center space-x-2">
-            <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
-              刷新
-            </Button>
-            <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={syncAllTVBtn}>
-              更新所有电视剧
-            </Button>
-          </div>
-          <div class="grid grid-cols-12 gap-2 mt-4">
-            <Input class="col-span-10" store={input1} />
-            <Button class="col-span-1" store={searchBtn}>
-              搜索
-            </Button>
-            <Button class="col-span-1" store={resetBtn}>
-              重置
-            </Button>
-          </div>
-          <div class="mt-4">
-            <div class="space-y-4">
-              <For each={dataSource()}>
-                {(tv) => {
-                  const {
-                    id,
-                    name,
-                    overview,
-                    poster_path,
-                    first_air_date,
-                    popularity,
-                    tips,
-                    need_bind,
-                    sync_task,
-                    cur_episode_count,
-                    episode_count,
-                  } = tv;
-                  return (
+      <ScrollView class="h-screen p-8" store={scrollView}>
+        <div class="relative" ref={$page}>
+          <h1 class="text-2xl">电视剧列表</h1>
+          <div class="mt-8">
+            <div class="flex items-center space-x-2">
+              <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+                刷新
+              </Button>
+              <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={syncAllTVBtn}>
+                更新所有电视剧
+              </Button>
+            </div>
+            <div class="flex items-center space-x-2 mt-4">
+              <Input class="" store={input1} />
+              <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+                搜索
+              </Button>
+              <Button class="" store={resetBtn}>
+                重置
+              </Button>
+            </div>
+            <div class="mt-4">
+              <ListView
+                store={list}
+                skeleton={
+                  <div>
                     <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                       <div class="flex">
                         <div class="overflow-hidden mr-2 rounded-sm">
-                          <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
+                          <Skeleton class="w-[180px] h-[272px]" />
                         </div>
                         <div class="flex-1 p-4">
-                          <h2 class="text-2xl text-slate-800">{name}</h2>
-                          <div class="mt-2 overflow-hidden text-ellipsis">
-                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</p>
+                          <Skeleton class="h-[36px] w-[180px]"></Skeleton>
+                          <div class="mt-2 space-y-1">
+                            <Skeleton class="h-[24px] w-[120px]"></Skeleton>
+                            <Skeleton class="h-[24px] w-[240px]"></Skeleton>
                           </div>
                           <div class="flex items-center space-x-4 mt-2">
-                            <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
-                              <Calendar class="w-4 h-4 text-slate-800" />
-                              <div>{first_air_date}</div>
-                            </div>
-                            <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
-                              <Award class="w-4 h-4" />
-                              <div>{popularity}</div>
-                            </div>
-                            <Show when={cur_episode_count === episode_count}>
-                              <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
-                                <Smile class="w-4 h-4" />
-                                <div>全{episode_count}集</div>
-                              </div>
-                            </Show>
-                            <Show when={cur_episode_count !== episode_count}>
-                              <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
-                                <Send class="w-4 h-4" />
-                                <div>
-                                  {cur_episode_count}/{episode_count}
-                                </div>
-                              </div>
-                            </Show>
-                            <Show when={tips.length}>
-                              <PurePopover
-                                content={
-                                  <div class="space-y-2">
-                                    <For each={tips}>
-                                      {(tip) => {
-                                        return <div class="text-sm text-slate-800">{tip}</div>;
-                                      }}
-                                    </For>
-                                  </div>
-                                }
-                              >
-                                <div class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500">
-                                  <Info class="w-4 h-4" />
-                                  <div>{tips.length}个问题</div>
-                                </div>
-                              </PurePopover>
-                            </Show>
+                            <Skeleton class="w-10 h-6"></Skeleton>
+                            <Skeleton class="w-10 h-6"></Skeleton>
+                            <Skeleton class="w-10 h-6"></Skeleton>
                           </div>
-
-                          <div class="space-x-2 mt-6">
-                            <Button store={profileBtn.bind(tv)} variant="subtle" icon={<BookOpen class="w-4 h-4" />}>
-                              详情
-                            </Button>
-                            <Show when={need_bind}>
-                              <Button
-                                store={addSyncTaskBtn.bind(tv)}
-                                variant="subtle"
-                                icon={<BellPlus class="w-4 h-4" />}
-                              >
-                                创建更新任务
-                              </Button>
-                            </Show>
-                            <Show when={sync_task}>
-                              <Button store={execSyncTaskBtn.bind(tv)} variant="subtle" icon={<Bell class="w-4 h-4" />}>
-                                更新
-                              </Button>
-                            </Show>
+                          <div class="flex space-x-2 mt-6">
+                            <Skeleton class="w-24 h-8"></Skeleton>
+                            <Skeleton class="w-24 h-8"></Skeleton>
                           </div>
                         </div>
                       </div>
                     </div>
-                  );
-                }}
-              </For>
-            </div>
-            <Show when={!noMore()}>
-              <div
-                class="mt-4 text-center text-slate-500 cursor-pointer"
-                onClick={() => {
-                  list.loadMore();
-                }}
+                  </div>
+                }
               >
-                加载更多
-              </div>
-            </Show>
+                <div class="space-y-4">
+                  <For each={dataSource()}>
+                    {(tv) => {
+                      const {
+                        id,
+                        name,
+                        overview,
+                        poster_path,
+                        first_air_date,
+                        popularity,
+                        need_bind,
+                        sync_task,
+                        cur_episode_count,
+                        episode_count,
+                      } = tv;
+                      return (
+                        <div class="rounded-md border border-slate-300 bg-white shadow-sm">
+                          <div class="flex">
+                            <div class="overflow-hidden mr-2 rounded-sm">
+                              <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
+                            </div>
+                            <div class="flex-1 w-0 p-4">
+                              <h2 class="text-2xl text-slate-800">{name}</h2>
+                              <div class="mt-2 overflow-hidden text-ellipsis">
+                                <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
+                                  {overview}
+                                </p>
+                              </div>
+                              <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
+                                <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
+                                  <Calendar class="w-4 h-4 text-slate-800" />
+                                  <div class="break-keep whitespace-nowrap">{first_air_date}</div>
+                                </div>
+                                <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
+                                  <Award class="w-4 h-4" />
+                                  <div>{popularity}</div>
+                                </div>
+                                <Show when={cur_episode_count === episode_count}>
+                                  <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                    <Smile class="w-4 h-4" />
+                                    <div>全{episode_count}集</div>
+                                  </div>
+                                </Show>
+                                <Show when={cur_episode_count !== episode_count}>
+                                  <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                    <Send class="w-4 h-4" />
+                                    <div>
+                                      {cur_episode_count}/{episode_count}
+                                    </div>
+                                  </div>
+                                </Show>
+                                <Show when={tv.tips.length}>
+                                  <div
+                                    class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500"
+                                    onClick={(event) => {
+                                      const { x, y, width, height, left, top, right, bottom } =
+                                        event.currentTarget.getBoundingClientRect();
+                                      setTips(tv.tips);
+                                      tipPopover.show({ x, y, width, height: height + 8, left, top, right, bottom });
+                                    }}
+                                  >
+                                    <Info class="w-4 h-4" />
+                                    <div>{tv.tips.length}个问题</div>
+                                  </div>
+                                </Show>
+                              </div>
+
+                              <div class="space-x-2 mt-6 overflow-hidden whitespace-nowrap">
+                                <Button
+                                  store={profileBtn.bind(tv)}
+                                  variant="subtle"
+                                  icon={<BookOpen class="w-4 h-4" />}
+                                >
+                                  详情
+                                </Button>
+                                <Show when={need_bind}>
+                                  <Button
+                                    store={addSyncTaskBtn.bind(tv)}
+                                    variant="subtle"
+                                    icon={<BellPlus class="w-4 h-4" />}
+                                  >
+                                    创建更新任务
+                                  </Button>
+                                </Show>
+                                <Show when={sync_task}>
+                                  <Button
+                                    store={execSyncTaskBtn.bind(tv)}
+                                    variant="subtle"
+                                    icon={<Bell class="w-4 h-4" />}
+                                  >
+                                    更新
+                                  </Button>
+                                </Show>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  </For>
+                </div>
+              </ListView>
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollView>
       <TMDBSearcherDialog store={dialog} />
       <Dialog store={addSyncTaskDialog}>
         <div class="grid grid-cols-12 gap-2">
@@ -456,6 +501,18 @@ export const TVManagePage: ViewComponent = (props) => {
           </For>
         </div>
       </Dialog>
+      <Popover
+        store={tipPopover}
+        content={
+          <div class="space-y-2">
+            <For each={tips()}>
+              {(tip) => {
+                return <div class="text-sm text-slate-800">{tip}</div>;
+              }}
+            </For>
+          </div>
+        }
+      ></Popover>
     </>
   );
 };

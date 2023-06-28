@@ -2,7 +2,20 @@
  * @file 后台/首页布局
  */
 import { For, JSX, createSignal } from "solid-js";
-import { Film, Users, FolderInput, Home, EyeOff, Bot, Flame, FolderSearch, LogOut, Settings, Tv } from "lucide-solid";
+import {
+  Film,
+  Users,
+  FolderInput,
+  Home,
+  EyeOff,
+  Bot,
+  Flame,
+  FolderSearch,
+  LogOut,
+  Settings,
+  Tv,
+  FileSearch,
+} from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
@@ -192,7 +205,7 @@ export const HomeLayout: ViewComponent = (props) => {
     },
     {
       text: "文件名解析",
-      icon: <FolderSearch class="w-6 h-6" />,
+      icon: <FileSearch class="w-6 h-6" />,
       link: "/home/parse",
       // onClick() {
       //   router.push("/home/parse");
@@ -212,7 +225,9 @@ export const HomeLayout: ViewComponent = (props) => {
                   return (
                     <Menu
                       icon={icon}
-                      highlight={pathname() === `${NavigatorCore.prefix}${link}`}
+                      highlight={(() => {
+                        return pathname() === `${NavigatorCore.prefix}${link}`;
+                      })()}
                       link={link}
                       onClick={onClick}
                     >
@@ -240,18 +255,14 @@ export const HomeLayout: ViewComponent = (props) => {
                 return (
                   <KeepAliveRouteView
                     class={cn(
-                      "absolute left-0 top-0 w-full h-full",
+                      "absolute inset-0",
                       "data-[state=open]:animate-in data-[state=open]:fade-in",
                       "data-[state=closed]:animate-out data-[state=closed]:fade-out"
                     )}
                     store={subView}
                     index={i()}
                   >
-                    <div class="overflow-y-auto w-full h-full p-8">
-                      <div class="min-h-full">
-                        <PageContent app={app} router={router} view={subView} />
-                      </div>
-                    </div>
+                    <PageContent app={app} router={router} view={subView} />
                   </KeepAliveRouteView>
                 );
               }}

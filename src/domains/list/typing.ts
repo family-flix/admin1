@@ -128,4 +128,5 @@ export interface ListProps<T> {
    */
   extraDefaultResponse?: Record<string, unknown>;
   onLoadingChange?: (loading: boolean) => void;
+  onStateChange?: (state: Response<T>) => void;
 }

@@ -13,7 +13,7 @@ import {
   fetch_unknown_tv_list,
   update_unknown_season_number,
 } from "@/services";
-import { FolderCard } from "@/components/FolderCard";
+import { FolderCard, FolderCardSkeleton } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
@@ -22,6 +22,8 @@ import { DialogCore } from "@/domains/ui/dialog";
 import { InputCore } from "@/domains/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const UnknownSeasonPage: ViewComponent = (props) => {
   const { app } = props;
@@ -91,50 +93,49 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
   const noMore = () => response().noMore;
 
   return (
-    <div class="">
+    <div class="px-4">
       <div class="my-4">
         <Button icon={<RotateCw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
           刷新季
         </Button>
       </div>
-      <Show when={empty()}>
-        <div class="w-full h-[240px] center flex items-center justify-center">
-          <div class="text-slate-500 text-xl">列表为空</div>
-        </div>
-      </Show>
-      <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
-        <For each={dataSource()}>
-          {(file) => {
-            const { id, name, season_number } = file;
-            const n = `${name} - ${season_number}`;
-            return (
-              <div class="w-[152px] rounded">
-                <FolderCard type="folder" name={n} />
-                <div class="flex justify-center mt-2">
-                  <Button
-                    class="block box-content"
-                    variant="subtle"
-                    store={updateSeasonBtn.bind(file)}
-                    icon={<Brush class="w-4 h-4" />}
-                  >
-                    修改
-                  </Button>
-                </div>
+      <ListView
+        store={list}
+        skeleton={
+          <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+            <div class="w-[152px] rounded">
+              <FolderCardSkeleton />
+              <div class="flex justify-center mt-2">
+                <Skeleton class="block box-content"></Skeleton>
               </div>
-            );
-          }}
-        </For>
-      </div>
-      <Show when={!noMore()}>
-        <div
-          class="mt-4 text-center text-slate-500 cursor-pointer"
-          onClick={() => {
-            list.loadMore();
-          }}
-        >
-          加载更多
+            </div>
+          </div>
+        }
+      >
+        <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+          <For each={dataSource()}>
+            {(file) => {
+              const { id, name, season_number } = file;
+              const n = `${name} - ${season_number}`;
+              return (
+                <div class="w-[152px] rounded">
+                  <FolderCard type="folder" name={n} />
+                  <div class="flex justify-center mt-2">
+                    <Button
+                      class="block box-content"
+                      variant="subtle"
+                      store={updateSeasonBtn.bind(file)}
+                      icon={<Brush class="w-4 h-4" />}
+                    >
+                      修改
+                    </Button>
+                  </div>
+                </div>
+              );
+            }}
+          </For>
         </div>
-      </Show>
+      </ListView>
       <Dialog store={dialog}>
         <Input store={seasonInput} />
       </Dialog>

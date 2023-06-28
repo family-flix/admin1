@@ -132,7 +132,15 @@ export class ListCore<
       throw new Error("fetch must be a instance of RequestCore");
     }
 
-    const { debug, rowKey = "id", beforeRequest, processor, extraDefaultResponse, onLoadingChange } = options;
+    const {
+      debug,
+      rowKey = "id",
+      beforeRequest,
+      processor,
+      extraDefaultResponse,
+      onLoadingChange,
+      onStateChange,
+    } = options;
     this.debug = !!debug;
     this.rowKey = rowKey;
     this.originalFetch = fetch;
@@ -158,6 +166,9 @@ export class ListCore<
     };
     if (onLoadingChange) {
       this.onLoadingChange(onLoadingChange);
+    }
+    if (onStateChange) {
+      this.onStateChange(onStateChange);
     }
     this.initialize(options);
   }
@@ -217,6 +228,10 @@ export class ListCore<
     this.params = result as FetchParams;
     this.emit(Events.ParamsChange, { ...this.params });
   };
+  setDataSource(dataSources: T[]) {
+    this.response.dataSource = dataSources;
+    this.emit(Events.StateChange, { ...this.response });
+  }
   /**
    * 调用接口进行请求
    * 外部不应该直接调用该方法
@@ -240,6 +255,9 @@ export class ListCore<
     const res = await this.originalFetch.run(...processedArgs);
     this.response.loading = false;
     this.response.search = omit({ ...mergedParams }, ["page", "pageSize"]);
+    if (this.response.initial) {
+      this.response.initial = false;
+    }
     this.params = { ...processedParams };
     this.emit(Events.LoadingChange, false);
     this.emit(Events.ParamsChange, { ...this.params });
@@ -263,7 +281,6 @@ export class ListCore<
       ...this.initialParams,
       ...params,
     });
-    this.response.initial = false;
     if (res.error) {
       this.tip({ icon: "error", text: [res.error.message] });
       this.response.error = res.error;
@@ -464,6 +481,15 @@ export class ListCore<
       ...DEFAULT_RESPONSE,
     };
     this.params = { ...DEFAULT_PARAMS };
+    this.emit(Events.StateChange, { ...this.response });
+  }
+  deleteItem(targetItem: T) {
+    const { dataSource } = this.response;
+    const nextDataSource = dataSource.filter((item) => {
+      return item !== targetItem;
+    });
+    this.response.total = nextDataSource.length;
+    this.response.dataSource = nextDataSource;
     this.emit(Events.StateChange, { ...this.response });
   }
   /**
