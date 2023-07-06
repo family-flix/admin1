@@ -4,17 +4,38 @@
  */
 import { ListCore } from "@/domains/list";
 import { Application } from "@/domains/app";
-import { LocalCache } from "@/domains/app/cache";
-import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
-import { Result } from "@/types";
 import { has_admin } from "@/services";
+import { Result } from "@/types";
+
+import { cache } from "./cache";
+import { user } from "./user";
 
 NavigatorCore.prefix = "/admin";
 
-const cache = new LocalCache();
 const router = new NavigatorCore();
-const user = new UserCore(cache.get("user"));
+export const app = new Application({
+  user,
+  router,
+  async beforeReady() {
+    if (!user.isLogin) {
+      const r = await has_admin();
+      if (r.error) {
+        return Result.Ok(null);
+      }
+      const { existing } = r.data;
+      if (!existing) {
+        user.needRegister = true;
+      }
+      return Result.Ok(null);
+    }
+    await app.user.validate();
+    return Result.Ok(null);
+  },
+});
+app.onClickLink(({ href }) => {
+  router.push(href);
+});
 user.onTip((msg) => {
   app.tip(msg);
 });
@@ -34,30 +55,6 @@ user.onExpired(() => {
   router.replace("/login");
 });
 
-export const app = new Application({
-  user,
-  router,
-  cache,
-  async beforeReady() {
-    if (!user.isLogin) {
-      const r = await has_admin();
-      if (r.error) {
-        return Result.Ok(null);
-      }
-      const { existing } = r.data;
-      if (!existing) {
-        user.needRegister = true;
-        return Result.Ok(null);
-      }
-    }
-    await app.user.validate();
-    return Result.Ok(null);
-  },
-});
-app.onClickLink(({ href }) => {
-  router.push(href);
-});
-
 ListCore.commonProcessor = <T>(
   originalResponse: any
 ): {
@@ -69,6 +66,17 @@ ListCore.commonProcessor = <T>(
   noMore: boolean;
   error: Error | null;
 } => {
+  if (originalResponse === null) {
+    return {
+      dataSource: [],
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      noMore: false,
+      empty: false,
+      error: null,
+    };
+  }
   try {
     const data = originalResponse.data || originalResponse;
     const { list, page, page_size, total, no_more } = data;

@@ -2,7 +2,7 @@
  * @file 最原始的气泡组件
  * 仅负责计算气泡位置，不负责显隐
  */
-import { JSX, createSignal, onMount } from "solid-js";
+import { JSX, Show, createSignal, onMount } from "solid-js";
 
 import { PopperCore } from "@/domains/ui/popper";
 import { cn } from "@/utils";
@@ -21,31 +21,59 @@ const Anchor = (
   const { store } = props;
   let $anchor: HTMLDivElement;
 
-  // console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
-  if (!store.reference) {
-    store.setReference({
-      getRect() {
-        const rect = $anchor.getBoundingClientRect();
-        return rect;
-      },
-    });
-    return (
-      <div
-        ref={(el) => {
-          $anchor = el;
-          if (typeof props.ref === "function") {
-            props.ref(el);
-            return;
-          }
-          props.ref = el;
-        }}
-        class={cn("popper__anchor", props.class)}
-      >
-        {props.children}
-      </div>
-    );
-  }
-  return props.children;
+  console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
+  return (
+    <div
+      ref={(el) => {
+        $anchor = el;
+        // console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
+        if (typeof props.ref === "function") {
+          // props.ref(el);
+          return;
+        }
+        props.ref = el;
+        store.setReference({
+          $el: el,
+          getRect() {
+            const rect = $anchor.getBoundingClientRect();
+            return rect;
+          },
+        });
+      }}
+      class={cn("popper__anchor", props.class)}
+    >
+      {props.children}
+    </div>
+  );
+  // return (
+  //   <Show
+  //     when={store.reference}
+  //     fallback={
+  //       <div
+  //         ref={(el) => {
+  //           $anchor = el;
+  //           if (typeof props.ref === "function") {
+  //             props.ref(el);
+  //             return;
+  //           }
+  //           props.ref = el;
+  //           store.setReference({
+  //             $el: el,
+  //             getRect() {
+  //               const rect = $anchor.getBoundingClientRect();
+  //               return rect;
+  //             },
+  //           });
+  //         }}
+  //         class={cn("popper__anchor", props.class)}
+  //       >
+  //         {props.children}
+  //       </div>
+  //     }
+  //   >
+  //     {props.children}
+  //   </Show>
+  // );
 };
 
 const Content = (

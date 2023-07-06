@@ -75,8 +75,8 @@ export type ListResponse<T> = {
 };
 
 export type RequestedResource<T extends (...args: any[]) => any> = UnpackedResult<Unpacked<ReturnType<T>>>;
-
-export type ViewComponent = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => JSX.Element;
+export type ViewComponentProps = { app: Application; router: NavigatorCore; view: RouteViewCore };
+export type ViewComponent = (props: ViewComponentProps) => JSX.Element;
 
 export type Rect = {
   width: number;

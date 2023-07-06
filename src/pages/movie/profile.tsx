@@ -12,6 +12,7 @@ import { bind_searched_tv_for_tv } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
 import { ButtonCore } from "@/domains/ui/button";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
 async function fetch_movie_profile(body: { movie_id: string }) {
   const { movie_id } = body;
@@ -73,6 +74,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       dialog.show();
     },
   });
+  const scrollView = new ScrollViewCore();
 
   const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
@@ -83,7 +85,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
 
   return (
     <>
-      <div class="">
+      <div class="h-screen p-8">
         <div class="">
           <Show when={!!profile()}>
             <div class="relative">

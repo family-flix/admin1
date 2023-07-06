@@ -100,6 +100,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   // url: string;
   component: unknown;
   presence = new PresenceCore();
+  loaded = false;
   // keepAlive = false;
 
   isMounted = false;
@@ -374,6 +375,10 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   unmounted() {
     this.isMounted = false;
     this.emit(Events.Unmounted);
+  }
+  /** 页面组件已加载 */
+  setLoaded() {
+    this.loaded = true;
   }
 
   onStart(handler: Handler<TheTypesOfEvents[Events.Start]>) {

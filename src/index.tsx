@@ -1,10 +1,9 @@
 /* @refresh reload */
-import { createSignal, For, onMount, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { render } from "solid-js/web";
-import { Loader, Loader2 } from "lucide-solid";
+import { Loader2 } from "lucide-solid";
 
 import { app } from "./store/app";
-import { ViewComponent } from "./types";
 import { connect } from "./domains/app/connect.web";
 import { ToastCore } from "./domains/ui/toast";
 import { Toast } from "./components/ui/toast";
@@ -114,6 +113,12 @@ function Application() {
     if (subView === rootView.curView) {
       return;
     }
+    if (app.user.needRegister) {
+      rootView.curView = registerPage;
+      rootView.curView.show();
+      rootView.appendSubView(rootView.curView);
+      return;
+    }
     const prevView = rootView.curView;
     rootView.prevView = prevView;
     rootView.curView = subView;
@@ -172,11 +177,8 @@ function Application() {
       <Show when={subViews().length !== 0}>
         <For each={subViews()}>
           {(subView) => {
-            const PageContent = subView.component as ViewComponent;
             return (
-              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" store={subView}>
-                <PageContent app={app} router={router} view={subView} />
-              </RouteView>
+              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" app={app} router={router} view={subView} />
             );
           }}
         </For>

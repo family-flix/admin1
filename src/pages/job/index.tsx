@@ -1,6 +1,14 @@
 import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { Ban, Bug, Bus, CheckCircle, ParkingCircle, Recycle, RotateCw, Timer } from "lucide-solid";
+import {
+  LucideBan as Ban,
+  LucideBus as Bus,
+  LucideCheckCircle as CheckCircle,
+  LucideParkingCircle as ParkingCircle,
+  LucideRecycle as Recycle,
+  LucideRotateCw as RotateCw,
+  LucideTimer as Timer,
+} from "lucide-solid";
 
 import { ListCore } from "@/domains/list";
 import { Button } from "@/components/ui/button";
@@ -14,6 +22,8 @@ import { TaskStatus } from "@/constants";
 import { cn } from "@/utils";
 import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/packages/ui/skeleton";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
 export const TaskListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, view, router } = props;
@@ -46,6 +56,8 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
       jobList.refresh();
     },
   });
+  const scrollView = new ScrollViewCore();
+
   jobList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
@@ -61,13 +73,17 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
     [TaskStatus.Running]: () => <Timer class="w-4 h-4" />,
   };
 
-  jobList.init();
+  scrollView.onReachBottom(() => {
+    jobList.loadMore();
+  });
+  view.onShow(() => {
+    jobList.init();
+  });
 
   const dataSource = () => response().dataSource;
-  const noMore = () => response().noMore;
 
   return (
-    <div>
+    <ScrollView store={scrollView} class="h-screen p-8">
       <h1 class="text-2xl">任务列表</h1>
       <div class="mt-8">
         <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
@@ -125,6 +141,6 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
           </div>
         </ListView>
       </div>
-    </div>
+    </ScrollView>
   );
 };

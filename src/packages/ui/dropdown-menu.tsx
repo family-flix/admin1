@@ -1,7 +1,7 @@
 /**
  * @file 下拉菜单
  */
-import { createSignal, onCleanup, JSX, onMount } from "solid-js";
+import { createSignal, JSX, onMount } from "solid-js";
 
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
@@ -15,10 +15,6 @@ const Root = (
 ) => {
   const { store } = props;
 
-  // onCleanup(() => {
-  //   store.unmount();
-  // });
-
   return (
     <MenuPrimitive.Root class={props.class} store={store.menu}>
       {props.children}
@@ -26,9 +22,6 @@ const Root = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuTrigger
- * -----------------------------------------------------------------------------------------------*/
 const Trigger = (
   props: {
     store: DropdownMenuCore;
@@ -36,7 +29,6 @@ const Trigger = (
 ) => {
   const { store } = props;
 
-  // const store = useContext(DropdownMenuContext);
   const [state, setState] = createSignal(store.state);
   store.onStateChange((nextState) => {
     setState(nextState);
@@ -91,9 +83,6 @@ const Portal = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuContent
- * -----------------------------------------------------------------------------------------------*/
 const Content = (
   props: {
     store: DropdownMenuCore;
@@ -108,17 +97,11 @@ const Content = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuGroup
- * -----------------------------------------------------------------------------------------------*/
 const Group = (props: { store: DropdownMenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   return <MenuPrimitive.Group class={props.class}>{props.children}</MenuPrimitive.Group>;
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuLabel
- * -----------------------------------------------------------------------------------------------*/
 const Label = (
   props: {
     // store: DropdownMenuCore;
@@ -127,9 +110,6 @@ const Label = (
   return <MenuPrimitive.Label class={props.class}>{props.children}</MenuPrimitive.Label>;
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuItem
- * -----------------------------------------------------------------------------------------------*/
 const Item = (
   props: {
     store: MenuItemCore;
@@ -145,16 +125,10 @@ const Item = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuSeparator
- * -----------------------------------------------------------------------------------------------*/
 const Separator = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <MenuPrimitive.Separator class={props.class}></MenuPrimitive.Separator>;
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuArrow
- * -----------------------------------------------------------------------------------------------*/
 const Arrow = (
   props: {
     store: DropdownMenuCore;
@@ -168,9 +142,6 @@ const Arrow = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuSub
- * -----------------------------------------------------------------------------------------------*/
 const Sub = (
   props: {
     store: MenuCore;
@@ -185,9 +156,6 @@ const Sub = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuSubTrigger
- * -----------------------------------------------------------------------------------------------*/
 const SubTrigger = (
   props: {
     store: MenuItemCore;
@@ -206,9 +174,6 @@ const SubTrigger = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * DropdownMenuSubContent
- * -----------------------------------------------------------------------------------------------*/
 const SubContent = (
   props: {
     store: MenuCore;

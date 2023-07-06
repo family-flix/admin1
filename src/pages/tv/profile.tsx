@@ -2,7 +2,7 @@
  * @file 电视剧详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { Edit3, Loader, Trash } from "lucide-solid";
+import { LucideEdit3 as Edit3, LucideLoader as Loader, LucideTrash as Trash } from "lucide-solid";
 
 import { ViewComponent } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,9 @@ import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckboxCore } from "@/domains/ui/checkbox";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -48,8 +51,6 @@ export const TVProfilePage: ViewComponent = (props) => {
       setSourceProfile(v);
     },
   });
-  const [sourceResponse, setSourceResponse] = createSignal(sourceList.response);
-  const [sourceProfile, setSourceProfile] = createSignal(sourceProfileRequest.response);
   const profileRequest = new RequestCore(fetch_tv_profile, {
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
@@ -185,8 +186,11 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const scrollView = new ScrollViewCore();
 
   const [profile, set_profile] = createSignal<TVProfile | null>(null);
+  const [sourceResponse, setSourceResponse] = createSignal(sourceList.response);
+  const [sourceProfile, setSourceProfile] = createSignal(sourceProfileRequest.response);
 
   onMount(() => {
     const { id } = view.params;
@@ -195,9 +199,33 @@ export const TVProfilePage: ViewComponent = (props) => {
 
   return (
     <>
-      <div class="">
+      <ScrollView class="h-screen p-8" store={scrollView}>
         <div class="">
-          <Show when={!!profile()}>
+          <Show
+            when={!!profile()}
+            fallback={
+              <div class="relative">
+                <div class="">
+                  <div>
+                    <div class="relative z-3">
+                      <div class="flex">
+                        <Skeleton class="w-[240px] h-[360px] rounded-lg mr-4 object-cover" />
+                        <div class="flex-1 mt-4">
+                          <Skeleton class="w-full h-[48px]"></Skeleton>
+                          <Skeleton class="mt-6 w-12 h-[36px]"></Skeleton>
+                          <div class="mt-2 space-y-1">
+                            <Skeleton class="w-12 h-[18px]"></Skeleton>
+                            <Skeleton class="w-full h-[18px]"></Skeleton>
+                            <Skeleton class="w-32 h-[18px]"></Skeleton>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          >
             <div class="relative">
               <div class="">
                 <div>
@@ -233,11 +261,23 @@ export const TVProfilePage: ViewComponent = (props) => {
                           <div class="space-y-1 px-4">
                             <For each={episodes}>
                               {(episode) => {
-                                const { id, name, overview } = episode;
+                                const { id, name, overview, sources } = episode;
                                 return (
                                   <div class="py-2">
                                     <p class="text-lg">{name}</p>
                                     <p class="">{overview}</p>
+                                    <div class="mt-4">
+                                      <For each={sources}>
+                                        {(source) => {
+                                          const { parent_paths, file_name } = source;
+                                          return (
+                                            <div>
+                                              {parent_paths}/{file_name}
+                                            </div>
+                                          );
+                                        }}
+                                      </For>
+                                    </div>
                                   </div>
                                 );
                               }}
@@ -277,11 +317,14 @@ export const TVProfilePage: ViewComponent = (props) => {
             <div class="mt-4 space-y-1">
               <For each={sourceResponse().dataSource}>
                 {(source) => {
-                  const { file_name, parent_paths } = source;
+                  const { file_name, drive, parent_paths } = source;
                   return (
                     <div class="flex items-center space-x-2 text-slate-800">
                       <div>
-                        {parent_paths}/{file_name}
+                        <span class="text-slate-800 mr-2">{drive.name}</span>
+                        <span>
+                          {parent_paths}/{file_name}
+                        </span>
                       </div>
                       {/* <div class="flex items-center space-x-1">
                         <Element store={updateBtn.bind(source)}>
@@ -308,21 +351,21 @@ export const TVProfilePage: ViewComponent = (props) => {
             </Show>
           </Show>
         </div>
-        <TMDBSearcherDialog store={dialog} />
-        <Dialog store={deleteConfirmDialog}>
-          <div class="flex items-center space-x-2">
-            <Checkbox id="delete" store={checkbox} />
-            <label html-for="delete">同时删除云盘内文件</label>
-          </div>
-        </Dialog>
-        <Dialog store={parsedTVDeletingDialog}>
-          <div class="space-y-1">
-            <div>删除关联的解析电视剧</div>
-            <div>同时还会删除解析电视剧关联的所有季、集</div>
-            <div>请仅在需要重新索引关联的文件时进行删除操作</div>
-          </div>
-        </Dialog>
-      </div>
+      </ScrollView>
+      <TMDBSearcherDialog store={dialog} />
+      <Dialog store={deleteConfirmDialog}>
+        <div class="flex items-center space-x-2">
+          <Checkbox id="delete" store={checkbox} />
+          <label html-for="delete">同时删除云盘内文件</label>
+        </div>
+      </Dialog>
+      <Dialog store={parsedTVDeletingDialog}>
+        <div class="space-y-1">
+          <div>删除关联的解析电视剧</div>
+          <div>同时还会删除解析电视剧关联的所有季、集</div>
+          <div>请仅在需要重新索引关联的文件时进行删除操作</div>
+        </div>
+      </Dialog>
     </>
   );
 };

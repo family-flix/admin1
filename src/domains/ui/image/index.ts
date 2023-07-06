@@ -33,7 +33,7 @@ type ImageState = ImageProps & {
 };
 const prefix = window.location.origin;
 // const prefix = "https://img.funzm.com";
-const DEFAULT_IMAGE1 = prefix + "/placeholder.png";
+// const DEFAULT_IMAGE1 = prefix + "/placeholder.png";
 
 export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   src: string;
@@ -63,7 +63,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
     const { width, height, src, fit = "cover" } = options;
     this.width = width;
     this.height = height;
-    this.src = DEFAULT_IMAGE1;
+    this.src = "";
     this.fit = fit;
     this.realSrc = src;
   }
@@ -72,11 +72,10 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 图片进入可视区域 */
   handleShow() {
-    // console.log("[IMAGE_CORE]handleShow", this.realSrc);
+    console.log("[IMAGE_CORE]handleShow", this.realSrc);
     if (this.realSrc === undefined) {
       return;
     }
-    // this.load(this.realSrc);
     this.src = (() => {
       if (this.realSrc.includes("http")) {
         return this.realSrc;

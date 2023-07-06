@@ -1,12 +1,12 @@
+/**
+ * @file 应用，包含一些全局相关的事件、状态
+ */
 import { Handler } from "mitt";
 
-import { UserCore } from "@/domains/user";
 import { BaseDomain } from "@/domains/base";
-import { Drive } from "@/domains/drive";
+import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
 import { Result } from "@/types";
-
-import { LocalCache } from "./cache";
 
 enum Events {
   Ready,
@@ -52,13 +52,14 @@ type TheTypesOfEvents = {
   [Events.Show]: void;
   [Events.Hidden]: void;
   [Events.StateChange]: ApplicationState;
-  [Events.DrivesChange]: Drive[];
 };
 
 type ApplicationProps = {
   user: UserCore;
   router: NavigatorCore;
-  cache: LocalCache;
+  /**
+   * 应用加载前的声明周期，只有返回 Result.Ok() 页面才会展示内容
+   */
   beforeReady?: () => Promise<Result<null>>;
   onReady?: () => void;
 };
@@ -69,11 +70,10 @@ type ApplicationState = {
 export class Application extends BaseDomain<TheTypesOfEvents> {
   user: UserCore;
   router: NavigatorCore;
-  cache: LocalCache;
 
   lifetimes: Pick<ApplicationProps, "beforeReady" | "onReady">;
 
-  size: {
+  screen: {
     width: number;
     height: number;
   } = {
@@ -84,9 +84,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   Events = Events;
 
   // @todo 怎么才能更方便地拓展 Application 类，给其添加许多的额外属性还能有类型提示呢？
-
-  /** 网盘列表 */
-  drives: Drive[] = [];
 
   _ready: boolean = false;
 
@@ -99,14 +96,13 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   constructor(options: ApplicationProps) {
     super();
 
-    const { user, router, cache, beforeReady, onReady } = options;
+    const { user, router, beforeReady, onReady } = options;
     this.lifetimes = {
       beforeReady,
       onReady,
     };
     this.user = user;
     this.router = router;
-    this.cache = cache;
     // const { availHeight, availWidth } = window.screen;
     // if (window.navigator.userAgent.match(/iphone/i)) {
     //   const matched = [
@@ -145,7 +141,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   /** 手机震动 */
   vibrate() {}
   setSize(size: { width: number; height: number }) {
-    this.size = size;
+    this.screen = size;
   }
   /** 设置页面 title */
   setTitle(title: string): void {
@@ -178,37 +174,37 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.PopState, { type, pathname });
   }
   resize(size: { width: number; height: number }) {
-    this.size = size;
+    this.screen = size;
     this.emit(Events.Resize, size);
   }
   blur() {
     this.emit(Events.Blur);
   }
-  async fetchDrives() {
-    if (this.drives.length !== 0) {
-      this.emit(Events.DrivesChange, this.drives);
-      return;
-    }
-    const r = await Drive.ListHelper.init();
-    if (r.error) {
-      this.tip({ text: ["获取网盘失败", r.error.message] });
-      return;
-    }
-    this.drives = [...r.data];
-    this.emit(Events.DrivesChange, [...r.data]);
-  }
-  async refreshDrives() {
-    const r = await Drive.ListHelper.refresh();
-    if (r.error) {
-      this.tip({ text: ["获取网盘失败", r.error.message] });
-      return;
-    }
-    this.drives = [...r.data];
-    this.emit(Events.DrivesChange, [...r.data]);
-  }
-  onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
-    this.on(Events.DrivesChange, handler);
-  }
+  // async fetchDrives() {
+  //   if (this.drives.length !== 0) {
+  //     this.emit(Events.DrivesChange, this.drives);
+  //     return;
+  //   }
+  //   const r = await Drive.ListHelper.init();
+  //   if (r.error) {
+  //     this.tip({ text: ["获取网盘失败", r.error.message] });
+  //     return;
+  //   }
+  //   this.drives = [...r.data];
+  //   this.emit(Events.DrivesChange, [...r.data]);
+  // }
+  // async refreshDrives() {
+  //   const r = await Drive.ListHelper.refresh();
+  //   if (r.error) {
+  //     this.tip({ text: ["获取网盘失败", r.error.message] });
+  //     return;
+  //   }
+  //   this.drives = [...r.data];
+  //   this.emit(Events.DrivesChange, [...r.data]);
+  // }
+  // onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
+  //   this.on(Events.DrivesChange, handler);
+  // }
   /* ----------------
    * Lifetime
    * ----------------

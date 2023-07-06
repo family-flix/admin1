@@ -46,7 +46,7 @@ export const RegisterPage: ViewComponent = (props) => {
             <Input store={passwordInput} />
           </div>
           <div class="grid grid-cols-1 mt-4">
-            <Button store={registerBtn} class="h-[28px]">
+            <Button store={registerBtn} size="default">
               注册
             </Button>
           </div>

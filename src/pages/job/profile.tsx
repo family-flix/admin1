@@ -2,12 +2,12 @@
  * @file 转存任务详情页面
  */
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
+import { LucideCalendar as Calendar } from "lucide-solid";
 
 import { JobProfile, fetch_job_profile, pause_job } from "@/domains/job/services";
 import { RequestCore } from "@/domains/client";
 import { Article } from "@/components/Article";
 import { ViewComponent } from "@/types";
-import { Calendar } from "lucide-solid";
 import { TimerCore } from "@/domains/timer";
 import { TaskStatus } from "@/domains/job/constants";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
@@ -18,7 +18,6 @@ export const TaskProfilePage: ViewComponent = (props) => {
   // const router = useRouter();
   // const { id } = router.query as { id: string };
 
-  const timer = new TimerCore();
   const pauseBtn = new ButtonCore<JobProfile>({
     onClick() {
       pauseJob.run(view.params.id);
@@ -29,7 +28,6 @@ export const TaskProfilePage: ViewComponent = (props) => {
       pauseBtn.setLoading(loading);
     },
     onSuccess() {
-      timer.clear();
       app.tip({
         text: ["任务暂停成功"],
       });
@@ -45,19 +43,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
       // ...
     },
     onSuccess(v) {
-      console.log("profile", v);
       setProfile(v);
-      if (v.status === TaskStatus.Running) {
-        timer.interval(() => {
-          request.run(view.params.id);
-        }, 2000);
-      }
-      if (v.status === TaskStatus.Finished) {
-        timer.clear();
-      }
-      if (v.status === TaskStatus.Paused) {
-        timer.clear();
-      }
     },
     onFailed(error) {
       app.tip({
@@ -75,12 +61,9 @@ export const TaskProfilePage: ViewComponent = (props) => {
     }
     request.run(id);
   });
-  onCleanup(() => {
-    timer.clear();
-  });
 
   return (
-    <div class="">
+    <div class="h-screen p-8">
       <Show when={!!profile()}>
         <div>
           <h1 class="text-3xl">{profile()!.desc}</h1>

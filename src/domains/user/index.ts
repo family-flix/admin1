@@ -149,6 +149,7 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
     this.username = username;
     this.avatar = avatar;
     this.token = token;
+    this.needRegister = false;
     this.emit(Events.Login, { ...this.state, token: this.token });
     return Result.Ok(r.data);
   }

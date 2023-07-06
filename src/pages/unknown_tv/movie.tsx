@@ -2,7 +2,12 @@
  * @file 未识别的电影
  */
 import { For, Show, createSignal } from "solid-js";
-import { Brush, RotateCcw, Train, Trash } from "lucide-solid";
+import {
+  LucideBrush as Brush,
+  LucideRotateCcw as RotateCcw,
+  LucideTrain as Train,
+  LucideTrash as Trash,
+} from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
@@ -12,7 +17,7 @@ import {
   delete_unknown_movie,
   fetch_unknown_movie_list,
 } from "@/services";
-import { FolderCard } from "@/components/FolderCard";
+import { FolderCard, FolderCardSkeleton } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
@@ -21,9 +26,11 @@ import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
+import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const UnknownMoviePage: ViewComponent = (props) => {
-  const { app } = props;
+  const { app, view } = props;
 
   const list = new ListCore(new RequestCore(fetch_unknown_movie_list), {
     onLoadingChange(loading) {
@@ -103,11 +110,11 @@ export const UnknownMoviePage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  list.init();
+  view.onShow(() => {
+    list.init();
+  });
 
   const dataSource = () => response().dataSource;
-  const empty = () => response().empty;
-  const noMore = () => response().noMore;
 
   return (
     <div class="px-4">
@@ -116,53 +123,50 @@ export const UnknownMoviePage: ViewComponent = (props) => {
           刷新电影
         </Button>
       </div>
-      <Show when={empty()}>
-        <div class="w-full h-[240px] center flex items-center justify-center">
-          <div class="text-slate-500 text-xl">列表为空</div>
-        </div>
-      </Show>
-      <div class="grid grid-cols-6 gap-2 2xl:grid-cols-8">
-        <For each={dataSource()}>
-          {(file) => {
-            const { id, name } = file;
-            return (
-              <div class="w-[152px] rounded">
-                <FolderCard type="folder" name={name} />
-                <div class="flex justify-center space-x-2 mt-2">
-                  <Button
-                    class="block box-content"
-                    variant="subtle"
-                    size="sm"
-                    store={selectMatchedProfileBtn.bind(file)}
-                    icon={<Brush class="w-4 h-4" />}
-                  >
-                    修改
-                  </Button>
-                  <Button
-                    class="block box-content"
-                    variant="subtle"
-                    size="sm"
-                    store={deleteBtn.bind(file)}
-                    icon={<Trash class="w-4 h-4" />}
-                  >
-                    删除
-                  </Button>
-                </div>
+      <ListView
+        store={list}
+        skeleton={
+          <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+            <div class="w-[152px] rounded">
+              <FolderCardSkeleton />
+              <div class="flex justify-center mt-2">
+                <Skeleton class="block box-content"></Skeleton>
               </div>
-            );
-          }}
-        </For>
-      </div>
-      <Show when={!noMore()}>
-        <div
-          class="mt-4 text-center text-slate-500 cursor-pointer"
-          onClick={() => {
-            list.loadMore();
-          }}
-        >
-          加载更多
+            </div>
+          </div>
+        }
+      >
+        <div class="grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
+          <For each={dataSource()}>
+            {(file) => {
+              const { id, name } = file;
+              return (
+                <div class="w-[152px] rounded">
+                  <FolderCard type="folder" name={name} />
+                  <div class="flex justify-center space-x-2 mt-2">
+                    <Button
+                      class="box-content"
+                      variant="subtle"
+                      store={selectMatchedProfileBtn.bind(file)}
+                      icon={<Brush class="w-4 h-4" />}
+                    >
+                      修改
+                    </Button>
+                    <Button
+                      class="box-content"
+                      variant="subtle"
+                      store={deleteBtn.bind(file)}
+                      icon={<Trash class="w-4 h-4" />}
+                    >
+                      删除
+                    </Button>
+                  </div>
+                </div>
+              );
+            }}
+          </For>
         </div>
-      </Show>
+      </ListView>
       <TMDBSearcherDialog store={dialog} />
       <Dialog store={deleteConfirmDialog}>
         <div>仅删除该记录，不删除云盘文件。</div>

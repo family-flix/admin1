@@ -10,7 +10,7 @@ import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 
 export const LoginPage: ViewComponent = (props) => {
-  const { app, router } = props;
+  const { app, router, view } = props;
   const { user } = app;
   const emailInput = new InputCore({
     placeholder: "请输入邮箱",
@@ -33,6 +33,12 @@ export const LoginPage: ViewComponent = (props) => {
     },
   });
 
+  // view.onShow(() => {
+  //   if (!app.user.needRegister) {
+  //     return;
+  //   }
+  // });
+
   return (
     <div class="flex justify-center items-center h-screen">
       <form>
@@ -45,7 +51,7 @@ export const LoginPage: ViewComponent = (props) => {
             <Input store={passwordInput} />
           </div>
           <div class="grid grid-cols-1 mt-4">
-            <Button store={loginBtn} class="h-[28px]">
+            <Button store={loginBtn} size="default">
               登录
             </Button>
           </div>

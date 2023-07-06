@@ -2,6 +2,7 @@
  * @file TMDB 搜索器
  */
 import { For, JSX, createSignal } from "solid-js";
+import { Search } from "lucide-solid";
 
 import { LazyImage } from "@/components/ui/image";
 import * as Form from "@/components/ui/form";
@@ -15,10 +16,12 @@ import { Input } from "@/components/ui/input";
 //   SelectValue,
 // } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ScrollView } from "@/components/ui/scroll-view";
+import { ListView } from "@/components/ListView";
+import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
@@ -27,6 +30,9 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
   //   language: "zh-CN",
   // });
   const scrollView = new ScrollViewCore({
+    // onScroll(pos) {
+    //   console.log('scroll', pos);
+    // },
     onReachBottom() {
       store.list.loadMore();
     },
@@ -82,30 +88,57 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
           </div>
         </div>
       </div>
-      <div class="relative">
-        <ScrollView store={scrollView} class="relative overflow-y-auto h-[480px] p-2 space-y-4">
-          <For each={dataSource()}>
-            {(tv) => {
-              const { name, overview, poster_path, first_air_date } = tv;
-              return (
-                <div
-                  class={cn("flex py-2", tv.id === cur()?.id ? "bg-slate-300" : "bg-white")}
-                  onClick={() => {
-                    store.toggle(tv);
-                  }}
-                >
-                  <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
-                  <div class="flex-1 overflow-hidden text-ellipsis">
-                    <div class="text-2xl">{name}</div>
-                    <div class="break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</div>
-                    <div>{first_air_date}</div>
-                  </div>
+      <ListView
+        store={store.list}
+        skeleton={
+          <div class="relative h-[240px] p-2 space-y-4">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="flex flex-col items-center justify-center text-slate-500">
+                <Search class="w-24 h-24" />
+                <div class="text-xl">搜索 TMDB 数据库</div>
+              </div>
+            </div>
+            {/* <div class={cn("flex py-2 bg-white")}>
+              <Skeleton class="w-[120px] h-[240px] rounded-sm mr-4" />
+              <div class="flex-1 overflow-hidden text-ellipsis">
+                <Skeleton class="h-[48px] w-full text-2xl" />
+                <div class="mt-2 space-y-1">
+                  <Skeleton class="w-24 h-[24px]" />
+                  <Skeleton class="w-full h-[24px]" />
+                  <Skeleton class="w-48 h-[24px]" />
+                  <Skeleton class="w-12 h-[24px]" />
                 </div>
-              );
-            }}
-          </For>
-        </ScrollView>
-      </div>
+                <Skeleton class="w-24 h-[18px] mt-2" />
+              </div>
+            </div> */}
+          </div>
+        }
+      >
+        <div class="relative">
+          <ScrollView store={scrollView} class="relative max-h-[360px] overflow-y-auto p-2 space-y-4">
+            <For each={dataSource()}>
+              {(tv) => {
+                const { name, overview, poster_path, first_air_date } = tv;
+                return (
+                  <div
+                    class={cn("flex py-2", tv.id === cur()?.id ? "bg-slate-300" : "bg-white")}
+                    onClick={() => {
+                      store.toggle(tv);
+                    }}
+                  >
+                    <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
+                    <div class="flex-1 overflow-hidden text-ellipsis">
+                      <div class="text-2xl">{name}</div>
+                      <div class="break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</div>
+                      <div>{first_air_date}</div>
+                    </div>
+                  </div>
+                );
+              }}
+            </For>
+          </ScrollView>
+        </div>
+      </ListView>
     </div>
   );
 };

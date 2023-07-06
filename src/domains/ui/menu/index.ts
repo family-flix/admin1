@@ -132,7 +132,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   listenItems(items: MenuItemCore[]) {
-    this.log("listen items", items);
+    // this.log("listen items", items);
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       item.onEnter(() => {

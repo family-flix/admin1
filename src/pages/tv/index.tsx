@@ -11,6 +11,7 @@ import {
   Calendar,
   Check,
   Info,
+  Package,
   RotateCw,
   Search,
   Send,
@@ -26,8 +27,11 @@ import {
   FolderCanAddingSyncTaskItem,
   run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
+  transfer_tv_to_another_drive,
   TVItem,
 } from "@/services";
+import { driveList } from "@/store/drives";
+import { ViewComponent } from "@/types";
 import { hidden_tv } from "@/domains/tv/services";
 import { ListCore } from "@/domains/list";
 import { InputCore } from "@/domains/ui/input";
@@ -39,7 +43,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { ViewComponent } from "@/types";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogCore } from "@/domains/ui/dialog";
 import { SharedResourceCore } from "@/domains/shared_resource";
@@ -50,6 +53,11 @@ import { Skeleton } from "@/packages/ui/skeleton";
 import { PopoverCore } from "@/domains/ui/popover";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { DriveItem } from "@/domains/drive/services";
+import { cn } from "@/utils";
+import { Drive } from "@/domains/drive";
+import { effect } from "solid-js/web";
+import { appendJob } from "@/store";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -64,6 +72,12 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const tvSelection = new SelectionCore<TVItem>();
+  const driveSelection = new SelectionCore<Drive>({
+    onChange(v) {
+      // console.log('SelectionCore change', v);
+      setCurDrive(v);
+    },
+  });
   const folderSelection = new SelectionCore<{
     url: string;
     name: string;
@@ -104,7 +118,7 @@ export const TVManagePage: ViewComponent = (props) => {
       console.log(error);
       app.tip({ text: ["新增更新任务失败", error.message] });
       const { code, data } = error;
-      if (code !== "20001") {
+      if (code !== 20001) {
         return;
       }
       const folders = data as {
@@ -112,6 +126,34 @@ export const TVManagePage: ViewComponent = (props) => {
         file_name: string;
       }[];
       setFolders(folders);
+    },
+  });
+  const transferRequest = new RequestCore(transfer_tv_to_another_drive, {
+    onLoading(loading) {
+      transferConfirmDialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["复制失败", error.message],
+      });
+    },
+    onSuccess(r) {
+      app.tip({
+        text: ["开始复制，请等待一段时间"],
+      });
+      const job = new JobCore({ id: r.job_id });
+      job.onFinish(() => {
+        if (!tvSelection.value) {
+          return;
+        }
+        const { name, original_name } = tvSelection.value;
+        app.tip({
+          text: [`完成电视剧 '${name || original_name}' 复制`],
+        });
+      });
+      job.waitFinish();
+      appendJob(job);
+      transferConfirmDialog.hide();
     },
   });
   const tipPopover = new PopoverCore({
@@ -153,7 +195,7 @@ export const TVManagePage: ViewComponent = (props) => {
         execSyncTaskBtn.setLoading(false);
         list.refresh();
       });
-      job.wait_finish();
+      job.waitFinish();
     },
     onFailed(error) {
       app.tip({ text: ["更新失败", error.message] });
@@ -217,13 +259,39 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
+  const transferConfirmDialog = new DialogCore({
+    title: "移动到其他云盘",
+    onOk() {
+      if (!driveSelection.value) {
+        app.tip({ text: ["请先选择目标云盘"] });
+        return;
+      }
+      const curTV = tvSelection.value;
+      if (!curTV) {
+        app.tip({ text: ["请先选择电视剧"] });
+        return;
+      }
+      transferRequest.run({
+        tv_id: curTV.id,
+        target_drive_id: driveSelection.value.id,
+      });
+    },
+  });
+  const transferBtn = new ButtonInListCore<TVItem>({
+    onClick(record) {
+      if (record === null) {
+        return;
+      }
+      tvSelection.select(record);
+      transferConfirmDialog.show();
+    },
+  });
   const addSyncTaskBtn = new ButtonInListCore<TVItem>({
     onClick(record) {
       if (record === null) {
         return;
       }
       tvSelection.select(record);
-      // sharedResource.input();
       folderCanAddSyncTaskList.search({
         name: [record.name],
       });
@@ -262,7 +330,7 @@ export const TVManagePage: ViewComponent = (props) => {
       job.onPause(() => {
         syncAllTVBtn.setLoading(false);
       });
-      job.wait_finish();
+      job.waitFinish();
     },
     onFailed(error) {
       app.tip({ text: ["同步更新失败", error.message] });
@@ -292,24 +360,40 @@ export const TVManagePage: ViewComponent = (props) => {
   >([]);
   const [resourceState, setResourceState] = createSignal(sharedResource.state);
   const [tips, setTips] = createSignal<string[]>([]);
+  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  const [curDrive, setCurDrive] = createSignal(driveSelection.value);
 
+  driveList.onStateChange((nextResponse) => {
+    setDriveResponse(nextResponse);
+  });
   list.onStateChange((nextState) => {
     setState(nextState);
   });
-  // folderCanAddSyncTaskList.onStateChange((nextState) => {
-  //   setFolders(nextState);
-  // });
+  folderCanAddSyncTaskList.onStateChange((nextState) => {
+    setFolders(
+      nextState.dataSource.map((folder) => {
+        const { file_id, name } = folder;
+        return {
+          file_id,
+          file_name: name,
+        };
+      })
+    );
+  });
   sharedResource.onStateChange((nextState) => {
     setResourceState(nextState);
   });
   scrollView.onScroll(() => {
     tipPopover.hide();
   });
-  view.onShow(() => {
-    list.init();
-  });
+  list.init();
+  driveList.init();
 
   const dataSource = () => state().dataSource;
+
+  effect(() => {
+    console.log(curDrive());
+  });
 
   return (
     <>
@@ -432,7 +516,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                 </Show>
                               </div>
 
-                              <div class="space-x-2 mt-6 overflow-hidden whitespace-nowrap">
+                              <div class="space-x-2 mt-6 py-2 overflow-hidden whitespace-nowrap">
                                 <Button
                                   store={profileBtn.bind(tv)}
                                   variant="subtle"
@@ -440,6 +524,15 @@ export const TVManagePage: ViewComponent = (props) => {
                                 >
                                   详情
                                 </Button>
+                                <Show when={cur_episode_count === episode_count}>
+                                  <Button
+                                    store={transferBtn.bind(tv)}
+                                    variant="subtle"
+                                    icon={<Package class="w-4 h-4" />}
+                                  >
+                                    复制到其他云盘
+                                  </Button>
+                                </Show>
                                 <Show when={need_bind}>
                                   <Button
                                     store={addSyncTaskBtn.bind(tv)}
@@ -499,6 +592,36 @@ export const TVManagePage: ViewComponent = (props) => {
               );
             }}
           </For>
+        </div>
+      </Dialog>
+      <Dialog store={transferConfirmDialog}>
+        <div>
+          <div>选择了 {curDrive()?.name}</div>
+          <div class="mt-8 space-y-4">
+            <For each={driveResponse().dataSource}>
+              {(drive) => {
+                const { id, name, state } = drive;
+                return (
+                  <div>
+                    {id}
+                    <div
+                      class={cn("py-2 cursor-pointer", {
+                        underline: curDrive()?.id === id,
+                      })}
+                      onClick={() => {
+                        driveSelection.select(drive);
+                      }}
+                    >
+                      <div class="text-lg">{name}</div>
+                    </div>
+                    <div>
+                      {state.used_size}/{state.total_size}
+                    </div>
+                  </div>
+                );
+              }}
+            </For>
+          </div>
         </div>
       </Dialog>
       <Popover

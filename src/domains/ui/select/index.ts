@@ -234,7 +234,7 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
       const leftDelta = this.reference.left - left;
       const minContentWidth = this.reference.width + leftDelta;
       const contentWidth = Math.max(minContentWidth, contentRect.width);
-      const rightEdge = app.size.width - CONTENT_MARGIN;
+      const rightEdge = app.screen.width - CONTENT_MARGIN;
       const clampedLeft = clamp(left, [CONTENT_MARGIN, rightEdge - contentWidth]);
       wrapStyles.minWidth = minContentWidth;
       wrapStyles.left = clampedLeft;
@@ -253,7 +253,7 @@ export class SelectCore extends BaseDomain<TheTypesOfEvents> {
     // Vertical positioning
     // -----------------------------------------------------------------------------------------
     // const items = getItems();
-    const availableHeight = app.size.height - CONTENT_MARGIN * 2;
+    const availableHeight = app.screen.height - CONTENT_MARGIN * 2;
     const itemsHeight = this.viewport.scrollHeight;
     const contentStyles = this.content.getStyles();
     const contentBorderTopWidth = parseInt(contentStyles.borderTopWidth, 10);

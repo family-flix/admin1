@@ -4,6 +4,8 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ChevronRight, Folder, FolderInput, MoreHorizontal, Search } from "lucide-solid";
 
+import { driveList } from "@/store/drives";
+import { ViewComponent } from "@/types";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { MenuCore } from "@/domains/ui/menu";
@@ -16,7 +18,6 @@ import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { ViewComponent } from "@/types";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -69,17 +70,18 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       btn.setLoading(false);
     },
   });
-  app.onDrivesChange((nextDrives) => {
+  driveList.onStateChange((nextResponse) => {
     driveSubMenu.setItems(
-      nextDrives.map((drive) => {
+      nextResponse.dataSource.map((drive) => {
         const { name } = drive;
         const item = new MenuItemCore({
           label: name,
           async onClick() {
-            item.disable();
-            await sharedResource.transferSelectedFolderToDrive(drive);
-            item.enable();
-            dropdownMenu.hide();
+            console.log('hello');
+            // item.disable();
+            // await sharedResource.transferSelectedFolderToDrive(drive);
+            // item.enable();
+            // dropdownMenu.hide();
           },
         });
         return item;
@@ -104,15 +106,10 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   input1.onChange((v) => {
     sharedResource.input(v);
   });
-  // view.onShow(() => {
-  //   console.log("shared files show");
-  // });
+  driveList.init();
   // view.onHidden(() => {
   //   console.log("shared files hide");
   // });
-  onMount(() => {
-    app.fetchDrives();
-  });
 
   const [state, setState] = createSignal(sharedResource.state);
 
@@ -121,18 +118,14 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   const files = () => state().files;
 
   return (
-    <div>
+    <div class="p-8">
       <h1 class="text-2xl">转存资源</h1>
       <div class="mt-8">
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-10">
-            <Input store={input1} />
-          </div>
-          <div class="grid col-span-2">
-            <Button size="default" variant="default" store={btn}>
-              获取
-            </Button>
-          </div>
+        <div class="flex items-center space-x-2">
+          <Input store={input1} />
+          <Button size="default" variant="default" store={btn}>
+            获取
+          </Button>
         </div>
         <div class="mt-8">
           <Show when={paths().length}>

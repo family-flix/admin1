@@ -2,7 +2,7 @@
  * @file 弹窗 组件
  */
 import { createSignal, JSX } from "solid-js";
-import { X } from "lucide-solid";
+import { LucideX as X } from "lucide-solid";
 
 import { DialogCore } from "@/domains/ui/dialog";
 import * as DialogPrimitive from "@/packages/ui/dialog";

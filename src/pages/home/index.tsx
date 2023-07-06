@@ -2,10 +2,11 @@
  * @file 管理后台首页
  */
 import { createSignal, For, onMount } from "solid-js";
-import { HardDrive, RotateCcw } from "lucide-solid";
+import { LucideRotateCcw as RotateCcw, LucideHardDrive as HardDrive } from "lucide-solid";
 
-import { DriveCard } from "@/components/DriveCard";
+import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/types";
+import { DriveCard } from "@/components/DriveCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore } from "@/domains/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -14,9 +15,8 @@ import { code_get_drive_token } from "@/constants";
 import { Textarea } from "@/components/ui/textarea";
 import { InputCore } from "@/domains/ui/input";
 import { RequestCore } from "@/domains/client";
-import { addAliyunDrive, fetch_drive_instance_list } from "@/domains/drive/services";
+import { addAliyunDrive } from "@/domains/drive/services";
 import { ListView } from "@/components/ListView";
-import { ListCore } from "@/domains/list";
 import { Skeleton } from "@/packages/ui/skeleton";
 
 export const HomePage: ViewComponent = (props) => {
@@ -30,7 +30,7 @@ export const HomePage: ViewComponent = (props) => {
       app.tip({ text: ["添加云盘成功"] });
       addingDriveDialog.hide();
       driveTokenInput.clear();
-      app.refreshDrives();
+      driveList.refresh();
     },
     onFailed(error) {
       app.tip({ text: ["添加云盘失败", error.message] });
@@ -55,17 +55,14 @@ export const HomePage: ViewComponent = (props) => {
     placeholder: "请输入",
   });
   const refreshBtn = new ButtonCore({
-    async onClick() {
-      refreshBtn.setLoading(true);
-      await app.refreshDrives();
-      refreshBtn.setLoading(false);
+    onClick() {
+      driveList.refresh();
     },
   });
-  const list = new ListCore(new RequestCore(fetch_drive_instance_list));
 
-  const [driveResponse, setDriveResponse] = createSignal(list.response);
+  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
 
-  list.onStateChange((nextState) => {
+  driveList.onStateChange((nextState) => {
     setDriveResponse(nextState);
   });
   view.onShow(() => {
@@ -75,12 +72,10 @@ export const HomePage: ViewComponent = (props) => {
     console.log("home page hide");
   });
 
-  onMount(() => {
-    list.init();
-  });
+  driveList.init();
 
   return (
-    <div class="">
+    <div class="p-8">
       <h1 class="text-2xl">云盘列表</h1>
       <div class="mt-8">
         <div class="space-x-2">
@@ -92,7 +87,7 @@ export const HomePage: ViewComponent = (props) => {
           </Button>
         </div>
         <ListView
-          store={list}
+          store={driveList}
           skeleton={
             <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
               <div class="relative p-4 bg-white rounded-xl border border-1">
@@ -115,7 +110,15 @@ export const HomePage: ViewComponent = (props) => {
           <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
             <For each={driveResponse().dataSource}>
               {(drive) => {
-                return <DriveCard app={app} store={drive} />;
+                return (
+                  <DriveCard
+                    app={app}
+                    store={drive}
+                    onRefresh={() => {
+                      driveList.refresh();
+                    }}
+                  />
+                );
               }}
             </For>
           </div>

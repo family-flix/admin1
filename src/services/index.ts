@@ -289,9 +289,14 @@ export async function fetch_files_of_tv(body: { id: string; page: number; page_s
   const { id, page, page_size } = body;
   return request.get<
     ListResponse<{
+      id: string;
       file_id: string;
       file_name: string;
       parent_paths: string;
+      drive: {
+        id: string;
+        name: string;
+      };
     }>
   >(`/api/admin/tv/${id}/source`, {
     page,
@@ -321,7 +326,7 @@ export async function fetch_file_profile_of_tv(body: { tv_id: string; id: string
     return Result.Err(r.error);
   }
   const { file_id, file_name, parsed_tv } = r.data;
-  const { name, original_name, correct_name } = parsed_tv;
+  const { name, original_name } = parsed_tv;
   return Result.Ok({
     id,
     file_id,
@@ -587,6 +592,16 @@ export function run_all_file_sync_tasks() {
 }
 
 /**
+ * 执行所有电视剧同步任务
+ */
+export function transfer_tv_to_another_drive(body: { tv_id: string; target_drive_id: string }) {
+  const { tv_id, target_drive_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/tv/${tv_id}/transfer`, {
+    target_drive_id,
+  });
+}
+
+/**
  * 删除指定成员
  * @returns
  */
@@ -626,6 +641,11 @@ export async function fetch_tv_profile(body: { tv_id: string }) {
         id: string;
         name: string;
         overview: string;
+        sources: {
+          file_id: string;
+          file_name: string;
+          parent_paths: string;
+        }[];
       }[];
     }[];
     sources: {

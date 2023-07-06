@@ -2,12 +2,12 @@
  * @file 未识别的电视剧
  */
 import { For, Show, createSignal } from "solid-js";
-import { Brush, RotateCcw } from "lucide-solid";
+import { LucideBrush as Brush, LucideRotateCcw as RotateCcw } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
 import { UnknownTVItem, bind_searched_tv_for_tv, fetch_tv_list, fetch_unknown_tv_list } from "@/services";
-import { FolderCard } from "@/components/FolderCard";
+import { FolderCard, FolderCardSkeleton } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
@@ -15,9 +15,10 @@ import { ViewComponent } from "@/types";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ListView } from "@/components/ListView";
+import { Skeleton } from "@/packages/ui/skeleton";
 
 export const UnknownTVPage: ViewComponent = (props) => {
-  const { app } = props;
+  const { app, view } = props;
 
   const list = new ListCore(new RequestCore(fetch_unknown_tv_list), {
     onLoadingChange(loading) {
@@ -66,7 +67,9 @@ export const UnknownTVPage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  list.init();
+  view.onShow(() => {
+    list.init();
+  });
 
   const dataSource = () => response().dataSource;
   const empty = () => response().empty;
@@ -79,8 +82,20 @@ export const UnknownTVPage: ViewComponent = (props) => {
           刷新电视剧
         </Button>
       </div>
-      <ListView store={list}>
-        <div class="grid grid-cols-6 gap-2">
+      <ListView
+        store={list}
+        skeleton={
+          <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+            <div class="w-[152px] rounded">
+              <FolderCardSkeleton />
+              <div class="flex justify-center mt-2">
+                <Skeleton class="block box-content"></Skeleton>
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <div class="grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
           <For each={dataSource()}>
             {(file) => {
               const { id, name } = file;
@@ -89,7 +104,7 @@ export const UnknownTVPage: ViewComponent = (props) => {
                   <FolderCard type="folder" name={name} />
                   <div class="flex justify-center mt-2">
                     <Button
-                      class="block box-content"
+                      class="box-content"
                       variant="subtle"
                       store={selectMatchedProfileBtn.bind(file)}
                       icon={<Brush class="w-4 h-4" />}

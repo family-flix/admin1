@@ -63,7 +63,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   });
 
   return (
-    <div class="flex flex-col h-screen">
+    <div class="flex flex-col box-border p-8">
       <h1 class="text-2xl h-[32px]">未识别的影视剧</h1>
       <div class="flex-1 mt-8">
         <div class="space-x-2 h-[24px]">
@@ -98,7 +98,14 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               {(subView, i) => {
                 const PageContent = subView.component as ViewComponent;
                 return (
-                  <KeepAliveRouteView class={cn("relative")} store={subView} index={i()} immediately={true}>
+                  <KeepAliveRouteView
+                    class={cn("relative")}
+                    view={subView}
+                    app={app}
+                    router={router}
+                    index={i()}
+                    immediately={true}
+                  >
                     <PageContent app={app} router={router} view={subView} />
                   </KeepAliveRouteView>
                 );

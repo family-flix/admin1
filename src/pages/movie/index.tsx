@@ -2,7 +2,13 @@
  * @file 电影列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, BookOpen, Calendar, RotateCw, Search } from "lucide-solid";
+import {
+  LucideAward as Award,
+  LucideBookOpen as BookOpen,
+  LucideCalendar as Calendar,
+  LucideRotateCw as RotateCw,
+  LucideSearch as Search,
+} from "lucide-solid";
 
 import { bind_searched_tv_for_tv, fetch_movie_list, MovieItem } from "@/services";
 import { hidden_tv } from "@/domains/tv/services";
@@ -19,6 +25,8 @@ import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ViewComponent } from "@/types";
 import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/packages/ui/skeleton";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
 export const MovieManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -85,9 +93,13 @@ export const MovieManagePage: ViewComponent = (props) => {
       list.refresh();
     },
   });
+  const scrollView = new ScrollViewCore();
 
   const [state, setState] = createSignal(list.response);
 
+  scrollView.onReachBottom(() => {
+    list.loadMore();
+  });
   list.onStateChange((nextState) => {
     setState(nextState);
   });
@@ -97,7 +109,7 @@ export const MovieManagePage: ViewComponent = (props) => {
 
   return (
     <>
-      <div class="">
+      <ScrollView store={scrollView} class="h-screen p-8">
         <h1 class="text-2xl">电影列表</h1>
         <div class="mt-8">
           <div class="flex items-center space-x-2">
@@ -187,7 +199,7 @@ export const MovieManagePage: ViewComponent = (props) => {
             </ListView>
           </div>
         </div>
-      </div>
+      </ScrollView>
       <TMDBSearcherDialog store={dialog} />
     </>
   );

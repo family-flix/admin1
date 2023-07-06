@@ -4,8 +4,7 @@ import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
 import { ListResponse, RequestedResource, Result } from "@/types";
 
-import { TaskStatus } from "./constants";
-import { relative_time_from_now } from "@/utils";
+import { TaskStatus, TaskTypes } from "./constants";
 
 /**
  * 获取当前用户所有异步任务
@@ -15,6 +14,7 @@ export async function fetch_job_list(params: FetchParams) {
     ListResponse<{
       id: string;
       unique_id: string;
+      type: TaskTypes;
       status: TaskStatus;
       desc: string;
       error?: string;
@@ -56,17 +56,23 @@ export type JobItem = RequestedResource<typeof fetch_job_list>["list"][0];
  * 查询索引任务详情
  */
 export async function fetch_job_profile(id: string) {
-  const r = await request.get<{ id: string; desc: string; status: TaskStatus; created: string; content: string }>(
-    `/api/admin/job/${id}`
-  );
+  const r = await request.get<{
+    id: string;
+    desc: string;
+    type: TaskTypes;
+    status: TaskStatus;
+    created: string;
+    content: string;
+  }>(`/api/admin/job/${id}`);
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { desc, status, content, created } = r.data;
+  const { desc, status, type, content, created } = r.data;
   const data = {
     id,
     desc,
     status,
+    type,
     statusText: (() => {
       if (status === TaskStatus.Running) {
         return "运行中";
@@ -90,7 +96,9 @@ export type JobProfile = RequestedResource<typeof fetch_job_profile>;
  * 查询索引任务状态
  */
 export function fetch_job_status(id: string) {
-  return request.get<{ id: string; desc: string; status: TaskStatus; error?: string }>(`/api/admin/job/status/${id}`);
+  return request.get<{ id: string; desc: string; type: TaskTypes; status: TaskStatus; error?: string }>(
+    `/api/admin/job/status/${id}`
+  );
 }
 // export type JobItem = RequestedResource<typeof fetch_job_status>;
 

@@ -3,18 +3,18 @@
  */
 import { For, JSX, createSignal } from "solid-js";
 import {
-  Film,
-  Users,
-  FolderInput,
-  Home,
-  EyeOff,
-  Bot,
-  Flame,
-  FolderSearch,
-  LogOut,
-  Settings,
-  Tv,
-  FileSearch,
+  LucideFilm as Film,
+  LucideUsers as Users,
+  LucideFolderInput as FolderInput,
+  LucideHome as Home,
+  LucideEyeOff as EyeOff,
+  LucideBot as Bot,
+  LucideFlame as Flame,
+  LucideFolderSearch as FolderSearch,
+  LucideLogOut as LogOut,
+  LucideSettings as Settings,
+  LucideTv as Tv,
+  LucideFileSearch as FileSearch,
 } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
@@ -136,6 +136,7 @@ export const HomeLayout: ViewComponent = (props) => {
     app.tip(msg);
   });
   view.checkMatch(router._pending);
+  app.user.validate();
 
   // const pathname = router.pathname;
 
@@ -251,7 +252,6 @@ export const HomeLayout: ViewComponent = (props) => {
           <div class="relative w-full h-full">
             <For each={subViews()}>
               {(subView, i) => {
-                const PageContent = subView.component as ViewComponent;
                 return (
                   <KeepAliveRouteView
                     class={cn(
@@ -259,11 +259,11 @@ export const HomeLayout: ViewComponent = (props) => {
                       "data-[state=open]:animate-in data-[state=open]:fade-in",
                       "data-[state=closed]:animate-out data-[state=closed]:fade-out"
                     )}
-                    store={subView}
+                    app={app}
+                    router={router}
+                    view={subView}
                     index={i()}
-                  >
-                    <PageContent app={app} router={router} view={subView} />
-                  </KeepAliveRouteView>
+                  />
                 );
               }}
             </For>

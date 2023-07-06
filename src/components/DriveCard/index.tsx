@@ -2,18 +2,7 @@
  * @file 云盘卡片
  */
 import { For, Show, createSignal } from "solid-js";
-import {
-  MoreHorizontal,
-  Apple,
-  Edit3,
-  Download,
-  Coffee,
-  Trash,
-  Gift,
-  FolderSearch,
-  RefreshCcw,
-  RefreshCw,
-} from "lucide-solid";
+import { MoreHorizontal, Apple, Edit3, Download, Coffee, Trash, Gift, FolderSearch, RefreshCw } from "lucide-solid";
 
 import { Application } from "@/domains/app";
 import { Drive } from "@/domains/drive";
@@ -31,7 +20,7 @@ import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
 
-export const DriveCard = (props: { app: Application; store: Drive }) => {
+export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: () => void }) => {
   const { app, store: drive } = props;
 
   const [state, setState] = createSignal(drive.state);
@@ -85,7 +74,9 @@ export const DriveCard = (props: { app: Application; store: Drive }) => {
       await drive.delete();
       confirmDeleteDriveDialog.okBtn.setLoading(false);
       confirmDeleteDriveDialog.hide();
-      app.refreshDrives();
+      if (props.onRefresh) {
+        props.onRefresh();
+      }
     },
   });
   const refreshTokenModal = new DialogCore({

@@ -3,6 +3,8 @@ import { Handler } from "mitt";
 import { BaseDomain } from "@/domains/base";
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
+import { Side } from "@/domains/ui/popper/types";
+import { Align } from "@/domains/ui/popper";
 
 enum Events {
   StateChange,
@@ -30,15 +32,17 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
   constructor(
     options: Partial<{
       _name: string;
+      side: Side;
+      align: Align;
       items: MenuItemCore[];
     }> = {}
   ) {
     super(options);
 
-    const { _name, items = [] } = options;
+    const { _name, side, align, items = [] } = options;
     this.state.items = items;
     // this.listenItems(items);
-    this.menu = new MenuCore({ items, _name: _name ? `${_name}__menu` : "menu-in-dropdown" });
+    this.menu = new MenuCore({ side, align, items, _name: _name ? `${_name}__menu` : "menu-in-dropdown" });
     this.menu.onHide(() => {
       // console.log("menu is hidden");
       this.menu.reset();

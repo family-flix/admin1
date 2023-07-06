@@ -2,18 +2,31 @@
  * @file 会销毁页面的视图（如果希望不销毁可以使用 keep-alive-route-view
  */
 import { Show, createSignal, JSX } from "solid-js";
-import { effect } from "solid-js/web";
 
-import { RouteViewCore } from "@/domains/route_view";
-import { cn } from "@/utils";
+import { PageLoading } from "@/components/PageLoading";
+import { ViewComponentProps } from "@/types";
 
-export function RouteView(props: { store: RouteViewCore } & JSX.HTMLAttributes<HTMLElement>) {
-  const { store } = props;
-  const [state, setState] = createSignal(store.state);
+export function RouteView(props: ViewComponentProps & JSX.HTMLAttributes<HTMLDivElement>) {
+  const { app, view, router } = props;
 
-  store.onStateChange((nextState) => {
+  const [state, setState] = createSignal(view.state);
+  const [pageContent, setPageContent] = createSignal(<PageLoading class="w-full h-full" />);
+
+  view.onStateChange((nextState) => {
     setState(nextState);
   });
+  (async () => {
+    if (typeof view.component === "function") {
+      if (view.loaded) {
+        return;
+      }
+      const PageView = await view.component();
+      setPageContent(<PageView app={app} router={router} view={view} />);
+      view.setLoaded();
+      return;
+    }
+    setPageContent(view.component as JSX.Element);
+  })();
 
   const visible = () => state().visible;
   const mounted = () => state().mounted;
@@ -36,7 +49,7 @@ export function RouteView(props: { store: RouteViewCore } & JSX.HTMLAttributes<H
         //   store.presence.animationEnd();
         // }}
       >
-        {props.children}
+        {pageContent()}
       </div>
     </Show>
   );

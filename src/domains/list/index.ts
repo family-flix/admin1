@@ -173,7 +173,7 @@ export class ListCore<
     this.initialize(options);
   }
   private initialize = (options: ListProps<T>) => {
-    const { search, dataSource, page, pageSize } = options;
+    const { search, dataSource, page, pageSize, initial } = options;
 
     if (search !== undefined) {
       this.initialParams = {
@@ -192,6 +192,9 @@ export class ListCore<
     if (pageSize !== undefined) {
       this.initialParams.pageSize = pageSize;
       this.extraResponse.pageSize = pageSize;
+    }
+    if (initial !== undefined) {
+      this.extraResponse.initial = initial;
     }
     this.params = { ...this.initialParams };
     this.response = {

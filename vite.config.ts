@@ -1,17 +1,15 @@
 import path from "path";
 
-import { defineConfig } from "vite";
+import { UserConfigExport, defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 
 export default defineConfig({
   base: "/admin",
   plugins: [solidPlugin()],
-  server: {
-    port: 3003,
-  },
   resolve: {
     alias: {
       "hls.js": "hls.js/dist/hls.min.js",
+      "lucide-solid": require.resolve("lucide-solid").replace('cjs', 'esm'),
       "@": path.resolve(__dirname, "./src"),
     },
   },

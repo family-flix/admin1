@@ -1,9 +1,9 @@
 // import { useEffect, useRef, useState } from "react";
 import { JSX } from "solid-js/jsx-runtime";
-import { createSignal, onMount } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 
 import { ImageCore } from "@/domains/ui/image";
-import { connect } from "@/domains/ui/image/conneect.web";
+import { connect } from "@/domains/ui/image/connect.web";
 
 export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttributes<HTMLImageElement>) {
   let $img: HTMLImageElement | undefined = undefined;
@@ -26,5 +26,9 @@ export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttrib
   const fit = () => state().fit;
   // const { src, alt, fit } = state();
 
-  return <img ref={$img} class={props.class} style={{ "object-fit": fit() }} src={src()} alt={alt()} />;
+  return (
+    <Show when={!!src()} fallback={<div ref={$img} class={props.class}></div>}>
+      <img ref={$img} class={props.class} style={{ "object-fit": fit() }} src={src()} alt={alt()} />
+    </Show>
+  );
 }

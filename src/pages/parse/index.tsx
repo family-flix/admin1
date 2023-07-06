@@ -62,18 +62,14 @@ export const VideoParsingPage: ViewComponent = (props) => {
   };
 
   return (
-    <div>
+    <div class="p-8">
       <h1 class="text-2xl">文件名解析</h1>
       <div class="mt-8">
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-10">
-            <Input store={input} />
-          </div>
-          <div class="grid col-span-2">
-            <Button store={btn} class="btn btn--primary btn--block">
-              解析
-            </Button>
-          </div>
+        <div class="flex items-center space-x-2">
+          <Input store={input} />
+          <Button store={btn} class="btn btn--primary btn--block">
+            解析
+          </Button>
         </div>
         <Show when={!!info()}>
           <div class="mt-4">

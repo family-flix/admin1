@@ -2,7 +2,15 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
-import { Edit2, Gem, QrCode as QrCodeIcon, RotateCcw, ShieldClose, UserPlus, UserX } from "lucide-solid";
+import {
+  LucideEdit2 as Edit2,
+  LucideGem as Gem,
+  LucideQrCode as QrCodeIcon,
+  LucideRotateCcw as RotateCcw,
+  LucideShieldClose as ShieldClose,
+  LucideUserPlus as UserPlus,
+  LucideUserX as UserX,
+} from "lucide-solid";
 
 import { add_member, create_member_auth_link, delete_member, fetch_members, MemberItem } from "@/services";
 import { Button } from "@/components/ui/button";
@@ -19,9 +27,11 @@ import { SelectionCore } from "@/domains/cur";
 import { cn } from "@/utils";
 import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/packages/ui/skeleton";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { ScrollView } from "@/components/ui/scroll-view";
 
 export const MemberManagePage: ViewComponent = (props) => {
-  const { app, router } = props;
+  const { app, router, view } = props;
 
   const memberList = new ListCore(new RequestCore(fetch_members), {
     onLoadingChange(loading) {
@@ -141,6 +151,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       confirmDeleteMemberDialog.hide();
     },
   });
+  const scrollView = new ScrollViewCore();
 
   const [response, setResponse] = createSignal(memberList.response);
   memberList.onStateChange((nextState) => {
@@ -148,15 +159,18 @@ export const MemberManagePage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  memberList.init();
+  view.onShow(() => {
+    memberList.init();
+  });
+  scrollView.onReachBottom(() => {
+    memberList.loadMore();
+  });
 
   const dataSource = () => response().dataSource;
-  const empty = () => response().empty;
-  const noMore = () => response().noMore;
 
   return (
     <>
-      <div class="min-h-full">
+      <ScrollView store={scrollView} class="p-8">
         <h1 class="text-2xl">成员列表</h1>
         <div class="mt-8">
           <div class="space-x-2">
@@ -295,7 +309,7 @@ export const MemberManagePage: ViewComponent = (props) => {
             </div>
           </ListView>
         </div>
-      </div>
+      </ScrollView>
       <Dialog title="新增成员" store={addMemberDialog}>
         <Input store={remarkInput} />
       </Dialog>

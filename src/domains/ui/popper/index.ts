@@ -138,12 +138,11 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   /** 基准元素加载完成 */
-  setReference(reference: { getRect: () => Rect }) {
-    this.log("setReference", this.reference, reference);
-    if (this.reference !== null) {
-      return;
-    }
-    this.log("[PopperCore]setReference", reference);
+  setReference(reference: { $el?: unknown; getRect: () => Rect }) {
+    this.log("setReference", this.reference, reference.$el);
+    // if (this.reference !== null) {
+    //   return;
+    // }
     this.reference = reference;
     this.state.reference = true;
     this.emit(Events.ReferenceMounted, reference);
@@ -152,16 +151,15 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   /** 更新基准元素（右键菜单时会用到这个方法） */
   updateReference(reference: { getRect: () => Rect }) {
     this.log("updateReference", this.reference);
-    // if (this.reference === null) {
-    //   return;
-    // }
     this.reference = reference;
   }
   removeReference() {
     if (this.reference === null) {
       return;
     }
+    this.state.reference = false;
     this.reference = null;
+    this.emit(Events.StateChange, { ...this.state });
   }
   /** 内容元素加载完成 */
   setFloating(floating: PopperCore["floating"]) {

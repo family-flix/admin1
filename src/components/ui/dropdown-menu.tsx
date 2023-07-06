@@ -61,7 +61,7 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
               );
             }}
           </For>
-          <DropdownMenuPrimitive.Arrow store={store} />
+          {/* <DropdownMenuPrimitive.Arrow store={store} /> */}
         </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>
     </DropdownMenuPrimitive.Root>
@@ -107,7 +107,7 @@ const ItemWithSubMenu = (
         </Show>
         {label()}
         <div class="ml-auto h-4 w-4">
-          <ChevronRight width={15} height={15} />
+          <ChevronRight class="w-4 h-4" />
         </div>
       </DropdownMenuPrimitive.SubTrigger>
       <DropdownMenuPrimitive.Portal store={subMenu}>

@@ -34,19 +34,21 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   resetBtn: ButtonCore;
 
   type?: string;
-  state: TMDBSearcherState = {
-    cur: null,
-    response: this.list.response,
-  };
+  state: TMDBSearcherState;
 
   constructor(options: Partial<{ _name: string } & TMDBSearcherProps> = {}) {
     super(options);
 
     const { type } = options;
+    console.log("[DOMAIN]TMDB - constructor ", this.list.response);
     if (type) {
       this.type = type;
       this.list.setParams({ type });
     }
+    this.state = {
+      cur: null,
+      response: this.list.response,
+    };
     this.form = new FormCore<{}>();
     this.input = new InputCore({
       placeholder: type === "2" ? "请输入电影名称" : "请输入电视剧名称",

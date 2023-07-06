@@ -8,7 +8,7 @@ import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { cn } from "@/utils";
 
-import * as Popper from "./popper";
+import * as PopperPrimitive from "./popper";
 import { Presence } from "./presence";
 import { DismissableLayer } from "./dismissable-layer";
 
@@ -19,9 +19,9 @@ const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   return (
-    <Popper.Root class={props.class} store={store.popper}>
+    <PopperPrimitive.Root class={props.class} store={store.popper}>
       {props.children}
-    </Popper.Root>
+    </PopperPrimitive.Root>
   );
 };
 
@@ -32,9 +32,9 @@ const Anchor = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) =>
   const { store } = props;
 
   return (
-    <Popper.Anchor class={props.class} store={store.popper}>
+    <PopperPrimitive.Anchor class={props.class} store={store.popper}>
       {props.children}
-    </Popper.Anchor>
+    </PopperPrimitive.Anchor>
   );
 };
 
@@ -97,9 +97,9 @@ const ContentImpl = (
 
   return (
     <DismissableLayer store={store.layer}>
-      <Popper.Content store={store.popper} class={props.class}>
+      <PopperPrimitive.Content store={store.popper} class={props.class}>
         {props.children}
-      </Popper.Content>
+      </PopperPrimitive.Content>
     </DismissableLayer>
   );
 };
@@ -142,12 +142,14 @@ const ItemImpl = (
 ) => {
   const { store: item } = props;
   let $item: HTMLDivElement;
+
   const [state, setState] = createSignal(item.state);
+
   item.onStateChange((nextState) => {
     setState(nextState);
   });
   item.onFocus(() => {
-    $item.focus();
+    // $item.focus();
   });
   item.onBlur(() => {
     $item.blur();
@@ -163,6 +165,7 @@ const ItemImpl = (
   return (
     <div
       ref={(el) => {
+        // console.log("[COMPONENT]ItemImpl - ref", el);
         $item = el;
         if (typeof props.ref === "function") {
           props.ref(el);
@@ -196,9 +199,11 @@ const ItemImpl = (
         item.leave();
       }}
       onClick={() => {
+        console.log('[COMPONENT]MenuItemImpl - on click');
         item.click();
       }}
       onFocus={() => {
+        console.log('[COMPONENT]MenuItemImpl - on focus');
         item.focus();
       }}
       onBlur={() => {
@@ -221,7 +226,7 @@ const Arrow = (
   const { store } = props;
   // const store = useContext(MenuContext);
 
-  return <Popper.Arrow class={props.class} store={store.popper}></Popper.Arrow>;
+  return <PopperPrimitive.Arrow class={props.class} store={store.popper}></PopperPrimitive.Arrow>;
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -234,12 +239,11 @@ const Sub = (
 ) => {
   const { store } = props;
 
-  return <Popper.Root store={store.popper}>{props.children}</Popper.Root>;
+  return <PopperPrimitive.Root store={store.popper}>{props.children}</PopperPrimitive.Root>;
 };
 const SubTrigger = (
   props: {
     store: MenuItemCore;
-    onMounted?: (el: HTMLDivElement) => void;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
   const { store: item } = props;
@@ -247,16 +251,13 @@ const SubTrigger = (
   let $item: HTMLDivElement | undefined = undefined;
 
   onMount(() => {
-    item.log("[COMPONENT]MenuSubTrigger - mount");
     const $$item = $item;
+    // console.log("[COMPONENT]MenuSubTrigger - mount", $item, $$item, item.menu);
     if (!$$item) {
       return;
     }
     if (!item.menu) {
       return;
-    }
-    if (props.onMounted) {
-      props.onMounted($$item);
     }
     item.menu.popper.setReference({
       getRect() {
@@ -266,6 +267,7 @@ const SubTrigger = (
     });
   });
   onCleanup(() => {
+    // console.log("[COMPONENT]MenuSubTrigger - unmounted");
     if (!item.menu) {
       return;
     }

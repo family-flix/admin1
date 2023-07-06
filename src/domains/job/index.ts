@@ -4,7 +4,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { BaseDomain } from "@/domains/base";
 import { Result } from "@/types";
 
-import { JobItem, fetch_job_profile, fetch_job_status, pause_job } from "./services";
+import { fetch_job_profile, fetch_job_status, pause_job } from "./services";
 import { TaskStatus } from "./constants";
 
 enum Events {
@@ -19,6 +19,7 @@ type TheTypesOfEvents = {
 };
 type JobState = {
   loading: boolean;
+  completed: boolean;
 };
 type JobProps = {
   /** job id */
@@ -26,6 +27,7 @@ type JobProps = {
 };
 
 export class JobCore extends BaseDomain<TheTypesOfEvents> {
+  /** 创建一个异步任务 */
   static async New(body: { id: string }) {
     const { id } = body;
     const r = await fetch_job_profile(id);
@@ -37,12 +39,21 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   timer: null | NodeJS.Timeout = null;
+  /** 记录id */
   id: string;
+  /** 是否处于请求中 */
+  loading = false;
+  /** 任务是否已结束 */
+  completed = false;
+  /** 开始时间 */
   start?: Dayjs;
-  // profile: JobItem;
-  state: JobState = {
-    loading: false,
-  };
+
+  get state(): JobState {
+    return {
+      loading: this.loading,
+      completed: this.completed,
+    };
+  }
 
   constructor(options: JobProps) {
     super();
@@ -52,8 +63,19 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   fetch_profile() {}
+  async fetch_status() {
+    const r = await fetch_job_status(this.id);
+    if (r.error) {
+      return Result.Err(r.error);
+    }
+    const { status, error } = r.data;
+    if ([TaskStatus.Finished, TaskStatus.Paused].includes(status)) {
+      this.completed = true;
+    }
+    return Result.Ok(r.data);
+  }
 
-  wait_finish() {
+  waitFinish() {
     this.start = dayjs();
     this.timer = setInterval(async () => {
       if (dayjs().diff(this.start, "minute") >= 10) {
@@ -62,7 +84,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
       }
       const r = await fetch_job_status(this.id);
       if (r.error) {
-        this.state.loading = false;
+        this.loading = false;
         this.emit(Events.StateChange, { ...this.state });
         this.tip({ text: ["获取任务状态失败", r.error.message] });
         if (this.timer) {
@@ -73,7 +95,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
       }
       const { status, error } = r.data;
       if (status === TaskStatus.Paused) {
-        this.state.loading = false;
+        this.loading = false;
         this.tip({ text: error ? ["任务失败", error] : ["任务被中断"] });
         this.emit(Events.StateChange, { ...this.state });
         this.emit(Events.Pause);
@@ -84,7 +106,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
         return;
       }
       if (status === TaskStatus.Finished) {
-        this.state.loading = false;
+        this.loading = false;
         this.tip({ text: error ? ["任务失败", error] : ["任务完成"] });
         this.emit(Events.StateChange, { ...this.state });
         this.emit(Events.Finish);
@@ -93,7 +115,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
           this.timer = null;
         }
       }
-    }, 3000);
+    }, 5000);
   }
   /** 强制中断任务 */
   async finish() {

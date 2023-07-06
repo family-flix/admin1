@@ -2,7 +2,7 @@
  * @file 未识别的季
  */
 import { For, Show, createSignal } from "solid-js";
-import { Brush, RotateCw } from "lucide-solid";
+import { LucideBrush as Brush, LucideRotateCw as RotateCw } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
@@ -26,7 +26,7 @@ import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/packages/ui/skeleton";
 
 export const UnknownSeasonPage: ViewComponent = (props) => {
-  const { app } = props;
+  const { app, view } = props;
   const list = new ListCore(new RequestCore(fetch_unknown_season_list), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
@@ -86,7 +86,9 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  list.init();
+  view.onShow(() => {
+    list.init();
+  });
 
   const dataSource = () => response().dataSource;
   const empty = () => response().empty;
@@ -112,7 +114,7 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
           </div>
         }
       >
-        <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+        <div class="grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
           <For each={dataSource()}>
             {(file) => {
               const { id, name, season_number } = file;
@@ -122,7 +124,7 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
                   <FolderCard type="folder" name={n} />
                   <div class="flex justify-center mt-2">
                     <Button
-                      class="block box-content"
+                      class="box-content"
                       variant="subtle"
                       store={updateSeasonBtn.bind(file)}
                       icon={<Brush class="w-4 h-4" />}
