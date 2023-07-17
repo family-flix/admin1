@@ -9,6 +9,8 @@ import { ButtonCore } from "@/domains/ui/button";
 import { homeUnknownTVPage } from "@/store/views";
 import { KeepAliveRouteView } from "@/components/ui/keep-alive-route-view";
 import { cn } from "@/utils";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
   const { app, view, router } = props;
@@ -63,9 +65,9 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   });
 
   return (
-    <div class="flex flex-col box-border p-8">
+    <ScrollView store={new ScrollViewCore()} class="flex flex-col box-border h-screen p-8">
       <h1 class="text-2xl h-[32px]">未识别的影视剧</h1>
-      <div class="flex-1 mt-8">
+      <div class="flex-1 mt-8 rounded-sm bg-white">
         <div class="space-x-2 h-[24px]">
           <div
             class="inline-block px-4 py-2 cursor-pointer"
@@ -114,6 +116,6 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
           </div>
         </div>
       </div>
-    </div>
+    </ScrollView>
   );
 };

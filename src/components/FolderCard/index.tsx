@@ -4,7 +4,7 @@
 import { JSX } from "solid-js/jsx-runtime";
 
 import { LazyImage } from "@/components/ui/image";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const FolderCard = (
   props: {

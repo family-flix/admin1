@@ -21,7 +21,7 @@ import { ListView } from "@/components/ListView";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;

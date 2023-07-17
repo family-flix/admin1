@@ -17,7 +17,7 @@ import { InputCore } from "@/domains/ui/input";
 import { RequestCore } from "@/domains/client";
 import { addAliyunDrive } from "@/domains/drive/services";
 import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;

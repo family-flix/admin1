@@ -26,6 +26,7 @@ type TheTypesOfEvents<T> = {
 };
 type RequestState = {};
 type RequestProps<T> = {
+  delay?: null | number;
   onSuccess: (v: T) => void;
   onFailed: (error: BizError) => void;
   onCompleted: () => void;
@@ -43,6 +44,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
 
   /** 原始 service 函数 */
   private _service: T;
+  delay: null | number = 800;
   /** 处于请求中的 promise */
   pending: ReturnType<T> | null = null;
   /** 调用 prepare 方法暂存的参数 */
@@ -57,7 +59,10 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
       throw new Error("service must be a function");
     }
     this._service = service;
-    const { onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
+    const { delay, onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
+    if (delay !== undefined) {
+      this.delay = delay;
+    }
     if (onSuccess) {
       this.onSuccess(onSuccess);
     }
@@ -88,7 +93,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     this.emit(Events.BeforeRequest);
     const pending = this._service(...args, this.token) as ReturnType<T>;
     this.pending = pending;
-    const [r] = await Promise.all([pending, sleep(1000)]);
+    const [r] = await Promise.all([pending, this.delay === null ? null : sleep(this.delay)]);
     this.emit(Events.LoadingChange, false);
     this.emit(Events.Completed);
     this.pending = null;

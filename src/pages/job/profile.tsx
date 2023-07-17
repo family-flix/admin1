@@ -4,7 +4,7 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { LucideCalendar as Calendar } from "lucide-solid";
 
-import { JobProfile, fetch_job_profile, pause_job } from "@/domains/job/services";
+import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job } from "@/domains/job/services";
 import { RequestCore } from "@/domains/client";
 import { Article } from "@/components/Article";
 import { ViewComponent } from "@/types";
@@ -12,6 +12,11 @@ import { TimerCore } from "@/domains/timer";
 import { TaskStatus } from "@/domains/job/constants";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { Button } from "@/components/ui/button";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ListCore } from "@/domains/list";
+import { ListView } from "@/components/ListView";
 
 export const TaskProfilePage: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -38,12 +43,18 @@ export const TaskProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const logList = new ListCore(
+    new RequestCore(fetch_output_lines_of_job, {
+      delay: null,
+    })
+  );
   const request = new RequestCore(fetch_job_profile, {
     onLoading(loading) {
       // ...
     },
     onSuccess(v) {
       setProfile(v);
+      logList.setDataSource(v.content);
     },
     onFailed(error) {
       app.tip({
@@ -51,20 +62,57 @@ export const TaskProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const scrollView = new ScrollViewCore();
+  scrollView.onReachBottom(() => {
+    logList.loadMore();
+  });
 
   const [profile, setProfile] = createSignal(request.response);
+  const [logResponse, setLogResponse] = createSignal(logList.response);
 
+  logList.onStateChange((nextResponse) => {
+    setLogResponse(nextResponse);
+  });
   onMount(() => {
     const { id } = view.params as { id?: string };
     if (!id) {
       return;
     }
     request.run(id);
+    logList.setParams((prev) => {
+      return {
+        ...prev,
+        job_id: id,
+      };
+    });
+    logList.loadMore();
   });
 
   return (
-    <div class="h-screen p-8">
-      <Show when={!!profile()}>
+    <ScrollView store={scrollView} class="h-screen p-8">
+      <Show
+        when={!!profile()}
+        fallback={
+          <div>
+            <div>
+              <Skeleton class="w-32 h-[64px]"></Skeleton>
+              <div class="mt-2 flex items-center space-x-4">
+                <div class="flex items-center space-x-1">
+                  <Skeleton class="w-4 h-4"></Skeleton>
+                  <Skeleton class="w-18 h-[18px]"></Skeleton>
+                </div>
+                <Skeleton class="mt-2 w-18 h-[18px]"></Skeleton>
+              </div>
+            </div>
+            <div class="divider-x-2"></div>
+            <div class="mt-8 space-y-1">
+              <Skeleton class="w-full h-[18]"></Skeleton>
+              <Skeleton class="w-32 h-[18]"></Skeleton>
+              <Skeleton class="w-24 h-[18]"></Skeleton>
+            </div>
+          </div>
+        }
+      >
         <div>
           <h1 class="text-3xl">{profile()!.desc}</h1>
           <div class="flex items-center space-x-4">
@@ -80,9 +128,11 @@ export const TaskProfilePage: ViewComponent = (props) => {
         </Show>
         <div class="divider-x-2"></div>
         <div class="mt-8">
-          <Article nodes={profile()!.content} />
+          <ListView store={logList}>
+            <Article nodes={logResponse().dataSource} />
+          </ListView>
         </div>
       </Show>
-    </div>
+    </ScrollView>
   );
 };

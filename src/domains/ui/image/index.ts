@@ -72,7 +72,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 图片进入可视区域 */
   handleShow() {
-    console.log("[IMAGE_CORE]handleShow", this.realSrc);
+    // console.log("[IMAGE_CORE]handleShow", this.realSrc);
     if (this.realSrc === undefined) {
       return;
     }

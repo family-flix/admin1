@@ -61,13 +61,15 @@ export async function fetch_job_profile(id: string) {
     desc: string;
     type: TaskTypes;
     status: TaskStatus;
+    lines: { content: string }[];
+    more_line: boolean;
     created: string;
     content: string;
   }>(`/api/admin/job/${id}`);
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { desc, status, type, content, created } = r.data;
+  const { desc, status, type, content, lines, more_line, created } = r.data;
   const data = {
     id,
     desc,
@@ -85,12 +87,41 @@ export async function fetch_job_profile(id: string) {
       }
       return "未知";
     })(),
-    content: JSON.parse(content),
+    content: lines.map((l) => JSON.parse(l.content)),
+    hasMoreContent: more_line,
     created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
   };
   return Result.Ok(data);
 }
 export type JobProfile = RequestedResource<typeof fetch_job_profile>;
+
+/** 获取指定异步任务的日志列表 */
+export async function fetch_output_lines_of_job(body: { job_id: string; page: number; pageSize: number }) {
+  const { job_id, page, pageSize } = body;
+  const r = await request.get<
+    ListResponse<{
+      content: string;
+      created: string;
+    }>
+  >(`/api/admin/job/${job_id}/logs`, {
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { no_more, total, list } = r.data;
+  return Result.Ok({
+    page: r.data.page,
+    page_size: r.data.page_size,
+    noMore: no_more,
+    total,
+    list: list.map((log) => {
+      const { content } = log;
+      return JSON.parse(content);
+    }),
+  });
+}
 
 /**
  * 查询索引任务状态

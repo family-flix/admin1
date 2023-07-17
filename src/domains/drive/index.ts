@@ -6,7 +6,6 @@ import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { ListCore } from "@/domains/list";
-import { fetch_job_profile } from "@/domains/job/services";
 import { RequestCore } from "@/domains/client";
 import { TaskStatus } from "@/constants";
 import { sleep } from "@/utils";
@@ -26,6 +25,7 @@ import {
   checkInDrive,
   analysisDriveQuickly,
   deleteDrive,
+  matchMediaFilesMedia,
   receiveCheckInRewardOfDrive,
 } from "./services";
 
@@ -71,7 +71,7 @@ type DriveState = DriveItem & {
   loading: boolean;
 };
 const helper = new ListCore(new RequestCore(fetchDrives));
-export class Drive extends BaseDomain<TheTypesOfEvents> {
+export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   /** 网盘列表辅助类 */
   static ListHelper = {
     response: ListCore.defaultResponse,
@@ -82,7 +82,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       }
       return Result.Ok(
         r.data.dataSource.map((drive) => {
-          const d = new Drive({
+          const d = new DriveCore({
             ...drive,
             loading: false,
           });
@@ -97,7 +97,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
       }
       return Result.Ok(
         r.data.dataSource.map((drive) => {
-          const d = new Drive({
+          const d = new DriveCore({
             ...drive,
             loading: false,
           });
@@ -161,7 +161,7 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
    * @param {boolean} [quickly=false] 是否增量索引
    */
   async startScrape(quickly: boolean = false) {
-    if (this.timer) {
+    if (this.state.loading) {
       this.tip({ text: ["索引正在进行中..."] });
       return Result.Ok(null);
     }
@@ -181,40 +181,72 @@ export class Drive extends BaseDomain<TheTypesOfEvents> {
     }
     this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     const { job_id } = r.data;
-    this.timer = setInterval(async () => {
-      const r = await fetch_job_profile(job_id);
-      if (r.error) {
-        this.state.loading = false;
-        this.emit(Events.StateChange, { ...this.state });
-        this.tip({ text: ["获取索引状态失败", r.error.message] });
-        if (this.timer) {
-          clearTimeout(this.timer);
-          this.timer = null;
-        }
-        return;
-      }
-      if (r.data.status === TaskStatus.Paused) {
-        this.state.loading = false;
-        this.tip({ text: ["索引被中断"] });
-        this.emit(Events.StateChange, { ...this.state });
-        if (this.timer) {
-          clearInterval(this.timer);
-          this.timer = null;
-        }
-        return;
-      }
-      if (r.data.status === TaskStatus.Finished) {
-        this.state.loading = false;
-        this.tip({ text: ["索引完成"] });
-        this.emit(Events.StateChange, { ...this.state });
-        this.emitCompleted(r.data);
-        if (this.timer) {
-          clearInterval(this.timer);
-          this.timer = null;
-        }
-      }
-    }, 3000);
-    return Result.Ok(null);
+    return Result.Ok(job_id);
+    // this.timer = setInterval(async () => {
+    //   const r = await fetch_job_profile(job_id);
+    //   if (r.error) {
+    //     this.state.loading = false;
+    //     this.emit(Events.StateChange, { ...this.state });
+    //     this.tip({ text: ["获取索引状态失败", r.error.message] });
+    //     if (this.timer) {
+    //       clearTimeout(this.timer);
+    //       this.timer = null;
+    //     }
+    //     return;
+    //   }
+    //   if (r.data.status === TaskStatus.Paused) {
+    //     this.state.loading = false;
+    //     this.tip({ text: ["索引被中断"] });
+    //     this.emit(Events.StateChange, { ...this.state });
+    //     if (this.timer) {
+    //       clearInterval(this.timer);
+    //       this.timer = null;
+    //     }
+    //     return;
+    //   }
+    //   if (r.data.status === TaskStatus.Finished) {
+    //     this.state.loading = false;
+    //     this.tip({ text: ["索引完成"] });
+    //     this.emit(Events.StateChange, { ...this.state });
+    //     this.emitCompleted(r.data);
+    //     if (this.timer) {
+    //       clearInterval(this.timer);
+    //       this.timer = null;
+    //     }
+    //   }
+    // }, 3000);
+    // return Result.Ok(null);
+  }
+  finishAnalysis() {
+    this.state.loading = false;
+    this.tip({ text: ["索引完成"] });
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  /** 搜索云盘内解析得到的影视剧 */
+  async matchMediaFilesProfile() {
+    if (this.state.loading) {
+      this.tip({ text: ["匹配正在进行中..."] });
+      return Result.Ok(null);
+    }
+    this.state.loading = true;
+    this.emit(Events.StateChange, { ...this.state });
+    const r = await matchMediaFilesMedia({
+      drive_id: this.id,
+    });
+    if (r.error) {
+      this.state.loading = false;
+      this.emit(Events.StateChange, { ...this.state });
+      this.tip({ text: ["匹配失败", r.error.message] });
+      return Result.Err(r.error);
+    }
+    this.tip({ text: ["开始匹配，请等待一段时间后刷新查看"] });
+    const { job_id } = r.data;
+    return Result.Ok(job_id);
+  }
+  finishMediaMatch() {
+    this.state.loading = false;
+    this.tip({ text: ["匹配完成"] });
+    this.emit(Events.StateChange, { ...this.state });
   }
   /** 导出云盘信息（可直接导入其他网站） */
   async export() {

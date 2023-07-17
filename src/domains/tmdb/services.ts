@@ -11,7 +11,7 @@ export async function search_media_in_tmdb(params: FetchParams & { keyword: stri
   const { keyword, page, pageSize, type, ...rest } = params;
   return request.get<
     ListResponse<{
-      id: string;
+      id: number;
       name: string;
       original_name: string;
       overview: string;

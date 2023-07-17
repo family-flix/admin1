@@ -1,7 +1,7 @@
 /**
  * @file 电视剧列表
  */
-import { createSignal, For, onMount, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import {
   ArrowUpCircle,
   Award,
@@ -16,15 +16,15 @@ import {
   Search,
   Send,
   Smile,
-  X,
 } from "lucide-solid";
 
 import {
   add_file_sync_task_of_tv,
-  bind_searched_tv_for_tv,
+  bind_profile_for_unknown_tv,
   fetch_folder_can_add_sync_task,
+  fetch_partial_tv,
   fetch_tv_list,
-  FolderCanAddingSyncTaskItem,
+  refresh_tv_profile,
   run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
   transfer_tv_to_another_drive,
@@ -32,75 +32,51 @@ import {
 } from "@/services";
 import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/types";
-import { hidden_tv } from "@/domains/tv/services";
-import { ListCore } from "@/domains/list";
-import { InputCore } from "@/domains/ui/input";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
-import { RequestCore } from "@/domains/client";
-import { SelectionCore } from "@/domains/cur";
-import { LazyImage } from "@/components/ui/image";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Skeleton, Popover, ScrollView, Input, Button, LazyImage, Dialog } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { Dialog } from "@/components/ui/dialog";
-import { DialogCore } from "@/domains/ui/dialog";
+import { ListView } from "@/components/ListView";
+import { ScrollViewCore, DialogCore, PopoverCore, InputCore, ButtonCore, ButtonInListCore } from "@/domains/ui";
+import { ListCore } from "@/domains/list";
+import { RequestCore } from "@/domains/client";
+import { SelectionCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
-import { Popover, PurePopover } from "@/components/ui/popover";
-import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
-import { PopoverCore } from "@/domains/ui/popover";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { DriveItem } from "@/domains/drive/services";
-import { cn } from "@/utils";
-import { Drive } from "@/domains/drive";
-import { effect } from "solid-js/web";
+import { DriveCore } from "@/domains/drive";
 import { appendJob } from "@/store";
+import { cn } from "@/utils";
+import { effect } from "solid-js/web";
+import { FileSearcher } from "@/components/FileSearcher";
+import { FileSearcherCore } from "@/components/FileSearcher/store";
+import { FileType } from "@/constants";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  let $page: HTMLDivElement | undefined;
-
-  const list = new ListCore(new RequestCore(fetch_tv_list), {
+  const tvList = new ListCore(new RequestCore(fetch_tv_list), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
       refreshBtn.setLoading(loading);
     },
   });
+  const partialTVRequest = new RequestCore(fetch_partial_tv);
   const tvSelection = new SelectionCore<TVItem>();
-  const driveSelection = new SelectionCore<Drive>({
+  const driveSelection = new SelectionCore<DriveCore>({
     onChange(v) {
-      // console.log('SelectionCore change', v);
       setCurDrive(v);
     },
   });
-  const folderSelection = new SelectionCore<{
-    url: string;
-    name: string;
-    file_id: string;
-  }>();
-  const bindSearchedTVForTV = new RequestCore(bind_searched_tv_for_tv, {
+  const bindSearchedTVForTVRequest = new RequestCore(refresh_tv_profile, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
-      list.refresh();
+      tvList.refresh();
     },
     onFailed(error) {
       app.tip({
         text: ["修改失败", error.message],
       });
-    },
-  });
-  const hiddenTV = new RequestCore(hidden_tv, {
-    onSuccess() {
-      list.refresh();
-    },
-    onFailed(error) {
-      app.tip({ text: ["隐藏失败", error.message] });
     },
   });
   const addFileSyncTask = new RequestCore(add_file_sync_task_of_tv, {
@@ -113,19 +89,29 @@ export const TVManagePage: ViewComponent = (props) => {
       setFolders([]);
       sharedResourceUrlInput.clear();
       addSyncTaskDialog.hide();
+      folderSearcher.dialog.hide();
+      refreshPartialTV();
     },
     onFailed(error) {
-      console.log(error);
+      console.log("[PAGE]tv/index - addFileSyncTask onFailed 1", error.code, error.data);
       app.tip({ text: ["新增更新任务失败", error.message] });
       const { code, data } = error;
-      if (code !== 20001) {
+      if (code === 20001) {
+        const folders = data as {
+          file_id: string;
+          file_name: string;
+          drive: {
+            id: string;
+            name: string;
+          };
+        }[];
+        console.log("[PAGE]tv/index - addFileSyncTask onFailed", data);
+        setFolders(folders);
         return;
       }
-      const folders = data as {
-        file_id: string;
-        file_name: string;
-      }[];
-      setFolders(folders);
+      if (code === 20002) {
+        folderSearcher.dialog.show();
+      }
     },
   });
   const transferRequest = new RequestCore(transfer_tv_to_another_drive, {
@@ -146,9 +132,9 @@ export const TVManagePage: ViewComponent = (props) => {
         if (!tvSelection.value) {
           return;
         }
-        const { name, original_name } = tvSelection.value;
+        const { name } = tvSelection.value;
         app.tip({
-          text: [`完成电视剧 '${name || original_name}' 复制`],
+          text: [`完成电视剧 '${name}' 复制`],
         });
       });
       job.waitFinish();
@@ -157,7 +143,6 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const tipPopover = new PopoverCore({
-    // side: "right",
     align: "end",
   });
   const folderSelectBtn = new ButtonInListCore<{ file_name: string; file_id: string }>({
@@ -174,14 +159,38 @@ export const TVManagePage: ViewComponent = (props) => {
         app.tip({ text: ["请先输入资源链接"] });
         return;
       }
-      const { file_id } = record;
+      const { file_id, file_name } = record;
       addFileSyncTask.run({
         tv_id: tvSelection.value.id,
         url: sharedResourceUrlInput.value,
         target_file_id: file_id,
+        target_file_name: file_name,
       });
     },
   });
+  const refreshPartialTV = async () => {
+    const tv_id = tvSelection.value?.id;
+    if (!tv_id) {
+      tvList.refresh();
+      return;
+    }
+    const r = await partialTVRequest.run({ tv_id });
+    if (r.error) {
+      app.tip({
+        text: ["获取电视剧最新信息失败", r.error.message],
+      });
+      return;
+    }
+    tvList.modifyItem((item) => {
+      const { id } = item;
+      if (id !== tv_id) {
+        return item;
+      }
+      return {
+        ...r.data,
+      };
+    });
+  };
   const runFileSyncTask = new RequestCore(run_file_sync_task_of_tv, {
     beforeRequest() {
       execSyncTaskBtn.setLoading(true);
@@ -191,9 +200,9 @@ export const TVManagePage: ViewComponent = (props) => {
       job.onTip((msg) => {
         app.tip(msg);
       });
-      job.onFinish(() => {
+      job.onFinish(async () => {
         execSyncTaskBtn.setLoading(false);
-        list.refresh();
+        refreshPartialTV();
       });
       job.waitFinish();
     },
@@ -205,24 +214,20 @@ export const TVManagePage: ViewComponent = (props) => {
   const folderCanAddSyncTaskList = new ListCore(new RequestCore(fetch_folder_can_add_sync_task));
   const dialog = new TMDBSearcherDialogCore({
     onOk(searchedTV) {
-      if (!tvSelection.value?.id) {
+      const tvId = tvSelection.value?.id;
+      if (!tvId) {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
       }
-      bindSearchedTVForTV.run(tvSelection.value.id, searchedTV);
+      bindSearchedTVForTVRequest.run({
+        tv_id: tvId,
+        tmdb_id: searchedTV.id,
+      });
     },
   });
   const addSyncTaskDialog = new DialogCore({
     title: "新增更新任务",
     footer: false,
-    onOk() {
-      if (!folderSelection.value) {
-        app.tip({ text: ["请先选择文件夹"] });
-        return;
-      }
-      const { url, name, file_id } = folderSelection.value;
-      // 还要看该电视剧有没有同名的 parsed_tv.file_name，如果没有，弹出所有的 parsed_tv 让用户选
-    },
   });
   const input1 = new InputCore({ placeholder: "请输入名称搜索" });
   const searchBtn = new ButtonCore({
@@ -230,12 +235,12 @@ export const TVManagePage: ViewComponent = (props) => {
       if (!input1.value) {
         return;
       }
-      list.search({ name: input1.value });
+      tvList.search({ name: input1.value });
     },
   });
   const resetBtn = new ButtonCore({
     onClick() {
-      list.reset();
+      tvList.reset();
       input1.clear();
     },
   });
@@ -248,7 +253,6 @@ export const TVManagePage: ViewComponent = (props) => {
   const sharedResource = new SharedResourceCore();
   const sharedResourceBtn = new ButtonCore({
     onClick() {
-      // sharedResource.fetch();
       if (!tvSelection.value) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
@@ -277,6 +281,12 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
+  const folderSearcher = new FileSearcherCore({
+    search: {
+      type: FileType.Folder,
+    },
+    footer: false,
+  });
   const transferBtn = new ButtonInListCore<TVItem>({
     onClick(record) {
       if (record === null) {
@@ -292,9 +302,6 @@ export const TVManagePage: ViewComponent = (props) => {
         return;
       }
       tvSelection.select(record);
-      folderCanAddSyncTaskList.search({
-        name: [record.name],
-      });
       addSyncTaskDialog.show();
     },
   });
@@ -303,6 +310,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
+      tvSelection.select(record);
       runFileSyncTask.run({ id: record.id });
     },
   });
@@ -324,7 +332,7 @@ export const TVManagePage: ViewComponent = (props) => {
       }
       const job = job_res.data;
       job.onFinish(() => {
-        list.refresh();
+        tvList.refresh();
         syncAllTVBtn.setLoading(false);
       });
       job.onPause(() => {
@@ -344,30 +352,38 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const refreshBtn = new ButtonCore({
     onClick() {
-      list.refresh();
+      tvList.refresh();
     },
   });
   const scrollView = new ScrollViewCore({
     pullToRefresh: false,
   });
 
-  const [state, setState] = createSignal(list.response);
+  const [tvListResponse, setTVListResponse] = createSignal(tvList.response);
   const [folders, setFolders] = createSignal<
     {
       file_id: string;
       file_name: string;
+      drive: {
+        id: string;
+        name: string;
+      };
     }[]
   >([]);
-  const [resourceState, setResourceState] = createSignal(sharedResource.state);
+  // const [resourceState, setResourceState] = createSignal(sharedResource.state);
   const [tips, setTips] = createSignal<string[]>([]);
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(driveSelection.value);
+  effect(() => {
+    console.log(tvListResponse().dataSource[0]?.name);
+  });
 
   driveList.onStateChange((nextResponse) => {
     setDriveResponse(nextResponse);
   });
-  list.onStateChange((nextState) => {
-    setState(nextState);
+  tvList.onStateChange((nextState) => {
+    // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
+    setTVListResponse(nextState);
   });
   folderCanAddSyncTaskList.onStateChange((nextState) => {
     setFolders(
@@ -376,29 +392,35 @@ export const TVManagePage: ViewComponent = (props) => {
         return {
           file_id,
           file_name: name,
+          drive: {
+            id: "",
+            name: "",
+          },
         };
       })
     );
   });
-  sharedResource.onStateChange((nextState) => {
-    setResourceState(nextState);
+  folderSearcher.onStateChange((nextState) => {
+    const { list } = nextState;
+    setFolders(list.dataSource);
+  });
+  // sharedResource.onStateChange((nextState) => {
+  // setResourceState(nextState);
+  // });
+  scrollView.onReachBottom(() => {
+    tvList.loadMore();
   });
   scrollView.onScroll(() => {
     tipPopover.hide();
   });
-  list.init();
+
+  tvList.init();
   driveList.init();
-
-  const dataSource = () => state().dataSource;
-
-  effect(() => {
-    console.log(curDrive());
-  });
 
   return (
     <>
       <ScrollView class="h-screen p-8" store={scrollView}>
-        <div class="relative" ref={$page}>
+        <div class="relative">
           <h1 class="text-2xl">电视剧列表</h1>
           <div class="mt-8">
             <div class="flex items-center space-x-2">
@@ -420,7 +442,7 @@ export const TVManagePage: ViewComponent = (props) => {
             </div>
             <div class="mt-4">
               <ListView
-                store={list}
+                store={tvList}
                 skeleton={
                   <div>
                     <div class="rounded-md border border-slate-300 bg-white shadow-sm">
@@ -450,19 +472,18 @@ export const TVManagePage: ViewComponent = (props) => {
                 }
               >
                 <div class="space-y-4">
-                  <For each={dataSource()}>
+                  <For each={tvListResponse().dataSource}>
                     {(tv) => {
                       const {
-                        id,
                         name,
                         overview,
                         poster_path,
                         first_air_date,
                         popularity,
-                        need_bind,
                         sync_task,
                         cur_episode_count,
                         episode_count,
+                        need_bind,
                       } = tv;
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
@@ -473,7 +494,7 @@ export const TVManagePage: ViewComponent = (props) => {
                             <div class="flex-1 w-0 p-4">
                               <h2 class="text-2xl text-slate-800">{name}</h2>
                               <div class="mt-2 overflow-hidden text-ellipsis">
-                                <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
+                                <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">
                                   {overview}
                                 </p>
                               </div>
@@ -486,13 +507,15 @@ export const TVManagePage: ViewComponent = (props) => {
                                   <Award class="w-4 h-4" />
                                   <div>{popularity}</div>
                                 </div>
-                                <Show when={cur_episode_count === episode_count}>
-                                  <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
-                                    <Smile class="w-4 h-4" />
-                                    <div>全{episode_count}集</div>
-                                  </div>
-                                </Show>
-                                <Show when={cur_episode_count !== episode_count}>
+                                <Show
+                                  when={cur_episode_count < episode_count}
+                                  fallback={
+                                    <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                      <Smile class="w-4 h-4" />
+                                      <div>全{episode_count}集</div>
+                                    </div>
+                                  }
+                                >
                                   <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
                                     <Send class="w-4 h-4" />
                                     <div>
@@ -515,7 +538,6 @@ export const TVManagePage: ViewComponent = (props) => {
                                   </div>
                                 </Show>
                               </div>
-
                               <div class="space-x-2 mt-6 py-2 overflow-hidden whitespace-nowrap">
                                 <Button
                                   store={profileBtn.bind(tv)}
@@ -530,7 +552,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                     variant="subtle"
                                     icon={<Package class="w-4 h-4" />}
                                   >
-                                    复制到其他云盘
+                                    归档
                                   </Button>
                                 </Show>
                                 <Show when={need_bind}>
@@ -574,24 +596,32 @@ export const TVManagePage: ViewComponent = (props) => {
             <Button store={sharedResourceBtn}>确定</Button>
           </div>
         </div>
-        <div>
+        <div class="h-[360px] overflow-auto">
           <For each={folders()}>
             {(file) => {
-              const { file_name } = file;
+              const { file_name, drive } = file;
               return (
                 <div class="flex items-center justify-between py-4 space-x-2">
+                  <div>{drive.name}</div>
                   <div>{file_name}</div>
                   <Button
                     store={folderSelectBtn.bind(file)}
                     class="ml-4 cursor-pointer"
                     icon={<Check class="w-4 h-4" />}
                   >
-                    确定
+                    选择
                   </Button>
                 </div>
               );
             }}
           </For>
+        </div>
+        <div
+          onClick={() => {
+            folderSearcher.dialog.show();
+          }}
+        >
+          从云盘中选择文件夹
         </div>
       </Dialog>
       <Dialog store={transferConfirmDialog}>
@@ -622,6 +652,36 @@ export const TVManagePage: ViewComponent = (props) => {
               }}
             </For>
           </div>
+        </div>
+      </Dialog>
+      <Dialog store={folderSearcher.dialog}>
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-9">
+            <Input store={folderSearcher.form.input} />
+          </div>
+          <div class="col-span-3 grid">
+            <Button store={folderSearcher.form.btn}>确定</Button>
+          </div>
+        </div>
+        <div class="h-[360px] overflow-auto">
+          <For each={folders()}>
+            {(file) => {
+              const { file_name, drive } = file;
+              return (
+                <div class="flex items-center justify-between py-4 space-x-2">
+                  <div>{drive.name}</div>
+                  <div>{file_name}</div>
+                  <Button
+                    store={folderSelectBtn.bind(file)}
+                    class="ml-4 cursor-pointer"
+                    icon={<Check class="w-4 h-4" />}
+                  >
+                    选择
+                  </Button>
+                </div>
+              );
+            }}
+          </For>
         </div>
       </Dialog>
       <Popover

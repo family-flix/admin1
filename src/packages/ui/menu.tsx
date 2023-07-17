@@ -199,11 +199,11 @@ const ItemImpl = (
         item.leave();
       }}
       onClick={() => {
-        console.log('[COMPONENT]MenuItemImpl - on click');
+        // console.log("[COMPONENT]MenuItemImpl - on click");
         item.click();
       }}
       onFocus={() => {
-        console.log('[COMPONENT]MenuItemImpl - on focus');
+        // console.log("[COMPONENT]MenuItemImpl - on focus");
         item.focus();
       }}
       onBlur={() => {
@@ -244,6 +244,7 @@ const Sub = (
 const SubTrigger = (
   props: {
     store: MenuItemCore;
+    onMounted?: (el: HTMLDivElement) => void;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
   const { store: item } = props;
@@ -258,6 +259,9 @@ const SubTrigger = (
     }
     if (!item.menu) {
       return;
+    }
+    if (props.onMounted) {
+      props.onMounted($$item);
     }
     item.menu.popper.setReference({
       getRect() {

@@ -2,10 +2,10 @@
  * @file 云盘卡片
  */
 import { For, Show, createSignal } from "solid-js";
-import { MoreHorizontal, Apple, Edit3, Download, Coffee, Trash, Gift, FolderSearch, RefreshCw } from "lucide-solid";
+import { MoreHorizontal, Edit3, Download, Trash, Gift, FolderSearch, RefreshCw, Stamp } from "lucide-solid";
 
 import { Application } from "@/domains/app";
-import { Drive } from "@/domains/drive";
+import { DriveCore } from "@/domains/drive";
 import { ProgressCore } from "@/domains/ui/progress";
 import { DialogCore } from "@/domains/ui/dialog";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
@@ -19,8 +19,10 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
+import { JobCore } from "@/domains/job";
+import { appendJob } from "@/store";
 
-export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: () => void }) => {
+export const DriveCard = (props: { app: Application; store: DriveCore; onRefresh?: () => void }) => {
   const { app, store: drive } = props;
 
   const [state, setState] = createSignal(drive.state);
@@ -92,7 +94,7 @@ export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: (
   });
   const checkInItem = new MenuItemCore({
     label: "签到",
-    icon: <Apple class="mr-2 w-4 h-4" />,
+    icon: <Stamp class="mr-2 w-4 h-4" />,
     async onClick() {
       // this.disable(<Loader class="w-4 h-4" />);
       checkInItem.disable();
@@ -112,7 +114,7 @@ export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: (
     },
   });
   const exportItem = new MenuItemCore({
-    label: "导出",
+    label: "导出云盘信息",
     icon: <Download class="mr-2 w-4 h-4" />,
     async onClick() {
       exportItem.disable();
@@ -137,10 +139,36 @@ export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: (
   });
   const analysisQuicklyItem = new MenuItemCore({
     label: "仅索引新增",
-    icon: <Coffee class="mr-2 w-4 h-4" />,
+    icon: <FolderSearch class="mr-2 w-4 h-4" />,
     async onClick() {
       dropdown.hide();
-      await drive.startScrape(true);
+      const r = await drive.startScrape(true);
+      if (r.error) {
+        return;
+      }
+      const job = new JobCore({ id: r.data });
+      appendJob(job);
+      job.onFinish(() => {
+        drive.finishAnalysis();
+      });
+      job.waitFinish();
+    },
+  });
+  const matchMediaItem = new MenuItemCore({
+    label: "匹配解析结果",
+    icon: <FolderSearch class="mr-2 w-4 h-4" />,
+    async onClick() {
+      const r = await drive.matchMediaFilesProfile();
+      if (r.error) {
+        return;
+      }
+      dropdown.hide();
+      const job = new JobCore({ id: r.data });
+      appendJob(job);
+      job.onFinish(() => {
+        drive.finishMediaMatch();
+      });
+      job.waitFinish();
     },
   });
   const dropdown = new DropdownMenuCore({
@@ -148,22 +176,23 @@ export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: (
       checkInItem,
       receiveRewardsItem,
       analysisQuicklyItem,
+      matchMediaItem,
       exportItem,
       setRootFolderItem,
+      new MenuItemCore({
+        label: "设置 refresh_token",
+        icon: <Edit3 class="mr-2 w-4 h-4" />,
+        onClick() {
+          refreshTokenModal.show();
+          dropdown.hide();
+        },
+      }),
       new MenuItemCore({
         label: "删除",
         icon: <Trash class="mr-2 w-4 h-4" />,
         async onClick() {
           confirmDeleteDriveDialog.setTitle(`删除云盘 ${drive.name}`);
           confirmDeleteDriveDialog.show();
-          dropdown.hide();
-        },
-      }),
-      new MenuItemCore({
-        label: "修改 refresh_token",
-        icon: <Edit3 class="mr-2 w-4 h-4" />,
-        onClick() {
-          refreshTokenModal.show();
           dropdown.hide();
         },
       }),
@@ -181,13 +210,22 @@ export const DriveCard = (props: { app: Application; store: Drive; onRefresh?: (
     },
   });
   const analysisBtn = new ButtonCore({
-    onClick() {
+    async onClick() {
       if (!drive.state.initialized) {
         foldersModal.show();
         drive.fetch({ file_id: "root", name: "文件" });
         return;
       }
-      drive.startScrape();
+      const r = await drive.startScrape();
+      if (r.error) {
+        return;
+      }
+      const job = new JobCore({ id: r.data });
+      appendJob(job);
+      job.onFinish(() => {
+        drive.finishAnalysis();
+      });
+      job.waitFinish();
     },
   });
   const showAddingFolderDialogBtn = new ButtonCore({

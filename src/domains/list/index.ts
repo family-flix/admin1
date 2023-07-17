@@ -486,10 +486,10 @@ export class ListCore<
     this.params = { ...DEFAULT_PARAMS };
     this.emit(Events.StateChange, { ...this.response });
   }
-  deleteItem(targetItem: T) {
+  deleteItem(fn: (item: T) => boolean) {
     const { dataSource } = this.response;
     const nextDataSource = dataSource.filter((item) => {
-      return item !== targetItem;
+      return !fn(item);
     });
     this.response.total = nextDataSource.length;
     this.response.dataSource = nextDataSource;
@@ -508,6 +508,21 @@ export class ListCore<
     this.response.dataSource = nextDataSource;
     this.emit(Events.StateChange, { ...this.response });
   };
+  modifyItem(fn: (item: T) => T) {
+    const { dataSource } = this.response;
+    const nextDataSource: T[] = [];
+    for (let i = 0; i < dataSource.length; i += 1) {
+      const item = dataSource[i];
+      let r = fn(item);
+      if (!r) {
+        r = item;
+      }
+      nextDataSource.push(r);
+    }
+    this.response.dataSource = nextDataSource;
+    console.log("[DOMAIN]list/index - modifyItem", nextDataSource[0]);
+    this.emit(Events.StateChange, { ...this.response });
+  }
   /**
    * 手动修改当前 response
    * @param fn

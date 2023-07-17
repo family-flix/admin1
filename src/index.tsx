@@ -4,6 +4,7 @@ import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
 import { app } from "./store/app";
+import "./store/job";
 import { connect } from "./domains/app/connect.web";
 import { ToastCore } from "./domains/ui/toast";
 import { Toast } from "./components/ui/toast";

@@ -26,7 +26,7 @@ import { Qrcode } from "@/components/Qrcode";
 import { SelectionCore } from "@/domains/cur";
 import { cn } from "@/utils";
 import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 
@@ -158,15 +158,11 @@ export const MemberManagePage: ViewComponent = (props) => {
     // console.log("list ", nextState);
     setResponse(nextState);
   });
-
-  view.onShow(() => {
-    memberList.init();
-  });
   scrollView.onReachBottom(() => {
     memberList.loadMore();
   });
 
-  const dataSource = () => response().dataSource;
+  memberList.init();
 
   return (
     <>
@@ -185,7 +181,7 @@ export const MemberManagePage: ViewComponent = (props) => {
             store={memberList}
             skeleton={
               <div class="space-y-8 mt-8">
-                <div class="card">
+                <div class="card rounded-sm bg-white p-4">
                   <div class="flex items-center">
                     <Skeleton class="w-12 h-12 rounded-full mr-2"></Skeleton>
                     <Skeleton class="w-36 h-8"></Skeleton>
@@ -211,11 +207,11 @@ export const MemberManagePage: ViewComponent = (props) => {
             }
           >
             <div class="space-y-8 mt-8">
-              <For each={dataSource()}>
+              <For each={response().dataSource}>
                 {(member) => {
                   const { remark, tokens } = member;
                   return (
-                    <div class="card">
+                    <div class="card rounded-sm bg-white p-4">
                       <div class="flex items-center">
                         <div class="flex items-center justify-center w-12 h-12 bg-slate-300 rounded-full mr-2">
                           <div class="text-3xl text-slate-500">{remark.slice(0, 1).toUpperCase()}</div>

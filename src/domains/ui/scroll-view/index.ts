@@ -192,6 +192,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     const { scrollTop } = event;
     this.emit(Events.Scroll, { scrollTop });
     const { height = 0, contentHeight = 0 } = this.rect;
+    // console.log("[]ScrollViewCore - scroll", scrollTop, height, contentHeight, this.canReachBottom);
     if (scrollTop + height + 120 >= contentHeight) {
       if (this.canReachBottom === false) {
         this.emit(Events.ReachBottom);

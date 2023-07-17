@@ -180,31 +180,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   blur() {
     this.emit(Events.Blur);
   }
-  // async fetchDrives() {
-  //   if (this.drives.length !== 0) {
-  //     this.emit(Events.DrivesChange, this.drives);
-  //     return;
-  //   }
-  //   const r = await Drive.ListHelper.init();
-  //   if (r.error) {
-  //     this.tip({ text: ["获取网盘失败", r.error.message] });
-  //     return;
-  //   }
-  //   this.drives = [...r.data];
-  //   this.emit(Events.DrivesChange, [...r.data]);
-  // }
-  // async refreshDrives() {
-  //   const r = await Drive.ListHelper.refresh();
-  //   if (r.error) {
-  //     this.tip({ text: ["获取网盘失败", r.error.message] });
-  //     return;
-  //   }
-  //   this.drives = [...r.data];
-  //   this.emit(Events.DrivesChange, [...r.data]);
-  // }
-  // onDrivesChange(handler: Handler<TheTypesOfEvents[Events.DrivesChange]>) {
-  //   this.on(Events.DrivesChange, handler);
-  // }
   /* ----------------
    * Lifetime
    * ----------------

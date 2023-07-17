@@ -10,13 +10,14 @@ import { Element } from "@/components/ui/element";
 import { LazyImage } from "@/components/ui/image";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import {
-  bind_searched_tv_for_tv,
   fetch_files_of_tv,
   fetch_file_profile_of_tv,
   delete_aliyun_file,
   fetch_tv_profile,
   TVProfile,
   delete_parsed_tv_of_tv,
+  delete_tv,
+  refresh_tv_profile,
 } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
@@ -29,10 +30,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CheckboxCore } from "@/domains/ui/checkbox";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { ScrollView } from "@/components/ui/scroll-view";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const TVProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, view, router } = props;
 
   const sourceList = new ListCore(new RequestCore(fetch_files_of_tv), {
     page: 1,
@@ -62,33 +63,59 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const curFile = new SelectionCore<TVProfile["sources"][number]>();
   const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
-  const request2 = new RequestCore(bind_searched_tv_for_tv, {
+  const updateTVProfileRequest = new RequestCore(refresh_tv_profile, {
+    onLoading(loading) {
+      tmdbSearchDialog.okBtn.setLoading(loading);
+    },
     onFailed(error) {
       app.tip({ text: ["更新详情失败", error.message] });
     },
     onSuccess(v) {
       app.tip({ text: ["更新详情成功"] });
       profileRequest.reload();
+      tmdbSearchDialog.hide();
     },
   });
-  const dialog = new TMDBSearcherDialogCore({
+  const tmdbSearchDialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
       const id = view.params.id as string;
       if (!id) {
         app.tip({ text: ["更新详情失败", "缺少电视剧 id"] });
         return;
       }
-      request2.run(id, searched_tv);
-      bind_searched_tv_for_tv(id, searched_tv);
-      dialog.hide();
+      updateTVProfileRequest.run({
+        tv_id: id,
+        tmdb_id: searched_tv.id,
+      });
     },
   });
   const btn1 = new ButtonCore({
     onClick() {
       if (profileRequest.response) {
-        dialog.input(profileRequest.response.name);
+        tmdbSearchDialog.input(profileRequest.response.name);
       }
-      dialog.show();
+      tmdbSearchDialog.show();
+    },
+  });
+  const refreshProfileRequest = new RequestCore(refresh_tv_profile, {
+    onLoading(loading) {
+      refreshProfileBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["刷新成功"],
+      });
+      profileRequest.reload();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["刷新失败", error.message],
+      });
+    },
+  });
+  const refreshProfileBtn = new ButtonCore({
+    onClick() {
+      refreshProfileRequest.run({ tv_id: view.params.id });
     },
   });
   const deleteFileRequest = new RequestCore(delete_aliyun_file, {
@@ -110,6 +137,34 @@ export const TVProfilePage: ViewComponent = (props) => {
         return;
       }
       sourceList.deleteItem(target);
+    },
+  });
+  const deleteTVRequest = new RequestCore(delete_tv, {
+    onLoading(loading) {
+      deleteTVConfirmDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["删除成功"],
+      });
+      router.back();
+      deleteTVConfirmDialog.hide();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除失败", error.message],
+      });
+    },
+  });
+  const deleteTVBtn = new ButtonCore({
+    onClick() {
+      deleteTVConfirmDialog.show();
+    },
+  });
+  const deleteTVConfirmDialog = new DialogCore({
+    title: "确认删除该电视剧吗？",
+    onOk() {
+      deleteTVRequest.run({ tv_id: view.params.id });
     },
   });
   const deleteConfirmDialog = new DialogCore({
@@ -247,6 +302,9 @@ export const TVProfilePage: ViewComponent = (props) => {
               <div class="relative z-3 mt-4">
                 <div class="space-x-4">
                   <Button store={btn1}>搜索 TMDB</Button>
+                  <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
+                  <Button store={refreshProfileBtn}>刷新详情</Button>
+                  <Button store={deleteTVBtn}>删除电视剧</Button>
                   {/* <TVFormDialog trigger={<Button>修改</Button>} /> */}
                 </div>
                 <div class="mt-4 space-y-4">
@@ -326,14 +384,14 @@ export const TVProfilePage: ViewComponent = (props) => {
                           {parent_paths}/{file_name}
                         </span>
                       </div>
-                      {/* <div class="flex items-center space-x-1">
+                      <div class="flex items-center space-x-1">
                         <Element store={updateBtn.bind(source)}>
                           <Edit3 class="w-4 h-4 cursor-pointer" />
                         </Element>
                         <Element store={deleteBtn.bind(source)}>
                           <Trash class="w-4 h-4 cursor-pointer" />
                         </Element>
-                      </div> */}
+                      </div>
                     </div>
                   );
                 }}
@@ -352,7 +410,13 @@ export const TVProfilePage: ViewComponent = (props) => {
           </Show>
         </div>
       </ScrollView>
-      <TMDBSearcherDialog store={dialog} />
+      <TMDBSearcherDialog store={tmdbSearchDialog} />
+      <Dialog store={deleteTVConfirmDialog}>
+        <div class="flex items-center space-x-2">
+          <Checkbox id="delete" store={checkbox} />
+          <label html-for="delete">同时删除云盘内文件</label>
+        </div>
+      </Dialog>
       <Dialog store={deleteConfirmDialog}>
         <div class="flex items-center space-x-2">
           <Checkbox id="delete" store={checkbox} />

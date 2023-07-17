@@ -5,7 +5,7 @@ import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 import { bytes_to_size } from "@/utils";
 import { request } from "@/utils/request";
-import { Drive } from ".";
+import { DriveCore } from ".";
 
 async function parseJSONStr<T extends JSONObject>(json: string) {
   try {
@@ -117,7 +117,7 @@ export async function fetch_drive_instance_list(params: FetchParams) {
     page_size,
     no_more,
     list: list.map((drive) => {
-      return new Drive(drive);
+      return new DriveCore(drive);
     }),
   });
 }
@@ -183,6 +183,16 @@ export async function analysisDrive(body: { drive_id: string; target_folder?: st
 export async function analysisDriveQuickly(body: { drive_id: string }) {
   const { drive_id } = body;
   return request.get<{ job_id: string }>(`/api/admin/drive/analysis_quickly/${drive_id}`);
+}
+
+/**
+ * 搜索指定云盘内所有解析到的影视剧
+ * @param {object} body
+ * @param {string} body.drive_id 要索引的云盘 id
+ */
+export async function matchMediaFilesMedia(body: { drive_id: string }) {
+  const { drive_id: aliyun_drive_id } = body;
+  return request.get<{ job_id: string }>(`/api/admin/drive/${aliyun_drive_id}/media_match`);
 }
 
 /**

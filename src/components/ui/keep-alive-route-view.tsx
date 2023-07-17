@@ -1,7 +1,7 @@
 /**
  * @file ???
  */
-import { createSignal, JSX } from "solid-js";
+import { createSignal, JSX, onCleanup } from "solid-js";
 
 import { PageLoading } from "@/components/PageLoading";
 import { ViewComponentProps } from "@/types";
@@ -34,6 +34,9 @@ export function KeepAliveRouteView(
     }
     setPageContent(view.component as JSX.Element);
   })();
+  onCleanup(() => {
+    view.unload();
+  });
 
   const visible = () => state().visible;
   const mounted = () => state().mounted;

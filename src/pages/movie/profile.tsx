@@ -8,11 +8,12 @@ import { request } from "@/utils/request";
 import { Button } from "@/components/ui/button";
 import { LazyImage } from "@/components/ui/image";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { bind_searched_tv_for_tv } from "@/services";
+import { bind_profile_for_unknown_movie, update_movie_profile } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
 import { ButtonCore } from "@/domains/ui/button";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { ScrollView } from "@/components/ui/scroll-view";
 
 async function fetch_movie_profile(body: { movie_id: string }) {
   const { movie_id } = body;
@@ -27,6 +28,7 @@ async function fetch_movie_profile(body: { movie_id: string }) {
     tmdb_id: number;
     sources: {
       file_id: string;
+      parent_paths: string;
       file_name: string;
     }[];
   }>(`/api/admin/movie/${movie_id}`);
@@ -37,7 +39,7 @@ type MovieProfile = RequestedResource<typeof fetch_movie_profile>;
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const request = new RequestCore(fetch_movie_profile, {
+  const profileRequest = new RequestCore(fetch_movie_profile, {
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },
@@ -45,31 +47,41 @@ export const MovieProfilePage: ViewComponent = (props) => {
       setProfile(v);
     },
   });
-  const request2 = new RequestCore(bind_searched_tv_for_tv, {
+  const updateProfileRequest = new RequestCore(update_movie_profile, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
     onFailed(error) {
       app.tip({ text: ["更新详情失败", error.message] });
     },
     onSuccess(v) {
       app.tip({ text: ["更新详情成功"] });
-      request.reload();
+      dialog.hide();
+      profileRequest.reload();
     },
   });
   const dialog = new TMDBSearcherDialogCore({
+    type: "2",
     onOk(searched_tv) {
       const id = view.params.id as string;
       if (!id) {
         app.tip({ text: ["更新详情失败", "缺少电视剧 id"] });
         return;
       }
-      request2.run(id, searched_tv);
-      bind_searched_tv_for_tv(id, searched_tv);
-      dialog.hide();
+      updateProfileRequest.run(
+        { movie_id: id },
+        {
+          ...searched_tv,
+          id: view.params.id,
+          tmdb_id: searched_tv.id,
+        }
+      );
     },
   });
   const btn1 = new ButtonCore({
     onClick() {
-      if (request.response) {
-        dialog.input(request.response.name);
+      if (profileRequest.response) {
+        dialog.input(profileRequest.response.name);
       }
       dialog.show();
     },
@@ -78,14 +90,18 @@ export const MovieProfilePage: ViewComponent = (props) => {
 
   const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
+  view.onShow(() => {
+    const { id } = view.params;
+    profileRequest.run({ movie_id: id });
+  });
   onMount(() => {
     const { id } = view.params;
-    request.run({ movie_id: id });
+    profileRequest.run({ movie_id: id });
   });
 
   return (
     <>
-      <div class="h-screen p-8">
+      <ScrollView store={scrollView} class="h-screen p-8">
         <div class="">
           <Show when={!!profile()}>
             <div class="relative">
@@ -115,11 +131,13 @@ export const MovieProfilePage: ViewComponent = (props) => {
                 <div class="mt-4 space-y-2">
                   <For each={profile()?.sources}>
                     {(source) => {
-                      const { file_name } = source;
+                      const { file_name, parent_paths } = source;
                       return (
                         <div class="">
                           <div class="">
-                            <div class="">{file_name}</div>
+                            <div class="">
+                              {parent_paths}/{file_name}
+                            </div>
                           </div>
                         </div>
                       );
@@ -130,8 +148,8 @@ export const MovieProfilePage: ViewComponent = (props) => {
             </div>
           </Show>
         </div>
-        <TMDBSearcherDialog store={dialog} />
-      </div>
+      </ScrollView>
+      <TMDBSearcherDialog store={dialog} />
     </>
   );
 };

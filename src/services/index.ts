@@ -54,6 +54,39 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
+/*
+ * 获取电视剧列表
+ */
+export async function fetch_partial_tv(params: { tv_id: string }) {
+  const { tv_id } = params;
+  const resp = await request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      first_air_date: string;
+      popularity: string;
+      episode_count: number;
+      season_count: number;
+      cur_episode_count: number;
+      cur_season_count: number;
+      episode_sources: number;
+      size_count: number;
+      size_count_text: string;
+      incomplete: boolean;
+      need_bind: boolean;
+      sync_task: { id: string } | null;
+      tips: string[];
+    }>
+  >(`/api/admin/tv/${tv_id}/partial`);
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok(resp.data);
+}
+
 /**
  * tv 列表中的元素
  */
@@ -66,6 +99,23 @@ export type PartialSearchedTV = Omit<
   created: string;
   updated: string;
 };
+
+export function delete_tv(body: {
+  tv_id: string;
+  /** 删除电视剧同时还要删除云盘内文件 */
+  include_file?: boolean;
+}) {
+  const { tv_id, include_file } = body;
+  return request.get<void>(`/api/admin/tv/delete/${tv_id}`);
+}
+
+/** 刷新电视剧详情 */
+export function refresh_tv_profile(body: { tv_id: string; tmdb_id?: number }) {
+  const { tv_id, tmdb_id } = body;
+  return request.post<void>(`/api/admin/tv/refresh_profile/${tv_id}`, {
+    tmdb_id,
+  });
+}
 
 /**
  * 获取电视剧列表
@@ -103,6 +153,11 @@ export async function fetch_movie_list(params: FetchParams & { name: string }) {
 }
 export type MovieItem = RequestedResource<typeof fetch_movie_list>["list"][number];
 
+export function update_movie_profile(body: { movie_id: string }, profile: {}) {
+  const { movie_id } = body;
+  return request.post(`/api/admin/movie/${movie_id}/refresh_profile`, profile);
+}
+
 /**
  * 获取无法识别的 tv
  */
@@ -134,6 +189,11 @@ export async function fetch_unknown_tv_list(params: FetchParams) {
   });
 }
 export type UnknownTVItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
+
+/** 删除所有未识别电视剧 */
+export function delete_unknown_tv_list() {
+  return request.get("/api/admin/unknown_tv/delete");
+}
 
 /**
  * 获取无法识别的季
@@ -168,8 +228,13 @@ export async function fetch_unknown_season_list(params: FetchParams) {
 }
 export type UnknownSeasonItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
 
+/** 删除所有未识别电视剧季 */
+export function delete_unknown_season_list() {
+  return request.get("/api/admin/unknown_season/delete");
+}
+
 /**
- * 获取无法识别的 tv
+ * 获取无法识别的电影
  */
 export async function fetch_unknown_movie_list(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
@@ -199,8 +264,13 @@ export async function fetch_unknown_movie_list(params: FetchParams) {
   });
 }
 export type UnknownMovieItem = RequestedResource<typeof fetch_unknown_movie_list>["list"][0];
+
+/** 删除所有未识别电影 */
+export function delete_unknown_movie_list() {
+  return request.get("/api/admin/unknown_movie/delete");
+}
 /**
- * 删除未知电影
+ * 删除指定未知电影
  * @param body
  */
 export function delete_unknown_movie(body: { id: string }, token?: CancelToken) {
@@ -258,7 +328,7 @@ export async function search_tv_in_tmdb(params: FetchParams & { keyword: string 
   const { keyword, page, pageSize, ...rest } = params;
   return request.get<
     ListResponse<{
-      id: string;
+      id: number;
       name: string;
       original_name: string;
       overview: string;
@@ -276,9 +346,16 @@ export async function search_tv_in_tmdb(params: FetchParams & { keyword: string 
 export type MatchedTVOfTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"][0];
 
 /**
+ * 给指定未知 tv 绑定一个 tmdb 的搜索结果
+ */
+export async function bind_profile_for_unknown_movie(id: string, body: MatchedTVOfTMDB) {
+  return request.post(`/api/admin/unknown_movie/update/${id}`, body);
+}
+
+/**
  * 给指定 tv 绑定一个 tmdb 的搜索结果
  */
-export async function bind_searched_tv_for_tv(id: string, body: MatchedTVOfTMDB) {
+export async function bind_profile_for_unknown_tv(id: string, body: MatchedTVOfTMDB) {
   return request.post(`/api/admin/unknown_tv/update/${id}`, body);
 }
 
@@ -339,7 +416,7 @@ export async function fetch_file_profile_of_tv(body: { tv_id: string; id: string
 }
 
 /**
- * 删除指定电视剧关联的文件详情
+ * 删除指定未知电视剧的指定文件
  */
 export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }) {
   const { tv_id, id } = body;
@@ -353,9 +430,9 @@ export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }
 /**
  * 给指定电影绑定一个 tmdb 的搜索结果
  */
-export async function bind_movie_profile_for_movie(id: string, body: { name: string }) {
-  return request.post(`/api/admin/unknown_movie/update/${id}`, body);
-}
+// export async function bind_movie_profile_for_movie(id: string, body: { name: string }) {
+//   return request.post(`/api/admin/unknown_movie/update/${id}`, body);
+// }
 
 /**
  * 获取成员列表
@@ -575,12 +652,18 @@ export function run_file_sync_task_of_tv(body: { id: string }) {
  * @param body
  * @returns
  */
-export function add_file_sync_task_of_tv(body: { tv_id: string; url: string; target_file_id?: string }) {
-  const { tv_id, url, target_file_id } = body;
+export function add_file_sync_task_of_tv(body: {
+  tv_id: string;
+  url: string;
+  target_file_id?: string;
+  target_file_name?: string;
+}) {
+  const { tv_id, url, target_file_id, target_file_name } = body;
   return request.post<{}>(`/api/admin/shared_file_sync/add`, {
     tv_id,
     url,
     target_file_id,
+    target_file_name,
   });
 }
 
@@ -632,6 +715,7 @@ export async function fetch_tv_profile(body: { tv_id: string }) {
     backdrop_path: null;
     original_language: string;
     first_air_date: string;
+    tmdb_id: number;
     incomplete: boolean;
     seasons: {
       id: string;

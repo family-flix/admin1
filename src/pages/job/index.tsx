@@ -21,7 +21,7 @@ import { JobItem, fetch_job_list, pause_job } from "@/domains/job/services";
 import { TaskStatus } from "@/constants";
 import { cn } from "@/utils";
 import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
@@ -76,9 +76,9 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   scrollView.onReachBottom(() => {
     jobList.loadMore();
   });
-  view.onShow(() => {
-    jobList.init();
-  });
+  // view.onShow(() => {
+  jobList.init();
+  // });
 
   const dataSource = () => response().dataSource;
 
@@ -106,12 +106,12 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
             </div>
           }
         >
-          <div class="space-y-8 mt-8">
+          <div class="space-y-4 mt-8">
             <For each={dataSource()}>
               {(task, i) => {
                 const { id, desc, unique_id, created, status, statusText } = task;
                 return (
-                  <div class={cn("space-y-1")}>
+                  <div class={cn("space-y-1 p-4 rounded-sm bg-white")}>
                     <h2 class="text-xl">{desc}</h2>
                     <div class="flex space-x-4">
                       <div>{created}</div>
@@ -120,7 +120,7 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
                         <div class={cn({})}>{statusText}</div>
                       </div>
                     </div>
-                    <div class="space-x-2">
+                    <div class="mt-2 space-x-2">
                       <Button store={profileBtn.bind(task)} icon={<Bus class="w-4 h-4" />} variant="subtle">
                         详情
                       </Button>

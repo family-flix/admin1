@@ -1,32 +1,19 @@
 /**
  * @file 电影列表
  */
-import { createSignal, For, Show } from "solid-js";
-import {
-  LucideAward as Award,
-  LucideBookOpen as BookOpen,
-  LucideCalendar as Calendar,
-  LucideRotateCw as RotateCw,
-  LucideSearch as Search,
-} from "lucide-solid";
+import { createSignal, For } from "solid-js";
+import { Award, BookOpen, Calendar, RotateCw, Search } from "lucide-solid";
 
-import { bind_searched_tv_for_tv, fetch_movie_list, MovieItem } from "@/services";
-import { hidden_tv } from "@/domains/tv/services";
+import { ViewComponent } from "@/types";
+import { bind_profile_for_unknown_movie, fetch_movie_list, MovieItem } from "@/services";
 import { ListCore } from "@/domains/list";
-import { InputCore } from "@/domains/ui/input";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
+import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
-import { LazyImage } from "@/components/ui/image";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { LazyImage, Input, Button, Skeleton, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { ViewComponent } from "@/types";
 import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
 
 export const MovieManagePage: ViewComponent = (props) => {
   const { app, router } = props;
@@ -39,7 +26,7 @@ export const MovieManagePage: ViewComponent = (props) => {
     },
   });
   const movieSelection = new SelectionCore<MovieItem>();
-  const bindSearchedMovieForMovie = new RequestCore(bind_searched_tv_for_tv, {
+  const bindSearchedMovieForMovie = new RequestCore(bind_profile_for_unknown_movie, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
@@ -49,14 +36,6 @@ export const MovieManagePage: ViewComponent = (props) => {
       app.tip({
         text: ["修改失败", error.message],
       });
-    },
-  });
-  const hiddenTV = new RequestCore(hidden_tv, {
-    onSuccess() {
-      list.refresh();
-    },
-    onFailed(error) {
-      app.tip({ text: ["隐藏失败", error.message] });
     },
   });
   const dialog = new TMDBSearcherDialogCore({

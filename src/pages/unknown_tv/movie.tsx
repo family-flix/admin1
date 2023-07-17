@@ -13,8 +13,9 @@ import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
 import {
   UnknownMovieItem,
-  bind_movie_profile_for_movie,
+  bind_profile_for_unknown_movie,
   delete_unknown_movie,
+  delete_unknown_movie_list,
   fetch_unknown_movie_list,
 } from "@/services";
 import { FolderCard, FolderCardSkeleton } from "@/components/FolderCard";
@@ -27,7 +28,7 @@ import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
 import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const UnknownMoviePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -79,7 +80,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       deleteConfirmDialog.show();
     },
   });
-  const bindProfileForMovie = new RequestCore(bind_movie_profile_for_movie, {
+  const bindProfileForMovie = new RequestCore(bind_profile_for_unknown_movie, {
     onLoading(loading) {
       dialog.okBtn.setLoading(loading);
     },
@@ -104,6 +105,41 @@ export const UnknownMoviePage: ViewComponent = (props) => {
     },
   });
 
+  const deleteRequest = new RequestCore(delete_unknown_movie_list, {
+    onLoading(loading) {
+      deleteListConfirmDialog.okBtn.setLoading(loading);
+      deleteListBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除失败", error.message],
+      });
+    },
+    onSuccess() {
+      app.tip({
+        text: ["删除成功"],
+      });
+      list.deleteItem((item) => {
+        if (item.id === cur.value?.id) {
+          return true;
+        }
+        return false;
+      });
+      deleteListConfirmDialog.hide();
+    },
+  });
+  const deleteListConfirmDialog = new DialogCore({
+    title: "确认删除所有未识别电影吗？",
+    onOk() {
+      deleteRequest.run();
+    },
+  });
+  const deleteListBtn = new ButtonCore({
+    onClick() {
+      deleteListConfirmDialog.show();
+    },
+  });
+
   const [response, setResponse] = createSignal(list.response);
 
   list.onStateChange((nextState) => {
@@ -118,9 +154,12 @@ export const UnknownMoviePage: ViewComponent = (props) => {
 
   return (
     <div class="px-4">
-      <div class="my-4">
+      <div class="my-4 space-x-2">
         <Button icon={<RotateCcw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
-          刷新电影
+          刷新
+        </Button>
+        <Button icon={<Trash class="w-4 h-4" />} variant="subtle" store={deleteListBtn}>
+          删除所有
         </Button>
       </div>
       <ListView
@@ -170,6 +209,10 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       <TMDBSearcherDialog store={dialog} />
       <Dialog store={deleteConfirmDialog}>
         <div>仅删除该记录，不删除云盘文件。</div>
+      </Dialog>
+      <Dialog store={deleteListConfirmDialog}>
+        <div>该操作并不会删除云盘内文件</div>
+        <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
       </Dialog>
     </div>
   );

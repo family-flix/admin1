@@ -255,4 +255,4 @@ const SubContent = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>
 // const Sub = ContextMenuSub;
 // const SubTrigger = ContextMenuSubTrigger;
 // const SubContent = ContextMenuSubContent;
-export { Root, Trigger, Portal, Content, Group, Label, Item, Separator, Arrow, Sub, SubTrigger, SubContent };
+// export { Root, Trigger, Portal, Content, Group, Label, Item, Separator, Arrow, Sub, SubTrigger, SubContent };

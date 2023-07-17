@@ -140,6 +140,7 @@ const Content = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivEl
           return;
         }
         store.setRect({
+          height: $page.clientHeight,
           contentHeight: $page.scrollHeight,
         });
         store.scroll({

@@ -140,9 +140,9 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   /** 基准元素加载完成 */
   setReference(reference: { $el?: unknown; getRect: () => Rect }) {
     this.log("setReference", this.reference, reference.$el);
-    // if (this.reference !== null) {
-    //   return;
-    // }
+    if (this.reference !== null) {
+      return;
+    }
     this.reference = reference;
     this.state.reference = true;
     this.emit(Events.ReferenceMounted, reference);
@@ -174,8 +174,8 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     this.arrow = arrow;
   }
   setContainer(container: Node) {
-    this.container = container;
-    this.emit(Events.ContainerChange, container);
+    // this.container = container;
+    // this.emit(Events.ContainerChange, container);
   }
   setConfig(config: { placement?: Placement; strategy?: Strategy }) {}
   /** 计算浮动元素位置 */

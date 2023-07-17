@@ -380,6 +380,9 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   setLoaded() {
     this.loaded = true;
   }
+  unload() {
+    this.loaded = false;
+  }
 
   onStart(handler: Handler<TheTypesOfEvents[Events.Start]>) {
     return this.on(Events.Start, handler);

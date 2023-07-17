@@ -45,8 +45,8 @@ export async function build_link_between_shared_files_with_folder(body: {
 /**
  * 根据分享链接获取文件夹列表（支持分页）
  */
-export async function fetch_shared_files(body: { url: string; file_id: string; next_marker: string }) {
-  const { url, file_id, next_marker } = body;
+export async function fetch_shared_files(body: { url: string; code?: string; file_id: string; next_marker: string }) {
+  const { url, code, file_id, next_marker } = body;
   const r = await request.get<{
     items: {
       file_id: string;
@@ -58,7 +58,7 @@ export async function fetch_shared_files(body: { url: string; file_id: string; n
       thumbnail: string;
     }[];
     next_marker: string;
-  }>("/api/admin/shared_file", { url, file_id, next_marker });
+  }>("/api/admin/shared_file", { url, code, file_id, next_marker });
   return r;
 }
 export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["items"][0];
@@ -71,6 +71,8 @@ export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["ite
 export async function save_shared_files(body: {
   /** 分享链接 */
   url: string;
+  /** 转存码 */
+  code?: string;
   /** 要转存的文件/文件夹 file_id */
   file_id: string;
   /** 要转存的文件/文件夹名称 */

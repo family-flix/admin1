@@ -175,4 +175,4 @@ const Cancel = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLButtonElem
   return <DialogPrimitive.Cancel store={store}>{props.children}</DialogPrimitive.Cancel>;
 };
 
-export { Root, Portal, Header, Title, Content, Overlay, Footer, Submit, Cancel };
+// export { Root, Portal, Header, Title, Content, Overlay, Footer, Submit, Cancel };

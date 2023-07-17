@@ -3,18 +3,18 @@
  */
 import { For, JSX, createSignal } from "solid-js";
 import {
-  LucideFilm as Film,
-  LucideUsers as Users,
-  LucideFolderInput as FolderInput,
-  LucideHome as Home,
-  LucideEyeOff as EyeOff,
-  LucideBot as Bot,
-  LucideFlame as Flame,
-  LucideFolderSearch as FolderSearch,
-  LucideLogOut as LogOut,
-  LucideSettings as Settings,
-  LucideTv as Tv,
-  LucideFileSearch as FileSearch,
+  Film,
+  Users,
+  FolderInput,
+  Home,
+  EyeOff,
+  Bot,
+  Flame,
+  LogOut,
+  Settings,
+  Tv,
+  FileSearch,
+  File,
 } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
@@ -38,11 +38,16 @@ import { ButtonCore } from "@/domains/ui/button";
 import { NavigatorCore } from "@/domains/navigator";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
+import { FileSearchDialog } from "@/components/FileSearcher";
+import { FileSearcherCore } from "@/components/FileSearcher/store";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
 
   const dialog = new TMDBSearcherDialogCore({
+    footer: false,
+  });
+  const dialog2 = new FileSearcherCore({
     footer: false,
   });
   const logoutBtn = new ButtonCore({
@@ -136,7 +141,7 @@ export const HomeLayout: ViewComponent = (props) => {
     app.tip(msg);
   });
   view.checkMatch(router._pending);
-  app.user.validate();
+  // app.user.validate();
 
   // const pathname = router.pathname;
 
@@ -180,6 +185,13 @@ export const HomeLayout: ViewComponent = (props) => {
       // onClick() {
       //   router.push("/home/task");
       // },
+    },
+    {
+      text: "云盘文件搜索",
+      icon: <File class="w-6 h-6" />,
+      onClick() {
+        dialog2.show();
+      },
     },
     {
       text: "TMDB 数据库",
@@ -248,7 +260,7 @@ export const HomeLayout: ViewComponent = (props) => {
             </div>
           </div>
         </div>
-        <div class="flex-1">
+        <div class="flex-1 bg-slate-100">
           <div class="relative w-full h-full">
             <For each={subViews()}>
               {(subView, i) => {
@@ -271,6 +283,7 @@ export const HomeLayout: ViewComponent = (props) => {
         </div>
       </div>
       <TMDBSearcherDialog store={dialog} />
+      <FileSearchDialog store={dialog2} />
       <Dialog store={settingsDialog}>敬请期待</Dialog>
     </>
   );
@@ -281,18 +294,21 @@ function Menu(
     highlight?: boolean;
     link?: string;
     icon: JSX.Element;
+    badge?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) {
   const inner = (
     <div
       class={cn(
-        "flex items-center px-4 py-2 space-x-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-300",
+        "relative flex items-center px-4 py-2 space-x-2 rounded-lg opacity-80 cursor-pointer hover:bg-slate-300",
         props.highlight ? "bg-slate-200" : ""
       )}
       onClick={props.onClick}
     >
       <div class="w-6 h-6">{props.icon}</div>
       <div class="flex-1 text-lg text-slate-800">{props.children}</div>
+      <div class="absolute right-[-8px] top-[-8px] w-2 h-2 rounded-full bg-red" />
+      {/* <Show when={props.badge}></Show> */}
     </div>
   );
   return (

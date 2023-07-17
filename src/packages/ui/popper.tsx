@@ -21,59 +21,31 @@ const Anchor = (
   const { store } = props;
   let $anchor: HTMLDivElement;
 
-  console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
-  return (
-    <div
-      ref={(el) => {
-        $anchor = el;
-        // console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
-        if (typeof props.ref === "function") {
-          // props.ref(el);
-          return;
-        }
-        props.ref = el;
-        store.setReference({
-          $el: el,
-          getRect() {
-            const rect = $anchor.getBoundingClientRect();
-            return rect;
-          },
-        });
-      }}
-      class={cn("popper__anchor", props.class)}
-    >
-      {props.children}
-    </div>
-  );
-  // return (
-  //   <Show
-  //     when={store.reference}
-  //     fallback={
-  //       <div
-  //         ref={(el) => {
-  //           $anchor = el;
-  //           if (typeof props.ref === "function") {
-  //             props.ref(el);
-  //             return;
-  //           }
-  //           props.ref = el;
-  //           store.setReference({
-  //             $el: el,
-  //             getRect() {
-  //               const rect = $anchor.getBoundingClientRect();
-  //               return rect;
-  //             },
-  //           });
-  //         }}
-  //         class={cn("popper__anchor", props.class)}
-  //       >
-  //         {props.children}
-  //       </div>
-  //     }
-  //   >
-  //     {props.children}
-  //   </Show>
-  // );
+  // console.log("[COMPONENT]PopperAnchor - before setReference", store.reference);
+  if (!store.reference) {
+    return (
+      <div
+        ref={(el) => {
+          $anchor = el;
+          if (typeof props.ref === "function") {
+            props.ref(el);
+            return;
+          }
+          props.ref = el;
+          store.setReference({
+            getRect() {
+              const rect = $anchor.getBoundingClientRect();
+              return rect;
+            },
+          });
+        }}
+        class={cn("popper__anchor", props.class)}
+      >
+        {props.children}
+      </div>
+    );
+  }
+  return props.children;
 };
 
 const Content = (
@@ -81,7 +53,7 @@ const Content = (
     store: PopperCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store, class: className, ref, ...restProps } = props;
+  const { store, class: className, ref } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
 
@@ -109,7 +81,7 @@ const Content = (
 
   return (
     <div
-      {...restProps}
+      // {...restProps}
       ref={(el) => {
         $content = el;
         if (typeof props.ref === "function") {
@@ -144,7 +116,7 @@ const Content = (
       }}
     >
       <div
-        {...restProps}
+        // {...restProps}
         class={cn("popper__content", props.class)}
         // class={cn("popper__content-child")}
         data-side={placedSide()}

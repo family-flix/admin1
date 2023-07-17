@@ -1,7 +1,7 @@
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
-import { Drive } from "@/domains/drive";
+import { DriveCore } from "@/domains/drive";
 import { Result } from "@/types";
 
 import {
@@ -67,6 +67,8 @@ type SharedResourceProps = {
 export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   /** 分享链接 */
   url?: string;
+  /** 提取码 */
+  code?: string;
   /** 当前展示的文件夹列表所属的文件夹 id */
   file_id: string = "";
   /** 用来获取当前文件夹下一页的标志 */
@@ -103,6 +105,10 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.url = url;
     this.emit(Events.Input, url);
   }
+  inputCode(code: string) {
+    this.code = code;
+    this.emit(Events.Input, code);
+  }
 
   async _fetch(file_id: string) {
     this.file_id = file_id;
@@ -116,6 +122,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     const [r] = await Promise.all([
       fetch_shared_files({
         url: this.url,
+        code: this.code,
         file_id,
         next_marker: this.next_marker,
       }),
@@ -269,7 +276,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.selectedFolder = folder;
   }
   /** 将指定文件转存到指定网盘 */
-  async transferSelectedFolderToDrive(drive: Drive) {
+  async transferSelectedFolderToDrive(drive: DriveCore) {
     if (!this.url) {
       const msg = this.tip({ text: ["请先指定分享链接"] });
       return Result.Err(msg);
@@ -280,6 +287,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     }
     const resp = await save_shared_files({
       url: this.url,
+      code: this.code,
       file_id: this.selectedFolder.file_id,
       file_name: this.selectedFolder.name,
       drive_id: drive.id,

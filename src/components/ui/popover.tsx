@@ -1,6 +1,7 @@
 /**
  * @file 气泡 组件
  */
+import { Show } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
 import { X } from "lucide-solid";
 
@@ -8,7 +9,6 @@ import { PopoverCore } from "@/domains/ui/popover";
 import { Align, Side } from "@/domains/ui/popper";
 import * as PopoverPrimitive from "@/packages/ui/popover";
 import { cn } from "@/utils";
-import { Show } from "solid-js";
 
 export const Popover = (
   props: {

@@ -62,6 +62,15 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   });
   const input1 = new InputCore({
     placeholder: "请输入分享链接",
+    onChange(v) {
+      sharedResource.input(v);
+    },
+  });
+  const input2 = new InputCore({
+    placeholder: "请输入提取码",
+    onChange(v) {
+      sharedResource.inputCode(v);
+    },
   });
   const btn = new ButtonCore({
     async onClick() {
@@ -77,11 +86,10 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
         const item = new MenuItemCore({
           label: name,
           async onClick() {
-            console.log('hello');
-            // item.disable();
-            // await sharedResource.transferSelectedFolderToDrive(drive);
-            // item.enable();
-            // dropdownMenu.hide();
+            item.disable();
+            await sharedResource.transferSelectedFolderToDrive(drive);
+            item.enable();
+            dropdownMenu.hide();
           },
         });
         return item;
@@ -103,9 +111,6 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       paths,
     });
   });
-  input1.onChange((v) => {
-    sharedResource.input(v);
-  });
   driveList.init();
   // view.onHidden(() => {
   //   console.log("shared files hide");
@@ -118,11 +123,12 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   const files = () => state().files;
 
   return (
-    <div class="p-8">
+    <div class="p-4">
       <h1 class="text-2xl">转存资源</h1>
-      <div class="mt-8">
+      <div class="mt-4 p-4 bg-white rounded-sm shadow-sm">
         <div class="flex items-center space-x-2">
           <Input store={input1} />
+          <Input store={input2} />
           <Button size="default" variant="default" store={btn}>
             获取
           </Button>
@@ -156,14 +162,14 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
             </div>
           </Show>
         </div>
-        <div class="grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
+        <div class="mt-2 grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
           <For each={files()}>
             {(file) => {
               const { name, type } = file;
               return (
                 <div class="relative">
                   <div
-                    class="w-full p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
+                    class="w-full p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-500"
                     onClick={() => {
                       sharedResource.fetch(file);
                     }}

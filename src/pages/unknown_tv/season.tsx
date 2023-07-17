@@ -2,13 +2,14 @@
  * @file 未识别的季
  */
 import { For, Show, createSignal } from "solid-js";
-import { LucideBrush as Brush, LucideRotateCw as RotateCw } from "lucide-solid";
+import { LucideBrush as Brush, LucideRotateCw as RotateCw, Trash } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
 import {
   UnknownSeasonItem,
   UnknownTVItem,
+  delete_unknown_season_list,
   fetch_unknown_season_list,
   fetch_unknown_tv_list,
   update_unknown_season_number,
@@ -23,7 +24,7 @@ import { InputCore } from "@/domains/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/packages/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const UnknownSeasonPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -43,13 +44,18 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
       dialog.okBtn.setLoading(loading);
       updateSeasonBtn.setLoading(loading);
     },
+    onFailed(error) {
+      app.tip({ text: ["修改季失败", error.message] });
+    },
     onSuccess() {
       app.tip({ text: ["修改季成功"] });
       dialog.hide();
-      list.refresh();
-    },
-    onFailed(error) {
-      app.tip({ text: ["修改季失败", error.message] });
+      list.deleteItem((item) => {
+        if (item.id === cur.value?.id) {
+          return true;
+        }
+        return false;
+      });
     },
   });
   const seasonInput = new InputCore({
@@ -79,6 +85,40 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
       dialog.show();
     },
   });
+  const deleteRequest = new RequestCore(delete_unknown_season_list, {
+    onLoading(loading) {
+      deleteConfirmDialog.okBtn.setLoading(loading);
+      deleteBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除失败", error.message],
+      });
+    },
+    onSuccess() {
+      app.tip({
+        text: ["删除成功"],
+      });
+      list.deleteItem((item) => {
+        if (item.id === cur.value?.id) {
+          return true;
+        }
+        return false;
+      });
+      deleteConfirmDialog.hide();
+    },
+  });
+  const deleteConfirmDialog = new DialogCore({
+    title: "确认删除所有未识别季吗？",
+    onOk() {
+      deleteRequest.run();
+    },
+  });
+  const deleteBtn = new ButtonCore({
+    onClick() {
+      deleteConfirmDialog.show();
+    },
+  });
 
   const [response, setResponse] = createSignal(list.response);
 
@@ -91,17 +131,19 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
   });
 
   const dataSource = () => response().dataSource;
-  const empty = () => response().empty;
-  const noMore = () => response().noMore;
 
   return (
     <div class="px-4">
-      <div class="my-4">
+      <div class="my-4 space-x-2">
         <Button icon={<RotateCw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
-          刷新季
+          刷新
+        </Button>
+        <Button icon={<Trash class="w-4 h-4" />} variant="subtle" store={deleteBtn}>
+          删除所有
         </Button>
       </div>
       <ListView
+        class="pb-4"
         store={list}
         skeleton={
           <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
@@ -120,7 +162,7 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
               const { id, name, season_number } = file;
               const n = `${name} - ${season_number}`;
               return (
-                <div class="w-[152px] rounded">
+                <div class="w-[152px] mb-4 rounded">
                   <FolderCard type="folder" name={n} />
                   <div class="flex justify-center mt-2">
                     <Button
@@ -140,6 +182,10 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
       </ListView>
       <Dialog store={dialog}>
         <Input store={seasonInput} />
+      </Dialog>
+      <Dialog store={deleteConfirmDialog}>
+        <div>该操作并不会删除云盘内文件</div>
+        <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
       </Dialog>
     </div>
   );
