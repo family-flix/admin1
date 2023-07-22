@@ -40,6 +40,7 @@ import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
 import { FileSearchDialog } from "@/components/FileSearcher";
 import { FileSearcherCore } from "@/components/FileSearcher/store";
+import { onJobsChange } from "@/store";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -145,7 +146,7 @@ export const HomeLayout: ViewComponent = (props) => {
 
   // const pathname = router.pathname;
 
-  const menus = () => [
+  const [menus, setMenus] = createSignal([
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
@@ -182,6 +183,7 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "任务",
       icon: <Bot class="w-6 h-6" />,
       link: "/home/task",
+      badge: false,
       // onClick() {
       //   router.push("/home/task");
       // },
@@ -224,7 +226,22 @@ export const HomeLayout: ViewComponent = (props) => {
       //   router.push("/home/parse");
       // },
     },
-  ];
+  ]);
+
+  onJobsChange((jobs) => {
+    setMenus(
+      menus().map((menu) => {
+        const { link } = menu;
+        if (link === "/home/task") {
+          return {
+            ...menu,
+            badge: jobs.length !== 0,
+          };
+        }
+        return menu;
+      })
+    );
+  });
 
   return (
     <>
@@ -234,7 +251,7 @@ export const HomeLayout: ViewComponent = (props) => {
             <div class="flex-1 space-y-1 p-2 w-full h-full rounded-xl self-start">
               <For each={menus()}>
                 {(menu) => {
-                  const { icon, text, link, onClick } = menu;
+                  const { icon, text, link, badge, onClick } = menu;
                   return (
                     <Menu
                       icon={icon}
@@ -242,6 +259,7 @@ export const HomeLayout: ViewComponent = (props) => {
                         return pathname() === `${NavigatorCore.prefix}${link}`;
                       })()}
                       link={link}
+                      badge={badge}
                       onClick={onClick}
                     >
                       {text}
@@ -306,9 +324,14 @@ function Menu(
       onClick={props.onClick}
     >
       <div class="w-6 h-6">{props.icon}</div>
-      <div class="flex-1 text-lg text-slate-800">{props.children}</div>
-      <div class="absolute right-[-8px] top-[-8px] w-2 h-2 rounded-full bg-red" />
-      {/* <Show when={props.badge}></Show> */}
+      <div class="flex-1 text-lg text-slate-800">
+        <div class="relative inline-block">
+          {props.children}
+          <Show when={props.badge}>
+            <div class="absolute right-[-8px] top-0 w-2 h-2 rounded-full bg-red-500" />
+          </Show>
+        </div>
+      </div>
     </div>
   );
   return (

@@ -1,7 +1,7 @@
 /**
  * @file 未识别的季
  */
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, onMount } from "solid-js";
 import { LucideBrush as Brush, LucideRotateCw as RotateCw, Trash } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";

@@ -17,7 +17,24 @@ type TheTypesOfEvents = {
 const jobs: JobCore[] = [];
 const emitter = mitt<TheTypesOfEvents>();
 
-(async () => {
+export async function refreshJobs() {
+  const jobs = cache.get<string[]>("jobs", []);
+  if (jobs.length === 0) {
+    return;
+  }
+  for (let i = 0; i < jobs.length; i += 1) {
+    const job = new JobCore({ id: jobs[i] });
+    const status_res = await job.fetch_status();
+    if (status_res.error) {
+      continue;
+    }
+    const { status } = status_res.data;
+    if ([TaskStatus.Finished, TaskStatus.Paused].includes(status)) {
+      removeJob(job);
+    }
+  }
+}
+export async function initializeJobs() {
   const jobs = cache.get<string[]>("jobs", []);
   if (jobs.length === 0) {
     return;
@@ -36,7 +53,7 @@ const emitter = mitt<TheTypesOfEvents>();
     job.waitFinish();
     appendJob(job);
   }
-})();
+}
 
 /** 向异步任务队列中添加任务 */
 export function appendJob(job: JobCore) {
@@ -45,6 +62,8 @@ export function appendJob(job: JobCore) {
   }
   const unlisten = job.onFinish(() => {
     removeJob(job);
+    const nextJobs = jobs.filter((j) => j.id !== job.id);
+    emitter.emit(Events.JobsChange, nextJobs);
     unlisten();
   });
   const prevJobs = cache.get<string[]>("jobs", []);
@@ -59,11 +78,9 @@ export function appendJob(job: JobCore) {
 /** 从异步任务队列中移除指定任务 */
 export function removeJob(job: JobCore) {
   const prevJobs = cache.get<string[]>("jobs", []);
+  const nextJobs = prevJobs.filter((j) => j !== job.id);
   if (prevJobs.includes(job.id)) {
-    cache.set(
-      "jobs",
-      prevJobs.filter((j) => j !== job.id)
-    );
+    cache.set("jobs", nextJobs);
   }
   if (!jobs.includes(job)) {
     return;
@@ -75,10 +92,34 @@ export function removeJob(job: JobCore) {
   const targetJob = jobs[index];
   targetJob.finish();
 }
+/**
+ * job 工厂函数
+ * @param body
+ */
+export function createJob(body: {
+  job_id: string;
+  onTip?: (msg: { icon?: unknown; text: string[] }) => void;
+  onFinish?: () => void;
+}) {
+  const { job_id, onTip, onFinish } = body;
+  const job = new JobCore({ id: job_id });
+  job.onFinish(() => {
+    if (onFinish) {
+      onFinish();
+    }
+  });
+  if (onTip) {
+    job.onTip((msg) => {
+      onTip(msg);
+    });
+  }
+  appendJob(job);
+  job.waitFinish();
+}
 
 /** 清空异步任务队列 */
 export function clearJobs() {}
 
-export function onJobsChange(handler: Handler) {
+export function onJobsChange(handler: Handler<TheTypesOfEvents[Events.JobsChange]>) {
   emitter.on(Events.JobsChange, handler);
 }

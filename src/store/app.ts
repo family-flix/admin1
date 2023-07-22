@@ -95,7 +95,10 @@ ListCore.commonProcessor = <T>(
     if (no_more !== undefined) {
       result.noMore = no_more;
     }
-    if (list.length === 0 && page >= 1) {
+    if (page_size && list.length < page_size) {
+      result.noMore = true;
+    }
+    if (list.length === 0 && page === 1) {
       result.empty = true;
     }
     return result;

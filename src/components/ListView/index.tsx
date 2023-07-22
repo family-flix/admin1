@@ -14,7 +14,7 @@ export function ListView(
   const [response, setResponse] = createSignal(store.response);
 
   store.onStateChange((nextState) => {
-    console.log("[COMPONENT]ListView - store.onStateChange", nextState.empty);
+    console.log("[COMPONENT]ListView - store.onStateChange", nextState);
     setResponse(nextState);
   });
 
@@ -51,7 +51,7 @@ export function ListView(
         <Show when={!response().noMore && !response().initial}>
           <div class="mt-4 flex justify-center py-4 text-slate-500">
             <div
-              class="mt-4 flex items-center space-x-2 cursor-pointer"
+              class="flex items-center space-x-2 cursor-pointer"
               onClick={() => {
                 store.loadMore();
               }}
@@ -63,6 +63,13 @@ export function ListView(
             </div>
           </div>
         </Show>
+      </Show>
+      <Show when={response().noMore && !response().empty}>
+        <div class="mt-4 flex justify-center py-4 text-slate-500">
+          <div class="flex items-center space-x-2">
+            <div class="text-center">没有数据了</div>
+          </div>
+        </div>
       </Show>
       {/* <Show when={response().loading}>
         <div class="z-10 absolute inset-0 flex items-center justify-center opacity-80 bg-white"></div>

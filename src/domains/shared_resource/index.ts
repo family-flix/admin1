@@ -297,9 +297,9 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       return Result.Err(msg);
     }
     this.tip({
-      text: ["转存成功"],
+      text: ["开始转存任务"],
     });
-    return Result.Ok(null);
+    return Result.Ok(resp.data);
   }
 
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {

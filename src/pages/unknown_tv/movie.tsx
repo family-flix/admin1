@@ -1,7 +1,7 @@
 /**
  * @file 未识别的电影
  */
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, onMount } from "solid-js";
 import {
   LucideBrush as Brush,
   LucideRotateCcw as RotateCcw,

@@ -50,11 +50,10 @@ export const TaskProfilePage: ViewComponent = (props) => {
   );
   const request = new RequestCore(fetch_job_profile, {
     onLoading(loading) {
-      // ...
+      refreshBtn.setLoading(loading);
     },
     onSuccess(v) {
       setProfile(v);
-      logList.setDataSource(v.content);
     },
     onFailed(error) {
       app.tip({
@@ -62,9 +61,15 @@ export const TaskProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const scrollView = new ScrollViewCore();
-  scrollView.onReachBottom(() => {
-    logList.loadMore();
+  const refreshBtn = new ButtonCore({
+    onClick() {
+      request.reload();
+    },
+  });
+  const scrollView = new ScrollViewCore({
+    onReachBottom() {
+      logList.loadMore();
+    },
   });
 
   const [profile, setProfile] = createSignal(request.response);
@@ -85,7 +90,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
         job_id: id,
       };
     });
-    logList.loadMore();
+    logList.init();
   });
 
   return (
@@ -115,7 +120,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
       >
         <div>
           <h1 class="text-3xl">{profile()!.desc}</h1>
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center mt-2 space-x-4">
             <div class="flex items-center space-x-1">
               <Calendar class="w-4 h-4" />
               <div>{profile()!.created}</div>
@@ -123,9 +128,12 @@ export const TaskProfilePage: ViewComponent = (props) => {
             <p>{profile()!.statusText}</p>
           </div>
         </div>
-        <Show when={profile()!.status === TaskStatus.Running}>
-          <Button store={pauseBtn}>暂停任务</Button>
-        </Show>
+        <div class="flex items-center mt-4 space-x-2">
+          <Button store={refreshBtn}>刷新</Button>
+          <Show when={profile()!.status === TaskStatus.Running}>
+            <Button store={pauseBtn}>暂停任务</Button>
+          </Show>
+        </div>
         <div class="divider-x-2"></div>
         <div class="mt-8">
           <ListView store={logList}>

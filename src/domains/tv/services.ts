@@ -1,185 +1,208 @@
 import { FetchParams } from "@/domains/list/typing";
-import { JSONObject, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
+import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { request } from "@/utils/request";
-import { episode_to_chinese_num, parse_filename_for_video, season_to_chinese_num } from "@/utils";
+import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils";
+
+import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";
 
 /**
  * 获取电视剧列表
- * @deprecated
  */
-export async function fetch_tv_list(params: FetchParams) {
-  console.log("[]fetch_tv_list params", params);
+export async function fetch_tv_list(params: FetchParams & { name: string }) {
+  const { page, pageSize, ...rest } = params;
   const resp = await request.get<
-    {
+    ListResponse<{
       id: string;
-      /** 电视剧名称 */
       name: string;
-      /** 电视剧简介 */
+      original_name: string;
       overview: string;
-    }[]
-  >("/api/tv", params);
+      poster_path: string;
+      backdrop_path: string;
+      first_air_date: string;
+    }>
+  >("/api/tv/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
   if (resp.error) {
-    return resp;
+    return Result.Err(resp.error);
   }
-  return resp.data;
+  return Result.Ok({
+    ...resp.data,
+    list: resp.data.list.map((tv) => {
+      const { ...rest } = tv;
+      return {
+        ...rest,
+        // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
+      };
+    }),
+  });
 }
-/**
- * 电视剧列表中的简略电视剧信息
- */
-export type PartialTVRecord = UnpackedResult<Unpacked<ReturnType<typeof fetch_tv_list>>>[0];
+export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][0];
 
 /**
  * 获取电视剧及包含的剧集详情
  * @param params
  */
-export async function fetch_tv_and_episodes_profile(params: { tv_id: string }) {
+export async function fetch_tv_and_cur_episode(params: { tv_id: string }) {
   // console.log("[]fetch_tv_profile params", params);
   const { tv_id } = params;
   const r = await request.get<{
     id: string;
-    /** 电视剧名称 */
     name: string;
-    /** 简介 */
     overview: string;
-    /** 该 tv 有哪些季 */
-    seasons: string[];
-    /** 在「第一季」中包含哪些文件夹 */
-    folders: {
-      parent_paths: string;
+    poster_path: string;
+    popularity: number;
+    /** 电视剧所有季 */
+    seasons: {
+      id: string;
+      name: string;
+      overview: string;
+      air_date: string;
       episodes: {
         id: string;
-        file_id: string;
-        parent_file_id: string;
-        file_name: string;
-        season: string;
-        episode: string;
+        name: string;
+        overview: string;
+        season_number: string;
+        episode_number: string;
+        season_id: string;
+        sources: {
+          id: string;
+          file_id: string;
+          file_name: string;
+        }[];
       }[];
     }[];
-    /** 第一集 */
-    first_episode: {
+    /** 会根据用户播放历史返回正在播放的剧集，或第一集 */
+    cur_episode: {
       id: string;
-      file_id: string;
-      parent_file_id: string;
-      file_name: string;
-      season: string;
-      episode: string;
-    } | null;
-  }>(`/api/tv/${tv_id}`);
+      name: string;
+      overview: string;
+      /** 第几季 */
+      season_number: string;
+      /** 第几集 */
+      episode_number: string;
+      season_id: string;
+      /** 当前进度 */
+      current_time: number;
+      /** 当前进度截图 */
+      thumbnail: string | null;
+      /** 可播放的视频源 */
+      sources: {
+        id: string;
+        file_id: string;
+        file_name: string;
+      }[];
+    };
+    cur_season: {
+      id: string;
+      name: string;
+      overview: string;
+      air_date: string;
+    };
+  }>(`/api/tv/play/${tv_id}`);
   if (r.error) {
-    return r;
+    return Result.Err(r.error);
   }
+  const { id, name, overview, seasons, cur_season, cur_episode } = r.data;
+  const matchedSeason = seasons.find((season) => {
+    return season.id === cur_season.id;
+  });
   return Result.Ok({
-    ...r.data,
-    first_episode: (() => {
-      if (r.data.first_episode === null) {
+    id,
+    name,
+    overview,
+    curSeason: {
+      ...(matchedSeason || cur_season),
+      episodes: [],
+    },
+    curEpisodes: (() => {
+      // 大概率会走这里
+      if (matchedSeason) {
+        return matchedSeason.episodes.map((episode) => {
+          const { id, name, overview, season_number, episode_number, season_id, sources } = episode;
+          const d = {
+            id,
+            name,
+            overview,
+            season_id,
+            season: season_to_chinese_num(season_number),
+            episode: episode_to_chinese_num(episode_number),
+            sources,
+          };
+          return d;
+        });
+      }
+      return [];
+    })(),
+    curEpisode: (() => {
+      if (cur_episode === null) {
         return null;
       }
-      const { id, file_id, parent_file_id, file_name, season, episode } = r.data.first_episode;
+      const { id, name, overview, season_number, episode_number, current_time, sources, season_id, thumbnail } =
+        cur_episode;
       const d = {
         id,
-        file_id,
-        parent_file_id,
-        file_name,
-        season,
-        episode: episode_to_chinese_num(episode),
+        name,
+        overview,
+        currentTime: current_time,
+        thumbnail,
+        season_id,
+        season: season_to_chinese_num(season_number),
+        episode: episode_to_chinese_num(episode_number),
+        sources,
       };
       return d;
     })(),
-    seasons: r.data.seasons,
-    folders: r.data.folders.map((folder) => {
-      const { parent_paths, episodes } = folder;
-      const last_path = parent_paths.split("/").pop();
-      // const { resolution } = parse_filename_for_video(last_path!, [
-      //   "resolution",
-      // ]);
+    seasons: seasons.map((season) => {
+      const { id, name, overview, episodes } = season;
       return {
-        parent_paths,
-        resolution: last_path || parent_paths,
+        id,
+        name,
+        overview,
         episodes: episodes.map((episode) => {
-          return {
-            ...episode,
-            episode: episode_to_chinese_num(episode.episode),
+          const { id, name, overview, season_number, episode_number, sources, season_id } = episode;
+          const d = {
+            id,
+            name,
+            overview,
+            season_id,
+            season: season_to_chinese_num(season_number),
+            episode: episode_to_chinese_num(episode_number),
+            sources,
           };
+          return d;
         }),
       };
     }),
   });
 }
 /** 电视剧详情 */
-export type TVAndEpisodesProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_tv_and_episodes_profile>>>;
+export type TVAndEpisodesProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_tv_and_cur_episode>>>;
+export type TVSeasonProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_tv_and_cur_episode>>>["seasons"][number];
+export type TVEpisodeProfile = UnpackedResult<
+  Unpacked<ReturnType<typeof fetch_tv_and_cur_episode>>
+>["curEpisodes"][number];
 
 /**
- * 获取和该 episode 属于同一季的所有影片，但是以文件夹结构返回
- * @param episode
+ * 获取影片「播放源」信息，包括播放地址、宽高等信息
  */
-export async function fetch_folders_in_special_season(options: { tv_id: string; season: string }) {
-  const { tv_id, season } = options;
-  const r = await request.get<TVAndEpisodesProfile["folders"]>(`/api/tv/folders/${tv_id}`, {
-    season,
-  });
-  if (r.error) {
-    return r;
-  }
-  return Result.Ok(
-    r.data.map((folder) => {
-      const { parent_paths, episodes } = folder;
-      const last_path = parent_paths.split("/").pop();
-      return {
-        parent_paths,
-        resolution: last_path || parent_paths,
-        episodes: episodes.map((episode) => {
-          return {
-            ...episode,
-            episode: episode_to_chinese_num(episode.episode),
-          };
-        }),
-      };
-    })
-  );
-}
-
-/**
- * 获取指定 season 下第一集及其文件夹信息
- * @param options
- * @returns
- */
-export function fetch_first_episode_of_season(options: { tv_id: string; season?: string }) {
-  const { tv_id, season } = options;
-  return request.get<{
-    id: string;
-    season: {
-      id: string;
-      season: string;
-    };
-    episode: string;
-    file_id: string;
-    file_name: string;
-  }>("/api/episode/first", { id: tv_id, season });
-}
-
-/**
- * 获取影片详情，包括播放地址、宽高等信息
- */
-export async function fetch_episode_profile(params: { id: string }) {
+export async function fetch_episode_profile(params: { id: string; type?: EpisodeResolutionTypes }) {
   // console.log("[]fetch_episode_profile", params);
   const { id } = params;
-  return request.get<{
+  const res = await request.get<{
     id: string;
-    /** 影片阿里云盘文件 id */
-    file_id: string;
+    name: string;
     // parent_file_id: string;
-    /** 影片阿里云盘名称 */
-    file_name: string;
     /** 缩略图 */
     thumbnail: string;
-    /** 所在文件夹路径 */
-    parent_paths: string;
-    /** 第几集 */
-    episode: string;
-    /** 该影片属于第几季 */
-    season: string;
+    season_number: string;
+    episode_number: string;
+    /** 影片阿里云盘文件 id */
+    file_id: string;
     /** 影片分辨率 */
-    type: string;
+    type: EpisodeResolutionTypes;
     /** 影片播放地址 */
     url: string;
     /** 影片宽度 */
@@ -188,8 +211,11 @@ export async function fetch_episode_profile(params: { id: string }) {
     height: number;
     /** 该影片其他分辨率 */
     other: {
+      id: string;
+      file_id: string;
       /** 影片分辨率 */
-      type: string;
+      type: EpisodeResolutionTypes;
+      thumbnail: string;
       /** 影片播放地址 */
       url: string;
       /** 影片宽度 */
@@ -197,29 +223,79 @@ export async function fetch_episode_profile(params: { id: string }) {
       /** 影片高度 */
       height: number;
     }[];
-  }>(`/api/episode/${id}`);
+  }>(`/api/episode/${id}`, {
+    type: params.type,
+  });
+  if (res.error) {
+    return Result.Err(res.error);
+  }
+  const { url, file_id, width, height, thumbnail, type, other } = res.data;
+  return Result.Ok({
+    url,
+    file_id,
+    type,
+    typeText: EpisodeResolutionTypeTexts[type],
+    width,
+    height,
+    thumbnail,
+    resolutions: other.map((t) => {
+      const { url, width, height, thumbnail, type } = t;
+      return {
+        url,
+        type,
+        typeText: EpisodeResolutionTypeTexts[t.type],
+        width,
+        height,
+        thumbnail,
+      };
+    }),
+  });
 }
-export type EpisodeProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_episode_profile>>>;
+export type MediaSourceProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch_episode_profile>>>;
 
 /**
  * 获取指定 tv、指定 season 下的所有影片
  */
-export async function fetch_episodes(params: { tv_id: string; season: string }) {
-  const { tv_id, season } = params;
-  return request.get<
-    {
+export async function fetch_episodes_of_season(params: { tv_id: string; season_id: string } & FetchParams) {
+  const { tv_id, season_id, page, pageSize } = params;
+  const resp = await request.get<
+    ListResponse<{
       id: string;
-      season: {
+      name: string;
+      overview: string;
+      season_number: string;
+      episode_number: string;
+      season_id: string;
+      sources: {
         id: string;
-        season: string;
-      };
-      episode: string;
-      file_id: string;
-      file_name: string;
-    }[]
-  >("/api/episode", {
+        file_id: string;
+        file_name: string;
+      }[];
+    }>
+  >("/api/episode/list", {
     tv_id,
-    season,
+    season_id,
+    page,
+    page_size: pageSize,
+  });
+  if (resp.error) {
+    return Result.Err(resp.error);
+  }
+  const { list } = resp.data;
+  return Result.Ok({
+    list: list.map((episode) => {
+      const { id, name, overview, season_number, episode_number, sources, season_id } = episode;
+      const d = {
+        id,
+        name,
+        overview,
+        season_id,
+        season: season_to_chinese_num(season_number),
+        episode: episode_to_chinese_num(episode_number),
+        sources,
+      };
+      return d;
+    }),
   });
 }
 
@@ -250,14 +326,16 @@ export async function update_play_history(params: {
   episode_id: string;
   /** 视频当前时间 */
   current_time: number;
-  duration: number;
+  duration?: number;
+  file_id: string;
 }) {
-  const { tv_id, episode_id, current_time, duration } = params;
+  const { tv_id, episode_id, current_time, duration, file_id } = params;
   return request.post<null>("/api/history/update", {
     tv_id,
     episode_id,
-    current_time: Math.floor(current_time),
+    current_time,
     duration,
+    file_id,
   });
 }
 
@@ -280,22 +358,11 @@ export async function fetch_play_history_of_tv(params: { tv_id: string }) {
   }
   return Result.Ok({
     ...r.data,
+    current_time: r.data.current_time || 0,
     episode: episode_to_chinese_num(r.data.episode),
   });
 }
 export type TVPlayHistory = RequestedResource<typeof fetch_play_history_of_tv>;
-
-export function update_searched_tv_of_tv(tv_id: string, body: JSONObject) {
-  return request.post(`/api/tv/update/${tv_id}`, body);
-}
-
-/**
- * 刮削指定 tv
- */
-export function scrape_tv(body: { id: string }) {
-  const { id } = body;
-  return request.get(`/api/tv/scrape/${id}`);
-}
 
 /**
  * 隐藏指定 tv
@@ -306,3 +373,96 @@ export function hidden_tv(body: { id: string }) {
   const { id } = body;
   return request.get(`/api/tv/hidden/${id}`);
 }
+
+/**
+ * 获取当前用户影片播放记录
+ * @param params
+ * @returns
+ */
+export async function fetch_play_histories(params: FetchParams) {
+  const { page, pageSize, ...rest } = params;
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      /** 电视剧名称 */
+      name: string;
+      /** 电视剧海报地址 */
+      poster_path: string;
+      /** 电视剧id */
+      tv_id: string;
+      /** 影片id */
+      episode_id: string;
+      /** 该集总时长 */
+      duration: number;
+      /** 看到该电视剧第几集 */
+      episode_number: string;
+      /** 该集是第几季 */
+      season_number: string;
+      /** 播放记录当前集进度 */
+      current_time: number;
+      /** 播放记录更新时间 */
+      updated: string;
+      /** 当前总集数 */
+      cur_episode_count: number;
+      /** 该剧集当前季总集数 */
+      episode_count: number;
+      /** 最新一集添加时间 */
+      latest_episode: string;
+      /** 电视剧首播日期 */
+      first_air_date: string;
+      /** 该季首播日期 */
+      air_date: string;
+      /** 看过后是否有更新 */
+      has_update: number;
+      thumbnail: string;
+    }>
+  >("/api/history/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return r;
+  }
+  const { list, total } = r.data;
+  return Result.Ok({
+    page,
+    pageSize,
+    total,
+    list: list.map((history) => {
+      const {
+        id,
+        name,
+        tv_id,
+        episode_id,
+        poster_path,
+        updated,
+        has_update,
+        episode_number,
+        season_number,
+        cur_episode_count,
+        episode_count,
+        duration,
+        current_time,
+        thumbnail,
+      } = history;
+      return {
+        id,
+        name,
+        tv_id,
+        episode_id,
+        poster_path,
+        cur_episode_count,
+        episode_count,
+        episode: episode_to_chinese_num(episode_number),
+        season: season_to_chinese_num(season_number),
+        updated: relative_time_from_now(updated),
+        has_update: !!has_update,
+        currentTime: current_time,
+        percent: parseFloat((current_time / duration).toFixed(2)) * 100 + "%",
+        thumbnail,
+      };
+    }),
+  });
+}
+export type PlayHistoryItem = RequestedResource<typeof fetch_play_histories>["list"][0];

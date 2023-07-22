@@ -1,10 +1,10 @@
 /* @refresh reload */
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
 import { app } from "./store/app";
-import "./store/job";
+import { initializeJobs } from "./store/job";
 import { connect } from "./domains/app/connect.web";
 import { ToastCore } from "./domains/ui/toast";
 import { Toast } from "./components/ui/toast";
@@ -29,14 +29,20 @@ import {
   homeMovieListPage,
   homeMovieProfilePage,
   homeUnknownMoviePage,
+  driveProfilePage,
+  filePreviewPage,
 } from "./store/views";
 
 import "./style.css";
+import { sleep } from "./utils";
 
 const { router } = app;
 
 homeLayout.register("/home/index", () => {
   return homeIndexPage;
+});
+homeLayout.register("/home/drive/:id", () => {
+  return driveProfilePage;
 });
 homeLayout.register("/home/task/:id", () => {
   return homeTaskProfilePage;
@@ -79,6 +85,9 @@ homeLayout.register("/home/parse", () => {
 });
 rootView.register("/test", () => {
   return testPage;
+});
+rootView.register("/play/:id", () => {
+  return filePreviewPage;
 });
 rootView.register("/login", () => {
   return loginPage;
@@ -153,6 +162,9 @@ function Application() {
       texts: text,
     });
   });
+  app.onError((error) => {
+    // 处理各种错误？
+  });
   app.onReady(() => {
     // if (app.user.isLogin) {
     //   router.start();
@@ -161,12 +173,17 @@ function Application() {
     // router.push(`/login?redirect=${router.pathname}`);
     router.start();
   });
+  onMount(async () => {
+    // @todo 让 app 能监听页面的生命周期
+    await sleep(1000);
+    initializeJobs();
+  });
   // console.log("[]Application - before start", window.history);
   router.prepare(window.location);
   app.start();
 
   return (
-    <div class={"screen w-screen h-screen"}>
+    <div class={"screen w-screen h-screen overflow-hidden"}>
       <Show when={!state().ready}>
         <div class="flex items-center justify-center w-full h-full">
           <div class="flex flex-col items-center text-slate-500">

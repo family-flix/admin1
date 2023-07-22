@@ -27,8 +27,8 @@ export function connect(app: Application) {
   });
   window.addEventListener("popstate", (event) => {
     const { type } = event;
-    const { pathname } = window.location;
-    app.emit(app.Events.PopState, { type, pathname });
+    const { pathname, href } = window.location;
+    app.emit(app.Events.PopState, { type, href, pathname });
   });
   window.addEventListener("beforeunload", (event) => {
     // // 取消事件

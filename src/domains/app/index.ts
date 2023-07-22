@@ -35,6 +35,7 @@ type TheTypesOfEvents = {
   [Events.Logout]: void;
   [Events.PopState]: {
     type: string;
+    href: string;
     pathname: string;
   };
   [Events.Resize]: {
@@ -170,8 +171,8 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   escape() {
     this.emit(Events.EscapeKeyDown);
   }
-  popstate({ type, pathname }: { type: string; pathname: string }) {
-    this.emit(Events.PopState, { type, pathname });
+  popstate({ type, href, pathname }: { type: string; href: string; pathname: string }) {
+    this.emit(Events.PopState, { type, href, pathname });
   }
   resize(size: { width: number; height: number }) {
     this.screen = size;

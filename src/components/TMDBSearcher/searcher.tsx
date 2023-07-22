@@ -118,7 +118,7 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
           <ScrollView store={scrollView} class="relative max-h-[360px] overflow-y-auto p-2 space-y-4">
             <For each={dataSource()}>
               {(tv) => {
-                const { name, overview, poster_path, first_air_date } = tv;
+                const { name, original_name, overview, poster_path, first_air_date } = tv;
                 return (
                   <div
                     class={cn("flex py-2", tv.id === cur()?.id ? "bg-slate-300" : "bg-white")}
@@ -129,6 +129,7 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
                     <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
                     <div class="flex-1 overflow-hidden text-ellipsis">
                       <div class="text-2xl">{name}</div>
+                      <div class="text-slate-500">{original_name}</div>
                       <div class="break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</div>
                       <div>{first_air_date}</div>
                     </div>

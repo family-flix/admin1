@@ -24,6 +24,7 @@ import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { refreshJobs } from "@/store";
 
 export const TaskListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
   const { app, view, router } = props;
@@ -53,6 +54,7 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   });
   const refreshBtn = new ButtonCore({
     onClick() {
+      refreshJobs();
       jobList.refresh();
     },
   });

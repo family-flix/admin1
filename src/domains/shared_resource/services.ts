@@ -82,5 +82,5 @@ export async function save_shared_files(body: {
   /** 转存到指定网盘的哪个文件夹，默认是根目录 */
   target_folder_id?: string;
 }) {
-  return request.post("/api/admin/shared_file/save", body);
+  return request.post<{ job_id: string }>("/api/admin/shared_file/save", body);
 }

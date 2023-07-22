@@ -9,8 +9,6 @@ import { ViewComponent } from "@/types";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { MenuCore } from "@/domains/ui/menu";
-import { DialogCore } from "@/domains/ui/dialog";
-import { TVProfileCore } from "@/domains/tv/profile";
 import { Input } from "@/components/ui/input";
 import { FolderCard } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
@@ -18,12 +16,13 @@ import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { createJob } from "@/store";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  const modal1 = new DialogCore();
-  const tvProfile = new TVProfileCore();
+  // const modal1 = new DialogCore();
+  // const tvProfile = new TVProfileCore();
   const sharedResource = new SharedResourceCore();
   const driveSubMenu = new MenuCore({
     _name: "menus-of-drives",
@@ -87,7 +86,17 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
           label: name,
           async onClick() {
             item.disable();
-            await sharedResource.transferSelectedFolderToDrive(drive);
+            const r = await sharedResource.transferSelectedFolderToDrive(drive);
+            if (r.data) {
+              createJob({
+                job_id: r.data.job_id,
+                onFinish() {
+                  app.tip({
+                    text: ["转存完成"],
+                  });
+                },
+              });
+            }
             item.enable();
             dropdownMenu.hide();
           },
@@ -96,10 +105,10 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       })
     );
   });
-  sharedResource.onShowTVProfile((profile) => {
-    tvProfile.set(profile);
-    modal1.show();
-  });
+  // sharedResource.onShowTVProfile((profile) => {
+  //   tvProfile.set(profile);
+  //   modal1.show();
+  // });
   sharedResource.onTip((msg) => {
     app.tip(msg);
   });

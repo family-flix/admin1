@@ -12,14 +12,25 @@ import { For, JSX } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 export function Article(props: { nodes: ArticleCore["children"] }) {
+  console.log("nodes", JSON.stringify(props.nodes));
   return (
     <For each={props.nodes}>
       {(node) => {
         if (node.type === ArticleNodeType.Line) {
-          return <ArticleLine node={node as ArticleLineNode} />;
+          return (
+            <>
+              <span class="text-slate-500">{node.created}</span>
+              <ArticleLine node={node as ArticleLineNode} />
+            </>
+          );
         }
         if (node.type === ArticleNodeType.Section) {
-          return <ArticleSection node={node as ArticleSectionNode} />;
+          return (
+            <>
+              <span class="text-slate-500">{node.created}</span>
+              <ArticleSection node={node as ArticleSectionNode} />
+            </>
+          );
         }
         return "unknown";
       }}
@@ -56,7 +67,12 @@ export function ArticleSection(props: { node: ArticleSectionNode }) {
     <div class="mt-4">
       <For each={props.node.children}>
         {(node) => {
-          return <ArticleLine node={node} />;
+          return (
+            <>
+              {node.created}
+              <ArticleLine node={node} />
+            </>
+          );
         }}
       </For>
     </div>

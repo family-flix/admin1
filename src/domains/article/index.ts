@@ -45,17 +45,20 @@ export class ArticleCore extends BaseDomain<TheTypesOfEvents> {
 }
 
 type ArticleSectionNodeProps = {
+  created: string;
   children: ArticleLineNode[];
 };
 export class ArticleSectionNode extends BaseDomain<TheTypesOfEvents> {
   type: ArticleNodeType;
+  created: string;
   values: ArticleSectionNodeProps;
   children: ArticleSectionNodeProps["children"];
 
   constructor(values: ArticleSectionNodeProps) {
     super();
 
-    const { children } = values;
+    const { created, children } = values;
+    this.created = created;
     this.values = values;
     this.type = ArticleNodeType.Section;
     this.children = children;
@@ -72,12 +75,14 @@ export class ArticleSectionNode extends BaseDomain<TheTypesOfEvents> {
 }
 
 type ArticleLineNodeProps = {
+  created: string;
   color?: string;
   value?: unknown;
   children: (ArticleTextNode | ArticleLinkNode | ArticleListNode | ArticleCardNode)[];
 };
 export class ArticleLineNode extends BaseDomain<TheTypesOfEvents> {
   type: ArticleNodeType;
+  created: string;
   values: ArticleLineNodeProps;
   children: ArticleLineNodeProps["children"];
   color: ArticleLineNodeProps["color"];
@@ -86,8 +91,9 @@ export class ArticleLineNode extends BaseDomain<TheTypesOfEvents> {
   constructor(values: ArticleLineNodeProps) {
     super();
 
-    const { children, color, value } = values;
+    const { children, color, value, created } = values;
     this.type = ArticleNodeType.Line;
+    this.created = created;
     this.children = children;
     this.color = color;
     this.value = value;

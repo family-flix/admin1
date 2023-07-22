@@ -1,7 +1,7 @@
 /**
  * @file 未识别的电视剧
  */
-import { For, createSignal } from "solid-js";
+import { For, createSignal, onMount } from "solid-js";
 import { LucideBrush as Brush, LucideRotateCcw as RotateCcw, Trash } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
@@ -109,10 +109,9 @@ export const UnknownTVPage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  // view.onShow(() => {});
-  list.init();
-
-  // const dataSource = () => response().dataSource;
+  view.onShow(() => {
+    list.init();
+  });
 
   return (
     <div class="px-4">

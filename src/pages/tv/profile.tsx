@@ -18,6 +18,7 @@ import {
   delete_parsed_tv_of_tv,
   delete_tv,
   refresh_tv_profile,
+  fetch_episodes_of_season,
 } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
@@ -57,8 +58,15 @@ export const TVProfilePage: ViewComponent = (props) => {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },
     onSuccess(v) {
-      set_profile(v);
-      sourceList.init();
+      setProfile(v);
+      if (v.seasons.length === 0) {
+        return;
+      }
+      curEpisodeList.init({
+        tv_id: view.params.id,
+        season_id: v.seasons[0].id,
+      });
+      // sourceList.init();
     },
   });
   const curFile = new SelectionCore<TVProfile["sources"][number]>();
@@ -136,7 +144,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       if (!target) {
         return;
       }
-      sourceList.deleteItem(target);
+      // sourceList.deleteItem(target);
     },
   });
   const deleteTVRequest = new RequestCore(delete_tv, {
@@ -242,10 +250,16 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore();
+  const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
 
-  const [profile, set_profile] = createSignal<TVProfile | null>(null);
+  const [profile, setProfile] = createSignal<TVProfile | null>(null);
+  const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
   const [sourceResponse, setSourceResponse] = createSignal(sourceList.response);
   const [sourceProfile, setSourceProfile] = createSignal(sourceProfileRequest.response);
+
+  curEpisodeList.onStateChange((nextResponse) => {
+    setCurEpisodeResponse(nextResponse);
+  });
 
   onMount(() => {
     const { id } = view.params;
@@ -305,37 +319,46 @@ export const TVProfilePage: ViewComponent = (props) => {
                   <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
                   <Button store={refreshProfileBtn}>刷新详情</Button>
                   <Button store={deleteTVBtn}>删除电视剧</Button>
-                  {/* <TVFormDialog trigger={<Button>修改</Button>} /> */}
                 </div>
-                <div class="mt-4 space-y-4">
+                <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
                   <For each={profile()?.seasons}>
                     {(season) => {
-                      const { name, overview, episodes } = season;
+                      const { id, name } = season;
                       return (
-                        <div class="rounded border border-slate-400">
-                          <div class="p-4 bg-slate-300">
-                            <div class="text-2xl">{name}</div>
-                          </div>
-                          <div class="space-y-1 px-4">
-                            <For each={episodes}>
-                              {(episode) => {
-                                const { id, name, overview, sources } = episode;
+                        <div
+                          class=""
+                          onClick={() => {
+                            curEpisodeList.init({
+                              tv_id: view.params.id,
+                              season_id: id,
+                            });
+                          }}
+                        >
+                          <div class="text-xl whitespace-nowrap">{name}</div>
+                        </div>
+                      );
+                    }}
+                  </For>
+                </div>
+                <div>
+                  <For each={curEpisodeResponse().dataSource}>
+                    {(episode) => {
+                      const { id, name, episode_number, sources } = episode;
+                      return (
+                        <div>
+                          {episode_number}、{name}
+                          <div class="pl-4">
+                            <For each={sources}>
+                              {(source) => {
                                 return (
-                                  <div class="py-2">
-                                    <p class="text-lg">{name}</p>
-                                    <p class="">{overview}</p>
-                                    <div class="mt-4">
-                                      <For each={sources}>
-                                        {(source) => {
-                                          const { parent_paths, file_name } = source;
-                                          return (
-                                            <div>
-                                              {parent_paths}/{file_name}
-                                            </div>
-                                          );
-                                        }}
-                                      </For>
-                                    </div>
+                                  <div>
+                                    <span
+                                      onClick={() => {
+                                        router.push(`/play/${source.file_id}`);
+                                      }}
+                                    >
+                                      {source.parent_paths}/{source.file_name}
+                                    </span>
                                   </div>
                                 );
                               }}

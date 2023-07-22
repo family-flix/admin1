@@ -91,6 +91,7 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     this._emitter.emit(event, value);
   }
   tip(content: { icon?: unknown; text: string[] }) {
+    console.log("log this in base domain", this);
     // @ts-ignore
     this._emitter.emit(BaseEvents.Tip, content);
     return content.text.join("\n");

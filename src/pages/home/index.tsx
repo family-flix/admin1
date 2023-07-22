@@ -18,9 +18,12 @@ import { RequestCore } from "@/domains/client";
 import { addAliyunDrive } from "@/domains/drive/services";
 import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/components/ui/skeleton";
+import { query_stringify } from "@/utils";
+import { ScrollView } from "@/components/ui";
+import { ScrollViewCore } from "@/domains/ui";
 
 export const HomePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, router, view } = props;
 
   const addDriveRequest = new RequestCore(addAliyunDrive, {
     onLoading(loading) {
@@ -59,6 +62,11 @@ export const HomePage: ViewComponent = (props) => {
       driveList.refresh();
     },
   });
+  const scrollView = new ScrollViewCore({
+    onReachBottom() {
+      driveList.loadMore();
+    },
+  });
 
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
 
@@ -75,55 +83,74 @@ export const HomePage: ViewComponent = (props) => {
   driveList.init();
 
   return (
-    <div class="p-8">
-      <h1 class="text-2xl">云盘列表</h1>
-      <div class="mt-8">
-        <div class="space-x-2">
-          <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
-            刷新
-          </Button>
-          <Button store={addingDriveBtn} icon={<HardDrive class="w-4 h-4" />}>
-            新增云盘
-          </Button>
-        </div>
-        <ListView
-          store={driveList}
-          skeleton={
-            <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
-              <div class="relative p-4 bg-white rounded-xl border border-1">
-                <div class="flex">
-                  <Skeleton class="w-16 h-16 mr-4 rounded"></Skeleton>
-                  <div class="flex-1 pr-12">
-                    <Skeleton class="h-[24px]"></Skeleton>
-                    <Skeleton class="mt-2 h-[18px]"></Skeleton>
-                    <Skeleton class="mt-2 h-[24px]"></Skeleton>
-                    <div class="flex items-center mt-4 space-x-2">
-                      <Skeleton class="w-[56px] h-[28px]"></Skeleton>
-                      <Skeleton class="w-[56px] h-[28px]"></Skeleton>
+    <>
+      <ScrollView store={scrollView} class="h-screen p-8">
+        <h1 class="text-2xl">云盘列表</h1>
+        <div class="mt-8">
+          <div class="space-x-2">
+            <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
+              刷新
+            </Button>
+            <Button store={addingDriveBtn} icon={<HardDrive class="w-4 h-4" />}>
+              新增云盘
+            </Button>
+          </div>
+          <ListView
+            store={driveList}
+            skeleton={
+              <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
+                <div class="relative p-4 bg-white rounded-xl border border-1">
+                  <div class="flex">
+                    <Skeleton class="w-16 h-16 mr-4 rounded"></Skeleton>
+                    <div class="flex-1 pr-12">
+                      <Skeleton class="h-[24px]"></Skeleton>
+                      <Skeleton class="mt-2 h-[18px]"></Skeleton>
+                      <Skeleton class="mt-2 h-[24px]"></Skeleton>
+                      <div class="flex items-center mt-4 space-x-2">
+                        <Skeleton class="w-[56px] h-[28px]"></Skeleton>
+                        <Skeleton class="w-[56px] h-[28px]"></Skeleton>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            }
+          >
+            <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
+              <For each={driveResponse().dataSource}>
+                {(drive) => {
+                  const { name, avatar, used_percent, used_size } = drive.state;
+                  return (
+                    <DriveCard
+                      app={app}
+                      store={drive}
+                      onRefresh={() => {
+                        driveList.refresh();
+                      }}
+                      onClick={() => {
+                        const url = `/home/drive/${drive.id}?${query_stringify({
+                          name,
+                          // avatar,
+                          // used_percent,
+                          // used_size,
+                        })}`;
+                        router.push(url);
+                        // const pathname = `/home/drive/${drive.id}`;
+                        // router.push(pathname, {
+                        //   name,
+                        //   avatar,
+                        //   used_percent: String(used_percent),
+                        //   used_size,
+                        // });
+                      }}
+                    />
+                  );
+                }}
+              </For>
             </div>
-          }
-        >
-          <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
-            <For each={driveResponse().dataSource}>
-              {(drive) => {
-                return (
-                  <DriveCard
-                    app={app}
-                    store={drive}
-                    onRefresh={() => {
-                      driveList.refresh();
-                    }}
-                  />
-                );
-              }}
-            </For>
-          </div>
-        </ListView>
-      </div>
+          </ListView>
+        </div>
+      </ScrollView>
       <Dialog store={addingDriveDialog}>
         <div class="p-4">
           <p>1、在网页端登录阿里云盘</p>
@@ -152,6 +179,6 @@ export const HomePage: ViewComponent = (props) => {
         </div>
         <Textarea store={driveTokenInput} />
       </Dialog>
-    </div>
+    </>
   );
 };

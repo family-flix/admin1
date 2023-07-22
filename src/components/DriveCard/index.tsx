@@ -19,11 +19,15 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { InputCore } from "@/domains/ui/input";
 import { ButtonCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
-import { JobCore } from "@/domains/job";
-import { appendJob } from "@/store";
+import { createJob } from "@/store";
 
-export const DriveCard = (props: { app: Application; store: DriveCore; onRefresh?: () => void }) => {
-  const { app, store: drive } = props;
+export const DriveCard = (props: {
+  app: Application;
+  store: DriveCore;
+  onClick?: () => void;
+  onRefresh?: () => void;
+}) => {
+  const { app, store: drive, onClick, onRefresh } = props;
 
   const [state, setState] = createSignal(drive.state);
   const [folderColumns, setFolderColumns] = createSignal(drive.folderColumns);
@@ -76,8 +80,8 @@ export const DriveCard = (props: { app: Application; store: DriveCore; onRefresh
       await drive.delete();
       confirmDeleteDriveDialog.okBtn.setLoading(false);
       confirmDeleteDriveDialog.hide();
-      if (props.onRefresh) {
-        props.onRefresh();
+      if (onRefresh) {
+        onRefresh();
       }
     },
   });
@@ -142,16 +146,18 @@ export const DriveCard = (props: { app: Application; store: DriveCore; onRefresh
     icon: <FolderSearch class="mr-2 w-4 h-4" />,
     async onClick() {
       dropdown.hide();
-      const r = await drive.startScrape(true);
+      const r = await drive.startScrape({
+        quickly: true,
+      });
       if (r.error) {
         return;
       }
-      const job = new JobCore({ id: r.data });
-      appendJob(job);
-      job.onFinish(() => {
-        drive.finishAnalysis();
+      createJob({
+        job_id: r.data,
+        onFinish() {
+          drive.finishAnalysis();
+        },
       });
-      job.waitFinish();
     },
   });
   const matchMediaItem = new MenuItemCore({
@@ -163,16 +169,19 @@ export const DriveCard = (props: { app: Application; store: DriveCore; onRefresh
         return;
       }
       dropdown.hide();
-      const job = new JobCore({ id: r.data });
-      appendJob(job);
-      job.onFinish(() => {
-        drive.finishMediaMatch();
-      });
-      job.waitFinish();
     },
   });
   const dropdown = new DropdownMenuCore({
     items: [
+      new MenuItemCore({
+        label: "详情",
+        onClick: () => {
+          if (onClick) {
+            onClick();
+          }
+          dropdown.hide();
+        },
+      }),
       checkInItem,
       receiveRewardsItem,
       analysisQuicklyItem,
@@ -220,12 +229,12 @@ export const DriveCard = (props: { app: Application; store: DriveCore; onRefresh
       if (r.error) {
         return;
       }
-      const job = new JobCore({ id: r.data });
-      appendJob(job);
-      job.onFinish(() => {
-        drive.finishAnalysis();
+      createJob({
+        job_id: r.data,
+        onFinish() {
+          drive.finishAnalysis();
+        },
       });
-      job.waitFinish();
     },
   });
   const showAddingFolderDialogBtn = new ButtonCore({

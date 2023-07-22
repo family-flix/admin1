@@ -6,6 +6,7 @@ import { CancelToken } from "axios";
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
 import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
+import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
 
 /**
  * 获取电视剧列表
@@ -54,8 +55,53 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
+export async function fetch_seasons(params: FetchParams) {
+  const { page, pageSize, ...rest } = params;
+  const resp = await request.get<
+    ListResponse<{
+      id: string;
+      tv_id: string;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      first_air_date: string;
+      popularity: string;
+      episode_count: number;
+      season_count: number;
+      cur_episode_count: number;
+      cur_season_count: number;
+      episode_sources: number;
+      size_count: number;
+      size_count_text: string;
+      incomplete: boolean;
+      need_bind: boolean;
+      sync_task: { id: string } | null;
+      tips: string[];
+    }>
+  >("/api/admin/season/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok({
+    ...resp.data,
+    list: resp.data.list.map((tv) => {
+      const { ...rest } = tv;
+      return {
+        ...rest,
+        // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
+      };
+    }),
+  });
+}
+export type TVSeasonItem = RequestedResource<typeof fetch_seasons>["list"][number];
+
 /*
- * 获取电视剧列表
+ * 获取电视剧部分详情
  */
 export async function fetch_partial_tv(params: { tv_id: string }) {
   const { tv_id } = params;
@@ -721,15 +767,17 @@ export async function fetch_tv_profile(body: { tv_id: string }) {
       id: string;
       name: string;
       overview: string;
-      episodes: {
-        id: string;
-        name: string;
-        overview: string;
-        sources: {
-          file_id: string;
-          file_name: string;
-          parent_paths: string;
-        }[];
+    }[];
+    curSeasonEpisodes: {
+      id: string;
+      name: string;
+      overview: string;
+      episode_number: string;
+      first_air_date: string;
+      sources: {
+        file_id: string;
+        parent_paths: string;
+        file_name: string;
       }[];
     }[];
     sources: {
@@ -753,4 +801,72 @@ export async function delete_episode_in_tv(body: { id: string; tv_id: string }) 
   const { id, tv_id } = body;
   const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
   return r;
+}
+
+/**
+ * 获取指定电视剧、指定季下的剧集，支持分页
+ * @param body
+ * @returns
+ */
+export function fetch_episodes_of_season(body: { tv_id: string; season_id: string } & FetchParams) {
+  const { tv_id, season_id, ...rest } = body;
+  return request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      overview: string;
+      first_air_date: string;
+      episode_number: string;
+      sources: {
+        id: string;
+        file_id: string;
+        file_name: string;
+        name: string;
+        parent_paths: string;
+      }[];
+    }>
+  >(`/api/admin/tv/${tv_id}/season/${season_id}/episodes`, rest);
+}
+
+export async function fetch_video_preview_info(body: { file_id: string }) {
+  const { file_id } = body;
+  const r = await request.get<{
+    url: string;
+    thumbnail: string;
+    type: EpisodeResolutionTypes;
+    width: number;
+    height: number;
+    other: {
+      url: string;
+      thumbnail: string;
+      type: EpisodeResolutionTypes;
+      width: number;
+      height: number;
+    }[];
+  }>(`/api/admin/files/preview/${file_id}`);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { url, width, height, type, other, thumbnail } = r.data;
+  return Result.Ok({
+    file_id,
+    url,
+    width,
+    height,
+    type,
+    typeText: EpisodeResolutionTypeTexts[type],
+    thumbnail,
+    resolutions: other.map((r) => {
+      const { url, width, height, type, thumbnail } = r;
+      return {
+        file_id,
+        url,
+        width,
+        height,
+        type,
+        typeText: EpisodeResolutionTypeTexts[type],
+        thumbnail,
+      };
+    }),
+  });
 }

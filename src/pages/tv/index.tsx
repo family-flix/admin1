@@ -2,6 +2,7 @@
  * @file 电视剧列表
  */
 import { createSignal, For, Show } from "solid-js";
+import { effect } from "solid-js/web";
 import {
   ArrowUpCircle,
   Award,
@@ -20,15 +21,15 @@ import {
 
 import {
   add_file_sync_task_of_tv,
-  bind_profile_for_unknown_tv,
   fetch_folder_can_add_sync_task,
   fetch_partial_tv,
+  fetch_seasons,
   fetch_tv_list,
   refresh_tv_profile,
   run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
   transfer_tv_to_another_drive,
-  TVItem,
+  TVSeasonItem,
 } from "@/services";
 import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/types";
@@ -43,17 +44,15 @@ import { SelectionCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { DriveCore } from "@/domains/drive";
-import { appendJob } from "@/store";
+import { createJob } from "@/store";
 import { cn } from "@/utils";
-import { effect } from "solid-js/web";
-import { FileSearcher } from "@/components/FileSearcher";
 import { FileSearcherCore } from "@/components/FileSearcher/store";
 import { FileType } from "@/constants";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  const tvList = new ListCore(new RequestCore(fetch_tv_list), {
+  const tvList = new ListCore(new RequestCore(fetch_seasons), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -61,7 +60,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialTVRequest = new RequestCore(fetch_partial_tv);
-  const tvSelection = new SelectionCore<TVItem>();
+  const tvSelection = new SelectionCore<TVSeasonItem>();
   const driveSelection = new SelectionCore<DriveCore>({
     onChange(v) {
       setCurDrive(v);
@@ -127,18 +126,18 @@ export const TVManagePage: ViewComponent = (props) => {
       app.tip({
         text: ["开始复制，请等待一段时间"],
       });
-      const job = new JobCore({ id: r.job_id });
-      job.onFinish(() => {
-        if (!tvSelection.value) {
-          return;
-        }
-        const { name } = tvSelection.value;
-        app.tip({
-          text: [`完成电视剧 '${name}' 复制`],
-        });
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          if (!tvSelection.value) {
+            return;
+          }
+          const { name } = tvSelection.value;
+          app.tip({
+            text: [`完成电视剧 '${name}' 复制`],
+          });
+        },
       });
-      job.waitFinish();
-      appendJob(job);
       transferConfirmDialog.hide();
     },
   });
@@ -161,7 +160,7 @@ export const TVManagePage: ViewComponent = (props) => {
       }
       const { file_id, file_name } = record;
       addFileSyncTask.run({
-        tv_id: tvSelection.value.id,
+        tv_id: tvSelection.value.tv_id,
         url: sharedResourceUrlInput.value,
         target_file_id: file_id,
         target_file_name: file_name,
@@ -169,7 +168,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const refreshPartialTV = async () => {
-    const tv_id = tvSelection.value?.id;
+    const tv_id = tvSelection.value?.tv_id;
     if (!tv_id) {
       tvList.refresh();
       return;
@@ -196,15 +195,16 @@ export const TVManagePage: ViewComponent = (props) => {
       execSyncTaskBtn.setLoading(true);
     },
     onSuccess(resp) {
-      const job = new JobCore({ id: resp.job_id });
-      job.onTip((msg) => {
-        app.tip(msg);
+      createJob({
+        job_id: resp.job_id,
+        onFinish() {
+          execSyncTaskBtn.setLoading(false);
+          refreshPartialTV();
+        },
+        onTip(msg) {
+          app.tip(msg);
+        },
       });
-      job.onFinish(async () => {
-        execSyncTaskBtn.setLoading(false);
-        refreshPartialTV();
-      });
-      job.waitFinish();
     },
     onFailed(error) {
       app.tip({ text: ["更新失败", error.message] });
@@ -214,7 +214,7 @@ export const TVManagePage: ViewComponent = (props) => {
   const folderCanAddSyncTaskList = new ListCore(new RequestCore(fetch_folder_can_add_sync_task));
   const dialog = new TMDBSearcherDialogCore({
     onOk(searchedTV) {
-      const tvId = tvSelection.value?.id;
+      const tvId = tvSelection.value?.tv_id;
       if (!tvId) {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
@@ -258,7 +258,7 @@ export const TVManagePage: ViewComponent = (props) => {
         return;
       }
       addFileSyncTask.run({
-        tv_id: tvSelection.value.id,
+        tv_id: tvSelection.value.tv_id,
         url: sharedResourceUrlInput.value,
       });
     },
@@ -276,7 +276,7 @@ export const TVManagePage: ViewComponent = (props) => {
         return;
       }
       transferRequest.run({
-        tv_id: curTV.id,
+        tv_id: curTV.tv_id,
         target_drive_id: driveSelection.value.id,
       });
     },
@@ -287,7 +287,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
     footer: false,
   });
-  const transferBtn = new ButtonInListCore<TVItem>({
+  const transferBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       if (record === null) {
         return;
@@ -296,7 +296,7 @@ export const TVManagePage: ViewComponent = (props) => {
       transferConfirmDialog.show();
     },
   });
-  const addSyncTaskBtn = new ButtonInListCore<TVItem>({
+  const addSyncTaskBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       if (record === null) {
         return;
@@ -305,18 +305,18 @@ export const TVManagePage: ViewComponent = (props) => {
       addSyncTaskDialog.show();
     },
   });
-  const execSyncTaskBtn = new ButtonInListCore<TVItem>({
+  const execSyncTaskBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       if (record === null) {
         return;
       }
       tvSelection.select(record);
-      runFileSyncTask.run({ id: record.id });
+      runFileSyncTask.run({ id: record.tv_id });
     },
   });
-  const profileBtn = new ButtonInListCore<TVItem>({
+  const profileBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
-      router.push(`/home/tv/${record.id}`);
+      router.push(`/home/tv/${record.tv_id}?season_id=${record.id}`);
     },
   });
   const syncAllTVRequest = new RequestCore(run_all_file_sync_tasks, {
@@ -473,7 +473,7 @@ export const TVManagePage: ViewComponent = (props) => {
               >
                 <div class="space-y-4">
                   <For each={tvListResponse().dataSource}>
-                    {(tv) => {
+                    {(season) => {
                       const {
                         name,
                         overview,
@@ -484,7 +484,7 @@ export const TVManagePage: ViewComponent = (props) => {
                         cur_episode_count,
                         episode_count,
                         need_bind,
-                      } = tv;
+                      } = season;
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
@@ -523,24 +523,24 @@ export const TVManagePage: ViewComponent = (props) => {
                                     </div>
                                   </div>
                                 </Show>
-                                <Show when={tv.tips.length}>
+                                <Show when={season.tips.length}>
                                   <div
                                     class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500"
                                     onClick={(event) => {
                                       const { x, y, width, height, left, top, right, bottom } =
                                         event.currentTarget.getBoundingClientRect();
-                                      setTips(tv.tips);
+                                      setTips(season.tips);
                                       tipPopover.show({ x, y, width, height: height + 8, left, top, right, bottom });
                                     }}
                                   >
                                     <Info class="w-4 h-4" />
-                                    <div>{tv.tips.length}个问题</div>
+                                    <div>{season.tips.length}个问题</div>
                                   </div>
                                 </Show>
                               </div>
                               <div class="space-x-2 mt-6 py-2 overflow-hidden whitespace-nowrap">
                                 <Button
-                                  store={profileBtn.bind(tv)}
+                                  store={profileBtn.bind(season)}
                                   variant="subtle"
                                   icon={<BookOpen class="w-4 h-4" />}
                                 >
@@ -548,7 +548,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                 </Button>
                                 <Show when={cur_episode_count === episode_count}>
                                   <Button
-                                    store={transferBtn.bind(tv)}
+                                    store={transferBtn.bind(season)}
                                     variant="subtle"
                                     icon={<Package class="w-4 h-4" />}
                                   >
@@ -557,7 +557,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                 </Show>
                                 <Show when={need_bind}>
                                   <Button
-                                    store={addSyncTaskBtn.bind(tv)}
+                                    store={addSyncTaskBtn.bind(season)}
                                     variant="subtle"
                                     icon={<BellPlus class="w-4 h-4" />}
                                   >
@@ -566,7 +566,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                 </Show>
                                 <Show when={sync_task}>
                                   <Button
-                                    store={execSyncTaskBtn.bind(tv)}
+                                    store={execSyncTaskBtn.bind(season)}
                                     variant="subtle"
                                     icon={<Bell class="w-4 h-4" />}
                                   >

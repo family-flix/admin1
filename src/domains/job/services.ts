@@ -61,15 +61,15 @@ export async function fetch_job_profile(id: string) {
     desc: string;
     type: TaskTypes;
     status: TaskStatus;
-    lines: { content: string }[];
-    more_line: boolean;
+    // lines: { content: string }[];
+    // more_line: boolean;
     created: string;
     content: string;
   }>(`/api/admin/job/${id}`);
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { desc, status, type, content, lines, more_line, created } = r.data;
+  const { desc, status, type, content, created } = r.data;
   const data = {
     id,
     desc,
@@ -87,8 +87,8 @@ export async function fetch_job_profile(id: string) {
       }
       return "未知";
     })(),
-    content: lines.map((l) => JSON.parse(l.content)),
-    hasMoreContent: more_line,
+    // content: lines.map((l) => JSON.parse(l.content)),
+    // hasMoreContent: more_line,
     created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
   };
   return Result.Ok(data);
@@ -100,6 +100,7 @@ export async function fetch_output_lines_of_job(body: { job_id: string; page: nu
   const { job_id, page, pageSize } = body;
   const r = await request.get<
     ListResponse<{
+      id: string;
       content: string;
       created: string;
     }>
@@ -117,8 +118,11 @@ export async function fetch_output_lines_of_job(body: { job_id: string; page: nu
     noMore: no_more,
     total,
     list: list.map((log) => {
-      const { content } = log;
-      return JSON.parse(content);
+      const { content, created } = log;
+      return {
+        ...JSON.parse(content),
+        created: dayjs(created).format("YYYY/MM/DD HH:mm:ss.SSS"),
+      };
     }),
   });
 }

@@ -107,8 +107,8 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
       });
     }
     this.list.onLoadingChange((loading) => {
-      this.okBtn.setLoading(loading);
-      this.cancelBtn.setLoading(loading);
+      this.form.btn.setLoading(loading);
+      this.form.reset.setLoading(loading);
     });
     this.form.btn.onClick(() => {
       const name = this.form.input.value;

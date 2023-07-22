@@ -2,11 +2,14 @@
  * @file 网盘相关 service
  */
 import { FetchParams } from "@/domains/list/typing";
-import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
-import { bytes_to_size } from "@/utils";
+import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { request } from "@/utils/request";
-import { DriveCore } from ".";
+import { bytes_to_size } from "@/utils";
 
+import { DriveCore } from ".";
+import { FileType } from "@/constants";
+
+/** 解析一段 json 字符串 */
 async function parseJSONStr<T extends JSONObject>(json: string) {
   try {
     if (json[0] !== "{") {
@@ -170,9 +173,14 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
  * @param {string} body.drive_id 要索引的云盘 id
  * @param {string} [body.target_folder] 要索引的云盘内指定文件夹 id
  */
-export async function analysisDrive(body: { drive_id: string; target_folder?: string }) {
-  const { drive_id: aliyun_drive_id, target_folder } = body;
-  return request.get<{ job_id: string }>(`/api/admin/drive/analysis/${aliyun_drive_id}`, { target_folder });
+export async function analysisDrive(body: {
+  drive_id: string;
+  target_folders?: { file_id: string; parent_paths?: string; name: string }[];
+}) {
+  const { drive_id: aliyun_drive_id, target_folders } = body;
+  return request.post<{ job_id: string }>(`/api/admin/drive/analysis/${aliyun_drive_id}`, {
+    target_folders,
+  });
 }
 
 /**
@@ -245,7 +253,7 @@ export async function exportDriveInfo(body: { drive_id: string }) {
  * @param {string} body.drive_id 云盘 id
  * @param {string} body.root_folder_id 云盘根目录id
  */
-export async function set_drive_root_file_id(body: { drive_id: string; root_folder_id: string }) {
+export async function setDriveRootFolderId(body: { drive_id: string; root_folder_id: string }) {
   const { root_folder_id: root_folder_id, drive_id } = body;
   return request.post<void>(`/api/admin/drive/root_folder/${drive_id}`, {
     root_folder_id,
@@ -274,19 +282,19 @@ export async function setAliyunDriveRefreshToken(values: { refresh_token: string
  * @param {string} body.name 传入该值时，使用该值进行搜索
  * @param {string} body.page_size 每页文件数量
  */
-export async function fetchDriveFiles(body: {
-  /** 网盘id */
-  drive_id: string;
-  /** 文件夹id */
-  file_id: string;
-  next_marker: string;
-  /** 按名称搜索时的关键字 */
-  name?: string;
-  /** 每页数量 */
-  page_size?: number;
-}) {
-  const { drive_id, file_id, name, next_marker, page_size = 24 } = body;
-  return request.get<{
+export async function fetchDriveFiles(
+  body: {
+    /** 网盘id */
+    drive_id: string;
+    /** 文件夹id */
+    file_id: string;
+    next_marker: string;
+    /** 按名称搜索时的关键字 */
+    name?: string;
+  } & FetchParams
+) {
+  const { drive_id, file_id, name, next_marker, page, pageSize = 24 } = body;
+  const r = await request.get<{
     items: {
       file_id: string;
       name: string;
@@ -301,9 +309,35 @@ export async function fetchDriveFiles(body: {
     name,
     file_id,
     next_marker,
-    page_size,
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { items } = r.data;
+  return Result.Ok({
+    page,
+    page_size: pageSize,
+    list: items.map((file) => {
+      const { file_id, name, parent_file_id, size, type, thumbnail } = file;
+      return {
+        file_id,
+        name,
+        type: type === "file" ? FileType.File : FileType.Folder,
+        parent_paths: [
+          {
+            file_id: parent_file_id,
+            name: "",
+          },
+        ],
+      };
+    }),
+    no_more: r.data.next_marker === "",
+    next_marker: r.data.next_marker,
   });
 }
+export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
 
 /**
  * 给指定网盘的指定文件夹内，新增一个新文件夹

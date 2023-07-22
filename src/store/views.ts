@@ -44,6 +44,13 @@ export const homeIndexPage = new RouteViewCore({
     return HomePage;
   },
 });
+export const driveProfilePage = new RouteViewCore({
+  title: "首页",
+  component: async () => {
+    const { DriveProfilePage } = await import("@/pages/drive/profile");
+    return DriveProfilePage;
+  },
+});
 export const homeTaskProfilePage = new RouteViewCore({
   title: "任务详情",
   // component: TaskProfilePage,
@@ -82,6 +89,14 @@ export const homeMovieListPage = new RouteViewCore({
   component: async () => {
     const { MovieManagePage } = await import("@/pages/movie");
     return MovieManagePage;
+  },
+});
+export const filePreviewPage = new RouteViewCore({
+  title: "文件播放",
+  // component: MovieManagePage,
+  component: async () => {
+    const { MediaPlayingPage } = await import("@/pages/play/index");
+    return MediaPlayingPage;
   },
 });
 export const homeTVProfilePage = new RouteViewCore({
