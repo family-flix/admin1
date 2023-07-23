@@ -48,6 +48,7 @@ import { createJob } from "@/store";
 import { cn } from "@/utils";
 import { FileSearcherCore } from "@/components/FileSearcher/store";
 import { FileType } from "@/constants";
+import { consumeAction, pendingActions } from "@/store/actions";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -413,7 +414,20 @@ export const TVManagePage: ViewComponent = (props) => {
   scrollView.onScroll(() => {
     tipPopover.hide();
   });
-
+  view.onShow(() => {
+    const { deleteTV } = pendingActions;
+    console.log("[PAGE]tv/index - view.onShow", deleteTV);
+    if (!deleteTV) {
+      return;
+    }
+    consumeAction("deleteTV");
+    tvList.deleteItem((tv) => {
+      if (tv.id === deleteTV.tv_id) {
+        return true;
+      }
+      return false;
+    });
+  });
   tvList.init();
   driveList.init();
 
@@ -508,7 +522,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                   <div>{popularity}</div>
                                 </div>
                                 <Show
-                                  when={cur_episode_count < episode_count}
+                                  when={cur_episode_count !== episode_count}
                                   fallback={
                                     <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
                                       <Smile class="w-4 h-4" />
@@ -526,11 +540,14 @@ export const TVManagePage: ViewComponent = (props) => {
                                 <Show when={season.tips.length}>
                                   <div
                                     class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500"
-                                    onClick={(event) => {
+                                    onMouseEnter={(event) => {
                                       const { x, y, width, height, left, top, right, bottom } =
                                         event.currentTarget.getBoundingClientRect();
                                       setTips(season.tips);
                                       tipPopover.show({ x, y, width, height: height + 8, left, top, right, bottom });
+                                    }}
+                                    onMouseLeave={() => {
+                                      tipPopover.hide();
                                     }}
                                   >
                                     <Info class="w-4 h-4" />

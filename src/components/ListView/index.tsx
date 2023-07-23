@@ -6,6 +6,7 @@ import { JSX } from "solid-js/jsx-runtime";
 import { AlertCircle, ArrowDown, Bird, Loader } from "lucide-solid";
 
 import { ListCore } from "@/domains/list";
+import { cn } from "@/utils";
 
 export function ListView(
   props: { store: ListCore<any, any>; skeleton?: JSX.Element } & JSX.HTMLAttributes<HTMLDivElement>
@@ -19,7 +20,7 @@ export function ListView(
   });
 
   return (
-    <div class="relative">
+    <div class={cn("relative", props.class)}>
       <Show
         when={!response().error}
         fallback={

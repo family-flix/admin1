@@ -158,7 +158,7 @@ export function delete_tv(body: {
 /** 刷新电视剧详情 */
 export function refresh_tv_profile(body: { tv_id: string; tmdb_id?: number }) {
   const { tv_id, tmdb_id } = body;
-  return request.post<void>(`/api/admin/tv/refresh_profile/${tv_id}`, {
+  return request.post<{ job_id: string }>(`/api/admin/tv/refresh_profile/${tv_id}`, {
     tmdb_id,
   });
 }

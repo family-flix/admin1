@@ -32,6 +32,9 @@ import { CheckboxCore } from "@/domains/ui/checkbox";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListView } from "@/components/ListView";
+import { createJob } from "@/store";
+import { appendAction } from "@/store/actions";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view, router } = props;
@@ -53,6 +56,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       setSourceProfile(v);
     },
   });
+  const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
   const profileRequest = new RequestCore(fetch_tv_profile, {
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
@@ -66,7 +70,6 @@ export const TVProfilePage: ViewComponent = (props) => {
         tv_id: view.params.id,
         season_id: v.seasons[0].id,
       });
-      // sourceList.init();
     },
   });
   const curFile = new SelectionCore<TVProfile["sources"][number]>();
@@ -79,8 +82,13 @@ export const TVProfilePage: ViewComponent = (props) => {
       app.tip({ text: ["更新详情失败", error.message] });
     },
     onSuccess(v) {
-      app.tip({ text: ["更新详情成功"] });
-      profileRequest.reload();
+      app.tip({ text: ["开始更新详情"] });
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          profileRequest.reload();
+        },
+      });
       tmdbSearchDialog.hide();
     },
   });
@@ -155,8 +163,11 @@ export const TVProfilePage: ViewComponent = (props) => {
       app.tip({
         text: ["删除成功"],
       });
-      router.back();
       deleteTVConfirmDialog.hide();
+      appendAction("deleteTV", {
+        tv_id: view.params.id,
+      });
+      router.back();
     },
     onFailed(error) {
       app.tip({
@@ -249,8 +260,11 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const scrollView = new ScrollViewCore();
-  const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
+  const scrollView = new ScrollViewCore({
+    onReachBottom() {
+      curEpisodeList.loadMore();
+    },
+  });
 
   const [profile, setProfile] = createSignal<TVProfile | null>(null);
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
@@ -340,7 +354,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                     }}
                   </For>
                 </div>
-                <div>
+                <ListView store={curEpisodeList}>
                   <For each={curEpisodeResponse().dataSource}>
                     {(episode) => {
                       const { id, name, episode_number, sources } = episode;
@@ -368,10 +382,10 @@ export const TVProfilePage: ViewComponent = (props) => {
                       );
                     }}
                   </For>
-                </div>
+                </ListView>
               </div>
             </div>
-            <div class="mt-8 text-xl">关联解析结果列表</div>
+            {/* <div class="mt-8 text-xl">关联解析结果列表</div>
             <div class="mt-4 space-y-1">
               <Show when={!!profile()}>
                 <For each={profile()?.parsed_tvs}>
@@ -393,8 +407,8 @@ export const TVProfilePage: ViewComponent = (props) => {
                   }}
                 </For>
               </Show>
-            </div>
-            <div class="mt-8 text-xl">文件列表</div>
+            </div> */}
+            {/* <div class="mt-8 text-xl">文件列表</div>
             <div class="mt-4 space-y-1">
               <For each={sourceResponse().dataSource}>
                 {(source) => {
@@ -429,7 +443,7 @@ export const TVProfilePage: ViewComponent = (props) => {
               >
                 更多
               </div>
-            </Show>
+            </Show> */}
           </Show>
         </div>
       </ScrollView>

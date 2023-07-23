@@ -4,6 +4,7 @@ import { Show, createSignal, onMount } from "solid-js";
 
 import { ImageCore } from "@/domains/ui/image";
 import { connect } from "@/domains/ui/image/connect.web";
+import { effect } from "solid-js/web";
 
 export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttributes<HTMLImageElement>) {
   let $img: HTMLImageElement | undefined = undefined;
@@ -19,6 +20,12 @@ export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttrib
       return;
     }
     connect($img, image);
+  });
+  effect(() => {
+    if (!props.src) {
+      return;
+    }
+    image.updateSrc(props.src);
   });
 
   const src = () => state().src;

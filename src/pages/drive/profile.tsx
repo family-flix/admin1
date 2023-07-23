@@ -46,49 +46,45 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const formatDialog = new DialogCore();
+  const analysisItem = new MenuItemCore({
+    label: "索引",
+    async onClick() {
+      if (!selectedFolder.value) {
+        app.tip({
+          text: ["请先选择要索引的文件夹"],
+        });
+        return;
+      }
+      analysisItem.disable();
+      const r = await drive.startScrape({
+        target_folders: [selectedFolder.value],
+      });
+      app.tip({
+        text: ["开始索引"],
+      });
+      analysisItem.enable();
+      if (r.error) {
+        app.tip({
+          text: ["索引失败", r.error.message],
+        });
+        return;
+      }
+      fileMenu.hide();
+      createJob({
+        job_id: r.data,
+        onFinish() {
+          drive.finishAnalysis();
+        },
+      });
+    },
+  });
+  // new MenuItemCore({
+  //   label: "删除",
+  // });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
-    items: [
-      new MenuItemCore({
-        label: "索引",
-        async onClick() {
-          // console.log(selectedFolder.value);
-          // fileMenu.hide();
-          // if (!drive.state.initialized) {
-          //   app.tip({
-          //     text: ["还未设置索引根目录"],
-          //   });
-          //   return;
-          // }
-          if (!selectedFolder.value) {
-            app.tip({
-              text: ["请先选择要索引的文件夹"],
-            });
-            return;
-          }
-          const r = await drive.startScrape({
-            target_folders: [selectedFolder.value],
-          });
-          if (r.error) {
-            app.tip({
-              text: ["索引失败", r.error.message],
-            });
-            return;
-          }
-          fileMenu.hide();
-          createJob({
-            job_id: r.data,
-            onFinish() {
-              drive.finishAnalysis();
-            },
-          });
-        },
-      }),
-      new MenuItemCore({
-        label: "删除",
-      }),
-    ],
+    items: [analysisItem],
   });
 
   const [state, setState] = createSignal(drive.state);
@@ -96,9 +92,10 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const [columns, setColumns] = createSignal(driveFileManage.folderColumns);
 
   drive.onStateChange((nextState) => {
-    console.log("[PAGE]drive/profile - drive.onStateChange", nextState);
+    // console.log("[PAGE]drive/profile - drive.onStateChange", nextState);
     setState(nextState);
   });
+  // driveFileManage.onSelectFolder((_, position) => {});
   driveFileManage.onFolderColumnChange((nextColumns) => {
     setColumns(nextColumns);
   });
@@ -115,9 +112,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
     <>
       <ScrollView store={scrollView} class="flex flex-col w-full h-screen">
         <div class="h-[80px] box-content p-4 border-b-2">
-          {/* <div class="py-2">
-          <Button store={formatBtn}>格式化云盘</Button>
-        </div> */}
           <div class="text-2xl">{state().name}</div>
           <div class="flex mt-2 space-x-2 text-slate-800">
             <For each={paths()}>
@@ -161,7 +155,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
                       <List
                         store={column.list}
                         renderItem={(folder, index) => {
-                          const { file_id, name, type } = folder;
+                          // @ts-ignore
+                          const { file_id, name, type, selected } = folder;
                           return (
                             <div
                               onContextMenu={(event) => {
@@ -178,11 +173,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
                             >
                               <div
                                 class="flex items-center justify-between p-2 cursor-pointer rounded-sm hover:bg-slate-300"
-                                classList={
-                                  {
-                                    // "bg-slate-200": selected,
-                                  }
-                                }
+                                classList={{
+                                  "bg-slate-200": selected,
+                                }}
                                 onClick={() => {
                                   driveFileManage.select(folder, [x(), index]);
                                 }}

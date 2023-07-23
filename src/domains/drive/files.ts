@@ -5,7 +5,6 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/client";
 import { FileType } from "@/constants";
 import { ScrollViewCore } from "@/domains/ui";
-import { Result } from "@/types";
 
 import { fetchDriveFiles, AliyunDriveFile } from "./services";
 import { AliyunFilePath } from "./types";
@@ -106,6 +105,12 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     //     this.selectedFolderPos = index;
     const [x, y] = index;
     const column = this.folderColumns[x];
+    column.list.modifyItem((f) => {
+      return {
+        ...f,
+        selected: f.file_id === folder.file_id,
+      };
+    });
     const selectedFolder = column.list.response.dataSource[y];
     (() => {
       if (x < this.folderColumns.length - 1) {
@@ -130,5 +135,8 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   }
   onPathsChange(handler: Handler<TheTypesOfEvents[Events.PathsChange]>) {
     return this.on(Events.PathsChange, handler);
+  }
+  onSelectFolder(handler: Handler<TheTypesOfEvents[Events.SelectFolder]>) {
+    return this.on(Events.SelectFolder, handler);
   }
 }

@@ -69,7 +69,10 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   load(src: string) {}
-
+  updateSrc(src: string) {
+    this.realSrc = src;
+    this.handleShow();
+  }
   /** 图片进入可视区域 */
   handleShow() {
     // console.log("[IMAGE_CORE]handleShow", this.realSrc);
