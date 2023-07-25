@@ -662,6 +662,8 @@ export function parse_video_file_name(body: { name: string; keys?: string[] }) {
     episode_count: string;
   }>("/api/admin/parse", { name, keys });
 }
+export type ParsedVideoInfo = RequestedResource<typeof parse_video_file_name>;
+export type VideoKeys = keyof ParsedVideoInfo;
 
 /**
  * 获取可以建立同步任务的文件夹转存记录

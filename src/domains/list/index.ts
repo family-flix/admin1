@@ -293,7 +293,6 @@ export class ListCore<
       ...params,
     });
     if (res.error) {
-      console.log("this is", this);
       this.tip({ icon: "error", text: [res.error.message] });
       this.response.error = res.error;
       this.emit(Events.Error, res.error);

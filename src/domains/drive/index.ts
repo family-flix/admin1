@@ -209,6 +209,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     }
     return Result.Ok(r.data);
   }
+  /** 删除该云盘 */
   async delete() {
     const r = await deleteDrive({ drive_id: this.id });
     if (r.error) {

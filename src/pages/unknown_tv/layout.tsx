@@ -1,7 +1,7 @@
 /**
  * @file 索引后没有找到匹配信息的电视剧（后面称为「未知电视剧」）
  */
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 
 import { ViewComponent } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -66,9 +66,9 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
 
   return (
     <ScrollView store={new ScrollViewCore()} class="flex flex-col box-border h-screen p-8">
-      <h1 class="text-2xl h-[32px]">未识别的影视剧</h1>
-      <div class="flex-1 mt-8 rounded-sm bg-white">
-        <div class="space-x-2 h-[24px]">
+      <div class="h-[80px]">
+        <h1 class="text-2xl">未识别的影视剧</h1>
+        <div class="space-x-2">
           <div
             class="inline-block px-4 py-2 cursor-pointer"
             onClick={() => {
@@ -94,26 +94,37 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
             电影
           </div>
         </div>
-        <div class="mt-8 w-full h-full">
-          <div class="relative w-full h-full">
-            <For each={subViews()}>
-              {(subView, i) => {
-                const PageContent = subView.component as ViewComponent;
-                return (
-                  <KeepAliveRouteView
-                    class={cn("relative")}
-                    view={subView}
-                    app={app}
-                    router={router}
-                    index={i()}
-                    immediately={true}
-                  >
-                    <PageContent app={app} router={router} view={subView} />
-                  </KeepAliveRouteView>
-                );
-              }}
-            </For>
-          </div>
+      </div>
+      <div class="flex-1 rounded-sm">
+        <div class="pt-2 w-full h-full bg-white">
+          <Show
+            when={subViews().length !== 0}
+            fallback={
+              <div class="flex items-center justify-center">
+                <div class="px-4 py-8 text-xl text-slate-800">点击上方未知影视剧类型</div>
+              </div>
+            }
+          >
+            <div class="relative w-full h-full">
+              <For each={subViews()}>
+                {(subView, i) => {
+                  const PageContent = subView.component as ViewComponent;
+                  return (
+                    <KeepAliveRouteView
+                      class={cn("relative")}
+                      view={subView}
+                      app={app}
+                      router={router}
+                      index={i()}
+                      immediately={true}
+                    >
+                      <PageContent app={app} router={router} view={subView} />
+                    </KeepAliveRouteView>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
         </div>
       </div>
     </ScrollView>

@@ -10,5 +10,6 @@ export * from "./scroll-view";
 export * from "./skeleton";
 export * from "./textarea";
 export * from "./popover";
+export * from "./progress";
 export * from "./image";
 // export * from "./toast";

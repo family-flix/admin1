@@ -19,8 +19,8 @@ export const TestPage: ViewComponent = (props) => {
   const tree = new TreeCore();
   const subTree = new TreeCore();
   const subMenu = new MenuCore({
-    side: 'right',
-    align: 'start',
+    side: "right",
+    align: "start",
     items: [
       new MenuItemCore({
         label: "13822136046",
@@ -42,7 +42,6 @@ export const TestPage: ViewComponent = (props) => {
       }),
     ],
   });
-  window._sub = subMenu;
 
   return (
     <div class="p-4 bg-white">

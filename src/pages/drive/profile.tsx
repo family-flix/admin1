@@ -2,22 +2,22 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
+import { ChevronRight } from "lucide-solid";
 
 import { Dialog, DropdownMenu, ScrollView, Skeleton } from "@/components/ui";
 import { DriveCore } from "@/domains/drive";
 import { AliyunDriveFile } from "@/domains/drive/types";
 import { DriveItem } from "@/domains/drive/services";
 import { DialogCore, DropdownMenuCore, ButtonCore, InputCore } from "@/domains/ui";
+import { AliyunDriveFilesCore } from "@/domains/drive/files";
+import { ListView } from "@/components/ListView";
+import { List } from "@/components/List";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { createJob } from "@/store";
 import { ViewComponent } from "@/types";
 import { SelectionCore } from "@/domains/cur";
 import { FileType } from "@/constants";
-import { AliyunDriveFilesCore } from "@/domains/drive/files";
-import { ListView } from "@/components/ListView";
-import { List } from "@/components/List";
-import { ArrowRight, ChevronRight } from "lucide-solid";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -28,7 +28,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const drive = new DriveCore({ ...(view.query as unknown as DriveItem), id: view.params.id });
   drive.list.pageSize = 50;
   const input = new InputCore({});
-  const selectedFolder = new SelectionCore<AliyunDriveFile>();
+  const fileSelect = new SelectionCore<[AliyunDriveFile, [number, number]]>();
   const btn = new ButtonCore({
     onClick() {
       if (!input.value) {
@@ -49,15 +49,16 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const analysisItem = new MenuItemCore({
     label: "索引",
     async onClick() {
-      if (!selectedFolder.value) {
+      if (!fileSelect.value) {
         app.tip({
           text: ["请先选择要索引的文件夹"],
         });
         return;
       }
+      const [file] = fileSelect.value;
       analysisItem.disable();
       const r = await drive.startScrape({
-        target_folders: [selectedFolder.value],
+        target_folders: [file],
       });
       app.tip({
         text: ["开始索引"],
@@ -78,13 +79,59 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  // new MenuItemCore({
-  //   label: "删除",
-  // });
+  const folderDeletingConfirmDialog = new DialogCore({
+    async onOk() {
+      if (!fileSelect.value) {
+        app.tip({
+          text: ["请先选择要删除的文件"],
+        });
+        return;
+      }
+      const [file, position] = fileSelect.value;
+      driveFileManage.deleteFile({
+        file,
+        position,
+        onLoading(loading) {
+          folderDeletingConfirmDialog.okBtn.setLoading(loading);
+        },
+        onFailed(error) {
+          app.tip({
+            text: ["删除文件失败", error.message],
+          });
+        },
+        onSuccess() {
+          app.tip({
+            text: ["删除成功"],
+          });
+          folderDeletingConfirmDialog.hide();
+          fileSelect.clear();
+        },
+      });
+    },
+  });
+  const folderDeletingItem = new MenuItemCore({
+    label: "删除",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要删除的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      fileSelect.select(driveFileManage.virtualSelectedFolder);
+      folderDeletingConfirmDialog.setTitle(`确认删除 '${file.name}' 吗？`);
+      folderDeletingConfirmDialog.show();
+      fileMenu.hide();
+    },
+  });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
-    items: [analysisItem],
+    items: [analysisItem, folderDeletingItem],
+    onHidden() {
+      driveFileManage.clearVirtualSelected();
+    },
   });
 
   const [state, setState] = createSignal(drive.state);
@@ -133,7 +180,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         </div>
         <div class="flex-1 flex space-x-2 max-w-full max-h-full overflow-x-auto bg-white">
           <For each={columns()}>
-            {(column, x) => {
+            {(column, columnIndex) => {
               return (
                 <ScrollView
                   store={column.view}
@@ -154,17 +201,15 @@ export const DriveProfilePage: ViewComponent = (props) => {
                     <div>
                       <List
                         store={column.list}
-                        renderItem={(folder, index) => {
+                        renderItem={(folder, fileIndex) => {
                           // @ts-ignore
-                          const { file_id, name, type, selected } = folder;
+                          const { name, type, selected, hover } = folder;
                           return (
                             <div
                               onContextMenu={(event) => {
                                 event.preventDefault();
                                 const { x, y } = event;
-                                if (type === FileType.Folder) {
-                                  selectedFolder.select(folder);
-                                }
+                                driveFileManage.virtualSelect(folder, [columnIndex(), fileIndex]);
                                 fileMenu.toggle({
                                   x,
                                   y,
@@ -175,9 +220,10 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                 class="flex items-center justify-between p-2 cursor-pointer rounded-sm hover:bg-slate-300"
                                 classList={{
                                   "bg-slate-200": selected,
+                                  "outline outline-2 outline-slate-800": hover,
                                 }}
-                                onClick={() => {
-                                  driveFileManage.select(folder, [x(), index]);
+                                onClick={(event) => {
+                                  driveFileManage.select(folder, [columnIndex(), fileIndex]);
                                 }}
                               >
                                 <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">{name}</div>
@@ -205,6 +251,12 @@ export const DriveProfilePage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <DropdownMenu store={fileMenu}></DropdownMenu>
+      <Dialog store={folderDeletingConfirmDialog}>
+        <div>
+          <p>该操作将删除云盘文件</p>
+          <p>该文件对应影视剧将无法观看，请谨慎操作</p>
+        </div>
+      </Dialog>
     </>
   );
 };

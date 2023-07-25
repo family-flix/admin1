@@ -3,14 +3,13 @@
  */
 import { For, Show, createSignal } from "solid-js";
 
-import { ParsedVideoInfo, VideoKeys, VIDEO_ALL_KEYS, VIDEO_KEY_NAME_MAP } from "@/utils";
-import { Textarea } from "@/components/ui/textarea";
+import { VIDEO_ALL_KEYS, VIDEO_KEY_NAME_MAP } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { ButtonCore } from "@/domains/ui/button";
 import { InputCore } from "@/domains/ui/input";
 import { ViewComponent } from "@/types";
 import { RequestCore } from "@/domains/client";
-import { parse_video_file_name } from "@/services";
+import { ParsedVideoInfo, VideoKeys, parse_video_file_name } from "@/services";
 import { Input } from "@/components/ui/input";
 
 export const VideoParsingPage: ViewComponent = (props) => {

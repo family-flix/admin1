@@ -6,45 +6,62 @@ import { RequestCore } from "@/domains/client";
 import { FileType } from "@/constants";
 import { ScrollViewCore } from "@/domains/ui";
 
-import { fetchDriveFiles, AliyunDriveFile } from "./services";
+import { fetchDriveFiles, AliyunDriveFile, deleteFileOfDrive } from "./services";
 import { AliyunFilePath } from "./types";
+import { Result } from "@/types";
 
 type FileColumn = {
   list: ListCore<typeof fetchDriveFiles, AliyunDriveFile>;
   view: ScrollViewCore;
 };
 enum Events {
+  Initialized,
   FoldersChange,
   PathsChange,
   SelectFolder,
+  LoadingChange,
+  StateChange,
 }
 type TheTypesOfEvents = {
+  [Events.Initialized]: void;
   [Events.FoldersChange]: FileColumn[];
   [Events.PathsChange]: { file_id: string; name: string }[];
   [Events.SelectFolder]: [AliyunDriveFile, [number, number]];
+  [Events.LoadingChange]: boolean;
+  [Events.StateChange]: AliyunDriveFilesState;
 };
 type AliyunDriveFilesProps = {
   id: string;
+};
+type AliyunDriveFilesState = {
+  initialized: boolean;
+  curFolder: AliyunDriveFile | null;
+  tmpHoverFile: [AliyunDriveFile, [number, number]] | null;
 };
 
 export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   id: string;
   loading = false;
-  selectedFolder: AliyunDriveFile = {
-    type: FileType.Folder,
-    file_id: "root",
-    name: "文件",
-    parent_paths: [],
-  };
+  initialized = false;
+  selectedFolder: AliyunDriveFile | null = null;
+  virtualSelectedFolder: [AliyunDriveFile, [number, number]] | null = null;
+  tmpSelectedColumn: FileColumn | null = null;
   paths: AliyunFilePath[] = [
     {
       file_id: "root",
       name: "文件",
     },
   ];
-
   /** 文件夹列表 */
   folderColumns: FileColumn[] = [];
+  get state() {
+    return {
+      initialized: this.initialized,
+      curFolder: this.selectedFolder,
+      tmpHoverFile: this.virtualSelectedFolder,
+    };
+  }
+
   constructor(props: AliyunDriveFilesProps) {
     super();
 
@@ -70,6 +87,17 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
         });
         return response;
       },
+    });
+    list.onStateChange((response) => {
+      if (response.initial === false) {
+        this.initialized = true;
+        this.emit(Events.StateChange, { ...this.state });
+      }
+      this.emit(Events.FoldersChange, [...this.folderColumns]);
+    });
+    list.onLoadingChange((loading) => {
+      this.loading = loading;
+      this.emit(Events.LoadingChange, loading);
     });
     const scrollView = new ScrollViewCore({
       onReachBottom() {
@@ -97,21 +125,22 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 选中文件/文件夹 */
   select(folder: AliyunDriveFile, index: [number, number]) {
-    if (folder.type === FileType.File) {
-      return;
-    }
+    this.selectedFolder = folder;
     this.emit(Events.SelectFolder, [folder, index]);
-    //     this.curFolder = folder;
-    //     this.selectedFolderPos = index;
     const [x, y] = index;
     const column = this.folderColumns[x];
     column.list.modifyItem((f) => {
       return {
         ...f,
         selected: f.file_id === folder.file_id,
+        hover: false,
       };
     });
     const selectedFolder = column.list.response.dataSource[y];
+    if (folder.type === FileType.File) {
+      // @todo 获取文件详情
+      return;
+    }
     (() => {
       if (x < this.folderColumns.length - 1) {
         this.replaceColumn(folder, x);
@@ -129,6 +158,70 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     })();
     this.emit(Events.PathsChange, [...this.paths]);
   }
+  virtualSelect(folder: AliyunDriveFile, position: [number, number]) {
+    this.virtualSelectedFolder = [folder, position];
+    this.emit(Events.SelectFolder, [folder, position]);
+    const [x, y] = position;
+    const column = this.folderColumns[x];
+    this.tmpSelectedColumn = column;
+    column.list.modifyItem((f) => {
+      return {
+        ...f,
+        hover: f.file_id === folder.file_id,
+      };
+    });
+  }
+  clear() {
+    this.selectedFolder = null;
+  }
+  clearVirtualSelected() {
+    this.virtualSelectedFolder = null;
+    if (!this.tmpSelectedColumn) {
+      return;
+    }
+    const column = this.tmpSelectedColumn;
+    this.tmpSelectedColumn = null;
+    column.list.modifyItem((f) => {
+      return {
+        ...f,
+        hover: false,
+      };
+    });
+  }
+  async deleteFile(options: {
+    file: {
+      file_id: string;
+    };
+    position: [number, number];
+    onLoading?: (loading: boolean) => void;
+    onFailed?: (error: Error) => void;
+    onSuccess?: () => void;
+  }) {
+    const { file, position, onLoading, onFailed, onSuccess } = options;
+    const [columnIndex, fileIndex] = position;
+    const folderColumns = this.folderColumns;
+    const folderDeletingRequest = new RequestCore(deleteFileOfDrive, {
+      onLoading,
+      onFailed,
+      onSuccess: () => {
+        const column = folderColumns[columnIndex];
+        column.list.deleteItem((f) => {
+          if (f.file_id === file.file_id) {
+            return true;
+          }
+          return false;
+        });
+        this.clearFolderColumns();
+        if (onSuccess) {
+          onSuccess();
+        }
+      },
+    });
+    return folderDeletingRequest.run({
+      drive_id: this.id,
+      file_id: file.file_id,
+    });
+  }
 
   onFolderColumnChange(handler: Handler<TheTypesOfEvents[Events.FoldersChange]>) {
     return this.on(Events.FoldersChange, handler);
@@ -138,5 +231,11 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   }
   onSelectFolder(handler: Handler<TheTypesOfEvents[Events.SelectFolder]>) {
     return this.on(Events.SelectFolder, handler);
+  }
+  onLoadingChange(handler: Handler<TheTypesOfEvents[Events.LoadingChange]>) {
+    return this.on(Events.LoadingChange, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
   }
 }

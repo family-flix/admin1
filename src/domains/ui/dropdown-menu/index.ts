@@ -12,6 +12,12 @@ enum Events {
 type TheTypesOfEvents = {
   [Events.StateChange]: DropdownMenuState;
 };
+type DropdownMenuProps = {
+  side?: Side;
+  align?: Align;
+  items?: MenuItemCore[];
+  onHidden?: () => void;
+};
 type DropdownMenuState = {
   items: MenuItemCore[];
   open: boolean;
@@ -30,22 +36,20 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
   items: MenuItemCore[] = [];
 
   constructor(
-    options: Partial<{
-      _name: string;
-      side: Side;
-      align: Align;
-      items: MenuItemCore[];
-    }> = {}
+    props: {
+      _name?: string;
+    } & DropdownMenuProps = {}
   ) {
-    super(options);
+    super(props);
 
-    const { _name, side, align, items = [] } = options;
+    const { _name, side, align, items = [], onHidden } = props;
     this.state.items = items;
-    // this.listenItems(items);
     this.menu = new MenuCore({ side, align, items, _name: _name ? `${_name}__menu` : "menu-in-dropdown" });
     this.menu.onHide(() => {
-      // console.log("menu is hidden");
       this.menu.reset();
+      if (onHidden) {
+        onHidden();
+      }
     });
   }
 

@@ -174,10 +174,7 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "未识别影视剧",
       icon: <EyeOff class="w-6 h-6" />,
-      link: "/home/unknown_tv/tv",
-      // onClick() {
-      //   router.push("/home/unknown_tv");
-      // },
+      link: "/home/unknown_tv",
     },
     {
       text: "任务",
