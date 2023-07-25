@@ -77,7 +77,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
         drive_id: this.id,
         file_id,
       },
-      processor(response, originalResponse) {
+      processor: (response, originalResponse) => {
         list.setParams((prev) => {
           return {
             ...prev,
@@ -85,7 +85,16 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
             next_marker: originalResponse.next_marker,
           };
         });
-        return response;
+        return {
+          ...response,
+          dataSource: response.dataSource.map((file) => {
+            const parent_paths = this.paths.slice(1);
+            return {
+              ...file,
+              parent_paths,
+            };
+          }),
+        };
       },
     });
     list.onStateChange((response) => {

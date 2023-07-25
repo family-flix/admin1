@@ -22,6 +22,7 @@ import {
 import {
   add_file_sync_task_of_tv,
   fetch_folder_can_add_sync_task,
+  fetch_partial_season,
   fetch_partial_tv,
   fetch_seasons,
   fetch_tv_list,
@@ -53,14 +54,14 @@ import { consumeAction, pendingActions } from "@/store/actions";
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  const tvList = new ListCore(new RequestCore(fetch_seasons), {
+  const seasonList = new ListCore(new RequestCore(fetch_seasons), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
       refreshBtn.setLoading(loading);
     },
   });
-  const partialTVRequest = new RequestCore(fetch_partial_tv);
+  const partialSeasonRequest = new RequestCore(fetch_partial_season);
   const tvSelection = new SelectionCore<TVSeasonItem>();
   const driveSelection = new SelectionCore<DriveCore>({
     onChange(v) {
@@ -71,7 +72,7 @@ export const TVManagePage: ViewComponent = (props) => {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
-      tvList.refresh();
+      seasonList.refresh();
     },
     onFailed(error) {
       app.tip({
@@ -169,21 +170,20 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const refreshPartialTV = async () => {
-    const tv_id = tvSelection.value?.tv_id;
-    if (!tv_id) {
-      tvList.refresh();
+    const season_id = tvSelection.value?.id;
+    if (!season_id) {
+      seasonList.refresh();
       return;
     }
-    const r = await partialTVRequest.run({ tv_id });
+    const r = await partialSeasonRequest.run({ season_id });
     if (r.error) {
       app.tip({
         text: ["获取电视剧最新信息失败", r.error.message],
       });
       return;
     }
-    tvList.modifyItem((item) => {
-      const { id } = item;
-      if (id !== tv_id) {
+    seasonList.modifyItem((item) => {
+      if (item.id !== season_id) {
         return item;
       }
       return {
@@ -236,12 +236,12 @@ export const TVManagePage: ViewComponent = (props) => {
       if (!input1.value) {
         return;
       }
-      tvList.search({ name: input1.value });
+      seasonList.search({ name: input1.value });
     },
   });
   const resetBtn = new ButtonCore({
     onClick() {
-      tvList.reset();
+      seasonList.reset();
       input1.clear();
     },
   });
@@ -333,7 +333,7 @@ export const TVManagePage: ViewComponent = (props) => {
       }
       const job = job_res.data;
       job.onFinish(() => {
-        tvList.refresh();
+        seasonList.refresh();
         syncAllTVBtn.setLoading(false);
       });
       job.onPause(() => {
@@ -353,14 +353,14 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const refreshBtn = new ButtonCore({
     onClick() {
-      tvList.refresh();
+      seasonList.refresh();
     },
   });
   const scrollView = new ScrollViewCore({
     pullToRefresh: false,
   });
 
-  const [tvListResponse, setTVListResponse] = createSignal(tvList.response);
+  const [tvListResponse, setTVListResponse] = createSignal(seasonList.response);
   const [folders, setFolders] = createSignal<
     {
       file_id: string;
@@ -382,7 +382,7 @@ export const TVManagePage: ViewComponent = (props) => {
   driveList.onStateChange((nextResponse) => {
     setDriveResponse(nextResponse);
   });
-  tvList.onStateChange((nextState) => {
+  seasonList.onStateChange((nextState) => {
     // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
     setTVListResponse(nextState);
   });
@@ -409,7 +409,7 @@ export const TVManagePage: ViewComponent = (props) => {
   // setResourceState(nextState);
   // });
   scrollView.onReachBottom(() => {
-    tvList.loadMore();
+    seasonList.loadMore();
   });
   scrollView.onScroll(() => {
     tipPopover.hide();
@@ -421,14 +421,14 @@ export const TVManagePage: ViewComponent = (props) => {
       return;
     }
     consumeAction("deleteTV");
-    tvList.deleteItem((tv) => {
+    seasonList.deleteItem((tv) => {
       if (tv.id === deleteTV.tv_id) {
         return true;
       }
       return false;
     });
   });
-  tvList.init();
+  seasonList.init();
   driveList.init();
 
   return (
@@ -456,7 +456,7 @@ export const TVManagePage: ViewComponent = (props) => {
             </div>
             <div class="mt-4">
               <ListView
-                store={tvList}
+                store={seasonList}
                 skeleton={
                   <div>
                     <div class="rounded-md border border-slate-300 bg-white shadow-sm">

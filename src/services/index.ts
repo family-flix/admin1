@@ -133,6 +133,40 @@ export async function fetch_partial_tv(params: { tv_id: string }) {
   return Result.Ok(resp.data);
 }
 
+/*
+ * 获取电视剧部分详情
+ */
+export async function fetch_partial_season(params: { season_id: string }) {
+  const { season_id } = params;
+  const resp = await request.get<
+    ListResponse<{
+      id: string;
+      tv_id: string;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      first_air_date: string;
+      popularity: string;
+      episode_count: number;
+      season_count: number;
+      cur_episode_count: number;
+      cur_season_count: number;
+      episode_sources: number;
+      size_count: number;
+      size_count_text: string;
+      incomplete: boolean;
+      need_bind: boolean;
+      sync_task: { id: string } | null;
+      tips: string[];
+    }>
+  >(`/api/admin/season/${season_id}/partial`);
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok(resp.data);
+}
+
 /**
  * tv 列表中的元素
  */

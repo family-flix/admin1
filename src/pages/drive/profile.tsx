@@ -49,17 +49,18 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const analysisItem = new MenuItemCore({
     label: "索引",
     async onClick() {
-      if (!fileSelect.value) {
+      if (!driveFileManage.virtualSelectedFolder) {
         app.tip({
-          text: ["请先选择要索引的文件夹"],
+          text: ["请先选择要删除的文件"],
         });
         return;
       }
-      const [file] = fileSelect.value;
+      const [file] = driveFileManage.virtualSelectedFolder;
       analysisItem.disable();
       const r = await drive.startScrape({
         target_folders: [file],
       });
+      driveFileManage.clearVirtualSelected();
       app.tip({
         text: ["开始索引"],
       });
@@ -222,7 +223,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                   "bg-slate-200": selected,
                                   "outline outline-2 outline-slate-800": hover,
                                 }}
-                                onClick={(event) => {
+                                onClick={() => {
                                   driveFileManage.select(folder, [columnIndex(), fileIndex]);
                                 }}
                               >
