@@ -65,12 +65,12 @@ type DriveState = DriveItem & {
 export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   static Delay = (props: { id: string }) => {};
 
-  /** 网盘id */
+  /** 云盘id */
   id: string;
   name: string;
   /** 刮削状态轮询定时器 */
   timer: NodeJS.Timer | null = null;
-  /** 网盘状态 */
+  /** 云盘状态 */
   state: DriveState;
   /** 表单值 */
   values: Partial<{
@@ -249,7 +249,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     });
     // this.emit(Events.StateChange, { ...this.state });
   }
-  /** 刷新网盘基本信息 */
+  /** 刷新云盘基本信息 */
   async refresh() {
     const r = await this._refresh();
     if (r.error) {
@@ -282,7 +282,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     this.tip({ text: ["领取成功"] });
     this.emit(Events.StateChange, { ...this.state });
   }
-  /** 设置网盘索引根目录 */
+  /** 设置云盘索引根目录 */
   async setRootFolder(file_id: string) {
     const r = await setDriveRootFolderId({
       root_folder_id: file_id,
@@ -298,12 +298,12 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
     return Result.Ok(null);
   }
-  /** 输入网盘 refresh_token */
+  /** 输入云盘 refresh_token */
   setRefreshToken(token: string) {
     this.values.refresh_token = token;
   }
   refreshTokenRequest = new RequestCore(setAliyunDriveRefreshToken);
-  /** 提交网盘 refresh_token */
+  /** 提交云盘 refresh_token */
   async submitRefreshToken() {
     const { refresh_token } = this.values;
     if (!refresh_token) {

@@ -4,6 +4,7 @@
 import qs from "qs";
 import { Handler } from "mitt";
 import { pathToRegexp } from "path-to-regexp";
+import parse from "url-parse";
 
 import { BaseDomain } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
@@ -146,8 +147,8 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   /** 判断给定的 pathname 是否有匹配的内容 */
-  async checkMatch({ pathname, type }: { pathname: string; type: RouteAction }) {
-    // console.log(...this.log("checkMatch - ", this.title, pathname, this.configs, this.subViews));
+  async checkMatch({ pathname, search, type }: { pathname: string; search: string; type: RouteAction }) {
+    console.log(...this.log("checkMatch - ", this.title, pathname, search));
     if (this.configs.length === 0) {
       return Result.Err("未配置子视图");
     }
@@ -155,7 +156,10 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       const msg = this.tip({ text: ["请传入 pathname"] });
       return Result.Err(msg);
     }
-    const targetPathname = pathname;
+    const { pathname: p, query: q } = parse(pathname);
+    const queryString = search || q;
+    // console.log(...this.log("checkMatch - after parse", typeof q));
+    const targetPathname = p;
     const matchedRoute = this.configs.find((route) => {
       const { regexp } = route;
       const strictMatch = regexp.test(targetPathname);
@@ -179,7 +183,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       targetPath: targetPathname,
       keys,
     });
-    const query = buildQuery(targetPathname);
+    const query = buildQuery(queryString);
     matchedSubView.query = query;
     matchedSubView.params = params;
     // console.log(...this.log("match", matchedSubView._name));
@@ -203,7 +207,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.ViewsChange, [...this.subViews]);
     this.curView.show();
   }
-  private setSubViews(
+  setSubViews(
     subView: RouteViewCore,
     extra: {
       pathname: string;

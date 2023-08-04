@@ -557,9 +557,9 @@ export class ListCore<
   /**
    * 手动修改当前 search
    */
-  modifySearch(fn: (v: Partial<FetchParams>) => FetchParams) {
+  modifySearch(fn: (v: FetchParams) => FetchParams) {
     this.params = {
-      ...fn(omit(this.params, ["page", "pageSize"])),
+      ...fn(this.params),
       page: this.params.page,
       pageSize: this.params.pageSize,
     };

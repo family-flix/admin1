@@ -1,10 +1,12 @@
 // import { useEffect, useRef, useState } from "react";
+import { Match, Switch, createSignal, onMount } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
-import { Show, createSignal, onMount } from "solid-js";
-
-import { ImageCore } from "@/domains/ui/image";
-import { connect } from "@/domains/ui/image/connect.web";
 import { effect } from "solid-js/web";
+import { Image, ImageOff } from "lucide-solid";
+
+import { ImageCore, ImageStep } from "@/domains/ui/image";
+import { connect } from "@/domains/ui/image/connect.web";
+import { cn } from "@/utils";
 
 export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttributes<HTMLImageElement>) {
   let $img: HTMLImageElement | undefined = undefined;
@@ -28,14 +30,29 @@ export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttrib
     image.updateSrc(props.src);
   });
 
-  const src = () => state().src;
-  const alt = () => state().alt;
-  const fit = () => state().fit;
-  // const { src, alt, fit } = state();
-
   return (
-    <Show when={!!src()} fallback={<div ref={$img} class={props.class}></div>}>
-      <img ref={$img} class={props.class} style={{ "object-fit": fit() }} src={src()} alt={alt()} />
-    </Show>
+    <Switch>
+      <Match when={state().step === ImageStep.Failed}>
+        <div class={cn(props.class, "flex items-center justify-center bg-slate-200")}>
+          <ImageOff class="w-8 h-8 text-slate-500" />
+        </div>
+      </Match>
+      <Match when={state().step === ImageStep.Pending}>
+        <div ref={$img} class={cn(props.class, "flex items-center justify-center bg-slate-200")}>
+          <Image class="w-8 h-8 text-slate-500" />
+        </div>
+      </Match>
+      <Match when={[ImageStep.Loading, ImageStep.Loaded].includes(state().step)}>
+        <img
+          class={props.class}
+          style={{ "object-fit": state().fit }}
+          src={state().src}
+          alt={state().alt}
+          onError={() => {
+            image.handleError();
+          }}
+        />
+      </Match>
+    </Switch>
   );
 }

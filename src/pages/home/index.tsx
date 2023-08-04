@@ -70,6 +70,9 @@ export const HomePage: ViewComponent = (props) => {
 
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
 
+  driveList.onLoadingChange((loading) => {
+    refreshBtn.setLoading(loading);
+  });
   driveList.onStateChange((nextState) => {
     setDriveResponse(nextState);
   });
@@ -84,7 +87,7 @@ export const HomePage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView store={scrollView} class="h-screen p-8">
+      <ScrollView store={scrollView} class="h-screen p-8 whitespace-nowrap">
         <h1 class="text-2xl">云盘列表</h1>
         <div class="mt-8">
           <div class="space-x-2">

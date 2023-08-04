@@ -136,7 +136,7 @@ export const DriveCard = (props: {
         return;
       }
       app.copy(JSON.stringify(r.data));
-      app.tip({ text: ["网盘信息已复制到剪贴板"] });
+      app.tip({ text: ["云盘信息已复制到剪贴板"] });
       dropdown.hide();
     },
   });
@@ -243,7 +243,7 @@ export const DriveCard = (props: {
       }
       createJob({
         job_id: r.data,
-        onFinish() {
+        onCompleted() {
           drive.finishAnalysis();
         },
       });
@@ -329,83 +329,85 @@ export const DriveCard = (props: {
         </div>
       </div>
       <Dialog title={name()} store={foldersModal}>
-        <Show
-          when={filesState().initialized}
-          fallback={
-            <div class="position">
-              <div class="flex items-center justify-center space-x-2 text-slate-800">
-                <Loader class="w-6 h-6 animate-spin" />
-                <div>加载中</div>
-              </div>
-            </div>
-          }
-        >
+        <div class="max-w-full overflow-x-auto h-[320px]">
           <Show
-            when={hasFolders()}
+            when={filesState().initialized}
             fallback={
-              <div class="position">
-                <div class="flex items-center justify-center">
-                  <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
+              <div class="position h-full">
+                <div class="flex items-center justify-center space-x-2 text-slate-800">
+                  <Loader class="w-6 h-6 animate-spin" />
+                  <div>加载中</div>
                 </div>
               </div>
             }
           >
-            <div class="flex-1 flex space-x-2 max-w-full max-h-full overflow-x-auto bg-white">
-              <For each={folderColumns()}>
-                {(column, columnIndex) => {
-                  return (
-                    <ScrollView
-                      store={column.view}
-                      class="flex-shrink-0 px-2 pt-2 pb-12 border-r-2 overflow-x-hidden w-[240px] max-h-full overflow-y-auto"
-                    >
-                      <ListView
-                        store={column.list}
-                        skeleton={
-                          <div>
-                            <div class="space-y-2">
-                              <Skeleton class="w-12 h-[24px]" />
-                              <Skeleton class="w-full h-[24px]" />
-                              <Skeleton class="w-4 h-[24px]" />
-                            </div>
-                          </div>
-                        }
+            <Show
+              when={hasFolders()}
+              fallback={
+                <div class="position">
+                  <div class="flex items-center justify-center">
+                    <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
+                  </div>
+                </div>
+              }
+            >
+              <div class="flex-1 flex space-x-2 max-w-full max-h-full overflow-x-auto bg-white">
+                <For each={folderColumns()}>
+                  {(column, columnIndex) => {
+                    return (
+                      <ScrollView
+                        store={column.view}
+                        class="flex-shrink-0 px-2 pt-2 pb-12 border-r-2 overflow-x-hidden w-[240px] max-h-full overflow-y-auto"
                       >
-                        <div>
-                          <List
-                            store={column.list}
-                            renderItem={(folder, index) => {
-                              // @ts-ignore
-                              const { file_id, name, type, selected } = folder;
-                              return (
-                                <div>
-                                  <div
-                                    class="flex items-center justify-between p-2 cursor-pointer rounded-sm hover:bg-slate-300"
-                                    classList={{
-                                      "bg-slate-200": selected,
-                                    }}
-                                    onClick={() => {
-                                      driveFileManage.select(folder, [columnIndex(), index]);
-                                    }}
-                                  >
-                                    <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">{name}</div>
-                                    <Show when={type === FileType.Folder}>
-                                      <ChevronRight class="ml-2 w-4 h-4" />
-                                    </Show>
+                        <ListView
+                          store={column.list}
+                          skeleton={
+                            <div>
+                              <div class="space-y-2">
+                                <Skeleton class="w-12 h-[24px]" />
+                                <Skeleton class="w-full h-[24px]" />
+                                <Skeleton class="w-4 h-[24px]" />
+                              </div>
+                            </div>
+                          }
+                        >
+                          <div>
+                            <List
+                              store={column.list}
+                              renderItem={(folder, index) => {
+                                // @ts-ignore
+                                const { file_id, name, type, selected } = folder;
+                                return (
+                                  <div>
+                                    <div
+                                      class="flex items-center justify-between p-2 cursor-pointer rounded-sm hover:bg-slate-300"
+                                      classList={{
+                                        "bg-slate-200": selected,
+                                      }}
+                                      onClick={() => {
+                                        driveFileManage.select(folder, [columnIndex(), index]);
+                                      }}
+                                    >
+                                      <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">{name}</div>
+                                      <Show when={type === FileType.Folder}>
+                                        <ChevronRight class="ml-2 w-4 h-4" />
+                                      </Show>
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            }}
-                          />
-                        </div>
-                      </ListView>
-                    </ScrollView>
-                  );
-                }}
-              </For>
-              <div class="flex-shrink-0 px-2 pb-12 border-r-2 overflow-x-hidden min-w-[240px] max-h-full overflow-y-auto"></div>
-            </div>
+                                );
+                              }}
+                            />
+                          </div>
+                        </ListView>
+                      </ScrollView>
+                    );
+                  }}
+                </For>
+                <div class="flex-shrink-0 px-2 pb-12 border-r-2 overflow-x-hidden min-w-[240px] max-h-full overflow-y-auto"></div>
+              </div>
+            </Show>
           </Show>
-        </Show>
+        </div>
       </Dialog>
       <Dialog title="添加文件夹" store={createFolderModal}>
         <div>
@@ -416,7 +418,7 @@ export const DriveCard = (props: {
         <Input store={refreshTokenInput} />
       </Dialog>
       <Dialog title="删除云盘" store={confirmDeleteDriveDialog}>
-        <div>删除云盘后可能导致电视剧无法观看等问题</div>
+        <div>删除后索引到的影视剧也会删除</div>
         <div class="mt-2">确认删除该云盘吗？</div>
       </Dialog>
       <Dialog title="设置索引根目录" store={rootFolderConfirmDialog}>

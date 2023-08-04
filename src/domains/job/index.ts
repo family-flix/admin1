@@ -11,11 +11,15 @@ enum Events {
   StateChange,
   Finish,
   Pause,
+  Failed,
+  Completed,
 }
 type TheTypesOfEvents = {
   [Events.StateChange]: JobState;
   [Events.Finish]: void;
   [Events.Pause]: void;
+  [Events.Failed]: void;
+  [Events.Completed]: void;
 };
 type JobState = {
   loading: boolean;
@@ -62,13 +66,12 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
     this.id = id;
   }
 
-  fetch_profile() {}
-  async fetch_status() {
+  async fetchStatus() {
     const r = await fetch_job_status(this.id);
     if (r.error) {
       return Result.Err(r.error);
     }
-    const { status, error } = r.data;
+    const { status } = r.data;
     if ([TaskStatus.Finished, TaskStatus.Paused].includes(status)) {
       this.completed = true;
     }
@@ -78,14 +81,15 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
   waitFinish() {
     this.start = dayjs();
     this.timer = setInterval(async () => {
-      if (dayjs().diff(this.start, "minute") >= 10) {
-        this.finish();
+      if (dayjs().diff(this.start, "minute") >= 30) {
+        this.forceFinish();
         return;
       }
       const r = await fetch_job_status(this.id);
       if (r.error) {
         this.loading = false;
         this.emit(Events.StateChange, { ...this.state });
+        // this.emit(Events.Completed);
         this.tip({ text: ["获取任务状态失败", r.error.message] });
         if (this.timer) {
           clearTimeout(this.timer);
@@ -98,7 +102,13 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
         this.loading = false;
         this.tip({ text: error ? ["任务失败", error] : ["任务被中断"] });
         this.emit(Events.StateChange, { ...this.state });
-        this.emit(Events.Pause);
+        (() => {
+          // if (error) {
+          //   this.emit(Events.Failed);
+          //   return;
+          // }
+          this.emit(Events.Pause);
+        })();
         if (this.timer) {
           clearInterval(this.timer);
           this.timer = null;
@@ -109,7 +119,13 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
         this.loading = false;
         this.tip({ text: error ? ["任务失败", error] : ["任务完成"] });
         this.emit(Events.StateChange, { ...this.state });
-        this.emit(Events.Finish);
+        (() => {
+          // if (error) {
+          //   this.emit(Events.Failed);
+          //   return;
+          // }
+          this.emit(Events.Finish);
+        })();
         if (this.timer) {
           clearInterval(this.timer);
           this.timer = null;
@@ -118,7 +134,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
     }, 5000);
   }
   /** 强制中断任务 */
-  async finish() {
+  async forceFinish() {
     if (this.timer === null) {
       return;
     }
@@ -132,6 +148,12 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
   }
   onPause(handler: Handler<TheTypesOfEvents[Events.Pause]>) {
     return this.on(Events.Pause, handler);
+  }
+  onFailed(handler: Handler<TheTypesOfEvents[Events.Failed]>) {
+    return this.on(Events.Failed, handler);
+  }
+  onCompleted(handler: Handler<TheTypesOfEvents[Events.Completed]>) {
+    return this.on(Events.Completed, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);

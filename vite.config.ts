@@ -9,9 +9,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "hls.js": "hls.js/dist/hls.min.js",
-      "lucide-solid": require.resolve("lucide-solid").replace('cjs', 'esm'),
+      "lucide-solid": require.resolve("lucide-solid").replace("cjs", "esm"),
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  esbuild: {
+    drop: ["console", "debugger"],
   },
   build: {
     target: "esnext",

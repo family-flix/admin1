@@ -8,6 +8,7 @@ import { ContextMenuCore } from "@/domains/ui/context-menu";
 import * as Menu from "@/packages/ui/menu";
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
+import { cn } from "@/utils";
 
 export const ContextMenu = (props: { store: ContextMenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
@@ -24,7 +25,13 @@ export const ContextMenu = (props: { store: ContextMenuCore } & JSX.HTMLAttribut
     <Root store={store}>
       <Trigger store={store}>{props.children}</Trigger>
       <Portal store={store.menu}>
-        <Content class="DropdownMenuContent" store={store}>
+        <Content
+          class={cn(
+            "z-50 min-w-[8rem] w-56 overflow-hidden rounded-md border-2 border-slate-100 bg-white p-1 text-slate-700 shadow-md dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400",
+            props.class
+          )}
+          store={store}
+        >
           <For each={items()}>
             {(item) => {
               const { label } = item;
@@ -32,7 +39,13 @@ export const ContextMenu = (props: { store: ContextMenuCore } & JSX.HTMLAttribut
                 return <ItemWithSub menu={store.menu} store={item}></ItemWithSub>;
               }
               return (
-                <Item class="DropdownMenuItem" store={item}>
+                <Item
+                  class={cn(
+                    "relative flex cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm font-medium outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-700",
+                    "focus:bg-slate-100"
+                  )}
+                  store={item}
+                >
                   {label}
                 </Item>
               );

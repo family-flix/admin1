@@ -34,11 +34,19 @@ import {
 } from "@/services";
 import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/types";
-import { Skeleton, Popover, ScrollView, Input, Button, LazyImage, Dialog } from "@/components/ui";
+import { Skeleton, Popover, ScrollView, Input, Button, LazyImage, Dialog, Checkbox } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ListView } from "@/components/ListView";
-import { ScrollViewCore, DialogCore, PopoverCore, InputCore, ButtonCore, ButtonInListCore } from "@/domains/ui";
+import {
+  ScrollViewCore,
+  DialogCore,
+  PopoverCore,
+  InputCore,
+  ButtonCore,
+  ButtonInListCore,
+  CheckboxCore,
+} from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
@@ -63,6 +71,20 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const partialSeasonRequest = new RequestCore(fetch_partial_season);
   const tvSelection = new SelectionCore<TVSeasonItem>();
+  const onlyInvalidCheckbox = new CheckboxCore({
+    onChange(checked) {
+      seasonList.search({
+        invalid: Number(checked),
+      });
+    },
+  });
+  const duplicatedCheckbox = new CheckboxCore({
+    onChange(checked) {
+      seasonList.search({
+        duplicated: Number(checked),
+      });
+    },
+  });
   const driveSelection = new SelectionCore<DriveCore>({
     onChange(v) {
       setCurDrive(v);
@@ -101,6 +123,7 @@ export const TVManagePage: ViewComponent = (props) => {
         const folders = data as {
           file_id: string;
           file_name: string;
+          parent_paths: string;
           drive: {
             id: string;
             name: string;
@@ -242,6 +265,8 @@ export const TVManagePage: ViewComponent = (props) => {
   const resetBtn = new ButtonCore({
     onClick() {
       seasonList.reset();
+      onlyInvalidCheckbox.uncheck();
+      duplicatedCheckbox.uncheck();
       input1.clear();
     },
   });
@@ -358,6 +383,12 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const scrollView = new ScrollViewCore({
     pullToRefresh: false,
+    onReachBottom() {
+      seasonList.loadMore();
+    },
+    onScroll() {
+      tipPopover.hide();
+    },
   });
 
   const [tvListResponse, setTVListResponse] = createSignal(seasonList.response);
@@ -365,6 +396,7 @@ export const TVManagePage: ViewComponent = (props) => {
     {
       file_id: string;
       file_name: string;
+      parent_paths: string;
       drive: {
         id: string;
         name: string;
@@ -375,9 +407,9 @@ export const TVManagePage: ViewComponent = (props) => {
   const [tips, setTips] = createSignal<string[]>([]);
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(driveSelection.value);
-  effect(() => {
-    console.log(tvListResponse().dataSource[0]?.name);
-  });
+  // effect(() => {
+  //   console.log(tvListResponse().dataSource[0]?.name);
+  // });
 
   driveList.onStateChange((nextResponse) => {
     setDriveResponse(nextResponse);
@@ -393,6 +425,7 @@ export const TVManagePage: ViewComponent = (props) => {
         return {
           file_id,
           file_name: name,
+          parent_paths: "",
           drive: {
             id: "",
             name: "",
@@ -404,15 +437,6 @@ export const TVManagePage: ViewComponent = (props) => {
   folderSearcher.onStateChange((nextState) => {
     const { list } = nextState;
     setFolders(list.dataSource);
-  });
-  // sharedResource.onStateChange((nextState) => {
-  // setResourceState(nextState);
-  // });
-  scrollView.onReachBottom(() => {
-    seasonList.loadMore();
-  });
-  scrollView.onScroll(() => {
-    tipPopover.hide();
   });
   view.onShow(() => {
     const { deleteTV } = pendingActions;
@@ -444,6 +468,14 @@ export const TVManagePage: ViewComponent = (props) => {
               <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={syncAllTVBtn}>
                 更新所有电视剧
               </Button>
+              <div class="flex items-center space-x-2">
+                <Checkbox store={onlyInvalidCheckbox}></Checkbox>
+                <span>待处理</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <Checkbox store={duplicatedCheckbox}></Checkbox>
+                <span>重复内容</span>
+              </div>
             </div>
             <div class="flex items-center space-x-2 mt-4">
               <Input class="" store={input1} />
@@ -616,11 +648,13 @@ export const TVManagePage: ViewComponent = (props) => {
         <div class="h-[360px] overflow-auto">
           <For each={folders()}>
             {(file) => {
-              const { file_name, drive } = file;
+              const { file_name, parent_paths, drive } = file;
               return (
-                <div class="flex items-center justify-between py-4 space-x-2">
-                  <div>{drive.name}</div>
-                  <div>{file_name}</div>
+                <div class="flex items-center justify-between py-4">
+                  <div class="">
+                    <div class="text-sm">{drive.name}</div>
+                    <div>{[parent_paths, file_name].filter(Boolean).join("/")}</div>
+                  </div>
                   <Button
                     store={folderSelectBtn.bind(file)}
                     class="ml-4 cursor-pointer"
@@ -635,6 +669,7 @@ export const TVManagePage: ViewComponent = (props) => {
         </div>
         <div
           onClick={() => {
+            setFolders([]);
             folderSearcher.dialog.show();
           }}
         >

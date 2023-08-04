@@ -152,9 +152,9 @@ function Application() {
     rootView.curView.show();
     rootView.appendSubView(rootView.curView);
   });
-  router.onPathnameChange(({ pathname, type }) => {
+  router.onPathnameChange(({ pathname, search, type }) => {
     // router.log("[]Application - pathname change", pathname);
-    rootView.checkMatch({ pathname, type });
+    rootView.checkMatch({ pathname, search, type });
   });
   app.onTip((msg) => {
     const { text } = msg;

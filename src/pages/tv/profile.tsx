@@ -19,6 +19,8 @@ import {
   delete_tv,
   refresh_tv_profile,
   fetch_episodes_of_season,
+  deleteSeason,
+  EpisodeItemInSeason,
 } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
@@ -35,6 +37,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ListView } from "@/components/ListView";
 import { createJob } from "@/store";
 import { appendAction } from "@/store/actions";
+import { ContextMenuCore } from "@/domains/ui";
+import { MenuItemCore } from "@/domains/ui/menu/item";
+import { ContextMenu } from "@/components/ui";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view, router } = props;
@@ -66,14 +71,20 @@ export const TVProfilePage: ViewComponent = (props) => {
       if (v.seasons.length === 0) {
         return;
       }
-      curEpisodeList.init({
-        tv_id: view.params.id,
-        season_id: v.seasons[0].id,
+      curEpisodeList.setDataSource(v.curSeasonEpisodes);
+      curEpisodeList.modifySearch((search) => {
+        return {
+          ...search,
+          tv_id: view.params.id,
+          season_id: v.seasons[0].id,
+        };
       });
+      // curEpisodeList.init({
+      // });
     },
   });
-  const curFile = new SelectionCore<TVProfile["sources"][number]>();
-  const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
+  const curFile = new SelectionCore<EpisodeItemInSeason["sources"][number]>();
+  // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
   const updateTVProfileRequest = new RequestCore(refresh_tv_profile, {
     onLoading(loading) {
       tmdbSearchDialog.okBtn.setLoading(loading);
@@ -114,16 +125,27 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const refreshProfileRequest = new RequestCore(refresh_tv_profile, {
-    onLoading(loading) {
-      refreshProfileBtn.setLoading(loading);
-    },
-    onSuccess() {
+    // onLoading(loading) {
+    //   refreshProfileBtn.setLoading(loading);
+    // },
+    onSuccess(resp) {
       app.tip({
-        text: ["刷新成功"],
+        text: ["开始刷新"],
       });
-      profileRequest.reload();
+      refreshProfileBtn.setLoading(true);
+      createJob({
+        job_id: resp.job_id,
+        onFinish() {
+          refreshProfileBtn.setLoading(false);
+          profileRequest.reload();
+        },
+        onTip(msg) {
+          app.tip(msg);
+        },
+      });
     },
     onFailed(error) {
+      refreshProfileBtn.setLoading(false);
       app.tip({
         text: ["刷新失败", error.message],
       });
@@ -131,6 +153,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const refreshProfileBtn = new ButtonCore({
     onClick() {
+      refreshProfileBtn.setLoading(true);
       refreshProfileRequest.run({ tv_id: view.params.id });
     },
   });
@@ -197,69 +220,111 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const deleteBtn = new ButtonInListCore<TVProfile["sources"][number]>({
-    onClick(record) {
-      curFile.select(record);
-      deleteConfirmDialog.setTitle(`确认删除 '${record.file_name}' 吗？`);
-      deleteConfirmDialog.show();
-    },
-  });
-  const updateSourceDialog = new DialogCore({
-    title: "详情",
-    footer: false,
-  });
-  const updateParsedTVBtn = new ButtonInListCore<TVProfile["parsed_tvs"][number]>({
-    onClick(record) {
-      // curFile.select(record);
-      // updateSourceDialog.show();
-      // sourceProfileRequest.run({ tv_id: view.params.id, id: record.file_id });
-    },
-  });
-  const deleteParsedTVBtn = new ButtonInListCore<TVProfile["parsed_tvs"][number]>({
-    onClick(record) {
-      curParsedTV.select(record);
-      parsedTVDeletingDialog.setTitle(`确认删除 '${record.name || record.original_name}' 吗？`);
-      parsedTVDeletingDialog.show();
-    },
-  });
-  const updateBtn = new ButtonInListCore<TVProfile["sources"][number]>({
-    onClick(record) {
-      curFile.select(record);
-      updateSourceDialog.show();
-      sourceProfileRequest.run({ tv_id: view.params.id, id: record.file_id });
-    },
-  });
-  const checkbox = new CheckboxCore();
-  const parsedTVDeletingRequest = new RequestCore(delete_parsed_tv_of_tv, {
+  // const deleteBtn = new ButtonInListCore<TVProfile["sources"][number]>({
+  //   onClick(record) {
+  //     curFile.select(record);
+  //     deleteConfirmDialog.setTitle(`确认删除 '${record.file_name}' 吗？`);
+  //     deleteConfirmDialog.show();
+  //   },
+  // });
+  // const updateSourceDialog = new DialogCore({
+  //   title: "详情",
+  //   footer: false,
+  // });
+  // const updateParsedTVBtn = new ButtonInListCore<TVProfile["parsed_tvs"][number]>({
+  //   onClick(record) {
+  //     curFile.select(record);
+  //     updateSourceDialog.show();
+  //     sourceProfileRequest.run({ tv_id: view.params.id, id: record.file_id });
+  //   },
+  // });
+  // const deleteParsedTVBtn = new ButtonInListCore<TVProfile["parsed_tvs"][number]>({
+  //   onClick(record) {
+  //     curParsedTV.select(record);
+  //     parsedTVDeletingDialog.setTitle(`确认删除 '${record.name || record.original_name}' 吗？`);
+  //     parsedTVDeletingDialog.show();
+  //   },
+  // });
+  // const updateBtn = new ButtonInListCore<TVProfile["sources"][number]>({
+  //   onClick(record) {
+  //     curFile.select(record);
+  //     updateSourceDialog.show();
+  //     sourceProfileRequest.run({ tv_id: view.params.id, id: record.file_id });
+  //   },
+  // });
+  const selectedSeason = new SelectionCore<{ id: string; name: string }>();
+  const deleteSeasonRequest = new RequestCore(deleteSeason, {
     onLoading(loading) {
-      parsedTVDeletingDialog.okBtn.setLoading(loading);
+      seasonDeletingConfirmDialog.okBtn.setLoading(loading);
     },
     onFailed(error) {
-      app.tip({ text: ["删除失败", error.message] });
+      app.tip({
+        text: ["删除失败", error.message],
+      });
     },
     onSuccess() {
-      parsedTVDeletingDialog.hide();
-      updateSourceDialog.hide();
+      seasonDeletingConfirmDialog.hide();
       profileRequest.reload();
-      app.tip({ text: ["删除成功"] });
-    },
-    onCompleted() {
-      parsedTVDeletingDialog.okBtn.setLoading(false);
-    },
-  });
-  const parsedTVDeletingDialog = new DialogCore({
-    title: "确认删除吗？",
-    onOk() {
-      if (!curParsedTV.value) {
-        return;
-      }
-      parsedTVDeletingDialog.okBtn.setLoading(true);
-      parsedTVDeletingRequest.run({
-        tv_id: view.params.id,
-        id: curParsedTV.value.id,
+      app.tip({
+        text: ["删除成功"],
       });
     },
   });
+  const seasonDeletingConfirmDialog = new DialogCore({
+    title: "删除季",
+    onOk() {
+      if (!selectedSeason.value) {
+        app.tip({
+          text: ["请先选择要删除的季"],
+        });
+        return;
+      }
+      deleteSeasonRequest.run({
+        season_id: selectedSeason.value.id,
+      });
+    },
+  });
+  const deleteSeasonMenuItem = new MenuItemCore({
+    label: "删除",
+    async onClick() {
+      seasonDeletingConfirmDialog.show();
+      seasonContextMenu.hide();
+    },
+  });
+  const seasonContextMenu = new ContextMenuCore({
+    items: [deleteSeasonMenuItem],
+  });
+  const checkbox = new CheckboxCore();
+  // const parsedTVDeletingRequest = new RequestCore(delete_parsed_tv_of_tv, {
+  //   onLoading(loading) {
+  //     parsedTVDeletingDialog.okBtn.setLoading(loading);
+  //   },
+  //   onFailed(error) {
+  //     app.tip({ text: ["删除失败", error.message] });
+  //   },
+  //   onSuccess() {
+  //     parsedTVDeletingDialog.hide();
+  //     updateSourceDialog.hide();
+  //     profileRequest.reload();
+  //     app.tip({ text: ["删除成功"] });
+  //   },
+  //   onCompleted() {
+  //     parsedTVDeletingDialog.okBtn.setLoading(false);
+  //   },
+  // });
+  // const parsedTVDeletingDialog = new DialogCore({
+  //   title: "确认删除吗？",
+  //   onOk() {
+  //     if (!curParsedTV.value) {
+  //       return;
+  //     }
+  //     parsedTVDeletingDialog.okBtn.setLoading(true);
+  //     parsedTVDeletingRequest.run({
+  //       tv_id: view.params.id,
+  //       id: curParsedTV.value.id,
+  //     });
+  //   },
+  // });
   const scrollView = new ScrollViewCore({
     onReachBottom() {
       curEpisodeList.loadMore();
@@ -340,10 +405,18 @@ export const TVProfilePage: ViewComponent = (props) => {
                       const { id, name } = season;
                       return (
                         <div
-                          class=""
+                          class="cursor-pointer hover:underline"
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            const { x, y } = event;
+                            selectedSeason.select(season);
+                            seasonContextMenu.show({
+                              x,
+                              y,
+                            });
+                          }}
                           onClick={() => {
-                            curEpisodeList.init({
-                              tv_id: view.params.id,
+                            curEpisodeList.search({
                               season_id: id,
                             });
                           }}
@@ -354,19 +427,43 @@ export const TVProfilePage: ViewComponent = (props) => {
                     }}
                   </For>
                 </div>
-                <ListView store={curEpisodeList}>
+                <ListView
+                  store={curEpisodeList}
+                  class="space-y-4"
+                  // skeleton={
+                  //   <div class="space-y-4">
+                  //     <div>
+                  //       <Skeleton class="w-full h-[28px]" />
+                  //       <div class="pl-4 space-y-1">
+                  //         <Skeleton class="w-full h-[24px]" />
+                  //         <Skeleton class="w-18 h-[24px]" />
+                  //       </div>
+                  //     </div>
+                  //     <div>
+                  //       <Skeleton class="w-32 h-[28px]" />
+                  //       <div class="pl-4 space-y-1">
+                  //         <Skeleton class="w-24 h-[24px]" />
+                  //         <Skeleton class="w-full h-[24px]" />
+                  //       </div>
+                  //     </div>
+                  //   </div>
+                  // }
+                >
                   <For each={curEpisodeResponse().dataSource}>
                     {(episode) => {
                       const { id, name, episode_number, sources } = episode;
                       return (
                         <div>
-                          {episode_number}、{name}
-                          <div class="pl-4">
+                          <div class="text-lg">
+                            {episode_number}、{name}
+                          </div>
+                          <div class="pl-4 space-y-1">
                             <For each={sources}>
                               {(source) => {
                                 return (
                                   <div>
                                     <span
+                                      class="text-slate-500"
                                       onClick={() => {
                                         router.push(`/play/${source.file_id}`);
                                       }}
@@ -460,13 +557,21 @@ export const TVProfilePage: ViewComponent = (props) => {
           <label html-for="delete">同时删除云盘内文件</label>
         </div>
       </Dialog>
-      <Dialog store={parsedTVDeletingDialog}>
+      {/* <Dialog store={parsedTVDeletingDialog}>
         <div class="space-y-1">
           <div>删除关联的解析电视剧</div>
           <div>同时还会删除解析电视剧关联的所有季、集</div>
           <div>请仅在需要重新索引关联的文件时进行删除操作</div>
         </div>
+      </Dialog> */}
+      <Dialog store={seasonDeletingConfirmDialog}>
+        <div class="space-y-1">
+          <div>确认删除吗？</div>
+          <div>同时还会删除关联的剧集</div>
+          <div>请仅在需要重新索引关联的文件时进行删除操作</div>
+        </div>
       </Dialog>
+      <ContextMenu store={seasonContextMenu} />
     </>
   );
 };

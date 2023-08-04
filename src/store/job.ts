@@ -24,7 +24,7 @@ export async function refreshJobs() {
   }
   for (let i = 0; i < jobs.length; i += 1) {
     const job = new JobCore({ id: jobs[i] });
-    const status_res = await job.fetch_status();
+    const status_res = await job.fetchStatus();
     if (status_res.error) {
       continue;
     }
@@ -41,7 +41,7 @@ export async function initializeJobs() {
   }
   for (let i = 0; i < jobs.length; i += 1) {
     const job = new JobCore({ id: jobs[i] });
-    const status_res = await job.fetch_status();
+    const status_res = await job.fetchStatus();
     if (status_res.error) {
       continue;
     }
@@ -90,7 +90,7 @@ export function removeJob(job: JobCore) {
     return;
   }
   const targetJob = jobs[index];
-  targetJob.finish();
+  targetJob.forceFinish();
 }
 /**
  * job 工厂函数
@@ -100,10 +100,16 @@ export function createJob(body: {
   job_id: string;
   onTip?: (msg: { icon?: unknown; text: string[] }) => void;
   onFinish?: () => void;
+  onCompleted?: () => void;
 }) {
-  const { job_id, onTip, onFinish } = body;
+  const { job_id, onTip, onFinish, onCompleted } = body;
   const job = new JobCore({ id: job_id });
   job.onFinish(() => {
+    if (onFinish) {
+      onFinish();
+    }
+  });
+  job.onCompleted(() => {
     if (onFinish) {
       onFinish();
     }

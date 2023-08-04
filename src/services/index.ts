@@ -55,7 +55,14 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
-export async function fetch_seasons(params: FetchParams) {
+export async function fetch_seasons(
+  params: FetchParams &
+    Partial<{
+      name: string;
+      invalid: number;
+      duplicated: number;
+    }>
+) {
   const { page, pageSize, ...rest } = params;
   const resp = await request.get<
     ListResponse<{
@@ -198,9 +205,9 @@ export function refresh_tv_profile(body: { tv_id: string; tmdb_id?: number }) {
 }
 
 /**
- * 获取电视剧列表
+ * 获取电影列表
  */
-export async function fetch_movie_list(params: FetchParams & { name: string }) {
+export async function fetch_movie_list(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
   const resp = await request.get<
     ListResponse<{
@@ -236,6 +243,11 @@ export type MovieItem = RequestedResource<typeof fetch_movie_list>["list"][numbe
 export function update_movie_profile(body: { movie_id: string }, profile: {}) {
   const { movie_id } = body;
   return request.post(`/api/admin/movie/${movie_id}/refresh_profile`, profile);
+}
+
+export function delete_movie(body: { movie_id: string }) {
+  const { movie_id } = body;
+  return request.post(`/api/admin/movie/${movie_id}/delete`, {});
 }
 
 /**
@@ -639,7 +651,7 @@ export async function patch_added_files(body: {
 }
 
 /**
- * 根据给定的文件夹名称，在网盘中找到有类似名字的文件夹
+ * 根据给定的文件夹名称，在云盘中找到有类似名字的文件夹
  * @param body
  * @returns
  */
@@ -811,24 +823,32 @@ export async function fetch_tv_profile(body: { tv_id: string }) {
       episode_number: string;
       first_air_date: string;
       sources: {
+        id: string;
         file_id: string;
-        parent_paths: string;
         file_name: string;
+        parent_paths: string;
+        size: string;
+        drive: {
+          id: string;
+          name: string;
+          avatar: string;
+        };
       }[];
     }[];
-    sources: {
-      file_id: string;
-      parent_paths: string;
-      file_name: string;
-    }[];
-    parsed_tvs: {
-      id: string;
-      file_id: string | null;
-      file_name: string | null;
-      name: string | null;
-      original_name: string | null;
-      correct_name: string | null;
-    }[];
+    // sources: {
+    //   id: string;
+    //   file_id: string;
+    //   parent_paths: string;
+    //   file_name: string;
+    // }[];
+    // parsed_tvs: {
+    //   id: string;
+    //   file_id: string | null;
+    //   file_name: string | null;
+    //   name: string | null;
+    //   original_name: string | null;
+    //   correct_name: string | null;
+    // }[];
   }>(`/api/admin/tv/${tv_id}`);
   return r;
 }
@@ -851,18 +871,24 @@ export function fetch_episodes_of_season(body: { tv_id: string; season_id: strin
       id: string;
       name: string;
       overview: string;
-      first_air_date: string;
       episode_number: string;
+      first_air_date: string;
       sources: {
         id: string;
         file_id: string;
         file_name: string;
-        name: string;
         parent_paths: string;
+        size: string;
+        drive: {
+          id: string;
+          name: string;
+          avatar: string;
+        };
       }[];
     }>
   >(`/api/admin/tv/${tv_id}/season/${season_id}/episodes`, rest);
 }
+export type EpisodeItemInSeason = RequestedResource<typeof fetch_episodes_of_season>["list"][number];
 
 export async function fetch_video_preview_info(body: { file_id: string }) {
   const { file_id } = body;
@@ -879,7 +905,7 @@ export async function fetch_video_preview_info(body: { file_id: string }) {
       width: number;
       height: number;
     }[];
-  }>(`/api/admin/files/preview/${file_id}`);
+  }>(`/api/admin/file/${file_id}/preview`);
   if (r.error) {
     return Result.Err(r.error);
   }
@@ -905,4 +931,14 @@ export async function fetch_video_preview_info(body: { file_id: string }) {
       };
     }),
   });
+}
+
+/**
+ * 删除指定季
+ * @param body
+ * @returns
+ */
+export function deleteSeason(body: { season_id: string }) {
+  const { season_id } = body;
+  return request.get(`/api/admin/season/${season_id}/delete`);
 }

@@ -66,7 +66,7 @@ const Root = (props: { store: CheckboxCore } & JSX.HTMLAttributes<HTMLButtonElem
         disabled={state().disabled}
         onClick={(event) => {
           event.stopPropagation();
-          store.check();
+          store.toggle();
         }}
       >
         {props.children}

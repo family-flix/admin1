@@ -1,5 +1,5 @@
 /**
- * @file 网盘相关 service
+ * @file 云盘相关 service
  */
 import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
@@ -26,7 +26,7 @@ async function parseJSONStr<T extends JSONObject>(json: string) {
 /**
  * 新增阿里云盘
  * @param {object} body 提交体
- * @param {string} body.payload 从阿里云盘页面通过脚本生成的网盘信息 json 字符串
+ * @param {string} body.payload 从阿里云盘页面通过脚本生成的云盘信息 json 字符串
  */
 export async function addAliyunDrive(body: { payload: string }) {
   const { payload } = body;
@@ -42,8 +42,8 @@ export async function addAliyunDrive(body: { payload: string }) {
 
 /**
  * 更新阿里云盘信息
- * @param {string} id 网盘 id
- * @param {object} body 网盘信息（目前仅支持传入 name、refresh_token、root_folder_id
+ * @param {string} id 云盘 id
+ * @param {object} body 云盘信息（目前仅支持传入 name、refresh_token、root_folder_id
  */
 export function updateAliyunDrive(id: string, body: JSONObject) {
   return request.post<{ id: string }>(`/api/admin/drive/update/${id}`, body);
@@ -88,11 +88,11 @@ export async function fetchDrives(params: FetchParams) {
         id,
         name,
         avatar,
-        /** 网盘总大小 */
+        /** 云盘总大小 */
         total_size: bytes_to_size(total_size),
-        /** 网盘已使用大小 */
+        /** 云盘已使用大小 */
         used_size: bytes_to_size(used_size),
-        /** 网盘空间使用百分比 */
+        /** 云盘空间使用百分比 */
         used_percent: (() => {
           const percent = (used_size / total_size) * 100;
           if (percent > 100) {
@@ -147,16 +147,16 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
   const { id, name, avatar, nick_name, user_name, total_size, used_size } = r.data;
   return Result.Ok({
     id,
-    /** 网盘名称 */
+    /** 云盘名称 */
     name: name || user_name || nick_name,
     user_name,
-    /** 网盘图标 */
+    /** 云盘图标 */
     avatar,
-    /** 网盘总大小 */
+    /** 云盘总大小 */
     total_size: bytes_to_size(total_size),
-    /** 网盘已使用大小 */
+    /** 云盘已使用大小 */
     used_size: bytes_to_size(used_size),
-    /** 网盘空间使用百分比 */
+    /** 云盘空间使用百分比 */
     used_percent: (() => {
       const percent = (used_size / total_size) * 100;
       if (percent > 100) {
@@ -204,7 +204,7 @@ export async function matchMediaFilesMedia(body: { drive_id: string }) {
 }
 
 /**
- * 获取网盘详情
+ * 获取云盘详情
  * @param {object} body
  * @param {string} body.drive_id 云盘 id
  */
@@ -274,7 +274,7 @@ export async function setAliyunDriveRefreshToken(values: { refresh_token: string
 }
 
 /**
- * 获取指定网盘内文件夹列表
+ * 获取指定云盘内文件夹列表
  * @param {object} body
  * @param {string} body.drive_id 云盘 id
  * @param {string} body.file_id 文件夹id（如果传入说明是获取指定文件夹下的文件列表
@@ -284,7 +284,7 @@ export async function setAliyunDriveRefreshToken(values: { refresh_token: string
  */
 export async function fetchDriveFiles(
   body: {
-    /** 网盘id */
+    /** 云盘id */
     drive_id: string;
     /** 文件夹id */
     file_id: string;
@@ -340,7 +340,7 @@ export async function fetchDriveFiles(
 export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
 
 /**
- * 给指定网盘的指定文件夹内，新增一个新文件夹
+ * 给指定云盘的指定文件夹内，新增一个新文件夹
  * @param {object} body
  * @param {string} body.drive_id 云盘id
  * @param {string} body.name 新文件夹名称
@@ -380,4 +380,14 @@ export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
 export function deleteFileOfDrive(body: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = body;
   return request.get(`/api/admin/drive/${drive_id}/file/${file_id}/delete`);
+}
+
+/**
+ * 重命名指定云盘的文件
+ */
+export function renameFileOfDrive(body: { drive_id: string; file_id: string; name: string }) {
+  const { drive_id, file_id, name } = body;
+  return request.post<void>(`/api/admin/drive/${drive_id}/file/${file_id}/rename`, {
+    name,
+  });
 }

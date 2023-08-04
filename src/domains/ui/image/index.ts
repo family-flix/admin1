@@ -27,33 +27,41 @@ type ImageProps = {
   fit?: "cover" | "contain";
 };
 type ImageState = ImageProps & {
-  loading: boolean;
-  failed: boolean;
-  loaded: boolean;
+  step: ImageStep;
 };
 const prefix = window.location.origin;
 // const prefix = "https://img.funzm.com";
 // const DEFAULT_IMAGE1 = prefix + "/placeholder.png";
 
+export enum ImageStep {
+  Pending,
+  Loading,
+  Loaded,
+  Failed,
+}
+
 export class ImageCore extends BaseDomain<TheTypesOfEvents> {
+  static url(url: string) {
+    if (url.includes("http")) {
+      return url;
+    }
+    return prefix + url;
+  }
+
   src: string;
   width: number;
   height: number;
   fit: "cover" | "contain";
 
-  loading: boolean = false;
-  failed: boolean = false;
-  loaded: boolean = false;
+  step: ImageStep = ImageStep.Pending;
   realSrc?: string;
 
   get state(): ImageState {
     return {
       src: this.src,
+      step: this.step,
       width: this.width,
       height: this.height,
-      loading: this.loading,
-      failed: this.failed,
-      loaded: this.loaded,
     };
   }
 
@@ -68,7 +76,6 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
     this.realSrc = src;
   }
 
-  load(src: string) {}
   updateSrc(src: string) {
     this.realSrc = src;
     this.handleShow();
@@ -76,23 +83,26 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   /** 图片进入可视区域 */
   handleShow() {
     // console.log("[IMAGE_CORE]handleShow", this.realSrc);
-    if (this.realSrc === undefined) {
-      return;
-    }
-    this.src = (() => {
-      if (this.realSrc.includes("http")) {
-        return this.realSrc;
+    (() => {
+      if (!this.realSrc) {
+        this.step = ImageStep.Failed;
+        return;
       }
-      return prefix + this.realSrc;
+      this.step = ImageStep.Loading;
+      this.src = ImageCore.url(this.realSrc);
     })();
     this.emit(Events.StateChange, { ...this.state });
   }
   /** 图片加载完成 */
   handleLoaded() {
+    this.step = ImageStep.Loaded;
     this.emit(Events.Loaded);
+    this.emit(Events.StateChange, { ...this.state });
   }
   /** 图片加载失败 */
   handleError() {
+    this.step = ImageStep.Failed;
+    this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.Error);
   }
 

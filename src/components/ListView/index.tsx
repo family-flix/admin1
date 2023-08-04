@@ -42,7 +42,7 @@ export function ListView(
                 <Show when={response().loading}>
                   <Loader class="w-6 h-6 animate-spin" />
                 </Show>
-                <div class="text-xl">{response().loading ? "加载中" : "列表为空"}</div>
+                <div class="text-center text-xl">{response().loading ? "加载中" : "列表为空"}</div>
               </div>
             </div>
           </div>
@@ -60,7 +60,7 @@ export function ListView(
               <Show when={response().loading} fallback={<ArrowDown class="w-6 h-6" />}>
                 <Loader class="w-6 h-6 animate-spin" />
               </Show>
-              <div class="text-center">{response().loading ? "加载中" : "加载更多"}</div>
+              <div class="text-center text-xl">{response().loading ? "加载中" : "加载更多"}</div>
             </div>
           </div>
         </Show>
@@ -68,19 +68,13 @@ export function ListView(
       <Show when={response().noMore && !response().empty}>
         <div class="mt-4 flex justify-center py-4 text-slate-500">
           <div class="flex items-center space-x-2">
-            <div class="text-center">没有数据了</div>
+            <Show when={response().loading}>
+              <Loader class="w-6 h-6 animate-spin" />
+            </Show>
+            <div class="text-center text-xl">没有数据了</div>
           </div>
         </div>
       </Show>
-      {/* <Show when={response().loading}>
-        <div class="z-10 absolute inset-0 flex items-center justify-center opacity-80 bg-white"></div>
-        <div class="z-20 absolute inset-0 flex items-center justify-center">
-          <div class="flex flex-col items-center justify-center text-slate-500">
-            <Loader class="w-6 h-6 animate-spin" />
-            <div class="mt-4 text-xl">加载中</div>
-          </div>
-        </div>
-      </Show> */}
     </div>
   );
 }

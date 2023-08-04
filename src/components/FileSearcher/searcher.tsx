@@ -51,12 +51,14 @@ export const FileSearcher = (props: { store: FileSearcherCore } & JSX.HTMLAttrib
           <ScrollView store={scrollView} class="relative max-h-[360px] overflow-y-auto p-2 space-y-2">
             <For each={dataSource()}>
               {(file) => {
-                const { name, drive } = file;
+                const { name, parent_paths, drive } = file;
                 return (
                   <div class={cn("py-2", "bg-white")}>
                     <div class="text-slate-500 text-sm">{drive.name}</div>
                     <div class="flex-1 overflow-hidden text-ellipsis">
-                      <div class="break-all">{name}</div>
+                      <div class="break-all">
+                        {parent_paths}/{name}
+                      </div>
                     </div>
                   </div>
                 );

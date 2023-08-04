@@ -25,7 +25,7 @@ export async function check_has_same_name_tv(body: {
 }
 
 /**
- * 将分享文件夹和网盘内的文件夹建立关联关系，用于后续更新
+ * 将分享文件夹和云盘内的文件夹建立关联关系，用于后续更新
  */
 export async function build_link_between_shared_files_with_folder(body: {
   /** 分享链接 */
@@ -34,9 +34,9 @@ export async function build_link_between_shared_files_with_folder(body: {
   file_id: string;
   /** 分享文件夹名称 */
   file_name: string;
-  /** 要建立关联的网盘内文件夹名称 */
+  /** 要建立关联的云盘内文件夹名称 */
   target_file_name?: string;
-  /** 要建立关联的网盘内文件夹id */
+  /** 要建立关联的云盘内文件夹id */
   target_file_id?: string;
 }) {
   return request.post("/api/admin/shared_file/link", body);
@@ -64,7 +64,7 @@ export async function fetch_shared_files(body: { url: string; code?: string; fil
 export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["items"][0];
 
 /**
- * 转存指定的分享文件到指定网盘
+ * 转存指定的分享文件到指定云盘
  * @param body
  * @returns
  */
@@ -77,9 +77,9 @@ export async function save_shared_files(body: {
   file_id: string;
   /** 要转存的文件/文件夹名称 */
   file_name: string;
-  /** 转存到指定网盘 */
+  /** 转存到指定云盘 */
   drive_id: string;
-  /** 转存到指定网盘的哪个文件夹，默认是根目录 */
+  /** 转存到指定云盘的哪个文件夹，默认是根目录 */
   target_folder_id?: string;
 }) {
   return request.post<{ job_id: string }>("/api/admin/shared_file/save", body);

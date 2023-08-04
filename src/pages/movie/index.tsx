@@ -7,18 +7,19 @@ import { Award, BookOpen, Calendar, RotateCw, Search } from "lucide-solid";
 import { ViewComponent } from "@/types";
 import { bind_profile_for_unknown_movie, fetch_movie_list, MovieItem } from "@/services";
 import { ListCore } from "@/domains/list";
-import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
+import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
-import { LazyImage, Input, Button, Skeleton, ScrollView } from "@/components/ui";
+import { LazyImage, Input, Button, Skeleton, ScrollView, Checkbox } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ListView } from "@/components/ListView";
+import { consumeAction, pendingActions } from "@/store/actions";
 
 export const MovieManagePage: ViewComponent = (props) => {
-  const { app, router } = props;
+  const { app, router, view } = props;
 
-  const list = new ListCore(new RequestCore(fetch_movie_list), {
+  const movieList = new ListCore(new RequestCore(fetch_movie_list), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -30,7 +31,7 @@ export const MovieManagePage: ViewComponent = (props) => {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
-      list.refresh();
+      movieList.refresh();
     },
     onFailed(error) {
       app.tip({
@@ -47,18 +48,26 @@ export const MovieManagePage: ViewComponent = (props) => {
       bindSearchedMovieForMovie.run(movieSelection.value.id, searchedTV);
     },
   });
+  const duplicatedCheckbox = new CheckboxCore({
+    onChange(checked) {
+      movieList.search({
+        duplicated: Number(checked),
+      });
+    },
+  });
   const input1 = new InputCore({ placeholder: "请输入名称搜索" });
   const searchBtn = new ButtonCore({
     onClick() {
       if (!input1.value) {
         return;
       }
-      list.search({ name: input1.value });
+      movieList.search({ name: input1.value });
     },
   });
   const resetBtn = new ButtonCore({
     onClick() {
-      list.reset();
+      movieList.reset();
+      duplicatedCheckbox.uncheck();
       input1.clear();
     },
   });
@@ -69,20 +78,33 @@ export const MovieManagePage: ViewComponent = (props) => {
   });
   const refreshBtn = new ButtonCore({
     onClick() {
-      list.refresh();
+      movieList.refresh();
     },
   });
   const scrollView = new ScrollViewCore();
 
-  const [state, setState] = createSignal(list.response);
+  const [state, setState] = createSignal(movieList.response);
 
-  scrollView.onReachBottom(() => {
-    list.loadMore();
+  view.onShow(() => {
+    const { deleteMovie } = pendingActions;
+    if (!deleteMovie) {
+      return;
+    }
+    consumeAction("deleteMovie");
+    movieList.deleteItem((movie) => {
+      if (movie.id === deleteMovie.movie_id) {
+        return true;
+      }
+      return false;
+    });
   });
-  list.onStateChange((nextState) => {
+  scrollView.onReachBottom(() => {
+    movieList.loadMore();
+  });
+  movieList.onStateChange((nextState) => {
     setState(nextState);
   });
-  list.init();
+  movieList.init();
 
   const dataSource = () => state().dataSource;
 
@@ -95,6 +117,10 @@ export const MovieManagePage: ViewComponent = (props) => {
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
+            <div class="flex items-center space-x-2">
+              <Checkbox store={duplicatedCheckbox}></Checkbox>
+              <span>重复内容</span>
+            </div>
           </div>
           <div class="flex items-center space-x-2 mt-4">
             <Input class="" store={input1} />
@@ -107,7 +133,7 @@ export const MovieManagePage: ViewComponent = (props) => {
           </div>
           <div class="mt-4">
             <ListView
-              store={list}
+              store={movieList}
               skeleton={
                 <div>
                   <div class="rounded-md border border-slate-300 bg-white shadow-sm">

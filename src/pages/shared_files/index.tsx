@@ -46,7 +46,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       //   },
       // }),
       // new MenuItemCore({
-      //   label: "转存到默认网盘",
+      //   label: "转存到默认云盘",
       //   onClick() {
       //     sharedResource.transferSelectedFolderToDrive(app.drives[0]);
       //   },

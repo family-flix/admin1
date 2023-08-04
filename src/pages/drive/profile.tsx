@@ -4,7 +4,7 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ChevronRight } from "lucide-solid";
 
-import { Dialog, DropdownMenu, ScrollView, Skeleton } from "@/components/ui";
+import { Dialog, DropdownMenu, Input, ScrollView, Skeleton } from "@/components/ui";
 import { DriveCore } from "@/domains/drive";
 import { AliyunDriveFile } from "@/domains/drive/types";
 import { DriveItem } from "@/domains/drive/services";
@@ -20,7 +20,7 @@ import { SelectionCore } from "@/domains/cur";
 import { FileType } from "@/constants";
 
 export const DriveProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, router, view } = props;
 
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.params.id,
@@ -46,6 +46,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const formatDialog = new DialogCore();
+  const profileItem = new MenuItemCore({
+    label: "详情",
+  });
   const analysisItem = new MenuItemCore({
     label: "索引",
     async onClick() {
@@ -110,6 +113,65 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const nameModifyInput = new InputCore();
+  const nameModifyDialog = new DialogCore({
+    title: "修改名称",
+    onOk() {
+      if (!fileSelect.value) {
+        app.tip({
+          text: ["请先选择要修改的文件"],
+        });
+        return;
+      }
+      const [file, position] = fileSelect.value;
+      if (file.name === nameModifyInput.value) {
+        app.tip({
+          text: ["名称没有变化"],
+        });
+        return;
+      }
+      driveFileManage.rename({
+        file: {
+          file_id: file.file_id,
+          name: nameModifyInput.value,
+        },
+        position,
+        onLoading(loading) {
+          nameModifyDialog.okBtn.setLoading(loading);
+        },
+        onFailed(error) {
+          app.tip({
+            text: ["重命名失败", error.message],
+          });
+        },
+        onSuccess() {
+          app.tip({
+            text: ["重命名成功"],
+          });
+          nameModifyDialog.hide();
+          nameModifyInput.clear();
+          fileSelect.clear();
+        },
+      });
+    },
+  });
+  const nameModifyItem = new MenuItemCore({
+    label: "修改名称",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要修改的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      fileSelect.select(driveFileManage.virtualSelectedFolder);
+      nameModifyDialog.setTitle(`修改 '${file.name}' 名称`);
+      nameModifyInput.change(file.name);
+      nameModifyDialog.show();
+      fileMenu.hide();
+    },
+  });
   const folderDeletingItem = new MenuItemCore({
     label: "删除",
     async onClick() {
@@ -126,10 +188,32 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
+  const linkSharedFileItem = new MenuItemCore({
+    label: "关联分享资源",
+  });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
-    items: [analysisItem, folderDeletingItem],
+    items: [
+      analysisItem,
+      nameModifyItem,
+      new MenuItemCore({
+        label: "播放",
+        onClick() {
+          if (!driveFileManage.virtualSelectedFolder) {
+            app.tip({
+              text: ["请选择要播放的文件"],
+            });
+            return;
+          }
+          const [file] = driveFileManage.virtualSelectedFolder;
+          console.log(file);
+          // if (file.type === FolderType)
+          // router.push(`/play/${file.file_id}`);
+        },
+      }),
+      folderDeletingItem,
+    ],
     onHidden() {
       driveFileManage.clearVirtualSelected();
     },
@@ -227,7 +311,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                   driveFileManage.select(folder, [columnIndex(), fileIndex]);
                                 }}
                               >
-                                <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">{name}</div>
+                                <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis" title={name}>
+                                  {name}
+                                </div>
                                 <Show when={type === FileType.Folder}>
                                   <ChevronRight class="ml-2 w-4 h-4" />
                                 </Show>
@@ -257,6 +343,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
           <p>该操作将删除云盘文件</p>
           <p>该文件对应影视剧将无法观看，请谨慎操作</p>
         </div>
+      </Dialog>
+      <Dialog store={nameModifyDialog}>
+        <Input store={nameModifyInput} />
       </Dialog>
     </>
   );

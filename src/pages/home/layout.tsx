@@ -130,13 +130,13 @@ export const HomeLayout: ViewComponent = (props) => {
     view.curView.show();
     view.appendSubView(view.curView);
   });
-  router.onPathnameChange(({ pathname, type }) => {
+  router.onPathnameChange(({ pathname, search, type }) => {
     // console.log("[LAYOUT]home/layout - router.onPathnameChange", view.state.visible, view.state.layered);
     setPathname(pathname);
     if (view.state.layered) {
       return;
     }
-    view.checkMatch({ pathname, type });
+    view.checkMatch({ pathname, search, type });
   });
   dialog.onTip((msg) => {
     app.tip(msg);
@@ -325,7 +325,7 @@ function Menu(
         <div class="relative inline-block">
           {props.children}
           <Show when={props.badge}>
-            <div class="absolute right-[-8px] top-0 w-3 h-3 rounded-full bg-red-500" />
+            <div class="absolute right-[-8px] top-0 w-2 h-2 rounded-full bg-red-500" />
           </Show>
         </div>
       </div>

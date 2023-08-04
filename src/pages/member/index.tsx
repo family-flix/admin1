@@ -166,7 +166,7 @@ export const MemberManagePage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView store={scrollView} class="p-8">
+      <ScrollView store={scrollView} class="h-screen p-8">
         <h1 class="text-2xl">成员列表</h1>
         <div class="mt-8">
           <div class="space-x-2">

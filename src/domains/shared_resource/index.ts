@@ -18,7 +18,7 @@ enum Events {
   Input,
   /** 获取文件列表成功 */
   StateChange,
-  /** 分享文件夹绑定网盘内文件夹成功 */
+  /** 分享文件夹绑定云盘内文件夹成功 */
   BindSuccess,
   /** 展示指定电视剧详情 */
   ShowTVProfile,
@@ -213,7 +213,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     return Result.Ok(null);
   }
   /**
-   * 将分享文件夹和网盘内同名文件夹进行关联
+   * 将分享文件夹和云盘内同名文件夹进行关联
    */
   async bindFolderInDrive(file: { file_id: string; name: string; type?: "file" | "folder" }) {
     const { file_id, name, type } = file;
@@ -246,7 +246,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.findTheTVHasSameName(this.selectedFolder);
   }
   /**
-   * 在网盘内查找同名影视剧
+   * 在云盘内查找同名影视剧
    */
   async findTheTVHasSameName(file: { file_id: string; name: string }) {
     const { name } = file;
@@ -275,7 +275,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   selectFolder(folder: { file_id: string; name: string }) {
     this.selectedFolder = folder;
   }
-  /** 将指定文件转存到指定网盘 */
+  /** 将指定文件转存到指定云盘 */
   async transferSelectedFolderToDrive(drive: DriveCore) {
     if (!this.url) {
       const msg = this.tip({ text: ["请先指定分享链接"] });

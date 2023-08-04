@@ -19,22 +19,24 @@ async function searchDriveFiles(params: FetchParams & { name: string }) {
         id: string;
         name: string;
       };
+      parent_paths: string;
       name: string;
       type: number;
     }>
-  >("/api/admin/files/search", params);
+  >("/api/admin/file/search", params);
   if (r.error) {
     return Result.Err(r.error);
   }
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((file) => {
-      const { id, file_id, name, type, drive } = file;
+      const { id, file_id, name, parent_paths, type, drive } = file;
       return {
         id,
         file_id,
         name,
         file_name: name,
+        parent_paths,
         type,
         drive,
       };

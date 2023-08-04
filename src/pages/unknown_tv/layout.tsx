@@ -46,7 +46,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
       view.prevView.hide();
     }
   });
-  router.onPathnameChange(({ pathname, type }) => {
+  router.onPathnameChange(({ pathname, search, type }) => {
     console.log("[PAGE]unknown_tv/layout - router.onPathnameChange", pathname, view.state.layered, view.state.visible);
     if (view.state.layered) {
       return;
@@ -54,7 +54,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
     if (!view.state.visible) {
       return;
     }
-    view.checkMatch({ pathname, type });
+    view.checkMatch({ pathname, search, type });
   });
   view.onNotFound(() => {
     console.log("[PAGE]unknown_tv/layout - view.onNotFound");

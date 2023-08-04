@@ -73,6 +73,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   createColumn(folder: { file_id: string; name: string }) {
     const { file_id } = folder;
     const list = new ListCore<typeof fetchDriveFiles, AliyunDriveFile>(new RequestCore(fetchDriveFiles), {
+      pageSize: 30,
       search: {
         drive_id: this.id,
         file_id,
@@ -220,7 +221,44 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
           }
           return false;
         });
-        this.clearFolderColumns();
+        // this.clearFolderColumns();
+        if (onSuccess) {
+          onSuccess();
+        }
+      },
+    });
+    return folderDeletingRequest.run({
+      drive_id: this.id,
+      file_id: file.file_id,
+    });
+  }
+  rename(options: {
+    file: {
+      file_id: string;
+      name: string;
+    };
+    position: [number, number];
+    onLoading?: (loading: boolean) => void;
+    onFailed?: (error: Error) => void;
+    onSuccess?: () => void;
+  }) {
+    const { file, position, onLoading, onFailed, onSuccess } = options;
+    const [columnIndex, fileIndex] = position;
+    const folderColumns = this.folderColumns;
+    const folderDeletingRequest = new RequestCore(deleteFileOfDrive, {
+      onLoading,
+      onFailed,
+      onSuccess: () => {
+        const column = folderColumns[columnIndex];
+        column.list.modifyItem((f) => {
+          if (f.file_id === file.file_id) {
+            return {
+              ...f,
+              name: file.name,
+            };
+          }
+          return f;
+        });
         if (onSuccess) {
           onSuccess();
         }

@@ -6,6 +6,9 @@ export const pendingActions: Partial<{
   deleteTV: {
     tv_id: string;
   };
+  deleteMovie: {
+    movie_id: string;
+  };
 }> = {};
 export function appendAction<T extends keyof typeof pendingActions>(key: T, value: (typeof pendingActions)[T]) {
   pendingActions[key] = value;
