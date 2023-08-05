@@ -88,6 +88,8 @@ enum Events {
   DataSourceAdded,
   StateChange,
   Error,
+  /** 一次请求结束 */
+  Completed,
 }
 type TheTypesOfEvents<T> = {
   [Events.LoadingChange]: boolean;
@@ -95,6 +97,7 @@ type TheTypesOfEvents<T> = {
   [Events.DataSourceAdded]: unknown[];
   [Events.StateChange]: ListState<T>;
   [Events.Error]: Error;
+  [Events.Completed]: void;
 };
 interface ListState<T> extends Response<T> {}
 
@@ -124,7 +127,7 @@ export class ListCore<
   /** 初始查询参数 */
   private initialParams: FetchParams;
   private extraResponse: Record<string, unknown>;
-  private params: FetchParams = { ...DEFAULT_PARAMS };
+  params: FetchParams = { ...DEFAULT_PARAMS };
 
   // 响应数据
   response: Response<T> = { ...DEFAULT_RESPONSE };
@@ -269,6 +272,7 @@ export class ListCore<
     this.params = { ...processedParams };
     this.emit(Events.LoadingChange, false);
     this.emit(Events.ParamsChange, { ...this.params });
+    this.emit(Events.Completed);
     if (res.error) {
       return Result.Err(res.error);
     }
@@ -577,5 +581,8 @@ export class ListCore<
   }
   onError(handler: Handler<TheTypesOfEvents<T>[Events.Error]>) {
     return this.on(Events.Error, handler);
+  }
+  onComplete(handler: Handler<TheTypesOfEvents<T>[Events.Completed]>) {
+    return this.on(Events.Completed, handler);
   }
 }

@@ -16,6 +16,7 @@ import {
   RotateCw,
   Search,
   Send,
+  SlidersHorizontal,
   Smile,
 } from "lucide-solid";
 
@@ -23,9 +24,7 @@ import {
   add_file_sync_task_of_tv,
   fetch_folder_can_add_sync_task,
   fetch_partial_season,
-  fetch_partial_tv,
-  fetch_seasons,
-  fetch_tv_list,
+  fetch_season_list,
   refresh_tv_profile,
   run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
@@ -34,7 +33,19 @@ import {
 } from "@/services";
 import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/types";
-import { Skeleton, Popover, ScrollView, Input, Button, LazyImage, Dialog, Checkbox } from "@/components/ui";
+import {
+  Skeleton,
+  Popover,
+  ScrollView,
+  Input,
+  Button,
+  LazyImage,
+  Dialog,
+  Checkbox,
+  PurePopover,
+  BackToTop,
+  CheckboxGroup,
+} from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ListView } from "@/components/ListView";
@@ -56,13 +67,14 @@ import { DriveCore } from "@/domains/drive";
 import { createJob } from "@/store";
 import { cn } from "@/utils";
 import { FileSearcherCore } from "@/components/FileSearcher/store";
-import { FileType } from "@/constants";
+import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { consumeAction, pendingActions } from "@/store/actions";
+import { CheckboxGroupCore } from "@/domains/ui/checkbox/group";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  const seasonList = new ListCore(new RequestCore(fetch_seasons), {
+  const seasonList = new ListCore(new RequestCore(fetch_season_list), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -82,6 +94,24 @@ export const TVManagePage: ViewComponent = (props) => {
     onChange(checked) {
       seasonList.search({
         duplicated: Number(checked),
+      });
+    },
+  });
+  const sourceCheckboxGroup = new CheckboxGroupCore({
+    options: MediaSourceOptions,
+    onChange(options) {
+      setHasSearch(!!options.length);
+      seasonList.search({
+        language: options.join("|"),
+      });
+    },
+  });
+  const tvGenresCheckboxGroup = new CheckboxGroupCore({
+    options: TVGenresOptions,
+    onChange(options) {
+      setHasSearch(!!options.length);
+      seasonList.search({
+        genres: options.join("|"),
       });
     },
   });
@@ -407,6 +437,7 @@ export const TVManagePage: ViewComponent = (props) => {
   const [tips, setTips] = createSignal<string[]>([]);
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(driveSelection.value);
+  const [hasSearch, setHasSearch] = createSignal(false);
   // effect(() => {
   //   console.log(tvListResponse().dataSource[0]?.name);
   // });
@@ -445,8 +476,8 @@ export const TVManagePage: ViewComponent = (props) => {
       return;
     }
     consumeAction("deleteTV");
-    seasonList.deleteItem((tv) => {
-      if (tv.id === deleteTV.tv_id) {
+    seasonList.deleteItem((season) => {
+      if (season.tv_id === deleteTV.tv_id) {
         return true;
       }
       return false;
@@ -476,6 +507,26 @@ export const TVManagePage: ViewComponent = (props) => {
                 <Checkbox store={duplicatedCheckbox}></Checkbox>
                 <span>重复内容</span>
               </div>
+              <PurePopover
+                align="center"
+                content={
+                  <div class="h-[320px] py-4 pb-8 px-2 overflow-y-auto">
+                    <div>
+                      <CheckboxGroup store={sourceCheckboxGroup} />
+                    </div>
+                    <div>
+                      <CheckboxGroup store={tvGenresCheckboxGroup} />
+                    </div>
+                  </div>
+                }
+              >
+                <div class="relative p-2 cursor-pointer">
+                  <SlidersHorizontal class={cn("w-5 h-5")} />
+                  <Show when={hasSearch()}>
+                    <div class="absolute top-[2px] right-[2px] w-2 h-2 rounded-full bg-red-500"></div>
+                  </Show>
+                </div>
+              </PurePopover>
             </div>
             <div class="flex items-center space-x-2 mt-4">
               <Input class="" store={input1} />
@@ -528,6 +579,7 @@ export const TVManagePage: ViewComponent = (props) => {
                         popularity,
                         sync_task,
                         cur_episode_count,
+                        season_text,
                         episode_count,
                         need_bind,
                       } = season;
@@ -538,7 +590,10 @@ export const TVManagePage: ViewComponent = (props) => {
                               <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
                             </div>
                             <div class="flex-1 w-0 p-4">
-                              <h2 class="text-2xl text-slate-800">{name}</h2>
+                              <div class="flex items-center">
+                                <h2 class="text-2xl text-slate-800">{name}</h2>
+                                <p class="ml-4 text-slate-500">{season_text}</p>
+                              </div>
                               <div class="mt-2 overflow-hidden text-ellipsis">
                                 <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">
                                   {overview}
@@ -587,7 +642,7 @@ export const TVManagePage: ViewComponent = (props) => {
                                   </div>
                                 </Show>
                               </div>
-                              <div class="space-x-2 mt-6 py-2 overflow-hidden whitespace-nowrap">
+                              <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
                                 <Button
                                   store={profileBtn.bind(season)}
                                   variant="subtle"
@@ -748,6 +803,7 @@ export const TVManagePage: ViewComponent = (props) => {
           </div>
         }
       ></Popover>
+      <BackToTop store={scrollView} />
     </>
   );
 };

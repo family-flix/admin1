@@ -35,7 +35,7 @@ export async function refreshJobs() {
   }
 }
 export async function initializeJobs() {
-  const jobs = cache.get<string[]>("jobs", []);
+  const jobs = cache.get<string[]>("jobs", []).filter(Boolean);
   if (jobs.length === 0) {
     return;
   }

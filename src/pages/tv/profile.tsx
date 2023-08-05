@@ -15,7 +15,6 @@ import {
   delete_aliyun_file,
   fetch_tv_profile,
   TVProfile,
-  delete_parsed_tv_of_tv,
   delete_tv,
   refresh_tv_profile,
   fetch_episodes_of_season,
@@ -40,10 +39,32 @@ import { appendAction } from "@/store/actions";
 import { ContextMenuCore } from "@/domains/ui";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { ContextMenu } from "@/components/ui";
+import { cn } from "@/utils";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view, router } = props;
 
+  const profileRequest = new RequestCore(fetch_tv_profile, {
+    onFailed(error) {
+      app.tip({ text: ["获取电视剧详情失败", error.message] });
+    },
+    onSuccess(v) {
+      setProfile(v);
+      if (v.seasons.length === 0) {
+        return;
+      }
+      curEpisodeList.setDataSource(v.curSeasonEpisodes);
+      curSeasonSelector.select(v.curSeason);
+      curEpisodeList.modifySearch((search) => {
+        return {
+          ...search,
+          tv_id: view.params.id,
+          season_id: v.seasons[0].id,
+        };
+      });
+    },
+  });
+  const curSeasonSelector = new SelectionCore<{ id: string }>();
   const sourceList = new ListCore(new RequestCore(fetch_files_of_tv), {
     page: 1,
     search: {
@@ -62,27 +83,7 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
-  const profileRequest = new RequestCore(fetch_tv_profile, {
-    onFailed(error) {
-      app.tip({ text: ["获取电视剧详情失败", error.message] });
-    },
-    onSuccess(v) {
-      setProfile(v);
-      if (v.seasons.length === 0) {
-        return;
-      }
-      curEpisodeList.setDataSource(v.curSeasonEpisodes);
-      curEpisodeList.modifySearch((search) => {
-        return {
-          ...search,
-          tv_id: view.params.id,
-          season_id: v.seasons[0].id,
-        };
-      });
-      // curEpisodeList.init({
-      // });
-    },
-  });
+
   const curFile = new SelectionCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
   const updateTVProfileRequest = new RequestCore(refresh_tv_profile, {
@@ -159,14 +160,14 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const deleteFileRequest = new RequestCore(delete_aliyun_file, {
     onLoading(loading) {
-      deleteConfirmDialog.okBtn.setLoading(loading);
+      fileDeleteConfirmDialog.okBtn.setLoading(loading);
     },
     onFailed(error) {
       app.tip({ text: ["删除文件失败", error.message] });
     },
     onSuccess() {
       app.tip({ text: ["删除文件成功"] });
-      deleteConfirmDialog.hide();
+      fileDeleteConfirmDialog.hide();
       const targetFile = curFile.value;
       if (!targetFile) {
         return;
@@ -178,15 +179,15 @@ export const TVProfilePage: ViewComponent = (props) => {
       // sourceList.deleteItem(target);
     },
   });
-  const deleteTVRequest = new RequestCore(delete_tv, {
+  const tvDeleteRequest = new RequestCore(delete_tv, {
     onLoading(loading) {
-      deleteTVConfirmDialog.okBtn.setLoading(loading);
+      tvDeleteConfirmDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({
         text: ["删除成功"],
       });
-      deleteTVConfirmDialog.hide();
+      tvDeleteConfirmDialog.hide();
       appendAction("deleteTV", {
         tv_id: view.params.id,
       });
@@ -198,18 +199,18 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const deleteTVBtn = new ButtonCore({
+  const tvDeleteBtn = new ButtonCore({
     onClick() {
-      deleteTVConfirmDialog.show();
+      tvDeleteConfirmDialog.show();
     },
   });
-  const deleteTVConfirmDialog = new DialogCore({
+  const tvDeleteConfirmDialog = new DialogCore({
     title: "确认删除该电视剧吗？",
     onOk() {
-      deleteTVRequest.run({ tv_id: view.params.id });
+      tvDeleteRequest.run({ tv_id: view.params.id });
     },
   });
-  const deleteConfirmDialog = new DialogCore({
+  const fileDeleteConfirmDialog = new DialogCore({
     title: "确认删除文件吗？",
     onOk() {
       if (!curFile.value) {
@@ -335,14 +336,22 @@ export const TVProfilePage: ViewComponent = (props) => {
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
   const [sourceResponse, setSourceResponse] = createSignal(sourceList.response);
   const [sourceProfile, setSourceProfile] = createSignal(sourceProfileRequest.response);
+  const [curSeason, setCurSeason] = createSignal(curSeasonSelector.value);
 
+  curSeasonSelector.onStateChange((nextState) => {
+    setCurSeason(nextState);
+  });
   curEpisodeList.onStateChange((nextResponse) => {
     setCurEpisodeResponse(nextResponse);
+  });
+  curEpisodeList.onComplete(() => {
+    curSeasonSelector.select({ id: curEpisodeList.params.season_id as string });
   });
 
   onMount(() => {
     const { id } = view.params;
-    profileRequest.run({ tv_id: id });
+    const season_id = view.query.season_id;
+    profileRequest.run({ tv_id: id, season_id });
   });
 
   return (
@@ -393,11 +402,11 @@ export const TVProfilePage: ViewComponent = (props) => {
                 </div>
               </div>
               <div class="relative z-3 mt-4">
-                <div class="space-x-4">
+                <div class="space-x-4 whitespace-nowrap">
                   <Button store={btn1}>搜索 TMDB</Button>
                   <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
                   <Button store={refreshProfileBtn}>刷新详情</Button>
-                  <Button store={deleteTVBtn}>删除电视剧</Button>
+                  <Button store={tvDeleteBtn}>删除电视剧</Button>
                 </div>
                 <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
                   <For each={profile()?.seasons}>
@@ -405,7 +414,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                       const { id, name } = season;
                       return (
                         <div
-                          class="cursor-pointer hover:underline"
+                          class={cn("cursor-pointer hover:underline", curSeason()?.id === id ? "underline" : "")}
                           onContextMenu={(event) => {
                             event.preventDefault();
                             const { x, y } = event;
@@ -460,15 +469,17 @@ export const TVProfilePage: ViewComponent = (props) => {
                           <div class="pl-4 space-y-1">
                             <For each={sources}>
                               {(source) => {
+                                const { file_id, file_name, parent_paths, drive } = source;
                                 return (
                                   <div>
                                     <span
                                       class="text-slate-500"
+                                      title={`[${drive.name}]${parent_paths}/${file_name}`}
                                       onClick={() => {
-                                        router.push(`/play/${source.file_id}`);
+                                        router.push(`/play/${file_id}`);
                                       }}
                                     >
-                                      {source.parent_paths}/{source.file_name}
+                                      {parent_paths}/{file_name}
                                     </span>
                                   </div>
                                 );
@@ -545,13 +556,13 @@ export const TVProfilePage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <TMDBSearcherDialog store={tmdbSearchDialog} />
-      <Dialog store={deleteTVConfirmDialog}>
+      <Dialog store={tvDeleteConfirmDialog}>
         <div class="flex items-center space-x-2">
           <Checkbox id="delete" store={checkbox} />
           <label html-for="delete">同时删除云盘内文件</label>
         </div>
       </Dialog>
-      <Dialog store={deleteConfirmDialog}>
+      <Dialog store={fileDeleteConfirmDialog}>
         <div class="flex items-center space-x-2">
           <Checkbox id="delete" store={checkbox} />
           <label html-for="delete">同时删除云盘内文件</label>

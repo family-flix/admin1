@@ -12,4 +12,6 @@ export * from "./textarea";
 export * from "./popover";
 export * from "./progress";
 export * from "./image";
+export * from "./back-to-top";
+export * from "./checkbox-group";
 // export * from "./toast";

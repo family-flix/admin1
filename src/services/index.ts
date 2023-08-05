@@ -55,7 +55,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
-export async function fetch_seasons(
+export async function fetch_season_list(
   params: FetchParams &
     Partial<{
       name: string;
@@ -74,6 +74,7 @@ export async function fetch_seasons(
       poster_path: string;
       first_air_date: string;
       popularity: string;
+      season_text: string;
       episode_count: number;
       season_count: number;
       cur_episode_count: number;
@@ -105,7 +106,7 @@ export async function fetch_seasons(
     }),
   });
 }
-export type TVSeasonItem = RequestedResource<typeof fetch_seasons>["list"][number];
+export type TVSeasonItem = RequestedResource<typeof fetch_season_list>["list"][number];
 
 /*
  * 获取电视剧部分详情
@@ -799,8 +800,8 @@ export function delete_aliyun_file(body: { file_id: string }) {
   return request.get(`/api/admin/aliyun/delete/${file_id}`);
 }
 
-export async function fetch_tv_profile(body: { tv_id: string }) {
-  const { tv_id } = body;
+export async function fetch_tv_profile(body: { tv_id: string; season_id?: string }) {
+  const { tv_id, season_id } = body;
   const r = await request.get<{
     id: string;
     name: string;
@@ -816,7 +817,10 @@ export async function fetch_tv_profile(body: { tv_id: string }) {
       name: string;
       overview: string;
     }[];
-    curSeasonEpisodes: {
+    cur_season: {
+      id: string;
+    };
+    cur_season_episodes: {
       id: string;
       name: string;
       overview: string;
@@ -849,8 +853,36 @@ export async function fetch_tv_profile(body: { tv_id: string }) {
     //   original_name: string | null;
     //   correct_name: string | null;
     // }[];
-  }>(`/api/admin/tv/${tv_id}`);
-  return r;
+  }>(`/api/admin/tv/${tv_id}`, { season_id });
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const {
+    id,
+    name,
+    overview,
+    poster_path,
+    backdrop_path,
+    first_air_date,
+    tmdb_id,
+    incomplete,
+    seasons,
+    cur_season,
+    cur_season_episodes,
+  } = r.data;
+  return Result.Ok({
+    id,
+    name,
+    overview,
+    poster_path,
+    backdrop_path,
+    first_air_date,
+    tmdb_id,
+    incomplete,
+    seasons,
+    curSeason: cur_season,
+    curSeasonEpisodes: cur_season_episodes,
+  });
 }
 export type TVProfile = RequestedResource<typeof fetch_tv_profile>;
 export async function delete_episode_in_tv(body: { id: string; tv_id: string }) {

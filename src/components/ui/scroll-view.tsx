@@ -6,6 +6,7 @@ import { Show, createSignal, onMount } from "solid-js";
 import { ArrowDown, ArrowUp, Loader2 } from "lucide-solid";
 
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { connect } from "@/domains/ui/scroll-view/connect.web";
 import { cn } from "@/utils";
 
 export const ScrollView = (
@@ -88,34 +89,18 @@ const Indicator = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLEle
 };
 const Content = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivElement>) => {
   const { store } = props;
-  //   let $page: HTMLDivElement;
-  // const $page = useRef<HTMLDivElement>(null);
-  let $page: HTMLDivElement | undefined = undefined;
 
   const [state, setState] = createSignal(store.state);
 
   store.onStateChange((nextState) => {
     setState(nextState);
   });
-  onMount(() => {
-    if (!$page) {
-      return;
-    }
-    const { clientWidth, clientHeight, scrollHeight } = $page;
-    store.setRect({
-      width: clientWidth,
-      height: clientHeight,
-      contentHeight: scrollHeight,
-    });
-  });
 
-  //   const top = () => state().top;
   const top = () => state().top;
 
   return (
     <div
-      ref={$page}
-      class={props.class}
+      class={cn(props.class, "__a")}
       style={{ transform: `translateY(${top()}px)` }}
       onTouchStart={(event) => {
         // console.log('start');
@@ -136,15 +121,23 @@ const Content = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivEl
         store.endPulling();
       }}
       onScroll={(event) => {
-        if (!$page) {
-          return;
-        }
+        const $page = event.currentTarget;
         store.setRect({
           height: $page.clientHeight,
           contentHeight: $page.scrollHeight,
         });
         store.scroll({
           scrollTop: event.currentTarget.scrollTop,
+        });
+      }}
+      onAnimationEnd={(event) => {
+        const $page = event.currentTarget;
+        connect(store, $page);
+        const { clientWidth, clientHeight, scrollHeight } = $page;
+        store.setRect({
+          width: clientWidth,
+          height: clientHeight,
+          contentHeight: scrollHeight,
         });
       }}
     >

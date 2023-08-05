@@ -192,7 +192,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     const { scrollTop } = event;
     this.emit(Events.Scroll, { scrollTop });
     const { height = 0, contentHeight = 0 } = this.rect;
-    // console.log("[]ScrollViewCore - scroll", scrollTop, height, contentHeight, this.canReachBottom);
+
     if (scrollTop + height + 120 >= contentHeight) {
       if (this.canReachBottom === false) {
         this.emit(Events.ReachBottom);
@@ -239,6 +239,9 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     this.state.top = 0;
     this.state.step = this.pullToRefresh.state;
     this.emit(Events.StateChange, { ...this.state });
+  }
+  scrollTo(position: Partial<{ left: number; top: number }>) {
+    console.log("请在 connect 中实现该方法");
   }
 
   onScroll(handler: Handler<TheTypesOfEvents[Events.Scroll]>) {
