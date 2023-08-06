@@ -2,12 +2,8 @@
  * @file 电视剧详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { LucideEdit3 as Edit3, LucideLoader as Loader, LucideTrash as Trash } from "lucide-solid";
 
 import { ViewComponent } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Element } from "@/components/ui/element";
-import { LazyImage } from "@/components/ui/image";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import {
   fetch_files_of_tv,
@@ -21,25 +17,15 @@ import {
   deleteSeason,
   EpisodeItemInSeason,
 } from "@/services";
+import { createJob, appendAction } from "@/store";
+import { cn } from "@/utils";
+import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage } from "@/components/ui";
+import { ListView } from "@/components/ListView";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
-import { Dialog } from "@/components/ui/dialog";
-import { DialogCore } from "@/domains/ui/dialog";
 import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CheckboxCore } from "@/domains/ui/checkbox";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ListView } from "@/components/ListView";
-import { createJob } from "@/store";
-import { appendAction } from "@/store/actions";
-import { ContextMenuCore } from "@/domains/ui";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { ContextMenu } from "@/components/ui";
-import { cn } from "@/utils";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view, router } = props;
@@ -59,7 +45,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         return {
           ...search,
           tv_id: view.params.id,
-          season_id: v.seasons[0].id,
+          season_id: view.query.season_id || v.seasons[0].id,
         };
       });
     },
@@ -295,7 +281,6 @@ export const TVProfilePage: ViewComponent = (props) => {
   const seasonContextMenu = new ContextMenuCore({
     items: [deleteSeasonMenuItem],
   });
-  const checkbox = new CheckboxCore();
   // const parsedTVDeletingRequest = new RequestCore(delete_parsed_tv_of_tv, {
   //   onLoading(loading) {
   //     parsedTVDeletingDialog.okBtn.setLoading(loading);
@@ -473,7 +458,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                                 return (
                                   <div>
                                     <span
-                                      class="text-slate-500"
+                                      class="text-slate-500 break-all"
                                       title={`[${drive.name}]${parent_paths}/${file_name}`}
                                       onClick={() => {
                                         router.push(`/play/${file_id}`);
@@ -557,15 +542,15 @@ export const TVProfilePage: ViewComponent = (props) => {
       </ScrollView>
       <TMDBSearcherDialog store={tmdbSearchDialog} />
       <Dialog store={tvDeleteConfirmDialog}>
-        <div class="flex items-center space-x-2">
-          <Checkbox id="delete" store={checkbox} />
-          <label html-for="delete">同时删除云盘内文件</label>
+        <div class="">
+          <div>仅删除本地索引记录</div>
+          <div>删除云盘文件请到云盘详情页操作</div>
         </div>
       </Dialog>
       <Dialog store={fileDeleteConfirmDialog}>
-        <div class="flex items-center space-x-2">
-          <Checkbox id="delete" store={checkbox} />
-          <label html-for="delete">同时删除云盘内文件</label>
+        <div class="">
+          <div>仅删除本地记录</div>
+          <div>删除云盘文件请到云盘详情页操作</div>
         </div>
       </Dialog>
       {/* <Dialog store={parsedTVDeletingDialog}>

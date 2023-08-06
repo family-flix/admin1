@@ -417,6 +417,9 @@ export const DriveCard = (props: {
       <Dialog title="修改 refresh_token" store={refreshTokenModal}>
         <Input store={refreshTokenInput} />
       </Dialog>
+      {/* <Dialog title="修改备注" store={refreshTokenModal}>
+        <Input store={refreshTokenInput} />
+      </Dialog> */}
       <Dialog title="删除云盘" store={confirmDeleteDriveDialog}>
         <div>删除后索引到的影视剧也会删除</div>
         <div class="mt-2">确认删除该云盘吗？</div>

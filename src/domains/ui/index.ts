@@ -20,3 +20,5 @@ export * from "./select";
 export * from "./tabs";
 export * from "./toast";
 export * from "./tree";
+export * from "./menu";
+export * from "./menu/item";

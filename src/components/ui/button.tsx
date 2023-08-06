@@ -53,7 +53,9 @@ function Button<T = unknown>(
       <ButtonPrimitive.Loading store={store}>
         <Loader class="animation animate-spin w-4 h-4" />
       </ButtonPrimitive.Loading>
-      <ButtonPrimitive.Text store={store}>{props.children}</ButtonPrimitive.Text>
+      <Show when={props.children}>
+        <ButtonPrimitive.Text store={store}>{props.children}</ButtonPrimitive.Text>
+      </Show>
     </ButtonPrimitive.Root>
   );
 }

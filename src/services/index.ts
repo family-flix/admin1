@@ -154,6 +154,7 @@ export async function fetch_partial_season(params: { season_id: string }) {
       original_name: string;
       overview: string;
       poster_path: string;
+      season_text: string;
       first_air_date: string;
       popularity: string;
       episode_count: number;

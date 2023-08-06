@@ -32,7 +32,7 @@ import {
   TVSeasonItem,
 } from "@/services";
 import { driveList } from "@/store/drives";
-import { ViewComponent } from "@/types";
+import { Result, ViewComponent } from "@/types";
 import {
   Skeleton,
   Popover,
@@ -222,18 +222,17 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const refreshPartialTV = async () => {
-    const season_id = tvSelection.value?.id;
+  const refreshPartialTV = async (id?: string) => {
+    const season_id = id || tvSelection.value?.id;
     if (!season_id) {
-      seasonList.refresh();
-      return;
+      return Result.Err("缺少季 id");
     }
     const r = await partialSeasonRequest.run({ season_id });
     if (r.error) {
       app.tip({
         text: ["获取电视剧最新信息失败", r.error.message],
       });
-      return;
+      return Result.Err(r.error.message);
     }
     seasonList.modifyItem((item) => {
       if (item.id !== season_id) {
@@ -243,6 +242,7 @@ export const TVManagePage: ViewComponent = (props) => {
         ...r.data,
       };
     });
+    return Result.Ok(null);
   };
   const runFileSyncTask = new RequestCore(run_file_sync_task_of_tv, {
     beforeRequest() {
@@ -368,6 +368,19 @@ export const TVManagePage: ViewComponent = (props) => {
       }
       tvSelection.select(record);
       runFileSyncTask.run({ id: record.tv_id });
+    },
+  });
+  const refreshPartialBtn = new ButtonInListCore<TVSeasonItem>({
+    async onClick(record) {
+      refreshPartialBtn.setLoading(true);
+      const r = await refreshPartialTV(record.id);
+      refreshPartialBtn.setLoading(false);
+      if (r.error) {
+        return;
+      }
+      app.tip({
+        text: ["刷新成功"],
+      });
     },
   });
   const profileBtn = new ButtonInListCore<TVSeasonItem>({
@@ -643,6 +656,11 @@ export const TVManagePage: ViewComponent = (props) => {
                                 </Show>
                               </div>
                               <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
+                                <Button
+                                  store={refreshPartialBtn.bind(season)}
+                                  variant="subtle"
+                                  icon={<RotateCw class="w-4 h-4" />}
+                                ></Button>
                                 <Button
                                   store={profileBtn.bind(season)}
                                   variant="subtle"

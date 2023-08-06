@@ -8,7 +8,7 @@ import { request } from "@/utils/request";
 import { Button } from "@/components/ui/button";
 import { LazyImage } from "@/components/ui/image";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { bind_profile_for_unknown_movie, delete_movie, update_movie_profile } from "@/services";
+import { delete_movie, update_movie_profile } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { RequestCore } from "@/domains/client";
 import { ButtonCore } from "@/domains/ui/button";
@@ -16,7 +16,7 @@ import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { DialogCore } from "@/domains/ui";
 import { appendAction } from "@/store/actions";
-import { Dialog } from "@/components/ui";
+import { Dialog, Skeleton } from "@/components/ui";
 
 async function fetch_movie_profile(body: { movie_id: string }) {
   const { movie_id } = body;
@@ -139,7 +139,31 @@ export const MovieProfilePage: ViewComponent = (props) => {
     <>
       <ScrollView store={scrollView} class="h-screen p-8">
         <div class="">
-          <Show when={!!profile()}>
+          <Show
+            when={!!profile()}
+            fallback={
+              <div class="relative">
+                <div class="">
+                  <div>
+                    <div class="relative z-3">
+                      <div class="flex">
+                        <Skeleton class="w-[240px] h-[360px] rounded-lg mr-4 object-cover" />
+                        <div class="flex-1 mt-4">
+                          <Skeleton class="w-full h-[48px]"></Skeleton>
+                          <Skeleton class="mt-6 w-12 h-[36px]"></Skeleton>
+                          <div class="mt-2 space-y-1">
+                            <Skeleton class="w-12 h-[18px]"></Skeleton>
+                            <Skeleton class="w-full h-[18px]"></Skeleton>
+                            <Skeleton class="w-32 h-[18px]"></Skeleton>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          >
             <div class="relative">
               <div class="">
                 <div>
