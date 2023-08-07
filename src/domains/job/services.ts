@@ -121,7 +121,7 @@ export async function fetch_output_lines_of_job(body: { job_id: string; page: nu
       const { content, created } = log;
       return {
         ...JSON.parse(content),
-        created: dayjs(created).format("YYYY/MM/DD HH:mm:ss.SSS"),
+        // created: dayjs(created).format("YYYY/MM/DD HH:mm:ss.SSS"),
       };
     }),
   });

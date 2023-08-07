@@ -8,9 +8,8 @@ import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job } f
 import { RequestCore } from "@/domains/client";
 import { Article } from "@/components/Article";
 import { ViewComponent } from "@/types";
-import { TimerCore } from "@/domains/timer";
 import { TaskStatus } from "@/domains/job/constants";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
+import { ButtonCore } from "@/domains/ui/button";
 import { Button } from "@/components/ui/button";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
@@ -20,8 +19,6 @@ import { ListView } from "@/components/ListView";
 
 export const TaskProfilePage: ViewComponent = (props) => {
   const { app, router, view } = props;
-  // const router = useRouter();
-  // const { id } = router.query as { id: string };
 
   const pauseBtn = new ButtonCore<JobProfile>({
     onClick() {

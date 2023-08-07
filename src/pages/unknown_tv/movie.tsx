@@ -18,7 +18,6 @@ import {
   delete_unknown_movie_list,
   fetch_unknown_movie_list,
 } from "@/services";
-import { FolderCard, FolderCardSkeleton } from "@/components/FolderCard";
 import { Button } from "@/components/ui/button";
 import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
 import { SelectionCore } from "@/domains/cur";
@@ -29,6 +28,7 @@ import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
 import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LazyImage } from "@/components/ui";
 
 export const UnknownMoviePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -90,7 +90,12 @@ export const UnknownMoviePage: ViewComponent = (props) => {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
-      list.refresh();
+      list.deleteItem((movie) => {
+        if (movie.id === cur.value?.id) {
+          return true;
+        }
+        return false;
+      });
     },
   });
   const dialog = new TMDBSearcherDialogCore({
@@ -119,12 +124,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       app.tip({
         text: ["删除成功"],
       });
-      list.deleteItem((item) => {
-        if (item.id === cur.value?.id) {
-          return true;
-        }
-        return false;
-      });
+      list.refresh();
       deleteListConfirmDialog.hide();
     },
   });
@@ -153,7 +153,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
   const dataSource = () => response().dataSource;
 
   return (
-    <div class="px-4">
+    <div class="">
       <div class="my-4 space-x-2">
         <Button icon={<RotateCcw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
           刷新
@@ -164,41 +164,56 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       </div>
       <ListView
         store={list}
-        skeleton={
-          <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
-            <div class="w-[152px] rounded">
-              <FolderCardSkeleton />
-              <div class="flex justify-center mt-2">
-                <Skeleton class="block box-content"></Skeleton>
-              </div>
-            </div>
-          </div>
-        }
+        // skeleton={
+        //   <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+        //     <div class="w-[152px] rounded">
+        //       <FolderCardSkeleton />
+        //       <div class="flex justify-center mt-2">
+        //         <Skeleton class="block box-content"></Skeleton>
+        //       </div>
+        //     </div>
+        //   </div>
+        // }
       >
-        <div class="grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
+        <div class="space-y-4">
           <For each={dataSource()}>
             {(file) => {
-              const { id, name } = file;
+              const { id, name, file_name, parent_paths, drive } = file;
               return (
-                <div class="w-[152px] rounded">
-                  <FolderCard type="folder" name={name} />
-                  <div class="flex justify-center space-x-2 mt-2">
-                    <Button
-                      class="box-content"
-                      variant="subtle"
-                      store={selectMatchedProfileBtn.bind(file)}
-                      icon={<Brush class="w-4 h-4" />}
-                    >
-                      修改
-                    </Button>
-                    <Button
-                      class="box-content"
-                      variant="subtle"
-                      store={deleteBtn.bind(file)}
-                      icon={<Trash class="w-4 h-4" />}
-                    >
-                      删除
-                    </Button>
+                <div class="flex items-center p-4 bg-white rounded-sm">
+                  <div class="mr-2 w-[80px]">
+                    <div class="w-full rounded">
+                      <LazyImage
+                        class="max-w-full max-h-full object-contain"
+                        src={(() => {
+                          return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                        })()}
+                      />
+                    </div>
+                  </div>
+                  <div class="flex-1 mt-2">
+                    <div class="text-lg">{name}</div>
+                    <div class="mt-2 text-sm text-slate-800 break-all">
+                      [{drive.name}]{parent_paths}/{file_name}
+                    </div>
+                    <div class="flex items-center mt-4 space-x-2">
+                      <Button
+                        class="box-content"
+                        variant="subtle"
+                        store={selectMatchedProfileBtn.bind(file)}
+                        icon={<Brush class="w-4 h-4" />}
+                      >
+                        修改
+                      </Button>
+                      <Button
+                        class="box-content"
+                        variant="subtle"
+                        store={deleteBtn.bind(file)}
+                        icon={<Trash class="w-4 h-4" />}
+                      >
+                        删除
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );

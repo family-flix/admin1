@@ -337,6 +337,14 @@ export async function fetch_unknown_movie_list(params: FetchParams) {
       id: string;
       name: string;
       original_name: string;
+      file_id: string;
+      file_name: string;
+      parent_paths: string;
+      drive: {
+        id: string;
+        name: string;
+        avatar: string;
+      };
     }>
   >(`/api/admin/unknown_movie/list`, {
     ...rest,
@@ -349,10 +357,14 @@ export async function fetch_unknown_movie_list(params: FetchParams) {
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, original_name } = tv;
+      const { id, name, original_name, file_id, file_name, parent_paths, drive } = tv;
       return {
         id,
         name: name || original_name,
+        file_id,
+        file_name,
+        parent_paths,
+        drive,
       };
     }),
   });

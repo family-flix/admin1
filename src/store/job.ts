@@ -100,6 +100,7 @@ export function createJob(body: {
   job_id: string;
   onTip?: (msg: { icon?: unknown; text: string[] }) => void;
   onFinish?: () => void;
+  /** @deprecated */
   onCompleted?: () => void;
 }) {
   const { job_id, onTip, onFinish, onCompleted } = body;

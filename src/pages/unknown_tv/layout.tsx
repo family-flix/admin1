@@ -25,6 +25,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
       router.push("/home/unknown_tv/season");
     },
   });
+  const scrollView = new ScrollViewCore();
 
   const [subViews, setSubViews] = createSignal(view.subViews);
   view.onSubViewsChange((nextSubViews) => {
@@ -65,7 +66,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   });
 
   return (
-    <ScrollView store={new ScrollViewCore()} class="flex flex-col box-border h-screen p-8">
+    <ScrollView store={scrollView} class="flex flex-col box-border h-screen p-8">
       <div class="h-[80px]">
         <h1 class="text-2xl">未识别的影视剧</h1>
         <div class="space-x-2">
@@ -96,12 +97,12 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
         </div>
       </div>
       <div class="flex-1 rounded-sm">
-        <div class="pt-2 w-full h-full bg-white">
+        <div class="pt-2 w-full h-full">
           <Show
             when={subViews().length !== 0}
             fallback={
               <div class="flex items-center justify-center">
-                <div class="px-4 py-8 text-xl text-slate-800">点击上方未知影视剧类型</div>
+                <div class="py-8 text-xl text-slate-800">点击上方未知影视剧类型</div>
               </div>
             }
           >

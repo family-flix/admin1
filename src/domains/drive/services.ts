@@ -379,7 +379,7 @@ export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
  */
 export function deleteFileOfDrive(body: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = body;
-  return request.get(`/api/admin/drive/${drive_id}/file/${file_id}/delete`);
+  return request.get<{ job_id: string }>(`/api/admin/drive/${drive_id}/file/${file_id}/delete`);
 }
 
 /**

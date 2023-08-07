@@ -205,7 +205,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     position: [number, number];
     onLoading?: (loading: boolean) => void;
     onFailed?: (error: Error) => void;
-    onSuccess?: () => void;
+    onSuccess?: (data: { job_id: string; deleteFile: () => void }) => void;
   }) {
     const { file, position, onLoading, onFailed, onSuccess } = options;
     const [columnIndex, fileIndex] = position;
@@ -213,17 +213,21 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     const folderDeletingRequest = new RequestCore(deleteFileOfDrive, {
       onLoading,
       onFailed,
-      onSuccess: () => {
-        const column = folderColumns[columnIndex];
-        column.list.deleteItem((f) => {
-          if (f.file_id === file.file_id) {
-            return true;
-          }
-          return false;
-        });
-        // this.clearFolderColumns();
+      onSuccess: (data) => {
         if (onSuccess) {
-          onSuccess();
+          onSuccess({
+            job_id: data.job_id,
+            // @todo 这个实现很糟糕
+            deleteFile: () => {
+              const column = folderColumns[columnIndex];
+              column.list.deleteItem((f) => {
+                if (f.file_id === file.file_id) {
+                  return true;
+                }
+                return false;
+              });
+            },
+          });
         }
       },
     });

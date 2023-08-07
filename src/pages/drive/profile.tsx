@@ -54,7 +54,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     async onClick() {
       if (!driveFileManage.virtualSelectedFolder) {
         app.tip({
-          text: ["请先选择要删除的文件"],
+          text: ["请先选择要索引的文件"],
         });
         return;
       }
@@ -103,12 +103,21 @@ export const DriveProfilePage: ViewComponent = (props) => {
             text: ["删除文件失败", error.message],
           });
         },
-        onSuccess() {
+        onSuccess(data) {
           app.tip({
-            text: ["删除成功"],
+            text: ["开始删除，需要等待一会"],
           });
           folderDeletingConfirmDialog.hide();
           fileSelect.clear();
+          createJob({
+            job_id: data.job_id,
+            onFinish() {
+              app.tip({
+                text: ["完成删除"],
+              });
+              data.deleteFile();
+            },
+          });
         },
       });
     },

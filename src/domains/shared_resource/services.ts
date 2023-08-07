@@ -84,3 +84,19 @@ export async function save_shared_files(body: {
 }) {
   return request.post<{ job_id: string }>("/api/admin/shared_file/save", body);
 }
+
+export function fetch_shared_file_save_list(body: FetchParams) {
+  return request.get<
+    ListResponse<{
+      id: string;
+      url: string;
+      name: string;
+      drive: {
+        id: string;
+        name: string;
+        avatar: string;
+      };
+    }>
+  >("/api/admin/shared_file_save/list", body);
+}
+export type SharedFileSaveItem = RequestedResource<typeof fetch_shared_file_save_list>["list"][number];

@@ -2,7 +2,6 @@
  * @file 电视剧列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { effect } from "solid-js/web";
 import {
   ArrowUpCircle,
   Award,
@@ -13,6 +12,7 @@ import {
   Check,
   Info,
   Package,
+  Pen,
   RotateCw,
   Search,
   Send,
@@ -70,6 +70,7 @@ import { FileSearcherCore } from "@/components/FileSearcher/store";
 import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { CheckboxGroupCore } from "@/domains/ui/checkbox/group";
+import { fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource/services";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -361,6 +362,16 @@ export const TVManagePage: ViewComponent = (props) => {
       addSyncTaskDialog.show();
     },
   });
+  const modifySyncTaskBtn = new ButtonInListCore<TVSeasonItem>({
+    onClick(record) {
+      if (record === null) {
+        return;
+      }
+      tvSelection.select(record);
+      addSyncTaskDialog.setTitle("修改更新任务");
+      addSyncTaskDialog.show();
+    },
+  });
   const execSyncTaskBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       if (record === null) {
@@ -386,6 +397,18 @@ export const TVManagePage: ViewComponent = (props) => {
   const profileBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       router.push(`/home/tv/${record.tv_id}?season_id=${record.id}`);
+    },
+  });
+  const sharedFileSaveListDialog = new DialogCore({
+    title: "最近的转存记录",
+    footer: false,
+  });
+  const sharedFileSaveList = new ListCore(new RequestCore(fetch_shared_file_save_list));
+  const addSyncFromSharedRecordBtn = new ButtonInListCore<SharedFileSaveItem>({
+    onClick(record) {
+      sharedFileSaveListDialog.hide();
+      sharedResourceUrlInput.change(record.url);
+      sharedResourceBtn.click();
     },
   });
   const syncAllTVRequest = new RequestCore(run_all_file_sync_tasks, {
@@ -451,6 +474,7 @@ export const TVManagePage: ViewComponent = (props) => {
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(driveSelection.value);
   const [hasSearch, setHasSearch] = createSignal(false);
+  const [sharedFileSaveResponse, setSharedFileSaveResponse] = createSignal(sharedFileSaveList.response);
   // effect(() => {
   //   console.log(tvListResponse().dataSource[0]?.name);
   // });
@@ -477,6 +501,9 @@ export const TVManagePage: ViewComponent = (props) => {
         };
       })
     );
+  });
+  sharedFileSaveList.onStateChange((nextResponse) => {
+    setSharedFileSaveResponse(nextResponse);
   });
   folderSearcher.onStateChange((nextState) => {
     const { list } = nextState;
@@ -687,13 +714,22 @@ export const TVManagePage: ViewComponent = (props) => {
                                   </Button>
                                 </Show>
                                 <Show when={sync_task}>
-                                  <Button
-                                    store={execSyncTaskBtn.bind(season)}
-                                    variant="subtle"
-                                    icon={<Bell class="w-4 h-4" />}
-                                  >
-                                    更新
-                                  </Button>
+                                  <>
+                                    <Button
+                                      store={execSyncTaskBtn.bind(season)}
+                                      variant="subtle"
+                                      icon={<Bell class="w-4 h-4" />}
+                                    >
+                                      更新
+                                    </Button>
+                                    <Button
+                                      store={modifySyncTaskBtn.bind(season)}
+                                      variant="subtle"
+                                      icon={<Pen class="w-4 h-4" />}
+                                    >
+                                      修改更新任务
+                                    </Button>
+                                  </>
                                 </Show>
                               </div>
                             </div>
@@ -740,13 +776,25 @@ export const TVManagePage: ViewComponent = (props) => {
             }}
           </For>
         </div>
-        <div
-          onClick={() => {
-            setFolders([]);
-            folderSearcher.dialog.show();
-          }}
-        >
-          从云盘中选择文件夹
+        <div class="space-y-2">
+          <div
+            class="cursor-pointer"
+            onClick={() => {
+              setFolders([]);
+              folderSearcher.dialog.show();
+            }}
+          >
+            从云盘中选择文件夹
+          </div>
+          <div
+            class="cursor-pointer"
+            onClick={() => {
+              sharedFileSaveList.init();
+              sharedFileSaveListDialog.show();
+            }}
+          >
+            从最近转存中选择
+          </div>
         </div>
       </Dialog>
       <Dialog store={transferConfirmDialog}>
@@ -791,23 +839,51 @@ export const TVManagePage: ViewComponent = (props) => {
         <div class="h-[360px] overflow-auto">
           <For each={folders()}>
             {(file) => {
-              const { file_name, drive } = file;
+              const { file_name, parent_paths, drive } = file;
               return (
                 <div class="flex items-center justify-between py-4 space-x-2">
-                  <div>{drive.name}</div>
-                  <div>{file_name}</div>
+                  <div>
+                    <div class="text-sm text-slate-500">{drive.name}</div>
+                    <div>
+                      {parent_paths}/{file_name}
+                    </div>
+                  </div>
                   <Button
                     store={folderSelectBtn.bind(file)}
                     class="ml-4 cursor-pointer"
                     icon={<Check class="w-4 h-4" />}
-                  >
-                    选择
-                  </Button>
+                  ></Button>
                 </div>
               );
             }}
           </For>
         </div>
+      </Dialog>
+      <Dialog store={sharedFileSaveListDialog}>
+        <ListView store={sharedFileSaveList}>
+          <For each={sharedFileSaveResponse().dataSource}>
+            {(save) => {
+              return (
+                <div>
+                  <div class="flex items-center justify-between py-4 space-x-2">
+                    <div>
+                      <div class="text-sm text-slate-500">{save.drive.name}</div>
+                      <div>
+                        <div>{save.url}</div>
+                        <div>{save.name}</div>
+                      </div>
+                    </div>
+                    <Button
+                      store={addSyncFromSharedRecordBtn.bind(save)}
+                      class="ml-4 cursor-pointer"
+                      icon={<Check class="w-4 h-4" />}
+                    ></Button>
+                  </div>
+                </div>
+              );
+            }}
+          </For>
+        </ListView>
       </Dialog>
       <Popover
         store={tipPopover}
