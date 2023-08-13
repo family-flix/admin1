@@ -3,7 +3,7 @@
  */
 import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer } from "lucide-solid";
+import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
 import { ListCore } from "@/domains/list";
 import { Button, Skeleton, ScrollView } from "@/components/ui";
@@ -12,7 +12,7 @@ import { NavigatorCore } from "@/domains/navigator";
 import { RequestCore } from "@/domains/client";
 import { Application } from "@/domains/app";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
-import { JobItem, fetch_job_list, pause_job } from "@/domains/job/services";
+import { JobItem, clear_expired_job_list, fetch_job_list, pause_job } from "@/domains/job/services";
 import { ListView } from "@/components/ListView";
 import { TaskStatus } from "@/constants";
 import { cn } from "@/utils";
@@ -34,6 +34,21 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
       jobList.refresh();
     },
   });
+  const jobDeletingRequest = new RequestCore(clear_expired_job_list, {
+    onLoading(loading) {
+      jobDeletingBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["清除成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["清除失败", error.message],
+      });
+    },
+  });
   const pauseJobBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
       pauseJob.run(task.id);
@@ -48,6 +63,11 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
     onClick() {
       refreshJobs();
       jobList.refresh();
+    },
+  });
+  const jobDeletingBtn = new ButtonCore({
+    onClick() {
+      jobDeletingRequest.run();
     },
   });
   const scrollView = new ScrollViewCore();
@@ -79,9 +99,12 @@ export const TaskListPage = (props: { app: Application; router: NavigatorCore; v
   return (
     <ScrollView store={scrollView} class="h-screen p-8">
       <h1 class="text-2xl">任务列表</h1>
-      <div class="mt-8">
+      <div class="mt-8 flex space-x-2">
         <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
           刷新
+        </Button>
+        <Button class="space-x-1" icon={<Trash class="w-4 h-4" />} variant="subtle" store={jobDeletingBtn}>
+          删除7天前任务记录
         </Button>
       </div>
       <ListView

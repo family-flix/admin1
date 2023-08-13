@@ -2,11 +2,13 @@
  *
  */
 import { CancelToken } from "axios";
+import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
-import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
+import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
+import { ReportTypeTexts, ReportTypes } from "@/constants";
 
 /**
  * 获取电视剧列表
@@ -206,6 +208,11 @@ export function refresh_tv_profile(body: { tv_id: string; tmdb_id?: number }) {
   });
 }
 
+export function delete_season(body: { season_id: string }) {
+  const { season_id } = body;
+  return request.get<void>(`/api/admin/season/${season_id}/delete`);
+}
+
 /**
  * 获取电影列表
  */
@@ -220,6 +227,8 @@ export async function fetch_movie_list(params: FetchParams & { name: string; dup
       poster_path: string;
       air_date: string;
       popularity: string;
+      vote_average: number;
+      runtime: number;
     }>
   >("/api/admin/movie/list", {
     ...rest,
@@ -370,6 +379,55 @@ export async function fetch_unknown_movie_list(params: FetchParams) {
   });
 }
 export type UnknownMovieItem = RequestedResource<typeof fetch_unknown_movie_list>["list"][0];
+
+export async function fetch_unknown_episode_list(params: FetchParams) {
+  const { page, pageSize, ...rest } = params;
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      original_name: string;
+      file_id: string;
+      file_name: string;
+      parent_paths: string;
+      drive: {
+        id: string;
+        name: string;
+        avatar: string;
+      };
+    }>
+  >(`/api/admin/unknown_episode/list`, {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return r;
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((tv) => {
+      const { id, name, original_name, file_id, file_name, parent_paths, drive } = tv;
+      return {
+        id,
+        name: name || original_name,
+        file_id,
+        file_name,
+        parent_paths,
+        drive,
+      };
+    }),
+  });
+}
+export type UnknownEpisodeItem = RequestedResource<typeof fetch_unknown_episode_list>["list"][0];
+
+export function delete_unknown_episode(body: { id: string }, token?: CancelToken) {
+  const { id } = body;
+  return request.get(`/api/admin/unknown_episode/delete/${id}`, undefined, token);
+}
+export function delete_unknown_episode_list() {
+  return request.get(`/api/admin/unknown_episode/delete`);
+}
 
 /** 删除所有未识别电影 */
 export function delete_unknown_movie_list() {
@@ -832,6 +890,7 @@ export async function fetch_tv_profile(body: { tv_id: string; season_id?: string
     }[];
     cur_season: {
       id: string;
+      name: string;
     };
     cur_season_episodes: {
       id: string;
@@ -839,6 +898,7 @@ export async function fetch_tv_profile(body: { tv_id: string; season_id?: string
       overview: string;
       episode_number: string;
       first_air_date: string;
+      runtime: number;
       sources: {
         id: string;
         file_id: string;
@@ -898,6 +958,7 @@ export async function fetch_tv_profile(body: { tv_id: string; season_id?: string
   });
 }
 export type TVProfile = RequestedResource<typeof fetch_tv_profile>;
+export type SeasonInTVProfile = RequestedResource<typeof fetch_tv_profile>["curSeason"];
 export async function delete_episode_in_tv(body: { id: string; tv_id: string }) {
   const { id, tv_id } = body;
   const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
@@ -918,6 +979,7 @@ export function fetch_episodes_of_season(body: { tv_id: string; season_id: strin
       overview: string;
       episode_number: string;
       first_air_date: string;
+      runtime: number;
       sources: {
         id: string;
         file_id: string;
@@ -986,4 +1048,41 @@ export async function fetch_video_preview_info(body: { file_id: string }) {
 export function deleteSeason(body: { season_id: string }) {
   const { season_id } = body;
   return request.get(`/api/admin/season/${season_id}/delete`);
+}
+
+export async function fetchReportList(params: FetchParams) {
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      type: ReportTypes;
+      member: {
+        id: string;
+        name: string;
+      };
+      data: string;
+      created: string;
+    }>
+  >(`/api/admin/report/list`, params);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { list, ...rest } = r.data;
+  return Result.Ok({
+    ...rest,
+    list: list.map((report) => {
+      const { id, type, member, data, created } = report;
+      return {
+        id,
+        type,
+        typeText: ReportTypeTexts[type],
+        member,
+        data,
+        created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
+      };
+    }),
+  });
+}
+export function fetchReportProfile(params: { report_id: string }) {
+  const { report_id } = params;
+  return request.get(`/api/admin/report/${report_id}`);
 }

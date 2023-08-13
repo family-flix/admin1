@@ -25,6 +25,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ListView } from "@/components/ListView";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LazyImage } from "@/components/ui";
 
 export const UnknownSeasonPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -39,17 +40,17 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
     },
   });
   const cur = new SelectionCore<UnknownSeasonItem>();
-  const updateSeason = new RequestCore(update_unknown_season_number, {
+  const bindSeasonRequest = new RequestCore(update_unknown_season_number, {
     onLoading(loading) {
-      dialog.okBtn.setLoading(loading);
-      updateSeasonBtn.setLoading(loading);
+      bindSeasonDialog.okBtn.setLoading(loading);
+      bindSeasonBtn.setLoading(loading);
     },
     onFailed(error) {
       app.tip({ text: ["修改季失败", error.message] });
     },
     onSuccess() {
       app.tip({ text: ["修改季成功"] });
-      dialog.hide();
+      bindSeasonDialog.hide();
       list.deleteItem((item) => {
         if (item.id === cur.value?.id) {
           return true;
@@ -61,7 +62,7 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
   const seasonInput = new InputCore({
     placeholder: "请输入季，如 S01、S02",
   });
-  const dialog = new DialogCore({
+  const bindSeasonDialog = new DialogCore({
     title: "修改季",
     onOk() {
       if (!seasonInput.value) {
@@ -76,19 +77,19 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
         });
         return;
       }
-      updateSeason.run({ id: cur.value.id, season_number: seasonInput.value });
+      bindSeasonRequest.run({ id: cur.value.id, season_number: seasonInput.value });
     },
   });
-  const updateSeasonBtn = new ButtonInListCore<UnknownSeasonItem>({
+  const bindSeasonBtn = new ButtonInListCore<UnknownSeasonItem>({
     onClick(record) {
       cur.select(record);
-      dialog.show();
+      bindSeasonDialog.show();
     },
   });
-  const deleteRequest = new RequestCore(delete_unknown_season_list, {
+  const seasonDeletingRequest = new RequestCore(delete_unknown_season_list, {
     onLoading(loading) {
-      deleteConfirmDialog.okBtn.setLoading(loading);
-      deleteBtn.setLoading(loading);
+      seasonDeletingConfirmDialog.okBtn.setLoading(loading);
+      seasonDeletingBtn.setLoading(loading);
     },
     onFailed(error) {
       app.tip({
@@ -105,18 +106,18 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
         }
         return false;
       });
-      deleteConfirmDialog.hide();
+      seasonDeletingConfirmDialog.hide();
     },
   });
-  const deleteConfirmDialog = new DialogCore({
+  const seasonDeletingConfirmDialog = new DialogCore({
     title: "确认删除所有未识别季吗？",
     onOk() {
-      deleteRequest.run();
+      seasonDeletingRequest.run();
     },
   });
-  const deleteBtn = new ButtonCore({
+  const seasonDeletingBtn = new ButtonCore({
     onClick() {
-      deleteConfirmDialog.show();
+      seasonDeletingConfirmDialog.show();
     },
   });
 
@@ -133,46 +134,61 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
   const dataSource = () => response().dataSource;
 
   return (
-    <div class="px-4">
+    <div class="">
       <div class="my-4 space-x-2">
-        <Button icon={<RotateCw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
+        <Button icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
           刷新
         </Button>
-        <Button icon={<Trash class="w-4 h-4" />} variant="subtle" store={deleteBtn}>
+        <Button icon={<Trash class="w-4 h-4" />} variant="subtle" store={seasonDeletingBtn}>
           删除所有
         </Button>
       </div>
       <ListView
-        class="pb-4"
+        class=""
         store={list}
-        skeleton={
-          <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
-            <div class="w-[152px] rounded">
-              <FolderCardSkeleton />
-              <div class="flex justify-center mt-2">
-                <Skeleton class="block box-content"></Skeleton>
-              </div>
-            </div>
-          </div>
-        }
+        // skeleton={
+        //   <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
+        //     <div class="w-[152px] rounded">
+        //       <FolderCardSkeleton />
+        //       <div class="flex justify-center mt-2">
+        //         <Skeleton class="block box-content"></Skeleton>
+        //       </div>
+        //     </div>
+        //   </div>
+        // }
       >
-        <div class="grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
+        <div class="space-y-4">
           <For each={dataSource()}>
             {(file) => {
               const { id, name, season_number } = file;
               const n = `${name} - ${season_number}`;
               return (
-                <div class="w-[152px] mb-4 rounded">
-                  <FolderCard type="folder" name={n} />
-                  <div class="flex justify-center mt-2">
-                    <Button
-                      class="box-content"
-                      variant="subtle"
-                      store={updateSeasonBtn.bind(file)}
-                      icon={<Brush class="w-4 h-4" />}
-                    >
-                      修改
-                    </Button>
+                <div class="flex p-4 bg-white rounded-sm">
+                  <div class="mr-2 w-[80px]">
+                    <div class="w-full rounded">
+                      <LazyImage
+                        class="max-w-full max-h-full object-contain"
+                        src={(() => {
+                          return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                        })()}
+                      />
+                    </div>
+                  </div>
+                  <div class="flex-1 mt-2">
+                    <div class="text-lg">{n}</div>
+                    {/* <div class="mt-2 text-sm text-slate-800 break-all">
+                      [{drive.name}]{parent_paths}/{file_name}
+                    </div> */}
+                    <div class="flex items-center mt-4 space-x-2">
+                      <Button
+                        class="box-content"
+                        variant="subtle"
+                        store={bindSeasonBtn.bind(file)}
+                        icon={<Brush class="w-4 h-4" />}
+                      >
+                        修改
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
@@ -180,10 +196,10 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
           </For>
         </div>
       </ListView>
-      <Dialog store={dialog}>
+      <Dialog store={bindSeasonDialog}>
         <Input store={seasonInput} />
       </Dialog>
-      <Dialog store={deleteConfirmDialog}>
+      <Dialog store={seasonDeletingConfirmDialog}>
         <div>该操作并不会删除云盘内文件</div>
         <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
       </Dialog>

@@ -205,3 +205,20 @@ export const MovieGenresOptions = TVGenres.map((text) => {
     value: text,
   };
 });
+
+export enum ReportTypes {
+  /** 电视剧问题 */
+  TV,
+  /** 电影问题 */
+  Movie,
+  /** 问题与建议 */
+  Question,
+  /** 想看什么剧 */
+  Want,
+}
+export const ReportTypeTexts = {
+  [ReportTypes.TV]: "电视剧",
+  [ReportTypes.Movie]: "电影",
+  [ReportTypes.Question]: "问题反馈",
+  [ReportTypes.Want]: "想看",
+};

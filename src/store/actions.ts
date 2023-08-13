@@ -5,6 +5,7 @@
 export const pendingActions: Partial<{
   deleteTV: {
     tv_id: string;
+    id: string;
   };
   deleteMovie: {
     movie_id: string;

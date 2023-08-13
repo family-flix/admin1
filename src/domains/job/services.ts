@@ -52,6 +52,9 @@ export async function fetch_job_list(params: FetchParams) {
 }
 export type JobItem = RequestedResource<typeof fetch_job_list>["list"][0];
 
+export function clear_expired_job_list() {
+  return request.get("/api/admin/job/clear_expired");
+}
 /**
  * 查询索引任务详情
  */

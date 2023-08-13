@@ -2,7 +2,7 @@
  * @file 电影列表
  */
 import { createSignal, For } from "solid-js";
-import { Award, BookOpen, Calendar, RotateCw, Search } from "lucide-solid";
+import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
 import { ViewComponent } from "@/types";
 import { bind_profile_for_unknown_movie, fetch_movie_list, MovieItem } from "@/services";
@@ -165,7 +165,7 @@ export const MovieManagePage: ViewComponent = (props) => {
               <div class="space-y-4">
                 <For each={dataSource()}>
                   {(tv) => {
-                    const { id, name, overview, poster_path, air_date, popularity } = tv;
+                    const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime } = tv;
                     return (
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">
@@ -187,6 +187,14 @@ export const MovieManagePage: ViewComponent = (props) => {
                               <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
                                 <Award class="w-4 h-4" />
                                 <div>{popularity}</div>
+                              </div>
+                              <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                <Star class="w-4 h-4" />
+                                <div>{vote_average}</div>
+                              </div>
+                              <div class="flex items-center space-x-1 px-2 border border-gray-600 rounded-xl text-gray-600">
+                                <Clock class="w-4 h-4" />
+                                <div>{runtime}</div>
                               </div>
                             </div>
                             <div class="space-x-2 mt-6">

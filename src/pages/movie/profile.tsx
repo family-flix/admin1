@@ -52,14 +52,14 @@ export const MovieProfilePage: ViewComponent = (props) => {
   });
   const updateProfileRequest = new RequestCore(update_movie_profile, {
     onLoading(loading) {
-      dialog.okBtn.setLoading(loading);
+      movieRefreshDialog.okBtn.setLoading(loading);
     },
     onFailed(error) {
       app.tip({ text: ["更新详情失败", error.message] });
     },
     onSuccess(v) {
       app.tip({ text: ["更新详情成功"] });
-      dialog.hide();
+      movieRefreshDialog.hide();
       profileRequest.reload();
     },
   });
@@ -96,9 +96,9 @@ export const MovieProfilePage: ViewComponent = (props) => {
       router.back();
     },
   });
-  const dialog = new TMDBSearcherDialogCore({
+  const movieRefreshDialog = new TMDBSearcherDialogCore({
     type: "2",
-    onOk(searched_tv) {
+    onOk(searched_movie) {
       const id = view.params.id as string;
       if (!id) {
         app.tip({ text: ["更新详情失败", "缺少电视剧 id"] });
@@ -107,19 +107,19 @@ export const MovieProfilePage: ViewComponent = (props) => {
       updateProfileRequest.run(
         { movie_id: id },
         {
-          ...searched_tv,
+          ...searched_movie,
           id: view.params.id,
-          tmdb_id: searched_tv.id,
+          tmdb_id: searched_movie.id,
         }
       );
     },
   });
-  const btn1 = new ButtonCore({
+  const movieRefreshDialogShowBtn = new ButtonCore({
     onClick() {
       if (profileRequest.response) {
-        dialog.input(profileRequest.response.name);
+        movieRefreshDialog.input(profileRequest.response.name);
       }
-      dialog.show();
+      movieRefreshDialog.show();
     },
   });
   const scrollView = new ScrollViewCore();
@@ -184,7 +184,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4">
-                  <Button store={btn1}>搜索 TMDB</Button>
+                  <Button store={movieRefreshDialogShowBtn}>搜索 TMDB</Button>
                   <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
                   <Button store={movieDeletingBtn}>删除</Button>
                 </div>
@@ -210,7 +210,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
           </Show>
         </div>
       </ScrollView>
-      <TMDBSearcherDialog store={dialog} />
+      <TMDBSearcherDialog store={movieRefreshDialog} />
       <Dialog store={movieDeletingConfirmDialog}>
         <div>
           <div>确认删除吗？</div>

@@ -31,6 +31,8 @@ import {
   homeUnknownMoviePage,
   driveProfilePage,
   filePreviewPage,
+  homeUnknownEpisodePage,
+  homeReportListPage,
 } from "./store/views";
 
 import "./style.css";
@@ -49,6 +51,9 @@ homeLayout.register("/home/task/:id", () => {
 });
 homeLayout.register("/home/task", () => {
   return homeTaskListPage;
+});
+homeLayout.register("/home/report", () => {
+  return homeReportListPage;
 });
 homeLayout.register("/home/shared_files", () => {
   return homeTransferPage;
@@ -70,6 +75,9 @@ homeUnknownMediaLayout.register("/home/unknown_tv/tv", () => {
 });
 homeUnknownMediaLayout.register("/home/unknown_tv/season", () => {
   return homeUnknownSeasonPage;
+});
+homeUnknownMediaLayout.register("/home/unknown_tv/episode", () => {
+  return homeUnknownEpisodePage;
 });
 homeUnknownMediaLayout.register("/home/unknown_tv/movie", () => {
   return homeUnknownMoviePage;

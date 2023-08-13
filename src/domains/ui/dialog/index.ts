@@ -48,24 +48,30 @@ type DialogProps = {
 };
 
 export class DialogCore extends BaseDomain<TheTypesOfEvents> {
-  visible = false;
+  open = false;
+  title: string = "";
+  footer: boolean = true;
+
   present = new PresenceCore();
   okBtn = new ButtonCore();
   cancelBtn = new ButtonCore();
 
-  state: DialogState = {
-    open: false,
-    title: "",
-  };
+  get state(): DialogState {
+    return {
+      open: this.open,
+      title: this.title,
+      footer: this.footer,
+    };
+  }
 
   constructor(options: Partial<{ _name: string }> & DialogProps = {}) {
     super(options);
 
     const { title, footer = true, onOk, onCancel, onUnmounted } = options;
     if (title) {
-      this.state.title = title;
+      this.title = title;
     }
-    this.state.footer = footer;
+    this.footer = footer;
     if (onOk) {
       this.onOk(onOk);
     }
@@ -76,12 +82,12 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
       this.onUnmounted(onUnmounted);
     }
     this.present.onShow(async () => {
-      this.state.open = true;
+      this.open = true;
       this.emit(Events.VisibleChange, true);
       this.emit(Events.StateChange, { ...this.state });
     });
     this.present.onHidden(async () => {
-      this.state.open = false;
+      this.open = false;
       this.emit(Events.Cancel);
       this.emit(Events.VisibleChange, false);
       this.emit(Events.StateChange, { ...this.state });
@@ -98,7 +104,7 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 显示弹窗 */
   show() {
-    if (this.state.open) {
+    if (this.open) {
       return;
     }
     // this.emit(Events.BeforeShow);
@@ -106,7 +112,7 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 隐藏弹窗 */
   hide() {
-    if (this.state.open === false) {
+    if (this.open === false) {
       return;
     }
     // this.emit(Events.Cancel);
@@ -119,7 +125,7 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Cancel);
   }
   setTitle(title: string) {
-    this.state.title = title;
+    this.title = title;
     this.emit(Events.StateChange, { ...this.state });
   }
 

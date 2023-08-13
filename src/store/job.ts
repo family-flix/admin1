@@ -18,8 +18,9 @@ const jobs: JobCore[] = [];
 const emitter = mitt<TheTypesOfEvents>();
 
 export async function refreshJobs() {
-  const jobs = cache.get<string[]>("jobs", []);
+  const jobs = cache.get<string[]>("jobs", []).filter(Boolean);
   if (jobs.length === 0) {
+    emitter.emit(Events.JobsChange, []);
     return;
   }
   for (let i = 0; i < jobs.length; i += 1) {
@@ -37,6 +38,7 @@ export async function refreshJobs() {
 export async function initializeJobs() {
   const jobs = cache.get<string[]>("jobs", []).filter(Boolean);
   if (jobs.length === 0) {
+    emitter.emit(Events.JobsChange, []);
     return;
   }
   for (let i = 0; i < jobs.length; i += 1) {
@@ -66,8 +68,8 @@ export function appendJob(job: JobCore) {
     emitter.emit(Events.JobsChange, nextJobs);
     unlisten();
   });
-  const prevJobs = cache.get<string[]>("jobs", []);
-  if (!prevJobs.includes(job.id)) {
+  const prevJobs = cache.get<string[]>("jobs", []).filter(Boolean);
+  if (job.id && !prevJobs.includes(job.id)) {
     prevJobs.push(job.id);
     cache.set("jobs", prevJobs);
   }

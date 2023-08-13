@@ -155,7 +155,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
   return (
     <div class="">
       <div class="my-4 space-x-2">
-        <Button icon={<RotateCcw class="w-4 h-4" />} variant="subtle" store={refreshBtn}>
+        <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
           刷新
         </Button>
         <Button icon={<Trash class="w-4 h-4" />} variant="subtle" store={deleteListBtn}>
@@ -180,7 +180,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
             {(file) => {
               const { id, name, file_name, parent_paths, drive } = file;
               return (
-                <div class="flex items-center p-4 bg-white rounded-sm">
+                <div class="flex p-4 bg-white rounded-sm">
                   <div class="mr-2 w-[80px]">
                     <div class="w-full rounded">
                       <LazyImage

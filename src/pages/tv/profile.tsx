@@ -6,16 +6,14 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { ViewComponent } from "@/types";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import {
-  fetch_files_of_tv,
-  fetch_file_profile_of_tv,
-  delete_aliyun_file,
   fetch_tv_profile,
   TVProfile,
-  delete_tv,
   refresh_tv_profile,
   fetch_episodes_of_season,
   deleteSeason,
   EpisodeItemInSeason,
+  delete_season,
+  SeasonInTVProfile,
 } from "@/services";
 import { createJob, appendAction } from "@/store";
 import { cn } from "@/utils";
@@ -50,24 +48,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const curSeasonSelector = new SelectionCore<{ id: string }>();
-  const sourceList = new ListCore(new RequestCore(fetch_files_of_tv), {
-    page: 1,
-    search: {
-      id: view.params.id,
-    },
-    onStateChange(state) {
-      setSourceResponse(state);
-    },
-  });
-  const sourceProfileRequest = new RequestCore(fetch_file_profile_of_tv, {
-    onFailed(error) {
-      app.tip({ text: ["获取文件详情失败", error.message] });
-    },
-    onSuccess(v) {
-      setSourceProfile(v);
-    },
-  });
+  const curSeasonSelector = new SelectionCore<SeasonInTVProfile>();
   const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
 
   const curFile = new SelectionCore<EpisodeItemInSeason["sources"][number]>();
@@ -144,28 +125,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       refreshProfileRequest.run({ tv_id: view.params.id });
     },
   });
-  const deleteFileRequest = new RequestCore(delete_aliyun_file, {
-    onLoading(loading) {
-      fileDeleteConfirmDialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({ text: ["删除文件失败", error.message] });
-    },
-    onSuccess() {
-      app.tip({ text: ["删除文件成功"] });
-      fileDeleteConfirmDialog.hide();
-      const targetFile = curFile.value;
-      if (!targetFile) {
-        return;
-      }
-      const target = sourceList.response.dataSource.find((item) => item.file_id === targetFile.file_id);
-      if (!target) {
-        return;
-      }
-      // sourceList.deleteItem(target);
-    },
-  });
-  const tvDeleteRequest = new RequestCore(delete_tv, {
+  const seasonDeleteRequest = new RequestCore(delete_season, {
     onLoading(loading) {
       tvDeleteConfirmDialog.okBtn.setLoading(loading);
     },
@@ -176,6 +136,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       tvDeleteConfirmDialog.hide();
       appendAction("deleteTV", {
         tv_id: view.params.id,
+        id: view.query.season_id,
       });
       router.back();
     },
@@ -191,54 +152,17 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const tvDeleteConfirmDialog = new DialogCore({
-    title: "确认删除该电视剧吗？",
+    title: "删除季",
     onOk() {
-      tvDeleteRequest.run({ tv_id: view.params.id });
-    },
-  });
-  const fileDeleteConfirmDialog = new DialogCore({
-    title: "确认删除文件吗？",
-    onOk() {
-      if (!curFile.value) {
+      if (!view.query.season_id) {
+        app.tip({
+          text: ["缺少季 id"],
+        });
         return;
       }
-      deleteFileRequest.run({
-        file_id: curFile.value.file_id,
-      });
+      seasonDeleteRequest.run({ season_id: view.query.season_id });
     },
   });
-  // const deleteBtn = new ButtonInListCore<TVProfile["sources"][number]>({
-  //   onClick(record) {
-  //     curFile.select(record);
-  //     deleteConfirmDialog.setTitle(`确认删除 '${record.file_name}' 吗？`);
-  //     deleteConfirmDialog.show();
-  //   },
-  // });
-  // const updateSourceDialog = new DialogCore({
-  //   title: "详情",
-  //   footer: false,
-  // });
-  // const updateParsedTVBtn = new ButtonInListCore<TVProfile["parsed_tvs"][number]>({
-  //   onClick(record) {
-  //     curFile.select(record);
-  //     updateSourceDialog.show();
-  //     sourceProfileRequest.run({ tv_id: view.params.id, id: record.file_id });
-  //   },
-  // });
-  // const deleteParsedTVBtn = new ButtonInListCore<TVProfile["parsed_tvs"][number]>({
-  //   onClick(record) {
-  //     curParsedTV.select(record);
-  //     parsedTVDeletingDialog.setTitle(`确认删除 '${record.name || record.original_name}' 吗？`);
-  //     parsedTVDeletingDialog.show();
-  //   },
-  // });
-  // const updateBtn = new ButtonInListCore<TVProfile["sources"][number]>({
-  //   onClick(record) {
-  //     curFile.select(record);
-  //     updateSourceDialog.show();
-  //     sourceProfileRequest.run({ tv_id: view.params.id, id: record.file_id });
-  //   },
-  // });
   const selectedSeason = new SelectionCore<{ id: string; name: string }>();
   const deleteSeasonRequest = new RequestCore(deleteSeason, {
     onLoading(loading) {
@@ -281,36 +205,6 @@ export const TVProfilePage: ViewComponent = (props) => {
   const seasonContextMenu = new ContextMenuCore({
     items: [deleteSeasonMenuItem],
   });
-  // const parsedTVDeletingRequest = new RequestCore(delete_parsed_tv_of_tv, {
-  //   onLoading(loading) {
-  //     parsedTVDeletingDialog.okBtn.setLoading(loading);
-  //   },
-  //   onFailed(error) {
-  //     app.tip({ text: ["删除失败", error.message] });
-  //   },
-  //   onSuccess() {
-  //     parsedTVDeletingDialog.hide();
-  //     updateSourceDialog.hide();
-  //     profileRequest.reload();
-  //     app.tip({ text: ["删除成功"] });
-  //   },
-  //   onCompleted() {
-  //     parsedTVDeletingDialog.okBtn.setLoading(false);
-  //   },
-  // });
-  // const parsedTVDeletingDialog = new DialogCore({
-  //   title: "确认删除吗？",
-  //   onOk() {
-  //     if (!curParsedTV.value) {
-  //       return;
-  //     }
-  //     parsedTVDeletingDialog.okBtn.setLoading(true);
-  //     parsedTVDeletingRequest.run({
-  //       tv_id: view.params.id,
-  //       id: curParsedTV.value.id,
-  //     });
-  //   },
-  // });
   const scrollView = new ScrollViewCore({
     onReachBottom() {
       curEpisodeList.loadMore();
@@ -319,8 +213,6 @@ export const TVProfilePage: ViewComponent = (props) => {
 
   const [profile, setProfile] = createSignal<TVProfile | null>(null);
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
-  const [sourceResponse, setSourceResponse] = createSignal(sourceList.response);
-  const [sourceProfile, setSourceProfile] = createSignal(sourceProfileRequest.response);
   const [curSeason, setCurSeason] = createSignal(curSeasonSelector.value);
 
   curSeasonSelector.onStateChange((nextState) => {
@@ -330,7 +222,7 @@ export const TVProfilePage: ViewComponent = (props) => {
     setCurEpisodeResponse(nextResponse);
   });
   curEpisodeList.onComplete(() => {
-    curSeasonSelector.select({ id: curEpisodeList.params.season_id as string });
+    curSeasonSelector.select({ id: curEpisodeList.params.season_id as string, name: curSeason()?.name ?? "" });
   });
 
   onMount(() => {
@@ -391,7 +283,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                   <Button store={btn1}>搜索 TMDB</Button>
                   <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
                   <Button store={refreshProfileBtn}>刷新详情</Button>
-                  <Button store={tvDeleteBtn}>删除电视剧</Button>
+                  <Button store={tvDeleteBtn}>删除季</Button>
                 </div>
                 <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
                   <For each={profile()?.seasons}>
@@ -445,11 +337,14 @@ export const TVProfilePage: ViewComponent = (props) => {
                 >
                   <For each={curEpisodeResponse().dataSource}>
                     {(episode) => {
-                      const { id, name, episode_number, sources } = episode;
+                      const { id, name, episode_number, runtime, sources } = episode;
                       return (
                         <div>
                           <div class="text-lg">
                             {episode_number}、{name}
+                            <Show when={runtime}>
+                              <span class="text-gray-500 text-sm">({runtime}min)</span>
+                            </Show>
                           </div>
                           <div class="pl-4 space-y-1">
                             <For each={sources}>
@@ -543,26 +438,14 @@ export const TVProfilePage: ViewComponent = (props) => {
       <TMDBSearcherDialog store={tmdbSearchDialog} />
       <Dialog store={tvDeleteConfirmDialog}>
         <div class="">
+          <div>确认删除「{curSeason()?.name}」吗？</div>
           <div>仅删除本地索引记录</div>
           <div>删除云盘文件请到云盘详情页操作</div>
         </div>
       </Dialog>
-      <Dialog store={fileDeleteConfirmDialog}>
-        <div class="">
-          <div>仅删除本地记录</div>
-          <div>删除云盘文件请到云盘详情页操作</div>
-        </div>
-      </Dialog>
-      {/* <Dialog store={parsedTVDeletingDialog}>
-        <div class="space-y-1">
-          <div>删除关联的解析电视剧</div>
-          <div>同时还会删除解析电视剧关联的所有季、集</div>
-          <div>请仅在需要重新索引关联的文件时进行删除操作</div>
-        </div>
-      </Dialog> */}
       <Dialog store={seasonDeletingConfirmDialog}>
         <div class="space-y-1">
-          <div>确认删除吗？</div>
+          <div>确认删除「{curSeason()?.name}」吗？</div>
           <div>同时还会删除关联的剧集</div>
           <div>请仅在需要重新索引关联的文件时进行删除操作</div>
         </div>

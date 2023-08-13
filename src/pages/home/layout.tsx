@@ -15,6 +15,7 @@ import {
   Tv,
   FileSearch,
   File,
+  CircuitBoard,
 } from "lucide-solid";
 
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
@@ -40,7 +41,7 @@ import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
 import { FileSearchDialog } from "@/components/FileSearcher";
 import { FileSearcherCore } from "@/components/FileSearcher/store";
-import { onJobsChange } from "@/store";
+import { homeReportListPage, onJobsChange } from "@/store";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, router, view } = props;
@@ -96,6 +97,7 @@ export const HomeLayout: ViewComponent = (props) => {
         homeMovieListPage,
         homeUnknownMediaLayout,
         homeTaskListPage,
+        homeReportListPage,
         homeMemberListPage,
         homeTransferPage,
         homeFilenameParsingPage,
@@ -180,6 +182,15 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "任务",
       icon: <Bot class="w-6 h-6" />,
       link: "/home/task",
+      badge: false,
+      // onClick() {
+      //   router.push("/home/task");
+      // },
+    },
+    {
+      text: "问题反馈",
+      icon: <CircuitBoard class="w-6 h-6" />,
+      link: "/home/report",
       badge: false,
       // onClick() {
       //   router.push("/home/task");

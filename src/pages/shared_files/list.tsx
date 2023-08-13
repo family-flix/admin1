@@ -5,11 +5,12 @@ import { For, createSignal } from "solid-js";
 
 import { ListCore } from "@/domains/list";
 import { FetchParams } from "@/domains/list/typing";
-import { NavigatorCore } from "@/domains/navigator";
 import { request } from "@/utils/request";
 import { relative_time_from_now } from "@/utils";
-import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
+import { JSONObject, ListResponse, RequestedResource, Result, ViewComponent } from "@/types";
 import { RequestCore } from "@/domains/client";
+import { ScrollView } from "@/components/ui";
+import { ScrollViewCore } from "@/domains/ui";
 
 async function fetch_shared_files_histories(body: FetchParams) {
   const r = await request.get<
@@ -36,20 +37,28 @@ async function fetch_shared_files_histories(body: FetchParams) {
 }
 type SharedFileHistory = RequestedResource<typeof fetch_shared_files_histories>["list"][0];
 
-export const SharedFilesHistoryPage = (props: { router: NavigatorCore }) => {
+export const SharedFilesHistoryPage: ViewComponent = (props) => {
   const { router } = props;
+
+  const list = new ListCore(new RequestCore(fetch_shared_files_histories));
+  const scrollView = new ScrollViewCore({
+    onReachBottom() {
+      list.loadMore();
+    },
+  });
+
   const [response, setResponse] = createSignal(ListCore.defaultResponse<SharedFileHistory>());
-  const helper = new ListCore(new RequestCore(fetch_shared_files_histories));
-  helper.onStateChange((nextState) => {
+
+  list.onStateChange((nextState) => {
     setResponse(nextState);
   });
-  helper.init();
+  list.init();
 
   const dataSource = () => response().dataSource;
 
   return (
     <>
-      <div class="mx-auto w-[960px] py-8">
+      <ScrollView class="py-8" store={scrollView}>
         <view>
           <div class="space-y-4">
             <For each={dataSource()}>
@@ -71,7 +80,7 @@ export const SharedFilesHistoryPage = (props: { router: NavigatorCore }) => {
             </For>
           </div>
         </view>
-      </div>
+      </ScrollView>
     </>
   );
 };

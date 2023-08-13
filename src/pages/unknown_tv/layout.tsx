@@ -4,13 +4,11 @@
 import { createSignal, For, Show } from "solid-js";
 
 import { ViewComponent } from "@/types";
-import { Button } from "@/components/ui/button";
 import { ButtonCore } from "@/domains/ui/button";
-import { homeUnknownTVPage } from "@/store/views";
-import { KeepAliveRouteView } from "@/components/ui/keep-alive-route-view";
-import { cn } from "@/utils";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { KeepAliveRouteView } from "@/components/ui/keep-alive-route-view";
+import { cn } from "@/utils";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
   const { app, view, router } = props;
@@ -69,7 +67,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
     <ScrollView store={scrollView} class="flex flex-col box-border h-screen p-8">
       <div class="h-[80px]">
         <h1 class="text-2xl">未识别的影视剧</h1>
-        <div class="space-x-2">
+        <div class="space-x-2 border">
           <div
             class="inline-block px-4 py-2 cursor-pointer"
             onClick={() => {
@@ -89,6 +87,14 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
           <div
             class="inline-block px-4 py-2 cursor-pointer"
             onClick={() => {
+              router.push("/home/unknown_tv/episode");
+            }}
+          >
+            剧集
+          </div>
+          <div
+            class="inline-block px-4 py-2 cursor-pointer"
+            onClick={() => {
               router.push("/home/unknown_tv/movie");
             }}
           >
@@ -96,8 +102,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
           </div>
         </div>
       </div>
-      <div class="flex-1 rounded-sm">
-        <div class="pt-2 w-full h-full">
+      <div class="flex-1 h-0 rounded-sm">
+        <div class="w-full h-full">
           <Show
             when={subViews().length !== 0}
             fallback={

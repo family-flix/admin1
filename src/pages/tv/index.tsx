@@ -404,6 +404,11 @@ export const TVManagePage: ViewComponent = (props) => {
     footer: false,
   });
   const sharedFileSaveList = new ListCore(new RequestCore(fetch_shared_file_save_list));
+  const sharedFileSaveScrollView = new ScrollViewCore({
+    onReachBottom() {
+      sharedFileSaveList.loadMore();
+    },
+  });
   const addSyncFromSharedRecordBtn = new ButtonInListCore<SharedFileSaveItem>({
     onClick(record) {
       sharedFileSaveListDialog.hide();
@@ -517,7 +522,7 @@ export const TVManagePage: ViewComponent = (props) => {
     }
     consumeAction("deleteTV");
     seasonList.deleteItem((season) => {
-      if (season.tv_id === deleteTV.tv_id) {
+      if (season.id === deleteTV.id) {
         return true;
       }
       return false;
@@ -836,7 +841,7 @@ export const TVManagePage: ViewComponent = (props) => {
             <Button store={folderSearcher.form.btn}>确定</Button>
           </div>
         </div>
-        <div class="h-[360px] overflow-auto">
+        <div class="h-[360px] overflow-y-auto">
           <For each={folders()}>
             {(file) => {
               const { file_name, parent_paths, drive } = file;
@@ -860,30 +865,32 @@ export const TVManagePage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <Dialog store={sharedFileSaveListDialog}>
-        <ListView store={sharedFileSaveList}>
-          <For each={sharedFileSaveResponse().dataSource}>
-            {(save) => {
-              return (
-                <div>
-                  <div class="flex items-center justify-between py-4 space-x-2">
-                    <div>
-                      <div class="text-sm text-slate-500">{save.drive.name}</div>
+        <ScrollView store={sharedFileSaveScrollView} class="h-[360px] overflow-y-auto">
+          <ListView store={sharedFileSaveList}>
+            <For each={sharedFileSaveResponse().dataSource}>
+              {(save) => {
+                return (
+                  <div>
+                    <div class="flex items-center justify-between py-4 space-x-2">
                       <div>
-                        <div>{save.url}</div>
-                        <div>{save.name}</div>
+                        <div class="text-sm text-slate-500">{save.drive.name}</div>
+                        <div>
+                          <div>{save.url}</div>
+                          <div class="break-all">{save.name}</div>
+                        </div>
                       </div>
+                      <Button
+                        store={addSyncFromSharedRecordBtn.bind(save)}
+                        class="ml-4 cursor-pointer"
+                        icon={<Check class="w-4 h-4" />}
+                      ></Button>
                     </div>
-                    <Button
-                      store={addSyncFromSharedRecordBtn.bind(save)}
-                      class="ml-4 cursor-pointer"
-                      icon={<Check class="w-4 h-4" />}
-                    ></Button>
                   </div>
-                </div>
-              );
-            }}
-          </For>
-        </ListView>
+                );
+              }}
+            </For>
+          </ListView>
+        </ScrollView>
       </Dialog>
       <Popover
         store={tipPopover}

@@ -17,6 +17,7 @@ import { MediaPlayingPage } from "@/pages/play/index";
 import { UnknownMediaLayout as UnknownMediaLayout } from "@/pages/unknown_tv/layout";
 import { UnknownTVPage } from "@/pages/unknown_tv/tv";
 import { UnknownSeasonPage } from "@/pages/unknown_tv/season";
+import { UnknownEpisodePage } from "@/pages/unknown_tv/episode";
 import { UnknownMoviePage } from "@/pages/unknown_tv/movie";
 import { MemberManagePage } from "@/pages/member";
 import { VideoParsingPage } from "@/pages/parse";
@@ -24,6 +25,7 @@ import { HomeLayout } from "@/pages/home/layout";
 import { TestPage } from "@/pages/test";
 import { RegisterPage } from "@/pages/register";
 import { LoginPage } from "@/pages/login";
+import { HomeReportListPage } from "@/pages/report";
 
 RouteViewCore.prefix = NavigatorCore.prefix;
 
@@ -141,6 +143,14 @@ export const homeUnknownSeasonPage = new RouteViewCore({
     return UnknownSeasonPage;
   },
 });
+export const homeUnknownEpisodePage = new RouteViewCore({
+  title: "未识别的剧集",
+  // component: UnknownMoviePage,
+  component: async () => {
+    // const { UnknownMoviePage } = await import("@/pages/unknown_tv/movie");
+    return UnknownEpisodePage;
+  },
+});
 export const homeUnknownMoviePage = new RouteViewCore({
   title: "未识别的电影",
   // component: UnknownMoviePage,
@@ -164,6 +174,13 @@ export const homeMemberListPage = new RouteViewCore({
   component: async () => {
     // const { MemberManagePage } = await import("@/pages/member");
     return MemberManagePage;
+  },
+});
+export const homeReportListPage = new RouteViewCore({
+  title: "问题列表",
+  component: async () => {
+    // const { LoginPage } = await import("@/pages/login");
+    return HomeReportListPage;
   },
 });
 export const loginPage = new RouteViewCore({

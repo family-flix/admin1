@@ -97,41 +97,39 @@ export const TaskProfilePage: ViewComponent = (props) => {
         fallback={
           <div>
             <div>
-              <Skeleton class="w-32 h-[64px]"></Skeleton>
+              <Skeleton class="w-32 h-[36px]"></Skeleton>
               <div class="mt-2 flex items-center space-x-4">
-                <div class="flex items-center space-x-1">
-                  <Skeleton class="w-4 h-4"></Skeleton>
-                  <Skeleton class="w-18 h-[18px]"></Skeleton>
-                </div>
-                <Skeleton class="mt-2 w-18 h-[18px]"></Skeleton>
+                <Skeleton class="w-64 h-[24px]"></Skeleton>
+              </div>
+              <div class="mt-4 space-y-1">
+                <Skeleton class="w-[60px] h-[36px]"></Skeleton>
               </div>
             </div>
-            <div class="divider-x-2"></div>
             <div class="mt-8 space-y-1">
-              <Skeleton class="w-full h-[18]"></Skeleton>
-              <Skeleton class="w-32 h-[18]"></Skeleton>
-              <Skeleton class="w-24 h-[18]"></Skeleton>
+              <Skeleton class="w-12 h-[24px]"></Skeleton>
+              <Skeleton class="w-full h-[24px]"></Skeleton>
+              <Skeleton class="w-32 h-[24px]"></Skeleton>
+              <Skeleton class="w-64 h-[24px]"></Skeleton>
             </div>
           </div>
         }
       >
         <div>
           <h1 class="text-3xl">{profile()!.desc}</h1>
-          <div class="flex items-center mt-2 space-x-4">
+          <div class="mt-2 flex items-center space-x-4">
             <div class="flex items-center space-x-1">
               <Calendar class="w-4 h-4" />
               <div>{profile()!.created}</div>
             </div>
             <p>{profile()!.statusText}</p>
           </div>
+          <div class="flex items-center mt-4 space-x-2">
+            <Button store={refreshBtn}>刷新</Button>
+            <Show when={profile()!.status === TaskStatus.Running}>
+              <Button store={pauseBtn}>暂停任务</Button>
+            </Show>
+          </div>
         </div>
-        <div class="flex items-center mt-4 space-x-2">
-          <Button store={refreshBtn}>刷新</Button>
-          <Show when={profile()!.status === TaskStatus.Running}>
-            <Button store={pauseBtn}>暂停任务</Button>
-          </Show>
-        </div>
-        <div class="divider-x-2"></div>
         <div class="mt-8">
           <ListView store={logList}>
             <Article nodes={logResponse().dataSource} />
