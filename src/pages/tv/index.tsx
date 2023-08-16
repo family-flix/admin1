@@ -709,15 +709,13 @@ export const TVManagePage: ViewComponent = (props) => {
                                     归档
                                   </Button>
                                 </Show>
-                                <Show when={need_bind}>
-                                  <Button
-                                    store={addSyncTaskBtn.bind(season)}
-                                    variant="subtle"
-                                    icon={<BellPlus class="w-4 h-4" />}
-                                  >
-                                    创建更新任务
-                                  </Button>
-                                </Show>
+                                <Button
+                                  store={addSyncTaskBtn.bind(season)}
+                                  variant="subtle"
+                                  icon={<BellPlus class="w-4 h-4" />}
+                                >
+                                  创建更新任务
+                                </Button>
                                 <Show when={sync_task}>
                                   <>
                                     <Button

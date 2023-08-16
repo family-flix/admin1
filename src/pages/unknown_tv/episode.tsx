@@ -69,7 +69,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       deleteUnknownEpisode.run({ id: cur.value.id });
     },
   });
-  const deleteBtn = new ButtonInListCore<UnknownMovieItem>({
+  const deleteBtn = new ButtonInListCore<UnknownEpisodeItem>({
     onClick(record) {
       cur.select(record);
       deleteConfirmDialog.setTitle(`确认删除 ${record.name} 吗？`);
@@ -173,8 +173,8 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       >
         <div class="space-y-4">
           <For each={dataSource()}>
-            {(file) => {
-              const { id, name, file_name, parent_paths, drive } = file;
+            {(episode) => {
+              const { id, name, episode_number, season_number, file_name, parent_paths, drive } = episode;
               return (
                 <div class="flex p-4 bg-white rounded-sm">
                   <div class="mr-2 w-[80px]">
@@ -204,7 +204,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                       <Button
                         class="box-content"
                         variant="subtle"
-                        store={deleteBtn.bind(file)}
+                        store={deleteBtn.bind(episode)}
                         icon={<Trash class="w-4 h-4" />}
                       >
                         删除

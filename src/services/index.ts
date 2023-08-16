@@ -387,6 +387,8 @@ export async function fetch_unknown_episode_list(params: FetchParams) {
       id: string;
       name: string;
       original_name: string;
+      season_number: string;
+      episode_number: string;
       file_id: string;
       file_name: string;
       parent_paths: string;
@@ -407,10 +409,12 @@ export async function fetch_unknown_episode_list(params: FetchParams) {
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, original_name, file_id, file_name, parent_paths, drive } = tv;
+      const { id, name, original_name, episode_number, season_number, file_id, file_name, parent_paths, drive } = tv;
       return {
         id,
         name: name || original_name,
+        episode_number,
+        season_number,
         file_id,
         file_name,
         parent_paths,
