@@ -3,7 +3,7 @@
  */
 import { createSignal, onMount } from "solid-js";
 
-import { Video } from "@/components/ui/video";
+import { Video } from "@/components/ui";
 import { RequestCore } from "@/domains/client";
 import { PlayerCore } from "@/domains/player";
 import { fetch_video_preview_info } from "@/services";

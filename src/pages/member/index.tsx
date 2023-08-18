@@ -2,33 +2,17 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
-import {
-  LucideEdit2 as Edit2,
-  LucideGem as Gem,
-  LucideQrCode as QrCodeIcon,
-  LucideRotateCcw as RotateCcw,
-  LucideShieldClose as ShieldClose,
-  LucideUserPlus as UserPlus,
-  LucideUserX as UserX,
-} from "lucide-solid";
+import { Edit2, Gem, RotateCcw, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
 import { add_member, create_member_auth_link, delete_member, fetch_members, MemberItem } from "@/services";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog } from "@/components/ui/dialog";
-import { DialogCore } from "@/domains/ui/dialog";
+import { Button, Dialog, Input, ListView, Skeleton, ScrollView } from "@/components/ui";
+import { Qrcode } from "@/components/Qrcode";
+import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/client";
-import { InputCore } from "@/domains/ui/input";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
-import { ViewComponent } from "@/types";
-import { Qrcode } from "@/components/Qrcode";
 import { SelectionCore } from "@/domains/cur";
+import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
-import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { ScrollView } from "@/components/ui/scroll-view";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;

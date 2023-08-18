@@ -18,12 +18,15 @@ import {
   CircuitBoard,
 } from "lucide-solid";
 
+import { Button, Dialog, KeepAliveRouteView } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { KeepAliveRouteView } from "@/components/ui/keep-alive-route-view";
+import { FileSearchDialog } from "@/components/FileSearcher";
+import { FileSearcherCore } from "@/components/FileSearcher/store";
+import { ButtonCore, DialogCore } from "@/domains/ui";
+import { NavigatorCore } from "@/domains/navigator";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
-import { cn, sleep } from "@/utils";
 import {
   homeFilenameParsingPage,
   homeIndexPage,
@@ -34,14 +37,8 @@ import {
   homeTransferPage,
   homeUnknownMediaLayout,
 } from "@/store/views";
-import { Button } from "@/components/ui/button";
-import { ButtonCore } from "@/domains/ui/button";
-import { NavigatorCore } from "@/domains/navigator";
-import { DialogCore } from "@/domains/ui/dialog";
-import { Dialog } from "@/components/ui/dialog";
-import { FileSearchDialog } from "@/components/FileSearcher";
-import { FileSearcherCore } from "@/components/FileSearcher/store";
 import { homeReportListPage, onJobsChange } from "@/store";
+import { cn, sleep } from "@/utils";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, router, view } = props;

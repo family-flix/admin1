@@ -1,13 +1,9 @@
 /**
  * @file 用户登录
  */
-import { onMount } from "solid-js";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/ui";
+import { ButtonCore, InputCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
-import { InputCore } from "@/domains/ui/input";
-import { ButtonCore } from "@/domains/ui/button";
 
 export const LoginPage: ViewComponent = (props) => {
   const { app, router, view } = props;

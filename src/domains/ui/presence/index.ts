@@ -41,8 +41,6 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   name = "PresenceCore";
   debug = false;
 
-  /** 之前是否可见状态 */
-  private prevPresent = false;
   // styles: CSSStyleDeclaration;
   animationName = "none";
   // private state = "unmounted";

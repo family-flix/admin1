@@ -3,11 +3,9 @@
  */
 import { createSignal, For, Show } from "solid-js";
 
+import { ButtonCore, ScrollViewCore } from "@/domains/ui";
+import { ScrollView, KeepAliveRouteView } from "@/components/ui";
 import { ViewComponent } from "@/types";
-import { ButtonCore } from "@/domains/ui/button";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { KeepAliveRouteView } from "@/components/ui/keep-alive-route-view";
 import { cn } from "@/utils";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {

@@ -4,20 +4,17 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ChevronRight } from "lucide-solid";
 
-import { Dialog, DropdownMenu, Input, ScrollView, Skeleton } from "@/components/ui";
+import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView } from "@/components/ui";
+import { List } from "@/components/List";
+import { DialogCore, DropdownMenuCore, ButtonCore, InputCore, MenuItemCore, ScrollViewCore } from "@/domains/ui";
 import { DriveCore } from "@/domains/drive";
 import { AliyunDriveFile } from "@/domains/drive/types";
 import { DriveItem } from "@/domains/drive/services";
-import { DialogCore, DropdownMenuCore, ButtonCore, InputCore } from "@/domains/ui";
-import { AliyunDriveFilesCore } from "@/domains/drive/files";
-import { ListView } from "@/components/ListView";
-import { List } from "@/components/List";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { createJob } from "@/store";
-import { ViewComponent } from "@/types";
 import { SelectionCore } from "@/domains/cur";
+import { AliyunDriveFilesCore } from "@/domains/drive/files";
+import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
+import { createJob } from "@/store";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, router, view } = props;

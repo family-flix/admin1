@@ -1,30 +1,18 @@
 /**
  * @file 未识别的电视剧
  */
-import { For, createSignal, onMount } from "solid-js";
-import { LucideBrush as Brush, LucideRotateCcw as RotateCcw, Trash } from "lucide-solid";
+import { For, createSignal } from "solid-js";
+import { Brush, RotateCcw, Trash } from "lucide-solid";
 
-import { RequestCore } from "@/domains/client";
-import { ListCore } from "@/domains/list";
-import {
-  UnknownTVItem,
-  bind_profile_for_unknown_movie,
-  bind_profile_for_unknown_tv,
-  delete_unknown_tv_list,
-  fetch_unknown_tv_list,
-} from "@/services";
-import { FolderCard, FolderCardSkeleton } from "@/components/FolderCard";
-import { Button } from "@/components/ui/button";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
-import { SelectionCore } from "@/domains/cur";
-import { ViewComponent } from "@/types";
+import { Button, ListView, Dialog, LazyImage } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DialogCore } from "@/domains/ui/dialog";
-import { Dialog } from "@/components/ui/dialog";
-import { LazyImage } from "@/components/ui";
+import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/client";
+import { ListCore } from "@/domains/list";
+import { SelectionCore } from "@/domains/cur";
+import { UnknownTVItem, bind_profile_for_unknown_tv, delete_unknown_tv_list, fetch_unknown_tv_list } from "@/services";
+import { ViewComponent } from "@/types";
 
 export const UnknownTVPage: ViewComponent = (props) => {
   const { app, view } = props;

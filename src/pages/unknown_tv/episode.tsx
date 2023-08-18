@@ -22,7 +22,7 @@ import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { DialogCore } from "@/domains/ui/dialog";
 import { Dialog } from "@/components/ui/dialog";
-import { ListView } from "@/components/ListView";
+import { ListView } from "@/components/ui/list-view";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LazyImage } from "@/components/ui";
 

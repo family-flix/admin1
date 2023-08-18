@@ -1,25 +1,22 @@
 /**
  * @file 任务列表
  */
-import { For, JSX, Show, createSignal } from "solid-js";
+import { For, JSX, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { Ban, CheckCircle, Eye, Film, Mails, ParkingCircle, RotateCw, Timer, Trash, Tv } from "lucide-solid";
+import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
-import { ListCore } from "@/domains/list";
-import { Button, Skeleton, ScrollView } from "@/components/ui";
-import { RouteViewCore } from "@/domains/route_view";
-import { NavigatorCore } from "@/domains/navigator";
-import { RequestCore } from "@/domains/client";
-import { Application } from "@/domains/app";
+import { fetchReportList } from "@/services";
+import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
-import { JobItem, clear_expired_job_list, fetch_job_list, pause_job } from "@/domains/job/services";
-import { ListView } from "@/components/ListView";
-import { ReportTypes, TaskStatus } from "@/constants";
+import { RequestCore } from "@/domains/client";
+import { ListCore } from "@/domains/list";
+import { JobItem, clear_expired_job_list } from "@/domains/job/services";
+import { ReportTypes } from "@/constants";
+import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { refreshJobs } from "@/store";
-import { fetchReportList } from "@/services";
 
-export const HomeReportListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
+export const HomeReportListPage: ViewComponent = (props) => {
   const { app, view, router } = props;
 
   const reportList = new ListCore(new RequestCore(fetchReportList), {});

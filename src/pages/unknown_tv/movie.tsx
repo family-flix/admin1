@@ -1,13 +1,8 @@
 /**
  * @file 未识别的电影
  */
-import { For, Show, createSignal, onMount } from "solid-js";
-import {
-  LucideBrush as Brush,
-  LucideRotateCcw as RotateCcw,
-  LucideTrain as Train,
-  LucideTrash as Trash,
-} from "lucide-solid";
+import { For, createSignal } from "solid-js";
+import { Brush, RotateCcw, Trash } from "lucide-solid";
 
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
@@ -18,17 +13,12 @@ import {
   delete_unknown_movie_list,
   fetch_unknown_movie_list,
 } from "@/services";
-import { Button } from "@/components/ui/button";
-import { ButtonCore, ButtonInListCore } from "@/domains/ui/button";
-import { SelectionCore } from "@/domains/cur";
-import { ViewComponent } from "@/types";
+import { Button, Dialog, ListView, LazyImage } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { DialogCore } from "@/domains/ui/dialog";
-import { Dialog } from "@/components/ui/dialog";
-import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LazyImage } from "@/components/ui";
+import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
+import { SelectionCore } from "@/domains/cur";
+import { ViewComponent } from "@/types";
 
 export const UnknownMoviePage: ViewComponent = (props) => {
   const { app, view } = props;

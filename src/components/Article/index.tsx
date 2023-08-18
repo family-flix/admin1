@@ -1,3 +1,6 @@
+import { For, JSX } from "solid-js";
+import { Dynamic } from "solid-js/web";
+
 import {
   ArticleCore,
   ArticleHeadNode,
@@ -8,8 +11,6 @@ import {
   ArticleSectionNode,
   ArticleTextNode,
 } from "@/domains/article";
-import { For, JSX } from "solid-js";
-import { Dynamic } from "solid-js/web";
 
 export function Article(props: { nodes: ArticleCore["children"] }) {
   // console.log("nodes", JSON.stringify(props.nodes));

@@ -1,11 +1,9 @@
 /**
  * @file 用户注册
  */
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/ui";
+import { InputCore, ButtonCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
-import { InputCore } from "@/domains/ui/input";
-import { ButtonCore } from "@/domains/ui/button";
 
 export const RegisterPage: ViewComponent = (props) => {
   const { app, router } = props;

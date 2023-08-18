@@ -17,14 +17,14 @@ function m() {
     const {access_token, avatar, default_drive_id, expire_time, nick_name, refresh_token, user_id, user_name, } = user;
     const result = {
         app_id: window.Global.app_id,
-        access_token,
-        avatar,
         drive_id: default_drive_id,
         device_id,
+        user_id,
         nick_name,
-        refresh_token,
-        aliyun_user_id: user_id,
         user_name,
+        avatar,
+        access_token,
+        refresh_token,
     };
     const result_str = jj.stringify(result);
     cc(result_str);
@@ -54,8 +54,9 @@ function cc(str) {
 m();`;
 
 const code_prefix = "";
+// esbuild index.js --outfile=dist/index.js --format=cjs --bundle --minify
 // 压缩后的代码
-export const code_get_drive_token = `${code_prefix}const oo=document,jj=JSON,ll=localStorage;function m(){const e=jj.parse(ll.getItem("token")||"null");if(null===e)return void alert("请先登录");const o=pp(oo.cookie).cna;if(!o)return void alert("请先登录");const{access_token:n,avatar:t,default_drive_id:r,expire_time:i,nick_name:c,refresh_token:a,user_id:l,user_name:s}=e,d={app_id:window.Global.app_id,access_token:n,avatar:t,drive_id:r,device_id:o,nick_name:c,refresh_token:a,aliyun_user_id:l,user_name:s},u=jj.stringify(d);return cc(u),console.log("云盘信息已复制到粘贴板，请粘贴到新增云盘处"),u}function pp(e){if(!e)return{};const o={},n=e.split("; ");for(let e=0;e<n.length;e+=1){const[t,r]=n[e].split("=");o[t]=r}return o}function cc(e){const o=oo.createElement("textarea");o.value=e,oo.body.appendChild(o),o.select(),oo.execCommand("copy"),oo.body.removeChild(o)}m();`;
+export const code_get_drive_token = `${code_prefix}var o=document,i=JSON,m=localStorage;function k(){let t="cna",e=i.parse(m.getItem("token")||"null");if(e===null){alert("\u8BF7\u5148\u767B\u5F55");return}let n=v(o.cookie)[t];if(!n){alert("请先登录");return}let{access_token:r,avatar:s,default_drive_id:a,expire_time:g,nick_name:u,refresh_token:d,user_id:_,user_name:p}=e,f={app_id:window.Global.app_id,drive_id:a,device_id:n,user_id:_,nick_name:u,user_name:p,avatar:s,access_token:r,refresh_token:d},l=i.stringify(f);return y(l),console.log("云盘信息已复制到粘贴板，请粘贴到新增云盘处"),l}function v(t){if(!t)return{};let e={},c=t.split("; ");for(let n=0;n<c.length;n+=1){let[r,s]=c[n].split("=");e[r]=s}return e}function y(t){let e=o.createElement("textarea");e.value=t,o.body.appendChild(e),e.select(),o.execCommand("copy"),o.body.removeChild(e)}k();`;
 
 export enum FileType {
   File = 1,

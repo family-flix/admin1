@@ -31,8 +31,6 @@ import {
   transfer_tv_to_another_drive,
   TVSeasonItem,
 } from "@/services";
-import { driveList } from "@/store/drives";
-import { Result, ViewComponent } from "@/types";
 import {
   Skeleton,
   Popover,
@@ -45,10 +43,11 @@ import {
   PurePopover,
   BackToTop,
   CheckboxGroup,
+  ListView,
 } from "@/components/ui";
+import { FileSearcherCore } from "@/components/FileSearcher/store";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { ListView } from "@/components/ListView";
 import {
   ScrollViewCore,
   DialogCore,
@@ -64,13 +63,12 @@ import { SelectionCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { DriveCore } from "@/domains/drive";
-import { createJob } from "@/store";
-import { cn } from "@/utils";
-import { FileSearcherCore } from "@/components/FileSearcher/store";
-import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
-import { consumeAction, pendingActions } from "@/store/actions";
 import { CheckboxGroupCore } from "@/domains/ui/checkbox/group";
 import { fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource/services";
+import { createJob, driveList, consumeAction, pendingActions } from "@/store";
+import { Result, ViewComponent } from "@/types";
+import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
+import { cn } from "@/utils";
 
 export const TVManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;

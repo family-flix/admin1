@@ -3,8 +3,7 @@
  */
 import { JSX } from "solid-js/jsx-runtime";
 
-import { LazyImage } from "@/components/ui/image";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LazyImage, Skeleton } from "@/components/ui";
 
 export const FolderCard = (
   props: {

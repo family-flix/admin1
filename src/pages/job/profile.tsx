@@ -1,21 +1,17 @@
 /**
  * @file 转存任务详情页面
  */
-import { Show, createSignal, onCleanup, onMount } from "solid-js";
-import { LucideCalendar as Calendar } from "lucide-solid";
+import { Show, createSignal, onMount } from "solid-js";
+import { Calendar } from "lucide-solid";
 
+import { Button, ScrollView, Skeleton, ListView } from "@/components/ui";
+import { Article } from "@/components/Article";
+import { ScrollViewCore, ButtonCore } from "@/domains/ui";
+import { ListCore } from "@/domains/list";
 import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job } from "@/domains/job/services";
 import { RequestCore } from "@/domains/client";
-import { Article } from "@/components/Article";
-import { ViewComponent } from "@/types";
 import { TaskStatus } from "@/domains/job/constants";
-import { ButtonCore } from "@/domains/ui/button";
-import { Button } from "@/components/ui/button";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ListCore } from "@/domains/list";
-import { ListView } from "@/components/ListView";
+import { ViewComponent } from "@/types";
 
 export const TaskProfilePage: ViewComponent = (props) => {
   const { app, router, view } = props;

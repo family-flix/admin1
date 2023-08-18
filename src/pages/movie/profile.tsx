@@ -3,41 +3,14 @@
  */
 import { For, Show, createSignal, onMount } from "solid-js";
 
-import { RequestedResource, ViewComponent } from "@/types";
-import { request } from "@/utils/request";
-import { Button } from "@/components/ui/button";
-import { LazyImage } from "@/components/ui/image";
+import { MovieProfile, delete_movie, fetch_movie_profile, update_movie_profile } from "@/services";
+import { Button, Dialog, Skeleton, LazyImage, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { delete_movie, update_movie_profile } from "@/services";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { DialogCore, ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
-import { ButtonCore } from "@/domains/ui/button";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { DialogCore } from "@/domains/ui";
-import { appendAction } from "@/store/actions";
-import { Dialog, Skeleton } from "@/components/ui";
-
-async function fetch_movie_profile(body: { movie_id: string }) {
-  const { movie_id } = body;
-  const r = await request.get<{
-    id: string;
-    name: string;
-    overview: string;
-    poster_path: null;
-    backdrop_path: null;
-    original_language: string;
-    air_date: string;
-    tmdb_id: number;
-    sources: {
-      file_id: string;
-      parent_paths: string;
-      file_name: string;
-    }[];
-  }>(`/api/admin/movie/${movie_id}`);
-  return r;
-}
-type MovieProfile = RequestedResource<typeof fetch_movie_profile>;
+import { ViewComponent } from "@/types";
+import { appendAction } from "@/store";
 
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view, router } = props;

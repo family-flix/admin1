@@ -1,28 +1,19 @@
 /**
  * @file 分享文件转存
  */
-import { For, Show, createSignal, onMount } from "solid-js";
-import { ChevronRight, Folder, FolderInput, MoreHorizontal, Search } from "lucide-solid";
+import { For, Show, createSignal } from "solid-js";
+import { ChevronRight, Folder, FolderInput, MoreHorizontal } from "lucide-solid";
 
-import { driveList } from "@/store/drives";
-import { ViewComponent } from "@/types";
+import { Button, DropdownMenu, Input } from "@/components/ui";
+import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
 import { SharedResourceCore } from "@/domains/shared_resource";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { MenuCore } from "@/domains/ui/menu";
-import { Input } from "@/components/ui/input";
 import { FolderCard } from "@/components/FolderCard";
-import { Button } from "@/components/ui/button";
-import { InputCore } from "@/domains/ui/input";
-import { ButtonCore } from "@/domains/ui/button";
-import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { createJob } from "@/store";
+import { ViewComponent } from "@/types";
+import { createJob, driveList } from "@/store";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
   const { app, router, view } = props;
 
-  // const modal1 = new DialogCore();
-  // const tvProfile = new TVProfileCore();
   const sharedResource = new SharedResourceCore();
   const driveSubMenu = new MenuCore({
     _name: "menus-of-drives",
@@ -32,25 +23,6 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   const dropdownMenu = new DropdownMenuCore({
     _name: "shared-resource-dropdown",
     items: [
-      // new MenuItemCore({
-      //   label: "查找同名文件夹并建立关联",
-      //   onClick() {
-      //     sharedResource.bindSelectedFolderInDrive();
-      //   },
-      // }),
-      // new MenuItemCore({
-      //   label: "检查同名文件夹",
-      //   icon: <Search class="w-4 h-4" />,
-      //   onClick() {
-      //     // sharedResource.findTheTVHasSameNameWithSelectedFolder();
-      //   },
-      // }),
-      // new MenuItemCore({
-      //   label: "转存到默认云盘",
-      //   onClick() {
-      //     sharedResource.transferSelectedFolderToDrive(app.drives[0]);
-      //   },
-      // }),
       new MenuItemCore({
         _name: "transfer_to",
         label: "转存到",
@@ -105,10 +77,6 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       })
     );
   });
-  // sharedResource.onShowTVProfile((profile) => {
-  //   tvProfile.set(profile);
-  //   modal1.show();
-  // });
   sharedResource.onTip((msg) => {
     app.tip(msg);
   });
@@ -121,13 +89,9 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
     });
   });
   driveList.init();
-  // view.onHidden(() => {
-  //   console.log("shared files hide");
-  // });
 
   const [state, setState] = createSignal(sharedResource.state);
 
-  // const url = () => state().url;
   const paths = () => state().paths;
   const files = () => state().files;
 
@@ -202,85 +166,6 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
         </div>
       </div>
       <DropdownMenu store={dropdownMenu}></DropdownMenu>
-      {/* <Modal
-          title="文件夹"
-          visible={drive_folder_visible}
-          footer={null}
-          onCancel={async () => {
-            console.log("1 set_drive_folder_visible false");
-            set_drive_folder_visible(false);
-            return Result.Ok(null);
-          }}
-        >
-          <Tabs
-            defaultValue={
-              drives_response.dataSource.length
-                ? drives_response.dataSource[0]?.user_name
-                : undefined
-            }
-          >
-            <TabsList>
-              {drives_response.dataSource.map((drive) => {
-                const { id, user_name } = drive;
-                return (
-                  <TabsTrigger key={id} value={user_name}>
-                    {user_name}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-            {drives_response.dataSource.map((drive) => {
-              const { id, user_name } = drive;
-              return (
-                <TabsContent
-                  class="p-4 min-h-[536px]"
-                  key={id}
-                  value={user_name}
-                >
-                  <DriveFolders
-                    key={id}
-                    class="grid-cols-3"
-                    options={[
-                      {
-                        label: "选择",
-                        async on_click(value) {
-                          if (!value) {
-                            return;
-                          }
-                          if (cur_folder_ref.current === null) {
-                            return;
-                          }
-                          const shared_folder = cur_folder_ref.current;
-                          const folder = value as FolderItem;
-                          const r =
-                            await build_link_between_shared_files_with_folder({
-                              url,
-                              file_id: shared_folder.file_id,
-                              file_name: shared_folder.name,
-                              target_file_id: folder.file_id,
-                            });
-                          if (r.error) {
-                            toast({
-                              title: "ERROR",
-                              description: r.error.message,
-                            });
-                            return;
-                          }
-                          toast({
-                            title: "成功",
-                            description: "建立关联成功",
-                          });
-                        },
-                      },
-                    ]}
-                    id={id}
-                    size={6}
-                  />
-                </TabsContent>
-              );
-            })}
-          </Tabs>
-        </Modal> */}
     </div>
   );
 };

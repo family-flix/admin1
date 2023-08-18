@@ -3,11 +3,7 @@
  */
 import { For, JSX, createSignal } from "solid-js";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { ListView } from "@/components/ListView";
+import { Button, Input, Label, ListView, ScrollView } from "@/components/ui";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
 

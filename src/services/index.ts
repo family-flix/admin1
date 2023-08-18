@@ -1090,3 +1090,24 @@ export function fetchReportProfile(params: { report_id: string }) {
   const { report_id } = params;
   return request.get(`/api/admin/report/${report_id}`);
 }
+
+export async function fetch_movie_profile(body: { movie_id: string }) {
+  const { movie_id } = body;
+  const r = await request.get<{
+    id: string;
+    name: string;
+    overview: string;
+    poster_path: null;
+    backdrop_path: null;
+    original_language: string;
+    air_date: string;
+    tmdb_id: number;
+    sources: {
+      file_id: string;
+      parent_paths: string;
+      file_name: string;
+    }[];
+  }>(`/api/admin/movie/${movie_id}`);
+  return r;
+}
+export type MovieProfile = RequestedResource<typeof fetch_movie_profile>;

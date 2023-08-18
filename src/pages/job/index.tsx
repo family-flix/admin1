@@ -5,20 +5,17 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
-import { ListCore } from "@/domains/list";
-import { Button, Skeleton, ScrollView } from "@/components/ui";
-import { RouteViewCore } from "@/domains/route_view";
-import { NavigatorCore } from "@/domains/navigator";
-import { RequestCore } from "@/domains/client";
-import { Application } from "@/domains/app";
+import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/client";
+import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetch_job_list, pause_job } from "@/domains/job/services";
-import { ListView } from "@/components/ListView";
 import { TaskStatus } from "@/constants";
-import { cn } from "@/utils";
 import { refreshJobs } from "@/store";
+import { ViewComponent } from "@/types";
+import { cn } from "@/utils";
 
-export const TaskListPage = (props: { app: Application; router: NavigatorCore; view: RouteViewCore }) => {
+export const TaskListPage: ViewComponent = (props) => {
   const { app, view, router } = props;
 
   const jobList = new ListCore(new RequestCore(fetch_job_list), {});

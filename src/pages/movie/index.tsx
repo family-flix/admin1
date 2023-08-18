@@ -4,17 +4,16 @@
 import { createSignal, For } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
-import { ViewComponent } from "@/types";
 import { bind_profile_for_unknown_movie, fetch_movie_list, MovieItem } from "@/services";
+import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox } from "@/components/ui";
+import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
+import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { ListCore } from "@/domains/list";
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
-import { LazyImage, Input, Button, Skeleton, ScrollView, Checkbox } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { ListView } from "@/components/ListView";
-import { consumeAction, pendingActions } from "@/store/actions";
+import { ViewComponent } from "@/types";
+import { consumeAction, pendingActions } from "@/store";
 
 export const MovieManagePage: ViewComponent = (props) => {
   const { app, router, view } = props;

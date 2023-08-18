@@ -16,17 +16,24 @@ import {
   Puzzle,
 } from "lucide-solid";
 
+import {
+  Button,
+  Input,
+  Dialog,
+  ScrollView,
+  Progress,
+  ListView,
+  LazyImage,
+  Skeleton,
+  DropdownMenu,
+} from "@/components/ui";
+import { List } from "@/components/List";
+import { InputCore, ButtonCore, DropdownMenuCore, DialogCore, ProgressCore, MenuItemCore } from "@/domains/ui";
 import { Application } from "@/domains/app";
 import { DriveCore } from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { LazyImage } from "@/components/ui/image";
-import { InputCore, ButtonCore, DropdownMenuCore, DialogCore, ProgressCore } from "@/domains/ui";
-import { Button, Input, Dialog, ScrollView, Progress, Skeleton, DropdownMenu } from "@/components/ui";
-import { ListView } from "@/components/ListView";
-import { List } from "@/components/List";
-import { createJob } from "@/store";
 import { FileType } from "@/constants";
+import { createJob } from "@/store";
 
 export const DriveCard = (props: {
   app: Application;

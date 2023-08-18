@@ -1,26 +1,18 @@
 /**
  * @file 管理后台首页
  */
-import { createSignal, For, onMount } from "solid-js";
-import { LucideRotateCcw as RotateCcw, LucideHardDrive as HardDrive } from "lucide-solid";
+import { createSignal, For } from "solid-js";
+import { RotateCcw, HardDrive } from "lucide-solid";
 
-import { driveList } from "@/store/drives";
-import { ViewComponent } from "@/types";
+import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
-import { Button } from "@/components/ui/button";
-import { ButtonCore } from "@/domains/ui/button";
-import { Dialog } from "@/components/ui/dialog";
-import { DialogCore } from "@/domains/ui/dialog";
-import { code_get_drive_token } from "@/constants";
-import { Textarea } from "@/components/ui/textarea";
-import { InputCore } from "@/domains/ui/input";
+import { ButtonCore, DialogCore, ScrollViewCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { addAliyunDrive } from "@/domains/drive/services";
-import { ListView } from "@/components/ListView";
-import { Skeleton } from "@/components/ui/skeleton";
+import { code_get_drive_token } from "@/constants";
+import { ViewComponent } from "@/types";
+import { driveList } from "@/store";
 import { query_stringify } from "@/utils";
-import { ScrollView } from "@/components/ui";
-import { ScrollViewCore } from "@/domains/ui";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, router, view } = props;

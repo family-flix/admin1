@@ -4,10 +4,10 @@
 import { For, JSX, createSignal } from "solid-js";
 import { Search } from "lucide-solid";
 
-import { LazyImage } from "@/components/ui/image";
+import { Button, Input, LazyImage, Label, ListView, ScrollView } from "@/components/ui";
 import * as Form from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TMDBSearcherCore } from "@/domains/tmdb";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
 // import {
 //   Select,
 //   SelectContent,
@@ -15,13 +15,7 @@ import { Input } from "@/components/ui/input";
 //   SelectTrigger,
 //   SelectValue,
 // } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { ListView } from "@/components/ListView";
-import { TMDBSearcherCore } from "@/domains/tmdb";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
