@@ -125,7 +125,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 将 DOM 从页面卸载 */
   unmount() {
-    console.log("[]PresenceCore - destroy", this.state.open, this.state.unmounted);
+    // console.log("[]PresenceCore - destroy", this.state.open, this.state.unmounted);
     if (this.state.open) {
       // this.emit(Events.Show);
       return;

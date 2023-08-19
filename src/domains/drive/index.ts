@@ -24,8 +24,8 @@ import {
   deleteDrive,
   matchMediaFilesMedia,
   receiveCheckInRewardOfDrive,
-  AliyunDriveFile,
 } from "./services";
+import { AliyunDriveFile } from "./types";
 
 enum Events {
   StateChange,
@@ -439,3 +439,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     return "Drive";
   }
 }
+
+export * from "./types";
+export * from "./services";
+export * from "./files";

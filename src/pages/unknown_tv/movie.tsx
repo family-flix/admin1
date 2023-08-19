@@ -4,8 +4,6 @@
 import { For, createSignal } from "solid-js";
 import { Brush, RotateCcw, Trash } from "lucide-solid";
 
-import { RequestCore } from "@/domains/client";
-import { ListCore } from "@/domains/list";
 import {
   UnknownMovieItem,
   bind_profile_for_unknown_movie,
@@ -14,9 +12,10 @@ import {
   fetch_unknown_movie_list,
 } from "@/services";
 import { Button, Dialog, ListView, LazyImage } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/client";
+import { ListCore } from "@/domains/list";
 import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 

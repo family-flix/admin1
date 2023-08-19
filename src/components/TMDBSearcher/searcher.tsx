@@ -45,7 +45,9 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
         <Form.Root store={store.form}>
           <div class="grid grid-cols-12 items-center gap-4">
             <Label class="col-span-2 text-right">名称</Label>
-            <Input class="col-span-10" store={store.input} />
+            <div class="col-span-10">
+              <Input store={store.input} />
+            </div>
           </div>
         </Form.Root>
         {/* <div class="grid grid-cols-12 items-center gap-4">

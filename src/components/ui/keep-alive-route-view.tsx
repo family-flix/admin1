@@ -13,7 +13,7 @@ export function KeepAliveRouteView(
     immediately?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) {
-  const { app, router, view, index, immediately = false } = props;
+  const { app, view, index, immediately = false } = props;
 
   const [state, setState] = createSignal(view.state);
   const loading = <PageLoading class="w-full h-full" />;
@@ -28,14 +28,14 @@ export function KeepAliveRouteView(
         return;
       }
       const PageView = await view.component();
-      setPageContent(<PageView app={app} router={router} view={view} />);
+      setPageContent(<PageView app={app} view={view} />);
       view.setLoaded();
       return;
     }
     setPageContent(view.component as JSX.Element);
   })();
   onCleanup(() => {
-    view.unload();
+    view.setUnload();
   });
 
   const visible = () => state().visible;

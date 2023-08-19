@@ -28,7 +28,9 @@ export const FileSearcher = (props: { store: FileSearcherCore } & JSX.HTMLAttrib
       <div class="grid gap-4 py-4">
         <div class="grid grid-cols-12 items-center gap-4">
           <Label class="col-span-2 text-right">名称</Label>
-          <Input class="col-span-10" store={store.form.input} />
+          <div class="col-span-10">
+            <Input store={store.form.input} />
+          </div>
         </div>
         <div class="grid grid-cols-12">
           <div class="col-span-2" />

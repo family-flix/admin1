@@ -139,7 +139,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 基准元素加载完成 */
   setReference(reference: { $el?: unknown; getRect: () => Rect }) {
-    this.log("setReference", this.reference, reference.$el);
+    // this.log("setReference", this.reference, reference.$el);
     if (this.reference !== null) {
       return;
     }

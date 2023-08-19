@@ -2,20 +2,19 @@
  * @file 管理后台首页
  */
 import { createSignal, For } from "solid-js";
-import { RotateCcw, HardDrive } from "lucide-solid";
+import { RotateCcw, HardDrive, ArrowLeft } from "lucide-solid";
 
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
-import { addAliyunDrive } from "@/domains/drive/services";
+import { addAliyunDrive } from "@/domains/drive";
 import { code_get_drive_token } from "@/constants";
 import { ViewComponent } from "@/types";
-import { driveList } from "@/store";
-import { query_stringify } from "@/utils";
+import { driveList, driveProfilePage, homeLayout } from "@/store";
 
 export const HomePage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
   const addDriveRequest = new RequestCore(addAliyunDrive, {
     onLoading(loading) {
@@ -68,19 +67,23 @@ export const HomePage: ViewComponent = (props) => {
   driveList.onStateChange((nextState) => {
     setDriveResponse(nextState);
   });
-  view.onShow(() => {
-    console.log("home page show");
-  });
-  view.onHidden(() => {
-    console.log("home page hide");
-  });
 
   driveList.init();
 
   return (
     <>
       <ScrollView store={scrollView} class="h-screen p-8 whitespace-nowrap">
-        <h1 class="text-2xl">云盘列表</h1>
+        <div class="flex items-center space-x-4">
+          {/* <div
+            class="cursor-pointer"
+            onClick={() => {
+              homeLayout.showPrevView();
+            }}
+          >
+            <ArrowLeft class="w-6 h-6" />
+          </div> */}
+          <h1 class="text-2xl">云盘列表</h1>
+        </div>
         <div class="mt-8">
           <div class="space-x-2">
             <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
@@ -123,13 +126,16 @@ export const HomePage: ViewComponent = (props) => {
                         driveList.refresh();
                       }}
                       onClick={() => {
-                        const url = `/home/drive/${drive.id}?${query_stringify({
+                        driveProfilePage.params = {
+                          id: drive.id,
+                        };
+                        driveProfilePage.query = {
                           name,
-                          // avatar,
-                          // used_percent,
-                          // used_size,
-                        })}`;
-                        router.push(url);
+                          avatar,
+                        };
+                        homeLayout.showSubView(driveProfilePage);
+                        // const url = `/home/drive/${drive.id}?${query_stringify({})}`;
+                        // router.push(url);
                         // const pathname = `/home/drive/${drive.id}`;
                         // router.push(pathname, {
                         //   name,

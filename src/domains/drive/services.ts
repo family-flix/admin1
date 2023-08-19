@@ -2,12 +2,12 @@
  * @file 云盘相关 service
  */
 import { FetchParams } from "@/domains/list/typing";
-import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
+import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
+import { FileType } from "@/constants";
 import { request } from "@/utils/request";
 import { bytes_to_size } from "@/utils";
 
 import { DriveCore } from ".";
-import { FileType } from "@/constants";
 
 /** 解析一段 json 字符串 */
 async function parseJSONStr<T extends JSONObject>(json: string) {
@@ -337,7 +337,7 @@ export async function fetchDriveFiles(
     next_marker: r.data.next_marker,
   });
 }
-export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
+// export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
 
 /**
  * 给指定云盘的指定文件夹内，新增一个新文件夹

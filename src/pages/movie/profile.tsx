@@ -10,10 +10,11 @@ import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
 import { DialogCore, ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { ViewComponent } from "@/types";
-import { appendAction } from "@/store";
+import { appendAction, homeLayout } from "@/store";
+import { ArrowLeft } from "lucide-solid";
 
 export const MovieProfilePage: ViewComponent = (props) => {
-  const { app, view, router } = props;
+  const { app, view } = props;
 
   const profileRequest = new RequestCore(fetch_movie_profile, {
     onFailed(error) {
@@ -66,7 +67,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       appendAction("deleteMovie", {
         movie_id: view.params.id,
       });
-      router.back();
+      homeLayout.showPrevView({ destroy: true });
     },
   });
   const movieRefreshDialog = new TMDBSearcherDialogCore({
@@ -110,8 +111,16 @@ export const MovieProfilePage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView store={scrollView} class="h-screen p-8">
-        <div class="">
+      <ScrollView store={scrollView} class="h-screen py-4 px-8">
+        <div class="py-2">
+          <div
+            class="mb-2 cursor-pointer"
+            onClick={() => {
+              homeLayout.showPrevView({ destroy: true });
+            }}
+          >
+            <ArrowLeft class="w-6 h-6" />
+          </div>
           <Show
             when={!!profile()}
             fallback={

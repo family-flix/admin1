@@ -1,19 +1,17 @@
 import { For, JSX, onMount } from "solid-js";
+import { MoreVertical } from "lucide-solid";
 
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
 import { MenuCore } from "@/domains/ui/menu";
-import { Checkbox } from "@/components/ui/checkbox";
 import { CheckboxCore } from "@/domains/ui/checkbox";
 import { TreeCore } from "@/domains/ui/tree";
-import { PurePopover } from "@/components/ui/popover";
 import * as TreePrimitive from "@/packages/ui/tree";
 import { ViewComponent } from "@/types";
-import { MoreVertical } from "lucide-solid";
 
 export const TestPage: ViewComponent = (props) => {
-  const { app, router } = props;
+  const { app } = props;
 
   const check = new CheckboxCore();
   const tree = new TreeCore();

@@ -3,166 +3,58 @@ import { createSignal, For, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
-import { app } from "./store/app";
-import { initializeJobs } from "./store/job";
-import { connect } from "./domains/app/connect.web";
-import { ToastCore } from "./domains/ui/toast";
 import { Toast } from "./components/ui/toast";
 import { RouteView } from "./components/ui/route-view";
-import {
-  homeLayout,
-  homeIndexPage,
-  homeTaskProfilePage,
-  homeTaskListPage,
-  homeTransferPage,
-  homeTVProfilePage,
-  homeTVListPage,
-  homeUnknownMediaLayout,
-  homeMemberListPage,
-  homeFilenameParsingPage,
-  rootView,
-  loginPage,
-  testPage,
-  registerPage,
-  homeUnknownTVPage,
-  homeUnknownSeasonPage,
-  homeMovieListPage,
-  homeMovieProfilePage,
-  homeUnknownMoviePage,
-  driveProfilePage,
-  filePreviewPage,
-  homeUnknownEpisodePage,
-  homeReportListPage,
-} from "./store/views";
-
-import "./style.css";
+import { connect } from "./domains/app/connect.web";
+import { ToastCore } from "./domains/ui/toast";
+import { rootView, homeIndexPage, homeLayout } from "./store/views";
+import { app, router, initializeJobs, pages } from "./store";
 import { sleep } from "./utils";
 
-const { router } = app;
+import "./style.css";
 
-homeLayout.register("/home/index", () => {
-  return homeIndexPage;
-});
-homeLayout.register("/home/drive/:id", () => {
-  return driveProfilePage;
-});
-homeLayout.register("/home/task/:id", () => {
-  return homeTaskProfilePage;
-});
-homeLayout.register("/home/task", () => {
-  return homeTaskListPage;
-});
-homeLayout.register("/home/report", () => {
-  return homeReportListPage;
-});
-homeLayout.register("/home/shared_files", () => {
-  return homeTransferPage;
-});
-homeLayout.register("/home/tv/:id", () => {
-  return homeTVProfilePage;
-});
-homeLayout.register("/home/tv", () => {
-  return homeTVListPage;
-});
-homeLayout.register("/home/movie/:id", () => {
-  return homeMovieProfilePage;
-});
-homeLayout.register("/home/movie", () => {
-  return homeMovieListPage;
-});
-homeUnknownMediaLayout.register("/home/unknown_tv/tv", () => {
-  return homeUnknownTVPage;
-});
-homeUnknownMediaLayout.register("/home/unknown_tv/season", () => {
-  return homeUnknownSeasonPage;
-});
-homeUnknownMediaLayout.register("/home/unknown_tv/episode", () => {
-  return homeUnknownEpisodePage;
-});
-homeUnknownMediaLayout.register("/home/unknown_tv/movie", () => {
-  return homeUnknownMoviePage;
-});
-homeLayout.register("/home/unknown_tv", () => {
-  return homeUnknownMediaLayout;
-});
-homeLayout.register("/home/members", () => {
-  return homeMemberListPage;
-});
-homeLayout.register("/home/parse", () => {
-  return homeFilenameParsingPage;
-});
-rootView.register("/test", () => {
-  return testPage;
-});
-rootView.register("/play/:id", () => {
-  return filePreviewPage;
-});
-rootView.register("/login", () => {
-  return loginPage;
-});
-rootView.register("/home", () => {
-  return homeLayout;
-});
+// const { router } = app;
 
-// router.onPathnameChange(({ pathname, type }) => {
-//   rootView.checkMatch({ pathname, type });
+app.onClickLink(({ href }) => {
+  console.log(href);
+  // router.push(href);
+});
+// app.onPopState((options) => {
+//   const { type, pathname } = options;
+//   router.handlePopState({ type, pathname });
 // });
-app.onPopState((options) => {
-  const { type, pathname } = options;
-  router.handlePopState({ type, pathname });
-});
-
+// router.onBack(() => {
+//   homeLayout.showPrevView({ ignore: true });
+// });
+// router.onHistoriesChange((histories) => {
+//   console.log(histories.map((h) => h.pathname));
+// });
 connect(app);
-const toast = new ToastCore();
 
 function Application() {
+  const toast = new ToastCore();
+
   const [state, setState] = createSignal(app.state);
   const [subViews, setSubViews] = createSignal(rootView.subViews);
 
   app.onStateChange((nextState) => {
     setState(nextState);
   });
+  rootView.onViewShow((views) => {
+    const curView = views.pop();
+    if (!curView) {
+      return;
+    }
+    if (curView.isShowForBack) {
+      curView.isShowForBack = false;
+      return;
+    }
+    const r = curView.buildUrl();
+    console.log("[PAGE]index.tsx - onViewShow", curView.title);
+    router.pushState(r);
+  });
   rootView.onSubViewsChange((nextSubViews) => {
-    // console.log(...rootView.log("[]Application - subViews changed", nextSubViews));
     setSubViews(nextSubViews);
-  });
-  rootView.onMatched((subView) => {
-    // console.log("[Application]rootView.onMatched", rootView.curView?._name, subView._name, router._pending.type);
-    if (subView === rootView.curView) {
-      return;
-    }
-    if (app.user.needRegister) {
-      rootView.curView = registerPage;
-      rootView.curView.show();
-      rootView.appendSubView(rootView.curView);
-      return;
-    }
-    const prevView = rootView.curView;
-    rootView.prevView = prevView;
-    rootView.curView = subView;
-    subView.show();
-    if (prevView) {
-      prevView.hide();
-    }
-    rootView.replaceSubViews([subView]);
-  });
-  rootView.onNotFound(() => {
-    // console.log("[Application]rootView.onNotFound");
-    rootView.curView = (() => {
-      if (app.user.isLogin) {
-        return homeLayout;
-      }
-      if (app.user.needRegister) {
-        return registerPage;
-      }
-      return loginPage;
-    })();
-    rootView.curView.show();
-    rootView.appendSubView(rootView.curView);
-  });
-  router.onPathnameChange(({ pathname, search, type }) => {
-    // router.log("[]Application - pathname change", pathname);
-    rootView.checkMatch({ pathname, search, type });
   });
   app.onTip((msg) => {
     const { text } = msg;
@@ -173,14 +65,9 @@ function Application() {
   app.onError((error) => {
     // 处理各种错误？
   });
-  app.onReady(() => {
-    // if (app.user.isLogin) {
-    //   router.start();
-    //   return;
-    // }
-    // router.push(`/login?redirect=${router.pathname}`);
-    router.start();
-  });
+  // app.onReady(() => {
+  //   router.start();
+  // });
   onMount(async () => {
     // @todo 让 app 能监听页面的生命周期
     await sleep(1000);
@@ -188,6 +75,24 @@ function Application() {
   });
   // console.log("[]Application - before start", window.history);
   router.prepare(window.location);
+  (() => {
+    const matched = pages.find((v) => {
+      return v.checkMatchRegexp(router.pathname);
+    });
+    if (matched) {
+      // console.log("[]Application - matched other view", router.params);
+      matched.query = router.query;
+      // @todo 这样写只能展示 /home/xxx 路由，应该根据路由，找到多层级视图，即 rootView,homeLayout,homeIndexPage 这样
+      rootView.showSubView(homeLayout);
+      homeLayout.showSubView(matched);
+      return;
+    }
+    rootView.showSubView(homeLayout);
+    homeLayout.showSubView(homeIndexPage);
+  })();
+  // console.log(matched);
+  // console.log("[]Application - before start", router.pathname, matched);
+
   app.start();
 
   return (
@@ -202,9 +107,9 @@ function Application() {
       </Show>
       <Show when={subViews().length !== 0}>
         <For each={subViews()}>
-          {(subView) => {
+          {(subView, i) => {
             return (
-              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" app={app} router={router} view={subView} />
+              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" app={app} view={subView} index={i()} />
             );
           }}
         </For>

@@ -3,6 +3,7 @@ import { Handler } from "mitt";
 import { BaseDomain } from "@/domains/base";
 import { DriveCore } from "@/domains/drive";
 import { Result } from "@/types";
+import { sleep } from "@/utils";
 
 import {
   build_link_between_shared_files_with_folder,
@@ -11,7 +12,6 @@ import {
   AliyunFolderItem,
   save_shared_files,
 } from "./services";
-import { sleep } from "@/utils";
 
 enum Events {
   /** 输入分享链接 */
@@ -315,3 +315,5 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.on(Events.ShowTVProfile, handler);
   }
 }
+
+export * from './services';

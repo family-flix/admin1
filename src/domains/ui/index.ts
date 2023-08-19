@@ -22,3 +22,4 @@ export * from "./toast";
 export * from "./tree";
 export * from "./menu";
 export * from "./menu/item";
+export * from "./checkbox/group";

@@ -26,9 +26,10 @@ export function connect(app: Application) {
     // console.log("2");
   });
   window.addEventListener("popstate", (event) => {
+    console.log("[DOMAIN]Application connect popstate", event.state.from, event.state.to);
     const { type } = event;
     const { pathname, href } = window.location;
-    app.emit(app.Events.PopState, { type, href, pathname });
+    app.emit(app.Events.PopState, { type, href, pathname: event.state.to });
   });
   window.addEventListener("beforeunload", (event) => {
     // // 取消事件
@@ -83,6 +84,7 @@ export function connect(app: Application) {
     app.keydown({ key });
   });
   ownerDocument.addEventListener("click", (event) => {
+    // console.log('[DOMAIN]app/connect.web', event.target);
     let target = event.target;
     if (target instanceof Document) {
       return;
@@ -117,17 +119,17 @@ export function connect(app: Application) {
     event.preventDefault();
     app.emit(app.Events.ClickLink, { href });
   });
-  router.onBack(() => {
+  router.back = () => {
     window.history.back();
-  });
-  router.onReload(() => {
+  };
+  router.reload = () => {
     window.location.reload();
-  });
-  router.onPushState(({ from, path }) => {
-    // router.log("[Application ]- onPushState", path);
+  };
+  router.onPushState(({ from, to, path }) => {
     window.history.pushState(
       {
         from,
+        to,
       },
       "",
       path

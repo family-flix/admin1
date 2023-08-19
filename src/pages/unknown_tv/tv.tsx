@@ -4,14 +4,13 @@
 import { For, createSignal } from "solid-js";
 import { Brush, RotateCcw, Trash } from "lucide-solid";
 
+import { UnknownTVItem, bind_profile_for_unknown_tv, delete_unknown_tv_list, fetch_unknown_tv_list } from "@/services";
 import { Button, ListView, Dialog, LazyImage } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
 import { SelectionCore } from "@/domains/cur";
-import { UnknownTVItem, bind_profile_for_unknown_tv, delete_unknown_tv_list, fetch_unknown_tv_list } from "@/services";
 import { ViewComponent } from "@/types";
 
 export const UnknownTVPage: ViewComponent = (props) => {

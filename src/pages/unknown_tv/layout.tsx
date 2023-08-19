@@ -6,59 +6,28 @@ import { createSignal, For, Show } from "solid-js";
 import { ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { ScrollView, KeepAliveRouteView } from "@/components/ui";
 import { ViewComponent } from "@/types";
+import {
+  homeUnknownEpisodePage,
+  homeUnknownMediaLayout,
+  homeUnknownMoviePage,
+  homeUnknownSeasonPage,
+  homeUnknownTVPage,
+} from "@/store";
 import { cn } from "@/utils";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
-  const { app, view, router } = props;
+  const { app, view } = props;
 
-  const tvBtn = new ButtonCore({
-    onClick() {
-      router.push("/home/unknown_tv/tv");
-    },
-  });
-  const seasonBtn = new ButtonCore({
-    onClick() {
-      router.push("/home/unknown_tv/season");
-    },
-  });
   const scrollView = new ScrollViewCore();
 
+  const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
+
+  view.onCurViewChange((nextCurView) => {
+    setCurSubView(nextCurView);
+  });
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
-  });
-  view.onMatched((subView) => {
-    console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
-    if (subView === view.curView) {
-      return;
-    }
-    const prevView = view.curView;
-    view.prevView = prevView;
-    view.curView = subView;
-    if (!view.subViews.includes(subView)) {
-      view.appendSubView(subView);
-    }
-    subView.show();
-    if (view.prevView) {
-      view.prevView.hide();
-    }
-  });
-  router.onPathnameChange(({ pathname, search, type }) => {
-    console.log("[PAGE]unknown_tv/layout - router.onPathnameChange", pathname, view.state.layered, view.state.visible);
-    if (view.state.layered) {
-      return;
-    }
-    if (!view.state.visible) {
-      return;
-    }
-    view.checkMatch({ pathname, search, type });
-  });
-  view.onNotFound(() => {
-    console.log("[PAGE]unknown_tv/layout - view.onNotFound");
-  });
-  view.onShow(() => {
-    console.log("[PAGE]unknown_tv/layout - view.onShow");
-    view.checkMatch(router._pending);
   });
 
   return (
@@ -67,33 +36,52 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
         <h1 class="text-2xl">未识别的影视剧</h1>
         <div class="space-x-2 border">
           <div
-            class="inline-block px-4 py-2 cursor-pointer"
+            classList={{
+              "inline-block px-4 py-2 cursor-pointer": true,
+              underline: curSubView() === homeUnknownTVPage,
+            }}
             onClick={() => {
-              router.push("/home/unknown_tv/tv");
+              homeUnknownMediaLayout.showSubView(homeUnknownTVPage);
+              // router.push("/home/unknown_tv/tv");
             }}
           >
             电视剧
           </div>
           <div
-            class="inline-block px-4 py-2 cursor-pointer"
+            // class="inline-block px-4 py-2 cursor-pointer"
+            classList={{
+              "inline-block px-4 py-2 cursor-pointer": true,
+              underline: curSubView() === homeUnknownSeasonPage,
+            }}
             onClick={() => {
-              router.push("/home/unknown_tv/season");
+              homeUnknownMediaLayout.showSubView(homeUnknownSeasonPage);
+              // router.push("/home/unknown_tv/season");
             }}
           >
             季
           </div>
           <div
-            class="inline-block px-4 py-2 cursor-pointer"
+            // class="inline-block px-4 py-2 cursor-pointer"
+            classList={{
+              "inline-block px-4 py-2 cursor-pointer": true,
+              underline: curSubView() === homeUnknownEpisodePage,
+            }}
             onClick={() => {
-              router.push("/home/unknown_tv/episode");
+              homeUnknownMediaLayout.showSubView(homeUnknownEpisodePage);
+              // router.push("/home/unknown_tv/episode");
             }}
           >
             剧集
           </div>
           <div
-            class="inline-block px-4 py-2 cursor-pointer"
+            // class="inline-block px-4 py-2 cursor-pointer"
+            classList={{
+              "inline-block px-4 py-2 cursor-pointer": true,
+              underline: curSubView() === homeUnknownMoviePage,
+            }}
             onClick={() => {
-              router.push("/home/unknown_tv/movie");
+              homeUnknownMediaLayout.showSubView(homeUnknownMoviePage);
+              // router.push("/home/unknown_tv/movie");
             }}
           >
             电影
@@ -119,12 +107,9 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                       class={cn("relative")}
                       view={subView}
                       app={app}
-                      router={router}
-                      index={i()}
                       immediately={true}
-                    >
-                      <PageContent app={app} router={router} view={subView} />
-                    </KeepAliveRouteView>
+                      index={i()}
+                    />
                   );
                 }}
               </For>

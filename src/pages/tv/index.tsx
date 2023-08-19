@@ -3,6 +3,7 @@
  */
 import { createSignal, For, Show } from "solid-js";
 import {
+  ArrowLeft,
   ArrowUpCircle,
   Award,
   Bell,
@@ -45,9 +46,8 @@ import {
   CheckboxGroup,
   ListView,
 } from "@/components/ui";
-import { FileSearcherCore } from "@/components/FileSearcher/store";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { FileSearcherCore } from "@/components/FileSearcher";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import {
   ScrollViewCore,
   DialogCore,
@@ -56,22 +56,21 @@ import {
   ButtonCore,
   ButtonInListCore,
   CheckboxCore,
+  CheckboxGroupCore,
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
-import { SharedResourceCore } from "@/domains/shared_resource";
+import { SharedResourceCore, fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { DriveCore } from "@/domains/drive";
-import { CheckboxGroupCore } from "@/domains/ui/checkbox/group";
-import { fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource/services";
-import { createJob, driveList, consumeAction, pendingActions } from "@/store";
+import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, homeLayout } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
 
 export const TVManagePage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
   const seasonList = new ListCore(new RequestCore(fetch_season_list), {
     onLoadingChange(loading) {
@@ -282,13 +281,15 @@ export const TVManagePage: ViewComponent = (props) => {
     title: "新增更新任务",
     footer: false,
   });
-  const input1 = new InputCore({ placeholder: "请输入名称搜索" });
+  const nameSearchInput = new InputCore({
+    placeholder: "请输入名称搜索",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
   const searchBtn = new ButtonCore({
     onClick() {
-      if (!input1.value) {
-        return;
-      }
-      seasonList.search({ name: input1.value });
+      seasonList.search({ name: nameSearchInput.value });
     },
   });
   const resetBtn = new ButtonCore({
@@ -296,7 +297,7 @@ export const TVManagePage: ViewComponent = (props) => {
       seasonList.reset();
       onlyInvalidCheckbox.uncheck();
       duplicatedCheckbox.uncheck();
-      input1.clear();
+      nameSearchInput.clear();
     },
   });
   const sharedResourceUrlInput = new InputCore({
@@ -394,7 +395,14 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
-      router.push(`/home/tv/${record.tv_id}?season_id=${record.id}`);
+      homeTVProfilePage.params = {
+        id: record.tv_id,
+      };
+      homeTVProfilePage.query = {
+        season_id: record.id,
+      };
+      homeLayout.showSubView(homeTVProfilePage);
+      // router.push(`/home/tv/${record.tv_id}?season_id=${record.id}`);
     },
   });
   const sharedFileSaveListDialog = new DialogCore({
@@ -514,7 +522,7 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   view.onShow(() => {
     const { deleteTV } = pendingActions;
-    console.log("[PAGE]tv/index - view.onShow", deleteTV);
+    // console.log("[PAGE]tv/index - view.onShow", deleteTV);
     if (!deleteTV) {
       return;
     }
@@ -533,7 +541,17 @@ export const TVManagePage: ViewComponent = (props) => {
     <>
       <ScrollView class="h-screen p-8" store={scrollView}>
         <div class="relative">
-          <h1 class="text-2xl">电视剧列表</h1>
+          <div class="flex items-center space-x-4">
+            {/* <div
+              class="cursor-pointer"
+              onClick={() => {
+                homeLayout.showPrevView();
+              }}
+            >
+              <ArrowLeft class="w-6 h-6" />
+            </div> */}
+            <h1 class="text-2xl">电视剧列表</h1>
+          </div>
           <div class="mt-8">
             <div class="flex items-center space-x-2">
               <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
@@ -572,7 +590,7 @@ export const TVManagePage: ViewComponent = (props) => {
               </PurePopover>
             </div>
             <div class="flex items-center space-x-2 mt-4">
-              <Input class="" store={input1} />
+              <Input class="" store={nameSearchInput} />
               <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
                 搜索
               </Button>
@@ -707,14 +725,19 @@ export const TVManagePage: ViewComponent = (props) => {
                                     归档
                                   </Button>
                                 </Show>
-                                <Button
-                                  store={addSyncTaskBtn.bind(season)}
-                                  variant="subtle"
-                                  icon={<BellPlus class="w-4 h-4" />}
+
+                                <Show
+                                  when={sync_task}
+                                  fallback={
+                                    <Button
+                                      store={addSyncTaskBtn.bind(season)}
+                                      variant="subtle"
+                                      icon={<BellPlus class="w-4 h-4" />}
+                                    >
+                                      创建更新任务
+                                    </Button>
+                                  }
                                 >
-                                  创建更新任务
-                                </Button>
-                                <Show when={sync_task}>
                                   <>
                                     <Button
                                       store={execSyncTaskBtn.bind(season)}

@@ -2,22 +2,19 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ChevronRight } from "lucide-solid";
+import { ArrowLeft, ChevronRight } from "lucide-solid";
 
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView } from "@/components/ui";
 import { List } from "@/components/List";
 import { DialogCore, DropdownMenuCore, ButtonCore, InputCore, MenuItemCore, ScrollViewCore } from "@/domains/ui";
-import { DriveCore } from "@/domains/drive";
-import { AliyunDriveFile } from "@/domains/drive/types";
-import { DriveItem } from "@/domains/drive/services";
+import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
 import { SelectionCore } from "@/domains/cur";
-import { AliyunDriveFilesCore } from "@/domains/drive/files";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
-import { createJob } from "@/store";
+import { createJob, homeLayout } from "@/store";
 
 export const DriveProfilePage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.params.id,
@@ -250,7 +247,17 @@ export const DriveProfilePage: ViewComponent = (props) => {
     <>
       <ScrollView store={scrollView} class="flex flex-col w-full h-screen">
         <div class="h-[80px] box-content p-4 border-b-2">
-          <div class="text-2xl">{state().name}</div>
+          <div class="flex items-center space-x-4">
+            <div
+              class="cursor-pointer"
+              onClick={() => {
+                homeLayout.showPrevView({ destroy: true });
+              }}
+            >
+              <ArrowLeft class="w-6 h-6" />
+            </div>
+            <div class="text-2xl">{state().name}</div>
+          </div>
           <div class="flex mt-2 space-x-2 text-slate-800">
             <For each={paths()}>
               {(path, i) => {

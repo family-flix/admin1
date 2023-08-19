@@ -3,14 +3,14 @@
  */
 import { For, createSignal } from "solid-js";
 
+import { ScrollView } from "@/components/ui";
+import { ScrollViewCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
 import { relative_time_from_now } from "@/utils";
 import { JSONObject, ListResponse, RequestedResource, Result, ViewComponent } from "@/types";
-import { RequestCore } from "@/domains/client";
-import { ScrollView } from "@/components/ui";
-import { ScrollViewCore } from "@/domains/ui";
 
 async function fetch_shared_files_histories(body: FetchParams) {
   const r = await request.get<
@@ -38,8 +38,6 @@ async function fetch_shared_files_histories(body: FetchParams) {
 type SharedFileHistory = RequestedResource<typeof fetch_shared_files_histories>["list"][0];
 
 export const SharedFilesHistoryPage: ViewComponent = (props) => {
-  const { router } = props;
-
   const list = new ListCore(new RequestCore(fetch_shared_files_histories));
   const scrollView = new ScrollViewCore({
     onReachBottom() {
@@ -68,7 +66,7 @@ export const SharedFilesHistoryPage: ViewComponent = (props) => {
                   <div
                     class="p-4"
                     onClick={() => {
-                      router.push(`/admin/shared_files?url=${url}`);
+                      // router.push(`/admin/shared_files?url=${url}`);
                     }}
                   >
                     <p>{title}</p>

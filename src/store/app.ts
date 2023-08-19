@@ -10,10 +10,11 @@ import { Result } from "@/types";
 
 import { cache } from "./cache";
 import { user } from "./user";
+import { homeIndexPage, homeLayout, loginPage, rootView } from "./views";
 
 NavigatorCore.prefix = "/admin";
 
-const router = new NavigatorCore();
+export const router = new NavigatorCore();
 export const app = new Application({
   user,
   router,
@@ -33,26 +34,26 @@ export const app = new Application({
     return Result.Ok(null);
   },
 });
-app.onClickLink(({ href }) => {
-  router.push(href);
-});
 user.onTip((msg) => {
   app.tip(msg);
 });
 user.onLogin((profile) => {
   cache.set("user", profile);
-  router.push("/home/index");
+  homeLayout.showSubView(homeIndexPage);
+  rootView.showSubView(homeLayout);
+  // router.push("/home/index");
 });
 user.onLogout(() => {
   cache.clear("user");
-  router.push("/login");
+  rootView.showSubView(loginPage);
+  // router.push("/login");
 });
 user.onExpired(() => {
   cache.clear("user");
   app.tip({
     text: ["token 已过期，请重新登录"],
   });
-  router.replace("/login");
+  // router.replace("/login");
 });
 
 ListCore.commonProcessor = <T>(

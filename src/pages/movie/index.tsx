@@ -6,17 +6,17 @@ import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide
 
 import { bind_profile_for_unknown_movie, fetch_movie_list, MovieItem } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { ListCore } from "@/domains/list";
+import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
+import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore } from "@/domains/ui";
+import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
-import { consumeAction, pendingActions } from "@/store";
+import { consumeAction, homeLayout, homeMovieProfilePage, pendingActions } from "@/store";
 
 export const MovieManagePage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
   const movieList = new ListCore(new RequestCore(fetch_movie_list), {
     onLoadingChange(loading) {
@@ -54,25 +54,31 @@ export const MovieManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const input1 = new InputCore({ placeholder: "请输入名称搜索" });
+  const nameSearchInput = new InputCore({
+    placeholder: "请输入名称搜索",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
   const searchBtn = new ButtonCore({
     onClick() {
-      if (!input1.value) {
-        return;
-      }
-      movieList.search({ name: input1.value });
+      movieList.search({ name: nameSearchInput.value });
     },
   });
   const resetBtn = new ButtonCore({
     onClick() {
       movieList.reset();
       duplicatedCheckbox.uncheck();
-      input1.clear();
+      nameSearchInput.clear();
     },
   });
   const profileBtn = new ButtonInListCore<MovieItem>({
     onClick(record) {
-      router.push(`/home/movie/${record.id}`);
+      homeMovieProfilePage.params = {
+        id: record.id,
+      };
+      homeLayout.showSubView(homeMovieProfilePage);
+      // router.push(`/home/movie/${record.id}`);
     },
   });
   const refreshBtn = new ButtonCore({
@@ -122,7 +128,7 @@ export const MovieManagePage: ViewComponent = (props) => {
             </div>
           </div>
           <div class="flex items-center space-x-2 mt-4">
-            <Input class="" store={input1} />
+            <Input class="" store={nameSearchInput} />
             <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
               搜索
             </Button>

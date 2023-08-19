@@ -1,7 +1,7 @@
 /**
  * @file 后台/首页布局
  */
-import { For, JSX, createSignal } from "solid-js";
+import { For, JSX, createSignal, onMount } from "solid-js";
 import {
   Film,
   Users,
@@ -19,12 +19,10 @@ import {
 } from "lucide-solid";
 
 import { Button, Dialog, KeepAliveRouteView } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { FileSearchDialog } from "@/components/FileSearcher";
-import { FileSearcherCore } from "@/components/FileSearcher/store";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
+import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
 import { ButtonCore, DialogCore } from "@/domains/ui";
-import { NavigatorCore } from "@/domains/navigator";
+import { RouteViewCore } from "@/domains/route_view";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
 import {
@@ -37,16 +35,16 @@ import {
   homeTransferPage,
   homeUnknownMediaLayout,
 } from "@/store/views";
-import { homeReportListPage, onJobsChange } from "@/store";
+import { homeLayout, homeReportListPage, onJobsChange } from "@/store";
 import { cn, sleep } from "@/utils";
 
 export const HomeLayout: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
-  const dialog = new TMDBSearcherDialogCore({
+  const tmdbDialog = new TMDBSearcherDialogCore({
     footer: false,
   });
-  const dialog2 = new FileSearcherCore({
+  const fileSearchDialog = new FileSearcherCore({
     footer: false,
   });
   const logoutBtn = new ButtonCore({
@@ -66,178 +64,95 @@ export const HomeLayout: ViewComponent = (props) => {
     },
   });
 
-  const [pathname, setPathname] = createSignal(router.pathname);
+  const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
-  // const [curSubView, setCurSubView] = createSignal(view.curView);
+
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
   });
-  // view.onCurViewChange((nextCurView) => {
-  //   setCurSubView(nextCurView);
-  // });
-  view.onMatched((subView) => {
-    console.log("[LAYOUT]home/layout - view.onMatched", view.curView?._name, view.prevView?._name, subView._name);
-    if (subView === view.curView) {
-      return;
-    }
-    const prevView = view.curView;
-    view.prevView = prevView;
-    view.curView = subView;
-    if (!view.subViews.includes(subView)) {
-      view.appendSubView(subView);
-    }
-    subView.show();
-    if (view.prevView) {
-      const isMenusPage = [
-        homeIndexPage,
-        homeTVListPage,
-        homeMovieListPage,
-        homeUnknownMediaLayout,
-        homeTaskListPage,
-        homeReportListPage,
-        homeMemberListPage,
-        homeTransferPage,
-        homeFilenameParsingPage,
-      ].includes(view.prevView);
-      // console.log("[LAYOUT]home/layout - check need remove subView", view.prevView._name, isMenusPage);
-      if (!isMenusPage) {
-        // console.log("[LAYOUT]home/layout - remove subView", view.prevView._name);
-        view.prevView.hide();
-        view.removeSubView(view.prevView);
-        return;
-      }
-      view.prevView.hide();
-    }
+  view.onCurViewChange((nextCurView) => {
+    setCurSubView(nextCurView);
   });
-  // view.onLayered(() => {
-  //   console.log("[LAYOUT]home/layout - view.onLayered");
-  // });
-  // view.onUncover(() => {
-  //   console.log("[LAYOUT]home/layout - view.onUncover");
-  // });
-  // 因为 home layout 和 playing page 是共存的，所以切换到 playing page 时，home layout 也会检查是否匹配，结果是不匹配
-  // 所以给 home layout 加了个 index
-  view.onNotFound(() => {
-    // console.log("[LAYOUT]home/layout - view.onNotFound", view.subViews, view.state.visible, view.state.layered);
-    if (view.state.layered) {
-      return;
-    }
-    if (!view.state.visible) {
-      return;
-    }
-    view.curView = homeIndexPage;
-    view.curView.show();
-    view.appendSubView(view.curView);
-  });
-  router.onPathnameChange(({ pathname, search, type }) => {
-    // console.log("[LAYOUT]home/layout - router.onPathnameChange", view.state.visible, view.state.layered);
-    setPathname(pathname);
-    if (view.state.layered) {
-      return;
-    }
-    view.checkMatch({ pathname, search, type });
-  });
-  dialog.onTip((msg) => {
+  tmdbDialog.onTip((msg) => {
     app.tip(msg);
   });
-  view.checkMatch(router._pending);
-  // app.user.validate();
-
-  // const pathname = router.pathname;
+  fileSearchDialog.onTip((msg) => {
+    app.tip(msg);
+  });
 
   const [menus, setMenus] = createSignal([
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
-      link: "/home/index",
-      // onClick() {
-      //   router.push("/home/index");
-      // },
+      view: homeIndexPage,
     },
     {
       text: "电视剧",
       icon: <Tv class="w-6 h-6" />,
-      link: "/home/tv",
-      // onClick() {
-      //   router.push("/home/tv");
-      // },
+      view: homeTVListPage,
     },
     {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
-      link: "/home/movie",
-      // onClick() {
-      //   router.push("/home/tv");
-      // },
+      view: homeMovieListPage,
     },
     {
       text: "未识别影视剧",
       icon: <EyeOff class="w-6 h-6" />,
-      link: "/home/unknown_tv",
+      view: homeUnknownMediaLayout,
     },
     {
       text: "任务",
       icon: <Bot class="w-6 h-6" />,
-      link: "/home/task",
       badge: false,
-      // onClick() {
-      //   router.push("/home/task");
-      // },
+      view: homeTaskListPage,
     },
     {
       text: "问题反馈",
       icon: <CircuitBoard class="w-6 h-6" />,
-      link: "/home/report",
       badge: false,
-      // onClick() {
-      //   router.push("/home/task");
-      // },
+      view: homeReportListPage,
     },
     {
       text: "云盘文件搜索",
       icon: <File class="w-6 h-6" />,
       onClick() {
-        dialog2.show();
+        fileSearchDialog.show();
       },
     },
     {
       text: "TMDB 数据库",
       icon: <Flame class="w-6 h-6" />,
       onClick() {
-        dialog.show();
+        tmdbDialog.show();
       },
     },
     {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
-      link: "/home/members",
-      // onClick() {
-      //   router.push("/home/members");
-      // },
+      view: homeMemberListPage,
     },
     {
       text: "转存资源",
       icon: <FolderInput class="w-6 h-6" />,
-      link: "/home/shared_files",
-      // onClick() {
-      //   router.push("/home/shared_files");
-      // },
+      view: homeTransferPage,
     },
     {
       text: "文件名解析",
       icon: <FileSearch class="w-6 h-6" />,
-      link: "/home/parse",
-      // onClick() {
-      //   router.push("/home/parse");
-      // },
+      view: homeFilenameParsingPage,
     },
   ]);
+
+  onMount(() => {
+    console.log("[PAGE]home/layout onMount");
+  });
 
   onJobsChange((jobs) => {
     setMenus(
       menus().map((menu) => {
-        const { link } = menu;
-        if (link === "/home/task") {
+        const { view } = menu;
+        if (view === homeTaskListPage) {
           return {
             ...menu,
             badge: jobs.length !== 0,
@@ -256,14 +171,14 @@ export const HomeLayout: ViewComponent = (props) => {
             <div class="flex-1 space-y-1 p-2 w-full h-full rounded-xl self-start">
               <For each={menus()}>
                 {(menu) => {
-                  const { icon, text, link, badge, onClick } = menu;
+                  const { icon, text, view, badge, onClick } = menu;
                   return (
                     <Menu
                       icon={icon}
                       highlight={(() => {
-                        return pathname() === `${NavigatorCore.prefix}${link}`;
+                        return curSubView() === view;
                       })()}
-                      link={link}
+                      view={view}
                       badge={badge}
                       onClick={onClick}
                     >
@@ -295,7 +210,6 @@ export const HomeLayout: ViewComponent = (props) => {
                       "data-[state=closed]:animate-out data-[state=closed]:fade-out"
                     )}
                     app={app}
-                    router={router}
                     view={subView}
                     index={i()}
                   />
@@ -305,8 +219,8 @@ export const HomeLayout: ViewComponent = (props) => {
           </div>
         </div>
       </div>
-      <TMDBSearcherDialog store={dialog} />
-      <FileSearchDialog store={dialog2} />
+      <TMDBSearcherDialog store={tmdbDialog} />
+      <FileSearchDialog store={fileSearchDialog} />
       <Dialog store={settingsDialog}>敬请期待</Dialog>
     </>
   );
@@ -315,7 +229,7 @@ export const HomeLayout: ViewComponent = (props) => {
 function Menu(
   props: {
     highlight?: boolean;
-    link?: string;
+    view?: RouteViewCore;
     icon: JSX.Element;
     badge?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
@@ -340,8 +254,17 @@ function Menu(
     </div>
   );
   return (
-    <Show when={props.link} fallback={inner}>
-      <a href={props.link}>{inner}</a>
+    <Show when={props.view} fallback={inner}>
+      <div
+        onClick={() => {
+          if (!props.view) {
+            return;
+          }
+          homeLayout.showSubView(props.view);
+        }}
+      >
+        {inner}
+      </div>
     </Show>
   );
 }

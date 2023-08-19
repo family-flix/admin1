@@ -1,13 +1,15 @@
 /**
  * @file 视频文件播放页面
  */
-import { createSignal, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
+import { ArrowLeft } from "lucide-solid";
 
+import { fetch_video_preview_info } from "@/services";
 import { Video } from "@/components/ui";
 import { RequestCore } from "@/domains/client";
 import { PlayerCore } from "@/domains/player";
-import { fetch_video_preview_info } from "@/services";
 import { ViewComponent } from "@/types";
+import { rootView } from "@/store";
 
 export const MediaPlayingPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -104,11 +106,22 @@ export const MediaPlayingPage: ViewComponent = (props) => {
     console.log("[PAGE]play/index - onMount", view.params.id);
     fileRequest.run({ file_id: view.params.id });
   });
+  onCleanup(() => {
+    console.log("[PAGE]play/index - onCleanup", view.params.id);
+  });
 
   return (
     <div>
-      <div class="flex flex-wrap w-full h-screen bg-[#14161a]">
-        <div class="flex-1 flex items-center w-full h-full bg-black">
+      <div class="relative flex flex-wrap w-full h-screen bg-[#14161a]">
+        <div
+          class="z-10 absolute top-6 left-6 cursor-pointer"
+          onClick={() => {
+            rootView.uncoverPrevView();
+          }}
+        >
+          <ArrowLeft class="w-6 h-6 text-white" />
+        </div>
+        <div class="z-0 relative flex-1 flex items-center w-full h-full bg-black">
           <Video store={player}></Video>
         </div>
         {/* <div class="profile p-4 h-full w-[380px] md:w-[240px] overflow-y-auto">

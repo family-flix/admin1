@@ -2,9 +2,8 @@
  * @file 电视剧详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
+import { ArrowLeft } from "lucide-solid";
 
-import { ViewComponent } from "@/types";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import {
   fetch_tv_profile,
   TVProfile,
@@ -16,16 +15,17 @@ import {
   SeasonInTVProfile,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView } from "@/components/ui";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { createJob, appendAction } from "@/store";
+import { createJob, appendAction, rootView, mediaPlayingPage, homeLayout } from "@/store";
+import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 
 export const TVProfilePage: ViewComponent = (props) => {
-  const { app, view, router } = props;
+  const { app, view } = props;
 
   const profileRequest = new RequestCore(fetch_tv_profile, {
     onFailed(error) {
@@ -137,7 +137,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         tv_id: view.params.id,
         id: view.query.season_id,
       });
-      router.back();
+      homeLayout.showPrevView({ destroy: true });
     },
     onFailed(error) {
       app.tip({
@@ -232,8 +232,19 @@ export const TVProfilePage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView class="h-screen p-8" store={scrollView}>
-        <div class="">
+      <ScrollView class="h-screen py-4 px-8" store={scrollView}>
+        <div class="py-2">
+          <div
+            class="mb-2 cursor-pointer"
+            onClick={() => {
+              // view.unload();
+              console.log("[PAGE]tv/profile - click arrow-left");
+              // debugger;
+              homeLayout.showPrevView({ destroy: true });
+            }}
+          >
+            <ArrowLeft class="w-6 h-6" />
+          </div>
           <Show
             when={!!profile()}
             fallback={
@@ -355,7 +366,11 @@ export const TVProfilePage: ViewComponent = (props) => {
                                       class="text-slate-500 break-all"
                                       title={`[${drive.name}]${parent_paths}/${file_name}`}
                                       onClick={() => {
-                                        router.push(`/play/${file_id}`);
+                                        mediaPlayingPage.params = {
+                                          id: file_id,
+                                        };
+                                        rootView.layerSubView(mediaPlayingPage);
+                                        // router.push(`/play/${file_id}`);
                                       }}
                                     >
                                       {parent_paths}/{file_name}

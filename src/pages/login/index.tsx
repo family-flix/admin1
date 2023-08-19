@@ -6,7 +6,7 @@ import { ButtonCore, InputCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
 
 export const LoginPage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
   const { user } = app;
   const emailInput = new InputCore({
     placeholder: "请输入邮箱",

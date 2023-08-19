@@ -110,6 +110,9 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
       this.form.btn.setLoading(loading);
       this.form.reset.setLoading(loading);
     });
+    this.form.input.onEnter(() => {
+      this.form.btn.click();
+    });
     this.form.btn.onClick(() => {
       const name = this.form.input.value;
       if (!name) {

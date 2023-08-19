@@ -2,7 +2,7 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
-import { Edit2, Gem, RotateCcw, ShieldClose, UserPlus, UserX } from "lucide-solid";
+import { Edit2, Gem, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
 import { add_member, create_member_auth_link, delete_member, fetch_members, MemberItem } from "@/services";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView } from "@/components/ui";
@@ -15,7 +15,7 @@ import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 
 export const MemberManagePage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
   const memberList = new ListCore(new RequestCore(fetch_members), {
     onLoadingChange(loading) {
@@ -71,6 +71,23 @@ export const MemberManagePage: ViewComponent = (props) => {
   const refreshBtn = new ButtonCore({
     onClick() {
       memberList.refresh();
+    },
+  });
+  const nameSearchInput = new InputCore({
+    placeholder: "请输入名称搜索",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
+  const searchBtn = new ButtonCore({
+    onClick() {
+      memberList.search({ name: nameSearchInput.value });
+    },
+  });
+  const resetBtn = new ButtonCore({
+    onClick() {
+      memberList.reset();
+      nameSearchInput.clear();
     },
   });
   const profileBtn = new ButtonInListCore<MemberItem>({
@@ -161,133 +178,145 @@ export const MemberManagePage: ViewComponent = (props) => {
               新增成员
             </Button>
           </div>
-          <ListView
-            store={memberList}
-            skeleton={
-              <div class="space-y-8 mt-8">
-                <div class="card rounded-sm bg-white p-4">
-                  <div class="flex items-center">
-                    <Skeleton class="w-12 h-12 rounded-full mr-2"></Skeleton>
-                    <Skeleton class="w-36 h-8"></Skeleton>
-                  </div>
-                  <div class="mt-4">
-                    <div class="flex space-x-2">
-                      <Skeleton class="w-24 h-10"></Skeleton>
-                      <Skeleton class="w-24 h-10"></Skeleton>
-                      <Skeleton class="w-24 h-10"></Skeleton>
+          <div class="flex items-center space-x-2 mt-4">
+            <Input class="" store={nameSearchInput} />
+            <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+              搜索
+            </Button>
+            <Button class="" store={resetBtn}>
+              重置
+            </Button>
+          </div>
+          <div class="mt-4">
+            <ListView
+              store={memberList}
+              skeleton={
+                <div class="space-y-8">
+                  <div class="card rounded-sm bg-white p-4">
+                    <div class="flex items-center">
+                      <Skeleton class="w-12 h-12 rounded-full mr-2"></Skeleton>
+                      <Skeleton class="w-36 h-8"></Skeleton>
                     </div>
-                    <div class="mt-4 space-y-8">
-                      <div class="space-y-2">
-                        <Skeleton class="w-[480px] h-6 mr-4"></Skeleton>
-                        <div class="flex">
-                          <Skeleton class="w-[120px] h-[120px] mr-4"></Skeleton>
-                          <Skeleton class="w-[360px] h-6 mr-4"></Skeleton>
+                    <div class="mt-4">
+                      <div class="flex space-x-2">
+                        <Skeleton class="w-24 h-10"></Skeleton>
+                        <Skeleton class="w-24 h-10"></Skeleton>
+                        <Skeleton class="w-24 h-10"></Skeleton>
+                      </div>
+                      <div class="mt-4 space-y-8">
+                        <div class="space-y-2">
+                          <Skeleton class="w-[480px] h-6 mr-4"></Skeleton>
+                          <div class="flex">
+                            <Skeleton class="w-[120px] h-[120px] mr-4"></Skeleton>
+                            <Skeleton class="w-[360px] h-6 mr-4"></Skeleton>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            }
-          >
-            <div class="space-y-8 mt-8">
-              <For each={response().dataSource}>
-                {(member) => {
-                  const { remark, tokens } = member;
-                  return (
-                    <div class="card rounded-sm bg-white p-4">
-                      <div class="flex items-center">
-                        <div class="flex items-center justify-center w-12 h-12 bg-slate-300 rounded-full mr-2">
-                          <div class="text-3xl text-slate-500">{remark.slice(0, 1).toUpperCase()}</div>
+              }
+            >
+              <div class="space-y-8">
+                <For each={response().dataSource}>
+                  {(member) => {
+                    const { remark, tokens } = member;
+                    return (
+                      <div class="card rounded-sm bg-white p-4">
+                        <div class="flex items-center">
+                          <div class="flex items-center justify-center w-12 h-12 bg-slate-300 rounded-full mr-2">
+                            <div class="text-3xl text-slate-500">{remark.slice(0, 1).toUpperCase()}</div>
+                          </div>
+                          <div>
+                            <p class="text-2xl">{remark}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p class="text-2xl">{remark}</p>
-                        </div>
-                      </div>
-                      <div class="mt-4">
-                        <div class="space-x-2">
-                          <Button variant="subtle" icon={<Gem class="w-4 h-4" />} store={profileBtn.bind(member)}>
-                            详情
-                          </Button>
-                          {/* <Button
+                        <div class="mt-4">
+                          <div class="space-x-2">
+                            <Button variant="subtle" icon={<Gem class="w-4 h-4" />} store={profileBtn.bind(member)}>
+                              详情
+                            </Button>
+                            {/* <Button
                             variant="subtle"
                             icon={<ShieldAlert class="w-4 h-4" />}
                             store={generateTokenBtn.bind(member)}
                           >
                             生成授权链接
                           </Button> */}
-                          <Button
-                            variant="subtle"
-                            icon={<ShieldClose class="w-4 h-4" />}
-                            store={banMemberBtn.bind(member)}
-                          >
-                            禁用该成员
-                          </Button>
-                          <Button
-                            variant="subtle"
-                            icon={<Edit2 class="w-4 h-4" />}
-                            store={updateMemberBtn.bind(member)}
-                          >
-                            修改信息
-                          </Button>
-                          <Button
-                            variant="subtle"
-                            icon={<UserX class="w-4 h-4" />}
-                            store={deleteMemberBtn.bind(member)}
-                          >
-                            删除
-                          </Button>
-                        </div>
-                        <Show when={tokens.length !== 0} fallback={null}>
-                          <div class="mt-4 space-y-8">
-                            <For each={tokens}>
-                              {(link) => {
-                                const { id, used } = link;
-                                return (
-                                  <div class="space-y-2">
-                                    {[
-                                      {
-                                        prefix: "/pc/home/index?token=",
-                                        qrcode: false,
-                                      },
-                                      {
-                                        prefix: "/mobile/home/index?token=",
-                                        qrcode: true,
-                                      },
-                                    ].map((config) => {
-                                      const { prefix, qrcode } = config;
-                                      const url = `${router.origin}${prefix}${id}`;
-                                      return (
-                                        <div class="flex">
-                                          <Show when={qrcode}>
-                                            <Qrcode class="w-[120px] h-[120px] mr-4" text={url} />
-                                          </Show>
-                                          <div
-                                            class={cn(
-                                              "text-lg text-slate-700 break-all whitespace-pre-wrap",
-                                              used ? "line-through" : ""
-                                            )}
-                                          >
-                                            <a href={url} target="_blank">
-                                              {url}
-                                            </a>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                );
-                              }}
-                            </For>
+                            <Button
+                              variant="subtle"
+                              icon={<ShieldClose class="w-4 h-4" />}
+                              store={banMemberBtn.bind(member)}
+                            >
+                              禁用该成员
+                            </Button>
+                            <Button
+                              variant="subtle"
+                              icon={<Edit2 class="w-4 h-4" />}
+                              store={updateMemberBtn.bind(member)}
+                            >
+                              修改信息
+                            </Button>
+                            <Button
+                              variant="subtle"
+                              icon={<UserX class="w-4 h-4" />}
+                              store={deleteMemberBtn.bind(member)}
+                            >
+                              删除
+                            </Button>
                           </div>
-                        </Show>
+                          <Show when={tokens.length !== 0} fallback={null}>
+                            <div class="mt-4 space-y-8">
+                              <For each={tokens}>
+                                {(link) => {
+                                  const { id, used } = link;
+                                  return (
+                                    <div class="space-y-2">
+                                      {[
+                                        {
+                                          prefix: "/pc/home/index?token=",
+                                          qrcode: false,
+                                        },
+                                        {
+                                          prefix: "/mobile/home/index?token=",
+                                          qrcode: true,
+                                        },
+                                      ].map((config) => {
+                                        const { prefix, qrcode } = config;
+                                        // @todo 怎么移除 window 平台相关变量？
+                                        const url = `${window.location.origin}${prefix}${id}`;
+                                        return (
+                                          <div class="flex">
+                                            <Show when={qrcode}>
+                                              <Qrcode class="w-[120px] h-[120px] mr-4" text={url} />
+                                            </Show>
+                                            <div
+                                              class={cn(
+                                                "text-lg text-slate-700 break-all whitespace-pre-wrap",
+                                                used ? "line-through" : ""
+                                              )}
+                                            >
+                                              <a href={url} target="_blank">
+                                                {url}
+                                              </a>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                }}
+                              </For>
+                            </div>
+                          </Show>
+                        </div>
                       </div>
-                    </div>
-                  );
-                }}
-              </For>
-            </div>
-          </ListView>
+                    );
+                  }}
+                </For>
+              </div>
+            </ListView>
+          </div>
         </div>
       </ScrollView>
       <Dialog title="新增成员" store={addMemberDialog}>

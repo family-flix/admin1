@@ -6,8 +6,8 @@ import { RequestCore } from "@/domains/client";
 import { FileType } from "@/constants";
 import { ScrollViewCore } from "@/domains/ui";
 
-import { fetchDriveFiles, AliyunDriveFile, deleteFileOfDrive } from "./services";
-import { AliyunFilePath } from "./types";
+import { fetchDriveFiles, deleteFileOfDrive } from "./services";
+import { AliyunFilePath, AliyunDriveFile } from "./types";
 import { Result } from "@/types";
 
 type FileColumn = {

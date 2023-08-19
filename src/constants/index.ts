@@ -63,12 +63,6 @@ export enum FileType {
   Folder = 2,
 }
 
-export enum TaskStatus {
-  Running,
-  Paused,
-  Finished,
-}
-
 export enum DriveFileType {
   File = 1,
   Folder = 2,

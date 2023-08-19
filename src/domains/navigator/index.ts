@@ -13,6 +13,7 @@ enum Events {
   PushState,
   ReplaceState,
   Back,
+  Forward,
   Reload,
   Start,
   PathnameChange,
@@ -20,6 +21,7 @@ enum Events {
   Relaunch,
   /** ???? */
   RedirectToHome,
+  HistoriesChange,
 }
 type TheTypesOfEvents = {
   [Events.PathnameChange]: {
@@ -29,6 +31,7 @@ type TheTypesOfEvents = {
   };
   [Events.PushState]: {
     from: string | null;
+    to: string | null;
     path: string;
     pathname: string;
   };
@@ -38,9 +41,13 @@ type TheTypesOfEvents = {
     pathname: string;
   };
   [Events.Back]: void;
+  [Events.Forward]: void;
   [Events.Reload]: void;
   [Events.Start]: RouteLocation;
   [Events.Relaunch]: void;
+  [Events.HistoriesChange]: {
+    pathname: string;
+  }[];
 };
 type RouteLocation = {
   host: string;
@@ -119,17 +126,17 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   async prepare(location: RouteLocation) {
     // console.log("[DOMAIN]router - start");
     const { pathname, href, search, origin, host, protocol } = location;
-    this.setPathname(pathname);
+    const pp = pathname.replace(NavigatorCore.prefix!, "");
+    this.setPathname(pp);
     this.origin = origin;
     // this.pathname = pathname;
     const query = buildQuery(href);
     this.query = query;
     this._pending = {
-      pathname,
+      pathname: pp,
       search,
       type: "initialize",
     };
-    // this.log("start, current pathname is", pathname);
   }
   start() {
     const { pathname } = this._pending;
@@ -147,6 +154,25 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   }
   private setPathname(p: string) {
     this.pathname = p;
+  }
+  pushState(url: string) {
+    const u = `${this.origin}${NavigatorCore.prefix}${url}`;
+    const r = new URL(u);
+    const { pathname: realTargetPathname, search } = r;
+    const prevPathname = this.pathname;
+    this.setPrevPathname(prevPathname);
+    this.setPathname(realTargetPathname);
+    // this.prevHistories = [...this.histories];
+    console.log("[DOMAIN]navigator - before push", prevPathname, realTargetPathname);
+    this.histories.push({ pathname: realTargetPathname });
+    this.emit(Events.PushState, {
+      from: prevPathname,
+      to: realTargetPathname,
+      // 这里似乎不用 this.origin，只要是 / 开头的，就会拼接在后面
+      path: realTargetPathname + search,
+      pathname: realTargetPathname,
+    });
+    this.emit(Events.HistoriesChange, [...this.histories]);
   }
   /** 跳转到指定路由 */
   async push(targetPathname: string, targetQuery?: Record<string, string>) {
@@ -175,16 +201,17 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.setPrevPathname(prevPathname);
     this.setPathname(realTargetPathname);
     this.histories.push({ pathname: realTargetPathname });
-    this.emit(Events.PushState, {
-      from: this.prevPathname,
-      // 这里似乎不用 this.origin，只要是 / 开头的，就会拼接在后面
-      path: (() => {
-        let url = `${this.origin}${realTargetPathname}`;
-        url += "?" + query_stringify(this.query);
-        return url;
-      })(),
-      pathname: realTargetPathname,
-    });
+    // this.emit(Events.PushState, {
+    //   from: this.prevPathname,
+    //   to: realTargetPathname,
+    //   // 这里似乎不用 this.origin，只要是 / 开头的，就会拼接在后面
+    //   path: (() => {
+    //     let url = `${this.origin}${realTargetPathname}`;
+    //     url += "?" + query_stringify(this.query);
+    //     return url;
+    //   })(),
+    //   pathname: realTargetPathname,
+    // });
     this._pending = {
       pathname: realTargetPathname,
       search,
@@ -215,14 +242,14 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.PathnameChange, { ...this._pending });
   };
   back = () => {
-    this.emit(Events.Back);
+    // this.emit(Events.Back);
   };
   reload = () => {
-    this.emit(Events.Reload);
+    // this.emit(Events.Reload);
   };
   /** 外部路由改变（点击浏览器前进、后退），作出响应 */
   handlePopState({ type, pathname }: { type: string; pathname: string }) {
-    // this.log("pathname change", type, pathname);
+    console.log("pathname change", type, this.pathname, this.prevHistories);
     if (type !== "popstate") {
       return;
     }
@@ -235,8 +262,8 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
         return false;
       }
       const lastStackWhenBack = this.prevHistories[this.prevHistories.length - 1];
-      // console.log("[Router]lastStackWhenBack", lastStackWhenBack);
-      if (lastStackWhenBack.pathname === targetPathname) {
+      // console.log("[DOMAIN]navigator -lastStackWhenBack", lastStackWhenBack.pathname, targetPathname);
+      if (lastStackWhenBack?.pathname === targetPathname) {
         return true;
       }
       return false;
@@ -251,27 +278,35 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
         return "back";
       })(),
     };
-    this.emit(Events.PathnameChange, { ...this._pending });
+    // this.emit(Events.PathnameChange, { ...this._pending });
     // forward
     if (isForward) {
+      console.log("is forward");
       this.setPrevPathname(this.pathname);
       this.setPathname(targetPathname);
       const lastStackWhenBack = this.prevHistories.pop();
-      this.histories = this.histories.concat([lastStackWhenBack!]);
+      if (lastStackWhenBack) {
+        this.histories = this.histories.concat([lastStackWhenBack]);
+      }
+      this.emit(Events.Forward);
+      this.emit(Events.HistoriesChange, [...this.histories]);
       return;
     }
     // back
-    if (this.histories.length === 1) {
-      this.emit(Events.Relaunch);
-      // const targetPathname = "/home/index";
-      // this.emit(Events.ReplaceState, {
-      //   from: this.prevPathname,
-      //   path: `${this.origin}${targetPathname}`,
-      //   pathname: targetPathname,
-      // });
-      // this.replace("/home/index");
-      return;
-    }
+    // if (this.histories.length === 1) {
+    // this.emit(Events.Relaunch);
+    // const targetPathname = "/home/index";
+    // this.emit(Events.ReplaceState, {
+    //   from: this.prevPathname,
+    //   path: `${this.origin}${targetPathname}`,
+    //   pathname: targetPathname,
+    // });
+    // this.replace("/home/index");
+    // this.emit(Events.Back);
+    // return;
+    // }
+    console.log("is back");
+    this.emit(Events.Back);
     // var confirmationMessage = "您的输入还未完成，确认放弃吗？";
     // if (confirm(confirmationMessage)) {
     // } else {
@@ -279,10 +314,18 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     // }
     const theHistoryDestroy = this.histories[this.histories.length - 1];
     this.prevHistories = this.prevHistories.concat([theHistoryDestroy]);
+    // this.prevHistories = [...this.histories];
     this.setPrevPathname(this.pathname);
     this.setPathname(targetPathname);
+    // const cloneStacks = this.histories.slice(0, this.histories.length - 1);
+    console.log(
+      "[DOMAIN]navigator - before pop",
+      this.histories.map((h) => h.pathname)
+    );
     const cloneStacks = this.histories.slice(0, this.histories.length - 1);
-    this.histories = cloneStacks;
+    this.histories = cloneStacks.filter(Boolean);
+    // this.histories.pop();
+    this.emit(Events.HistoriesChange, [...this.histories]);
   }
 
   onStart(handler: Handler<TheTypesOfEvents[Events.Start]>) {
@@ -303,8 +346,14 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   onBack(handler: Handler<TheTypesOfEvents[Events.Back]>) {
     return this.on(Events.Back, handler);
   }
+  onForward(handler: Handler<TheTypesOfEvents[Events.Forward]>) {
+    return this.on(Events.Forward, handler);
+  }
   onRelaunch(handler: Handler<TheTypesOfEvents[Events.Relaunch]>) {
     return this.on(Events.Relaunch, handler);
+  }
+  onHistoriesChange(handler: Handler<TheTypesOfEvents[Events.HistoriesChange]>) {
+    return this.on(Events.HistoriesChange, handler);
   }
 }
 

@@ -9,14 +9,13 @@ import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
-import { JobItem, clear_expired_job_list, fetch_job_list, pause_job } from "@/domains/job/services";
-import { TaskStatus } from "@/constants";
-import { refreshJobs } from "@/store";
+import { JobItem, clear_expired_job_list, fetch_job_list, pause_job, TaskStatus } from "@/domains/job";
+import { homeLayout, homeTaskProfilePage, refreshJobs } from "@/store";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 
 export const TaskListPage: ViewComponent = (props) => {
-  const { app, view, router } = props;
+  const { app, view } = props;
 
   const jobList = new ListCore(new RequestCore(fetch_job_list), {});
   const pauseJob = new RequestCore(pause_job, {
@@ -53,7 +52,11 @@ export const TaskListPage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      router.push(`/home/task/${task.id}`);
+      homeTaskProfilePage.params = {
+        id: task.id,
+      };
+      homeLayout.showSubView(homeTaskProfilePage);
+      // router.push(`/home/task/${task.id}`);
     },
   });
   const refreshBtn = new ButtonCore({

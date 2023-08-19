@@ -10,14 +10,14 @@ import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/client";
 import { ListCore } from "@/domains/list";
-import { JobItem, clear_expired_job_list } from "@/domains/job/services";
+import { JobItem, clear_expired_job_list } from "@/domains/job";
 import { ReportTypes } from "@/constants";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { refreshJobs } from "@/store";
 
 export const HomeReportListPage: ViewComponent = (props) => {
-  const { app, view, router } = props;
+  const { app, view } = props;
 
   const reportList = new ListCore(new RequestCore(fetchReportList), {});
   const reportDeletingRequest = new RequestCore(clear_expired_job_list, {
@@ -37,7 +37,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
   });
   const reportProfileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      router.push(`/home/task/${task.id}`);
+      // router.push(`/home/task/${task.id}`);
     },
   });
   const refreshBtn = new ButtonCore({

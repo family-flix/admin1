@@ -2,19 +2,19 @@
  * @file 转存任务详情页面
  */
 import { Show, createSignal, onMount } from "solid-js";
-import { Calendar } from "lucide-solid";
+import { ArrowLeft, Calendar } from "lucide-solid";
 
 import { Button, ScrollView, Skeleton, ListView } from "@/components/ui";
 import { Article } from "@/components/Article";
 import { ScrollViewCore, ButtonCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
-import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job } from "@/domains/job/services";
+import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job, TaskStatus } from "@/domains/job";
 import { RequestCore } from "@/domains/client";
-import { TaskStatus } from "@/domains/job/constants";
 import { ViewComponent } from "@/types";
+import { homeLayout } from "@/store";
 
 export const TaskProfilePage: ViewComponent = (props) => {
-  const { app, router, view } = props;
+  const { app, view } = props;
 
   const pauseBtn = new ButtonCore<JobProfile>({
     onClick() {
@@ -88,6 +88,19 @@ export const TaskProfilePage: ViewComponent = (props) => {
 
   return (
     <ScrollView store={scrollView} class="h-screen p-8">
+      <div>
+        <div
+          class="mb-2 cursor-pointer"
+          onClick={() => {
+            // view.unload();
+            console.log("[PAGE]tv/profile - click arrow-left");
+            // debugger;
+            homeLayout.showPrevView({ destroy: true });
+          }}
+        >
+          <ArrowLeft class="w-6 h-6" />
+        </div>
+      </div>
       <Show
         when={!!profile()}
         fallback={
