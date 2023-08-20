@@ -210,6 +210,7 @@ export const HomeLayout: ViewComponent = (props) => {
                       "data-[state=closed]:animate-out data-[state=closed]:fade-out"
                     )}
                     app={app}
+                    router={app.router}
                     view={subView}
                     index={i()}
                   />

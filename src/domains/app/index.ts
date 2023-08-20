@@ -123,7 +123,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     // }
   }
   /** 启动应用 */
-  async start() {
+  async start(size: { width: number; height: number }) {
     // console.log('[Application]start');
     const { beforeReady } = this.lifetimes;
     if (beforeReady) {

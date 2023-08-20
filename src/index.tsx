@@ -13,8 +13,6 @@ import { sleep } from "./utils";
 
 import "./style.css";
 
-// const { router } = app;
-
 app.onClickLink(({ href }) => {
   console.log(href);
   // router.push(href);
@@ -74,13 +72,13 @@ function Application() {
     initializeJobs();
   });
   // console.log("[]Application - before start", window.history);
-  router.prepare(window.location);
+  const { innerWidth, innerHeight, location } = window;
+  router.prepare(location);
   (() => {
     const matched = pages.find((v) => {
       return v.checkMatchRegexp(router.pathname);
     });
     if (matched) {
-      // console.log("[]Application - matched other view", router.params);
       matched.query = router.query;
       // @todo 这样写只能展示 /home/xxx 路由，应该根据路由，找到多层级视图，即 rootView,homeLayout,homeIndexPage 这样
       rootView.showSubView(homeLayout);
@@ -90,10 +88,10 @@ function Application() {
     rootView.showSubView(homeLayout);
     homeLayout.showSubView(homeIndexPage);
   })();
-  // console.log(matched);
-  // console.log("[]Application - before start", router.pathname, matched);
-
-  app.start();
+  app.start({
+    width: innerWidth,
+    height: innerHeight,
+  });
 
   return (
     <div class={"screen w-screen h-screen overflow-hidden"}>
@@ -109,7 +107,13 @@ function Application() {
         <For each={subViews()}>
           {(subView, i) => {
             return (
-              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" app={app} view={subView} index={i()} />
+              <RouteView
+                class="absolute inset-0 opacity-100 dark:bg-black"
+                app={app}
+                view={subView}
+                router={router}
+                index={i()}
+              />
             );
           }}
         </For>
