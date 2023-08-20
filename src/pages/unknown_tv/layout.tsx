@@ -107,6 +107,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                       class={cn("relative")}
                       view={subView}
                       app={app}
+                      router={app.router}
                       immediately={true}
                       index={i()}
                     />
