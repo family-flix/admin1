@@ -71,7 +71,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
     },
   });
   const movieRefreshDialog = new TMDBSearcherDialogCore({
-    type: "2",
+    type: "movie",
     onOk(searched_movie) {
       const id = view.params.id as string;
       if (!id) {

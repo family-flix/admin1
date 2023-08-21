@@ -68,7 +68,7 @@ export const HomePage: ViewComponent = (props) => {
     setDriveResponse(nextState);
   });
 
-  driveList.init();
+  driveList.initIfInitial();
 
   return (
     <>

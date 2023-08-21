@@ -317,6 +317,12 @@ export class ListCore<
     this.emit(Events.DataSourceChange, [...this.response.dataSource]);
     return Result.Ok({ ...this.response });
   }
+  async initIfInitial() {
+    if (!this.response.initial) {
+      return Result.Ok(this.response);
+    }
+    return this.init();
+  }
   /**
    * 下一页
    */

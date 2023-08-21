@@ -1,11 +1,9 @@
 /**
  * @file 未识别的剧集
  */
-import { For, Show, createSignal, onMount } from "solid-js";
-import { Brush, RotateCcw, Trash } from "lucide-solid";
+import { For, createSignal } from "solid-js";
+import { RotateCcw, Trash } from "lucide-solid";
 
-import { RequestCore } from "@/domains/client";
-import { ListCore } from "@/domains/list";
 import {
   UnknownEpisodeItem,
   bind_profile_for_unknown_movie,
@@ -17,6 +15,8 @@ import { Button, Dialog, LazyImage, ListView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
 import { SelectionCore } from "@/domains/cur";
+import { RequestCore } from "@/domains/client";
+import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
 
 export const UnknownEpisodePage: ViewComponent = (props) => {
@@ -69,7 +69,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       deleteConfirmDialog.show();
     },
   });
-  const bindEpisodeRequest = new RequestCore(bind_profile_for_unknown_movie, {
+  const bindMovieRequest = new RequestCore(bind_profile_for_unknown_movie, {
     onLoading(loading) {
       bindEpisodeDialog.okBtn.setLoading(loading);
     },
@@ -88,14 +88,14 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
     },
   });
   const bindEpisodeDialog = new TMDBSearcherDialogCore({
-    type: "2",
+    type: "movie",
     onOk(searched_tv) {
       if (!cur.value) {
         app.tip({ text: ["请先选择未识别的电影"] });
         return;
       }
       const { id } = cur.value;
-      bindEpisodeRequest.run(id, searched_tv);
+      bindMovieRequest.run(id, searched_tv);
     },
   });
 
@@ -182,6 +182,9 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                   </div>
                   <div class="flex-1 mt-2">
                     <div class="text-lg">{name}</div>
+                    <div>
+                      {season_number}/{episode_number}
+                    </div>
                     <div class="mt-2 text-sm text-slate-800 break-all">
                       [{drive.name}]{parent_paths}/{file_name}
                     </div>

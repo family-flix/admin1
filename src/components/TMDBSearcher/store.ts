@@ -22,7 +22,7 @@ type TMDBSearcherDialogState = {
   showFooter: boolean;
 };
 type TMDBSearcherDialogProps = {
-  type?: "1" | "2";
+  type?: "tv" | "movie";
   /** 是否底部按钮 */
   footer: boolean;
   /** 是否展示确定按钮 */
@@ -46,7 +46,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
 
     const { type, footer = true, onOk, onCancel } = options;
     this.dialog = new DialogCore({
-      title: type === "2" ? "搜索电影" : "搜索电视剧",
+      title: type === "movie" ? "搜索电影" : "搜索电视剧",
       footer,
       onOk: () => {
         if (onOk && this.tmdb.state.cur) {

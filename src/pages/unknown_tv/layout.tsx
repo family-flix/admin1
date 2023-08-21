@@ -32,9 +32,9 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
 
   return (
     <ScrollView store={scrollView} class="flex flex-col box-border h-screen p-8">
-      <div class="h-[80px]">
+      <div class="">
         <h1 class="text-2xl">未识别的影视剧</h1>
-        <div class="space-x-2 border">
+        <div class="mt-8 space-x-2 border">
           <div
             classList={{
               "inline-block px-4 py-2 cursor-pointer": true,

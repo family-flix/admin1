@@ -3,7 +3,6 @@
  */
 import { createSignal, For, Show } from "solid-js";
 import {
-  ArrowLeft,
   ArrowUpCircle,
   Award,
   Bell,
@@ -64,6 +63,7 @@ import { SelectionCore } from "@/domains/cur";
 import { SharedResourceCore, fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { DriveCore } from "@/domains/drive";
+import { NavigatorCore } from "@/domains/navigator";
 import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, homeLayout } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
@@ -110,6 +110,21 @@ export const TVManagePage: ViewComponent = (props) => {
       setHasSearch(!!options.length);
       seasonList.search({
         genres: options.join("|"),
+      });
+    },
+  });
+  const driveCheckboxGroup = new CheckboxGroupCore({
+    options: driveList.response.dataSource.map((d) => {
+      const { name, id } = d;
+      return {
+        value: id,
+        label: name,
+      };
+    }),
+    onChange(options) {
+      setHasSearch(!!options.length);
+      seasonList.search({
+        drive_ids: options.join("|"),
       });
     },
   });
@@ -491,6 +506,14 @@ export const TVManagePage: ViewComponent = (props) => {
   // });
 
   driveList.onStateChange((nextResponse) => {
+    const driveCheckBoxGroupOptions = nextResponse.dataSource.map((d) => {
+      const { name, id } = d;
+      return {
+        value: id,
+        label: name,
+      };
+    });
+    driveCheckboxGroup.setOptions(driveCheckBoxGroupOptions);
     setDriveResponse(nextResponse);
   });
   seasonList.onStateChange((nextState) => {
@@ -535,7 +558,7 @@ export const TVManagePage: ViewComponent = (props) => {
     });
   });
   seasonList.init();
-  driveList.init();
+  driveList.initIfInitial();
 
   return (
     <>
@@ -570,13 +593,20 @@ export const TVManagePage: ViewComponent = (props) => {
               </div>
               <PurePopover
                 align="center"
+                class="w-96"
                 content={
                   <div class="h-[320px] py-4 pb-8 px-2 overflow-y-auto">
                     <div>
+                      <div>来源</div>
                       <CheckboxGroup store={sourceCheckboxGroup} />
                     </div>
-                    <div>
+                    <div class="mt-4">
+                      <div>类型</div>
                       <CheckboxGroup store={tvGenresCheckboxGroup} />
+                    </div>
+                    <div class="mt-4">
+                      <div>云盘</div>
+                      <CheckboxGroup store={driveCheckboxGroup} />
                     </div>
                   </div>
                 }
@@ -633,6 +663,8 @@ export const TVManagePage: ViewComponent = (props) => {
                   <For each={tvListResponse().dataSource}>
                     {(season) => {
                       const {
+                        id,
+                        tv_id,
                         name,
                         overview,
                         poster_path,
@@ -652,7 +684,9 @@ export const TVManagePage: ViewComponent = (props) => {
                             </div>
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
-                                <h2 class="text-2xl text-slate-800">{name}</h2>
+                                <h2 class="text-2xl text-slate-800">
+                                  <a href={`${NavigatorCore.prefix}/home/tv/${tv_id}?season_id=${id}`}>{name}</a>
+                                </h2>
                                 <p class="ml-4 text-slate-500">{season_text}</p>
                               </div>
                               <div class="mt-2 overflow-hidden text-ellipsis">

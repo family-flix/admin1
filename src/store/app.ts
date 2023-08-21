@@ -10,7 +10,7 @@ import { Result } from "@/types";
 
 import { cache } from "./cache";
 import { user } from "./user";
-import { homeIndexPage, homeLayout, loginPage, rootView } from "./views";
+import { homeIndexPage, homeLayout, loginPage, registerPage, rootView } from "./views";
 
 NavigatorCore.prefix = "/admin";
 
@@ -26,8 +26,11 @@ export const app = new Application({
       }
       const { existing } = r.data;
       if (!existing) {
+        rootView.showSubView(registerPage);
         user.needRegister = true;
+        return Result.Ok(null);
       }
+      rootView.showSubView(loginPage);
       return Result.Ok(null);
     }
     await app.user.validate();

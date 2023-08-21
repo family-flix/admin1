@@ -88,7 +88,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
     },
   });
   const dialog = new TMDBSearcherDialogCore({
-    type: "2",
+    type: "movie",
     onOk(searched_tv) {
       if (!cur.value) {
         app.tip({ text: ["请先选择未识别的电影"] });

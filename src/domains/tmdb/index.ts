@@ -22,7 +22,7 @@ interface TMDBSearcherState {
   cur: TheTVInTMDB | null;
 }
 type TMDBSearcherProps = {
-  type?: "1" | "2";
+  type?: "tv" | "movie";
 };
 
 export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
@@ -66,7 +66,7 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
       },
     });
     this.input = new InputCore({
-      placeholder: type === "2" ? "请输入电影名称" : "请输入电视剧名称",
+      placeholder: type === "movie" ? "请输入电影名称" : "请输入电视剧名称",
       onEnter: () => {
         this.searchBtn.click();
       },

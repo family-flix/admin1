@@ -113,6 +113,37 @@ export class CheckboxGroupCore<T extends any> extends BaseDomain<TheTypesOfEvent
     this.emit(Events.Change, [...this.values]);
     this.emit(Events.StateChange, { ...this.state });
   }
+  setOptions(options: CheckboxGroupOption<T>[]) {
+    for (let i = 0; this.options.length; i += 1) {
+      const opt = this.options[i];
+      opt.core.unmount();
+    }
+    this.options = options.map((opt) => {
+      const { label, value, checked, disabled } = opt;
+      const store = new CheckboxCore({
+        label,
+        checked,
+        disabled,
+        onChange: (checked) => {
+          const existing = this.values.includes(value);
+          if (checked && !existing) {
+            this.checkOption(value);
+            return;
+          }
+          if (!checked && existing) {
+            this.uncheckOption(value);
+          }
+        },
+      });
+      return {
+        label,
+        value,
+        core: store,
+      };
+    });
+    console.log("[DOMAIN]ui/checkbox/group - setOptions", this.options.length);
+    this.emit(Events.StateChange, { ...this.state });
+  }
 
   onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
     return this.on(Events.Change, handler);
