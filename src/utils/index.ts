@@ -8,24 +8,7 @@ import { cn as nzhcn } from "./nzh";
 dayjs.extend(relative_time);
 dayjs.locale("zh-cn");
 
-export const VIDEO_KEYS_MAP = {
-  name: "",
-  original_name: "",
-  season: "",
-  episode: "",
-  episode_name: "",
-  resolution: "",
-  year: "",
-  source: "",
-  encode: "",
-  voice_encode: "",
-  episode_count: "",
-  type: "",
-};
-export type VideoKeys = keyof typeof VIDEO_KEYS_MAP;
-export const VIDEO_ALL_KEYS = Object.keys(VIDEO_KEYS_MAP) as VideoKeys[];
-export type ParsedVideoInfo = Record<VideoKeys, string>;
-export const VIDEO_KEY_NAME_MAP: Record<VideoKeys, string> = {
+export const VIDEO_KEY_NAME_MAP = {
   name: "中文名称",
   original_name: "译名or外文原名",
   season: "季",
@@ -38,7 +21,11 @@ export const VIDEO_KEY_NAME_MAP: Record<VideoKeys, string> = {
   voice_encode: "音频编码方式",
   episode_count: "总集数",
   type: "后缀",
+  subtitle_lang: "字幕语言",
 };
+export type VideoKeys = keyof typeof VIDEO_KEY_NAME_MAP;
+export const VIDEO_ALL_KEYS = Object.keys(VIDEO_KEY_NAME_MAP) as VideoKeys[];
+export type ParsedVideoInfo = Record<VideoKeys, string>;
 
 export function cn(...inputs: any[]) {
   return twMerge(inputs);

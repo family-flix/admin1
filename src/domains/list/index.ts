@@ -17,7 +17,7 @@ import { OriginalResponse, FetchParams, Response, Search, ParamsProcessor, ListP
  * @returns
  */
 const RESPONSE_PROCESSOR = <T>(
-  originalResponse: OriginalResponse
+  originalResponse: OriginalResponse | null
 ): {
   dataSource: T[];
   page: number;
@@ -27,6 +27,17 @@ const RESPONSE_PROCESSOR = <T>(
   noMore: boolean;
   error: Error | null;
 } => {
+  if (originalResponse === null) {
+    return {
+      dataSource: [],
+      page: 1,
+      pageSize: DEFAULT_PAGE_SIZE,
+      total: DEFAULT_TOTAL,
+      noMore: false,
+      empty: false,
+      error: new Error(`process response fail, because response is null`),
+    };
+  }
   try {
     const data = (() => {
       if (originalResponse.data) {
@@ -125,7 +136,7 @@ export class ListCore<
     return { ...prevParams, ...currentParams };
   };
   /** 响应处理器 */
-  private processor: (response: OriginalResponse) => Response<T>;
+  private processor: (response: OriginalResponse | null) => Response<T>;
   /** 初始查询参数 */
   private initialParams: FetchParams;
   private extraResponse: Record<string, unknown>;

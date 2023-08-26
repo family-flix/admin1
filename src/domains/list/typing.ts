@@ -106,7 +106,7 @@ export interface ListProps<T> {
    * 响应处理器
    * 建议在 service 函数中直接处理
    */
-  processor?: <T>(response: Response<T>, originalResponse: OriginalResponse) => Response<T>;
+  processor?: <T>(response: Response<T>, originalResponse: OriginalResponse | null) => Response<T>;
   /**
    * 默认已存在的数据
    */
