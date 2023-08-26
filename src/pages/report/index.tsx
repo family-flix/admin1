@@ -8,7 +8,7 @@ import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 import { fetchReportList } from "@/services";
 import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list } from "@/domains/job";
 import { ReportTypes } from "@/constants";

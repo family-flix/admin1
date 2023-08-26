@@ -8,7 +8,7 @@ import { UnknownTVItem, bind_profile_for_unknown_tv, delete_unknown_tv_list, fet
 import { Button, ListView, Dialog, LazyImage } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";

@@ -225,11 +225,13 @@ export const DriveCard = (props: {
   });
   const progress = new ProgressCore({ value: drive.state.used_percent });
   const newFolderNameInput = new InputCore({
+    defaultValue: "",
     onChange(v) {
       drive.inputNewFolderName(v);
     },
   });
   const refreshTokenInput = new InputCore({
+    defaultValue: "",
     onChange(v) {
       drive.setRefreshToken(v);
     },

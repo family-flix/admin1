@@ -2,11 +2,11 @@ import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { ListCore } from "@/domains/list";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { FileType } from "@/constants";
 import { ScrollViewCore } from "@/domains/ui";
 
-import { fetchDriveFiles, deleteFileOfDrive } from "./services";
+import { fetchDriveFiles, deleteFileOfDrive, renameFileOfDrive } from "./services";
 import { AliyunFilePath, AliyunDriveFile } from "./types";
 import { Result } from "@/types";
 
@@ -249,7 +249,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     const { file, position, onLoading, onFailed, onSuccess } = options;
     const [columnIndex, fileIndex] = position;
     const folderColumns = this.folderColumns;
-    const folderDeletingRequest = new RequestCore(deleteFileOfDrive, {
+    const folderDeletingRequest = new RequestCore(renameFileOfDrive, {
       onLoading,
       onFailed,
       onSuccess: () => {
@@ -271,6 +271,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     return folderDeletingRequest.run({
       drive_id: this.id,
       file_id: file.file_id,
+      name: file.name,
     });
   }
 

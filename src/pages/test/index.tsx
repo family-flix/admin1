@@ -1,14 +1,15 @@
+import axios from "axios";
 import { For, JSX, onMount } from "solid-js";
 import { MoreVertical } from "lucide-solid";
 
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { DropdownMenuCore } from "@/domains/ui/dropdown-menu";
-import { MenuItemCore } from "@/domains/ui/menu/item";
-import { MenuCore } from "@/domains/ui/menu";
-import { CheckboxCore } from "@/domains/ui/checkbox";
+import { Input } from "@/components/ui";
+import { InputCore, CheckboxCore, MenuCore, MenuItemCore, DropdownMenuCore } from "@/domains/ui";
 import { TreeCore } from "@/domains/ui/tree";
 import * as TreePrimitive from "@/packages/ui/tree";
 import { ViewComponent } from "@/types";
+import { RequestCore } from "@/domains/request";
+import { createWithFolders, fetchTokenOfDrive } from "@/domains/drive";
+import { upload_file } from "@/services";
 
 export const TestPage: ViewComponent = (props) => {
   const { app } = props;
@@ -40,6 +41,24 @@ export const TestPage: ViewComponent = (props) => {
       }),
     ],
   });
+  // const tokenRequest = new RequestCore(fetchTokenOfDrive, {});
+  // const preuploadRequest = new RequestCore(createWithFolders, {
+  //   onSuccess(v) {
+  //     console.log(v);
+  //   },
+  // });
+  const uploadRequest = new RequestCore(upload_file);
+  const input = new InputCore<File[]>({
+    defaultValue: [],
+    type: "file",
+    async onChange(event) {
+      const file = event[0];
+      const body = new FormData();
+      body.append("file", file);
+      // console.log("[PAGE]test - input onChange", file);
+      uploadRequest.run(body);
+    },
+  });
 
   return (
     <div class="p-4 bg-white">
@@ -50,11 +69,12 @@ export const TestPage: ViewComponent = (props) => {
       >
         Click it
       </div>
+      <Input store={input} />
       {/* <div class="flex items-center space-x-2">
         <Checkbox id="check" store={check} />
         <label html-for="check">点击选中</label>
       </div> */}
-      <TreePrimitive.Root class="text-lg" store={tree}>
+      {/* <TreePrimitive.Root class="text-lg" store={tree}>
         <TreePrimitive.Leaf class="py-2 whitespace-nowrap" store={tree}>
           <TreePrimitive.Switcher class="mr-2 cursor-pointer" store={tree}>
             <TreePrimitive.Arrow />
@@ -78,7 +98,7 @@ export const TestPage: ViewComponent = (props) => {
       </TreePrimitive.Root>
       <DropdownMenu store={menu}>
         <MoreVertical class="w-4 h-4" />
-      </DropdownMenu>
+      </DropdownMenu> */}
       <div class="h-[200px]"></div>
       <div class="h-[2000px]"></div>
     </div>

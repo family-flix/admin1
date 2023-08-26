@@ -7,7 +7,7 @@ import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-
 
 import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetch_job_list, pause_job, TaskStatus } from "@/domains/job";
 import { homeLayout, homeTaskProfilePage, refreshJobs } from "@/store";

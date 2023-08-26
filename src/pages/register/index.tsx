@@ -9,12 +9,14 @@ export const RegisterPage: ViewComponent = (props) => {
   const { app } = props;
   const { user } = app;
   const emailInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入邮箱",
     onChange(v) {
       user.inputEmail(v);
     },
   });
   const passwordInput = new InputCore({
+    defaultValue: "",
     type: "password",
     placeholder: "请输入密码",
     onChange(v) {
@@ -24,12 +26,22 @@ export const RegisterPage: ViewComponent = (props) => {
   const registerBtn = new ButtonCore({
     async onClick() {
       registerBtn.setLoading(true);
-      await user.register();
+      const r = await user.register();
       registerBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: [r.error.message],
+        });
+        return;
+      }
       app.tip({
         text: ["注册成功"],
       });
     },
+  });
+
+  user.onTip((msg) => {
+    app.tip(msg);
   });
 
   return (

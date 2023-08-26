@@ -425,9 +425,9 @@ export async function fetch_unknown_episode_list(params: FetchParams) {
 }
 export type UnknownEpisodeItem = RequestedResource<typeof fetch_unknown_episode_list>["list"][0];
 
-export function delete_unknown_episode(body: { id: string }, token?: CancelToken) {
+export function delete_unknown_episode(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/unknown_episode/delete/${id}`, undefined, token);
+  return request.get(`/api/admin/unknown_episode/delete/${id}`, undefined);
 }
 export function delete_unknown_episode_list() {
   return request.get(`/api/admin/unknown_episode/delete`);
@@ -441,9 +441,9 @@ export function delete_unknown_movie_list() {
  * 删除指定未知电影
  * @param body
  */
-export function delete_unknown_movie(body: { id: string }, token?: CancelToken) {
+export function delete_unknown_movie(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/unknown_movie/delete/${id}`, undefined, token);
+  return request.get(`/api/admin/unknown_movie/delete/${id}`, undefined);
 }
 
 /**
@@ -451,15 +451,11 @@ export function delete_unknown_movie(body: { id: string }, token?: CancelToken) 
  * @param body
  * @returns
  */
-export function update_unknown_season_number(body: { id: string; season_number: string }, token?: CancelToken) {
+export function update_unknown_season_number(body: { id: string; season_number: string }) {
   const { id, season_number } = body;
-  return request.post<void>(
-    `/api/admin/unknown_season/update/${id}`,
-    {
-      season_number,
-    },
-    token
-  );
+  return request.post<void>(`/api/admin/unknown_season/update/${id}`, {
+    season_number,
+  });
 }
 
 /**
@@ -782,6 +778,7 @@ export function parse_video_file_name(body: { name: string; keys?: string[] }) {
     encode: string;
     voice_encode: string;
     episode_count: string;
+    subtitle_lang: string;
   }>("/api/admin/parse", { name, keys });
 }
 export type ParsedVideoInfo = RequestedResource<typeof parse_video_file_name>;
@@ -1111,3 +1108,28 @@ export async function fetch_movie_profile(body: { movie_id: string }) {
   return r;
 }
 export type MovieProfile = RequestedResource<typeof fetch_movie_profile>;
+
+export function upload_file(body: FormData) {
+  return request.post("/api/admin/upload", body);
+}
+
+export function upload_subtitle_for_episode(params: { episode_id: string; drive_id: string; file: File }) {
+  const { episode_id, drive_id, file } = params;
+  const body = new FormData();
+  body.append("file", file);
+  return request.post(`/api/admin/episode/${episode_id}/subtitle/add?drive_id=${drive_id}`, body);
+}
+
+export function notify_test(values: { text: string; token: string }) {
+  const { text, token } = values;
+  return request.post(`/api/admin/notify/test`, { text, token });
+}
+export function fetch_settings() {
+  return request.get<{
+    push_deer_token: string;
+  }>("/api/admin/settings");
+}
+export function update_settings(values: Partial<{ push_deer_token: string }>) {
+  const { push_deer_token } = values;
+  return request.post(`/api/admin/settings/update`, { push_deer_token });
+}

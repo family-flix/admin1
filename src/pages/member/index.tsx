@@ -9,7 +9,7 @@ import { Button, Dialog, Input, ListView, Skeleton, ScrollView } from "@/compone
 import { Qrcode } from "@/components/Qrcode";
 import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
@@ -61,6 +61,7 @@ export const MemberManagePage: ViewComponent = (props) => {
     },
   });
   const remarkInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入备注",
   });
   const addMemberBtn = new ButtonCore({
@@ -74,6 +75,7 @@ export const MemberManagePage: ViewComponent = (props) => {
     },
   });
   const nameSearchInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入名称搜索",
     onEnter() {
       searchBtn.click();

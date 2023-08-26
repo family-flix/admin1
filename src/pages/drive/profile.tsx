@@ -21,7 +21,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
   });
   const drive = new DriveCore({ ...(view.query as unknown as DriveItem), id: view.params.id });
   drive.list.pageSize = 50;
-  const input = new InputCore({});
+  const input = new InputCore({
+    defaultValue: "",
+  });
   const fileSelect = new SelectionCore<[AliyunDriveFile, [number, number]]>();
   const btn = new ButtonCore({
     onClick() {
@@ -116,7 +118,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const nameModifyInput = new InputCore();
+  const nameModifyInput = new InputCore({
+    defaultValue: "",
+  });
   const nameModifyDialog = new DialogCore({
     title: "修改名称",
     onOk() {

@@ -13,11 +13,13 @@ import {
   EpisodeItemInSeason,
   delete_season,
   SeasonInTVProfile,
+  parse_video_file_name,
+  upload_subtitle_for_episode,
 } from "@/services";
-import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView } from "@/components/ui";
+import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore, InputCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/request";
 import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { createJob, appendAction, rootView, mediaPlayingPage, homeLayout } from "@/store";
@@ -143,6 +145,78 @@ export const TVProfilePage: ViewComponent = (props) => {
       app.tip({
         text: ["删除失败", error.message],
       });
+    },
+  });
+  const uploadRequest = new RequestCore(upload_subtitle_for_episode, {
+    onSuccess() {
+      app.tip({
+        text: ["字幕上传成功"],
+      });
+    },
+  });
+  const filenameParseRequest = new RequestCore(parse_video_file_name);
+  const subtitleUploadInput = new InputCore({
+    defaultValue: [],
+    type: "file",
+    async onChange(v) {
+      const file = v[0];
+      if (!file) {
+        return;
+      }
+      if (curEpisodeList.response.dataSource.length === 0) {
+        app.tip({
+          text: ["请等待详情加载成功"],
+        });
+        return;
+      }
+      const { name } = file;
+      const r = await filenameParseRequest.run({ name, keys: ["season", "episode", "subtitle_lang"] });
+      if (r.error) {
+        app.tip({
+          text: ["文件名解析失败"],
+        });
+        return;
+      }
+      const { subtitle_lang, episode: episode_text } = r.data;
+      if (!subtitle_lang) {
+        app.tip({
+          text: ["文件名中没有解析出字幕语言"],
+        });
+        return;
+      }
+      const matched_episode = curEpisodeList.response.dataSource.find((episode) => {
+        console.log("[]", episode, episode_text);
+        return episode.episode_number === episode_text;
+      });
+      if (!matched_episode) {
+        app.tip({
+          text: ["文件名中没有解析出集数"],
+        });
+        return;
+      }
+      // @todo 还需要判断季是否匹配
+      const { sources } = matched_episode;
+      if (sources.length === 0) {
+        app.tip({
+          text: ["没有可播放源"],
+        });
+        return;
+      }
+      const reference_id = sources[0].drive.id;
+      // 使用 every 方法遍历数组，检查每个元素的 drive.id 是否和参考 id 相同
+      const all_ids_equal = sources.every((source) => source.drive.id === reference_id);
+      if (!all_ids_equal) {
+        app.tip({
+          text: ["视频源在多个云盘内，请手动选择上传至哪个云盘"],
+        });
+        return;
+      }
+      uploadRequest.run({
+        episode_id: matched_episode.id,
+        drive_id: sources[0].drive.id,
+        file,
+      });
+      console.log(r.data, subtitle_lang, matched_episode);
     },
   });
   const tvDeleteBtn = new ButtonCore({
@@ -283,17 +357,22 @@ export const TVProfilePage: ViewComponent = (props) => {
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
                         <div class="mt-2">{profile()?.overview}</div>
+                        <div class="mt-4">
+                          <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>TMDB</a>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="relative z-3 mt-4">
-                <div class="space-x-4 whitespace-nowrap">
-                  <Button store={btn1}>搜索 TMDB</Button>
-                  <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
+                <div class="flex items-center space-x-4 whitespace-nowrap">
+                  <Button store={btn1}>修改详情</Button>
                   <Button store={refreshProfileBtn}>刷新详情</Button>
                   <Button store={tvDeleteBtn}>删除季</Button>
+                  <div class="flex items-center">
+                    <Input store={subtitleUploadInput} />
+                  </div>
                 </div>
                 <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
                   <For each={profile()?.seasons}>
@@ -387,65 +466,6 @@ export const TVProfilePage: ViewComponent = (props) => {
                 </ListView>
               </div>
             </div>
-            {/* <div class="mt-8 text-xl">关联解析结果列表</div>
-            <div class="mt-4 space-y-1">
-              <Show when={!!profile()}>
-                <For each={profile()?.parsed_tvs}>
-                  {(parsed_tv) => {
-                    const { file_name, name, original_name, correct_name } = parsed_tv;
-                    return (
-                      <div class="flex items-center space-x-2 text-slate-800">
-                        <div>{name || original_name}</div>
-                        <div class="flex items-center space-x-1">
-                          <Element store={updateParsedTVBtn.bind(parsed_tv)}>
-                            <Edit3 class="w-4 h-4 cursor-pointer" />
-                          </Element>
-                          <Element store={deleteParsedTVBtn.bind(parsed_tv)}>
-                            <Trash class="w-4 h-4 cursor-pointer" />
-                          </Element>
-                        </div>
-                      </div>
-                    );
-                  }}
-                </For>
-              </Show>
-            </div> */}
-            {/* <div class="mt-8 text-xl">文件列表</div>
-            <div class="mt-4 space-y-1">
-              <For each={sourceResponse().dataSource}>
-                {(source) => {
-                  const { file_name, drive, parent_paths } = source;
-                  return (
-                    <div class="flex items-center space-x-2 text-slate-800">
-                      <div>
-                        <span class="text-slate-800 mr-2">{drive.name}</span>
-                        <span>
-                          {parent_paths}/{file_name}
-                        </span>
-                      </div>
-                      <div class="flex items-center space-x-1">
-                        <Element store={updateBtn.bind(source)}>
-                          <Edit3 class="w-4 h-4 cursor-pointer" />
-                        </Element>
-                        <Element store={deleteBtn.bind(source)}>
-                          <Trash class="w-4 h-4 cursor-pointer" />
-                        </Element>
-                      </div>
-                    </div>
-                  );
-                }}
-              </For>
-            </div>
-            <Show when={!sourceResponse().noMore}>
-              <div
-                class="py-2 text-center cursor-pointer"
-                onClick={() => {
-                  sourceList.loadMore();
-                }}
-              >
-                更多
-              </div>
-            </Show> */}
           </Show>
         </div>
       </ScrollView>

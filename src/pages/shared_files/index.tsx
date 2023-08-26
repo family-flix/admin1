@@ -32,6 +32,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
     ],
   });
   const sharedFileUrlInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入分享链接",
     onChange(v) {
       sharedResource.input(v);
@@ -41,6 +42,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
     },
   });
   const sharedFileCodeInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入提取码",
     onChange(v) {
       sharedResource.inputCode(v);

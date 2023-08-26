@@ -58,7 +58,7 @@ import {
   CheckboxGroupCore,
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { SelectionCore } from "@/domains/cur";
 import { SharedResourceCore, fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
@@ -297,6 +297,7 @@ export const TVManagePage: ViewComponent = (props) => {
     footer: false,
   });
   const nameSearchInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入名称搜索",
     onEnter() {
       searchBtn.click();
@@ -316,6 +317,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const sharedResourceUrlInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入资源链接",
     onChange(v) {
       sharedResource.input(v);

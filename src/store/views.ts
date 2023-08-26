@@ -34,10 +34,6 @@ onViewCreated((created) => {
   pages.push(created);
 });
 
-// const authLayout = new RouteViewCore({
-//   title: "EmptyLayout",
-//   component: EmptyLayout,
-// });
 export const homeIndexPage = new RouteViewCore({
   key: "/home/index",
   title: "首页",

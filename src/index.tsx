@@ -81,6 +81,7 @@ function Application() {
     if (matched) {
       matched.query = router.query;
       // @todo 这样写只能展示 /home/xxx 路由，应该根据路由，找到多层级视图，即 rootView,homeLayout,homeIndexPage 这样
+      // rootView.showSubView(matched);
       rootView.showSubView(homeLayout);
       homeLayout.showSubView(matched);
       return;

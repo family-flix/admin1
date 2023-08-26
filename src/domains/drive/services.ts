@@ -391,3 +391,49 @@ export function renameFileOfDrive(body: { drive_id: string; file_id: string; nam
     name,
   });
 }
+
+export function createWithFolders(
+  drive_id: string,
+  body: {
+    content_hash: string;
+    content_hash_name: "sha1";
+    name: string;
+    parent_file_id: string;
+    part_info_list: { part_number: number }[];
+    proof_code: string;
+    size: number;
+    type: "file";
+  }
+) {
+  return request.post<{
+    parent_file_id: string;
+    part_info_list: {
+      part_number: number;
+      upload_url: string;
+      internal_upload_url: string;
+      content_type: string;
+    }[];
+    upload_id: string;
+    rapid_upload: boolean;
+    type: string;
+    file_id: string;
+    revision_id: string;
+    domain_id: string;
+    drive_id: string;
+    file_name: string;
+    encrypt_mode: string;
+    location: string;
+  }>(`/api/admin/drive/${drive_id}/preupload`, body);
+}
+
+export async function fetchTokenOfDrive(drive_id: string) {
+  const r = await request.get<{
+    access_token: string;
+    refresh_token: string;
+  }>(`/api/admin/drive/${drive_id}/token`);
+  console.log("[SERVICE]fetchTokenOfDrive - ", r);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  return Result.Ok(r.data);
+}

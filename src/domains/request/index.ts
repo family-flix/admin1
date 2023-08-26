@@ -84,7 +84,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
   async run(...args: Parameters<T>) {
     if (this.pending !== null) {
       const r = await this.pending;
-      const d = r.data;
+      const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
       this.pending = null;
       return Result.Ok(d);
     }
@@ -97,6 +97,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     this.emit(Events.LoadingChange, false);
     this.emit(Events.Completed);
     this.pending = null;
+    console.log("[DOMAIN]client - run", r.error);
     if (r.error) {
       this.emit(Events.Failed, r.error);
       return Result.Err(r.error);

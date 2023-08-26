@@ -2,16 +2,16 @@
  * @file 电影详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
+import { ArrowLeft } from "lucide-solid";
 
 import { MovieProfile, delete_movie, fetch_movie_profile, update_movie_profile } from "@/services";
-import { Button, Dialog, Skeleton, LazyImage, ScrollView } from "@/components/ui";
+import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
-import { DialogCore, ButtonCore, ScrollViewCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { DialogCore, ButtonCore, ScrollViewCore, InputCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { appendAction, homeLayout } from "@/store";
-import { ArrowLeft } from "lucide-solid";
+import { appendAction, homeLayout, mediaPlayingPage, rootView } from "@/store";
 
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -37,11 +37,26 @@ export const MovieProfilePage: ViewComponent = (props) => {
       profileRequest.reload();
     },
   });
+  const subtitleUploadInput = new InputCore({
+    defaultValue: [],
+    placeholder: "上传字幕文件",
+    type: "file",
+    onChange(v) {
+      console.log(v);
+    },
+  });
+  const subtitleUploadDialog = new DialogCore({
+    title: "上传字幕",
+    onOk() {
+      // 开始上传字幕
+    },
+  });
   const movieDeletingBtn = new ButtonCore({
     onClick() {
       movieDeletingConfirmDialog.show();
     },
   });
+
   const movieDeletingConfirmDialog = new DialogCore({
     title: "删除电影",
     onOk() {
@@ -75,7 +90,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
     onOk(searched_movie) {
       const id = view.params.id as string;
       if (!id) {
-        app.tip({ text: ["更新详情失败", "缺少电视剧 id"] });
+        app.tip({ text: ["更新详情失败", "缺少电影 id"] });
         return;
       }
       updateProfileRequest.run(
@@ -101,10 +116,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
   const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
   view.onShow(() => {
-    const { id } = view.params;
-    profileRequest.run({ movie_id: id });
-  });
-  onMount(() => {
     const { id } = view.params;
     profileRequest.run({ movie_id: id });
   });
@@ -159,6 +170,9 @@ export const MovieProfilePage: ViewComponent = (props) => {
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
                         <div class="mt-2">{profile()?.overview}</div>
+                        <div class="mt-4 space-x-2">
+                          <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>TMDB</a>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -166,17 +180,25 @@ export const MovieProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4">
-                  <Button store={movieRefreshDialogShowBtn}>搜索 TMDB</Button>
-                  <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>前往 TMDB 页面</a>
+                  <Button store={movieRefreshDialogShowBtn}>修改详情</Button>
                   <Button store={movieDeletingBtn}>删除</Button>
                 </div>
                 <div class="mt-8 text-2xl">可播放源</div>
                 <div class="mt-4 space-y-2">
                   <For each={profile()?.sources}>
                     {(source) => {
-                      const { file_name, parent_paths } = source;
+                      const { file_id, file_name, parent_paths } = source;
                       return (
-                        <div class="">
+                        <div
+                          class=""
+                          onClick={() => {
+                            mediaPlayingPage.params = {
+                              id: file_id,
+                            };
+                            rootView.layerSubView(mediaPlayingPage);
+                            // router.push(`/play/${file_id}`);
+                          }}
+                        >
                           <div class="">
                             <div class="">
                               {parent_paths}/{file_name}
@@ -199,6 +221,9 @@ export const MovieProfilePage: ViewComponent = (props) => {
           <div>该操作不删除视频文件</div>
           <div>请仅在需要重新索引关联的文件时进行删除操作</div>
         </div>
+      </Dialog>
+      <Dialog store={subtitleUploadDialog}>
+        <Input store={subtitleUploadInput} />
       </Dialog>
     </>
   );

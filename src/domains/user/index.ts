@@ -128,6 +128,7 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Logout);
   }
   async register() {
+    console.log('[DOMAIN]user/index - register', this.values);
     const { email, password } = this.values;
     if (!email) {
       const msg = this.tip({ text: ["请输入邮箱"] });

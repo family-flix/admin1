@@ -5,7 +5,7 @@ import { ButtonCore, InputCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { Response } from "@/domains/list/typing";
 import { FormCore } from "@/domains/ui/form";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 
 import { TheTVInTMDB, search_media_in_tmdb } from "./services";
 
@@ -28,7 +28,7 @@ type TMDBSearcherProps = {
 export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   list = new ListCore(new RequestCore(search_media_in_tmdb));
   form: FormCore<{}>;
-  input: InputCore;
+  input: InputCore<string>;
   searchBtn: ButtonCore;
   resetBtn: ButtonCore;
 
@@ -66,6 +66,7 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
       },
     });
     this.input = new InputCore({
+      defaultValue: "",
       placeholder: type === "movie" ? "请输入电影名称" : "请输入电视剧名称",
       onEnter: () => {
         this.searchBtn.click();

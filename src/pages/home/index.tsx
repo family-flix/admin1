@@ -7,11 +7,11 @@ import { RotateCcw, HardDrive, ArrowLeft } from "lucide-solid";
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { addAliyunDrive } from "@/domains/drive";
 import { code_get_drive_token } from "@/constants";
 import { ViewComponent } from "@/types";
-import { driveList, driveProfilePage, homeLayout } from "@/store";
+import { driveList, driveProfilePage, homeLayout, rootView } from "@/store";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -46,6 +46,7 @@ export const HomePage: ViewComponent = (props) => {
     },
   });
   const driveTokenInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入",
   });
   const refreshBtn = new ButtonCore({
@@ -134,6 +135,7 @@ export const HomePage: ViewComponent = (props) => {
                           avatar,
                         };
                         homeLayout.showSubView(driveProfilePage);
+                        // rootView.showSubView(driveProfilePage);
                         // const url = `/home/drive/${drive.id}?${query_stringify({})}`;
                         // router.push(url);
                         // const pathname = `/home/drive/${drive.id}`;

@@ -5,7 +5,7 @@ import { For, createSignal } from "solid-js";
 
 import { ScrollView } from "@/components/ui";
 import { ScrollViewCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";

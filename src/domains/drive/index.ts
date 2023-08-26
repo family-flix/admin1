@@ -5,7 +5,7 @@
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { Result } from "@/types";
 import { FileType } from "@/constants";
 

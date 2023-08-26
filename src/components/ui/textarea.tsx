@@ -6,7 +6,7 @@ import { createSignal } from "solid-js";
 
 export interface TextareaProps extends HTMLTextAreaElement {}
 
-const Textarea = (props: { store: InputCore } & JSX.HTMLAttributes<HTMLTextAreaElement>) => {
+const Textarea = (props: { store: InputCore<string> } & JSX.HTMLAttributes<HTMLTextAreaElement>) => {
   const { store, class: className, ...restProps } = props;
 
   const [state, setState] = createSignal(store.state);

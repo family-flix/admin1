@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-solid";
 
 import { fetch_video_preview_info } from "@/services";
 import { Video } from "@/components/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { PlayerCore } from "@/domains/player";
 import { ViewComponent } from "@/types";
 import { rootView } from "@/store";

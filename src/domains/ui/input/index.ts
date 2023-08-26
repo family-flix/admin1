@@ -10,42 +10,43 @@ enum Events {
   Blur,
   Enter,
 }
-type TheTypesOfEvents = {
-  [Events.Change]: string;
-  [Events.StateChange]: InputState;
+type TheTypesOfEvents<T> = {
+  [Events.StateChange]: InputState<T>;
   [Events.Mounted]: void;
+  [Events.Change]: T;
+  [Events.Blur]: T;
+  [Events.Enter]: T;
   [Events.Focus]: void;
-  [Events.Blur]: string;
-  [Events.Enter]: string;
 };
 
-type InputProps = {
+type InputProps<T> = {
   /** 字段键 */
-  name: string;
-  disabled: boolean;
-  defaultValue: string;
-  placeholder: string;
-  type: string;
-  onChange: (v: string) => void;
-  onEnter: (v: string) => void;
-  onBlur: (v: string) => void;
+  name?: string;
+  disabled?: boolean;
+  defaultValue: T;
+  placeholder?: string;
+  type?: string;
+  onChange?: (v: T) => void;
+  onEnter?: (v: T) => void;
+  onBlur?: (v: T) => void;
 };
-type InputState = {
-  value: string;
+type InputState<T> = {
+  value: T;
   placeholder: string;
   disabled: boolean;
   loading: boolean;
   type: string;
 };
 
-export class InputCore extends BaseDomain<TheTypesOfEvents> {
-  _defaultValue: string = "";
-  value = "";
+export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
+  _defaultValue: T;
+  value: T;
   placeholder: string;
   disabled: boolean;
   type: string;
   loading = false;
-  valueUsed = "";
+  /** 被消费过的值，用于做比较判断 input 值是否发生改变 */
+  valueUsed: T;
 
   get state() {
     return {
@@ -57,7 +58,7 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     };
   }
 
-  constructor(options: Partial<{ _name: string } & InputProps> = {}) {
+  constructor(options: Partial<{ _name: string }> & InputProps<T>) {
     super(options);
 
     const {
@@ -76,12 +77,9 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     this.placeholder = placeholder;
     this.type = type;
     this.disabled = disabled;
-    if (defaultValue) {
-      this._defaultValue = defaultValue;
-    }
-    if (defaultValue) {
-      this.value = defaultValue;
-    }
+    this._defaultValue = defaultValue;
+    this.value = defaultValue;
+    this.valueUsed = defaultValue;
     if (onChange) {
       this.onChange(onChange);
     }
@@ -116,7 +114,19 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
   focus() {
     console.log("请在 connect 中实现该方法");
   }
-  change(value: string) {
+  handleChange(event: unknown) {
+    console.log("[DOMAIN]ui/input - handleChange", event);
+    if (this.type === "file") {
+      const { target } = event as { target: { files: T } };
+      const { files: v } = target;
+      this.change(v);
+      return;
+    }
+    const { target } = event as { target: { value: T } };
+    const { value: v } = target;
+    this.change(v);
+  }
+  change(value: T) {
     this.value = value;
     this.emit(Events.Change, value);
     this.emit(Events.StateChange, { ...this.state });
@@ -130,7 +140,7 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   clear() {
-    this.value = "";
+    this.value = this._defaultValue;
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
@@ -138,22 +148,22 @@ export class InputCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
 
-  onChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {
+  onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
     return this.on(Events.Change, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);
   }
-  onMounted(handler: Handler<TheTypesOfEvents[Events.Mounted]>) {
+  onMounted(handler: Handler<TheTypesOfEvents<T>[Events.Mounted]>) {
     return this.on(Events.Mounted, handler);
   }
-  onFocus(handler: Handler<TheTypesOfEvents[Events.Focus]>) {
+  onFocus(handler: Handler<TheTypesOfEvents<T>[Events.Focus]>) {
     return this.on(Events.Focus, handler);
   }
-  onBlur(handler: Handler<TheTypesOfEvents[Events.Blur]>) {
+  onBlur(handler: Handler<TheTypesOfEvents<T>[Events.Blur]>) {
     return this.on(Events.Blur, handler);
   }
-  onEnter(handler: Handler<TheTypesOfEvents[Events.Enter]>) {
+  onEnter(handler: Handler<TheTypesOfEvents<T>[Events.Enter]>) {
     return this.on(Events.Enter, handler);
   }
 }

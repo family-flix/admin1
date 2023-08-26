@@ -9,7 +9,7 @@ import { cn } from "@/utils";
 
 const Input = (
   props: {
-    store: InputCore;
+    store: InputCore<string>;
   } & JSX.HTMLAttributes<HTMLInputElement>
 ) => {
   const { store } = props;
@@ -39,26 +39,24 @@ const Input = (
       ref={(e) => (ref = e)}
       class={cn(props.class)}
       style={props.style}
-      value={value()}
+      // value={value()}
       placeholder={placeholder()}
       disabled={disabled()}
       type={type()}
       onInput={(event: Event & { currentTarget: HTMLInputElement }) => {
-        const { value } = event.currentTarget;
-        store.change(value);
+        // console.log("[COMPONENT]ui/input onInput");
+        store.handleChange(event);
       }}
-      onChange={(event) => {
-        const { value: v } = event.target;
-        // console.log("[COMPONENT]ui/input onchange", v);
-        store.change(v);
-      }}
+      // onChange={(event) => {
+      //   console.log("[COMPONENT]ui/input onChange");
+      //   store.handleChange(event);
+      // }}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
           store.handleEnter();
         }
       }}
       onBlur={() => {
-        // console.log("[COMPONENT]ui/input onBlur");
         store.handleBlur();
       }}
     />

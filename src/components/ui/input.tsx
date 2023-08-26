@@ -6,7 +6,7 @@ import { Input as InputPrimitive } from "@/packages/ui/input";
 import { connect } from "@/domains/ui/input/connect.web";
 import { cn } from "@/utils";
 
-const Input = (props: { store: InputCore; prefix?: JSX.Element; class?: string }) => {
+const Input = (props: { store: InputCore<any>; prefix?: JSX.Element; class?: string }) => {
   const { store, prefix } = props;
 
   // let ref: HTMLInputElement;

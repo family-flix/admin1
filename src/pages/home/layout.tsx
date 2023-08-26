@@ -18,10 +18,10 @@ import {
   CircuitBoard,
 } from "lucide-solid";
 
-import { Button, Dialog, KeepAliveRouteView } from "@/components/ui";
+import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
-import { ButtonCore, DialogCore } from "@/domains/ui";
+import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
 import { RouteViewCore } from "@/domains/route_view";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
@@ -37,6 +37,8 @@ import {
 } from "@/store/views";
 import { homeLayout, homeReportListPage, onJobsChange } from "@/store";
 import { cn, sleep } from "@/utils";
+import { RequestCore } from "@/domains/request";
+import { fetch_settings, notify_test, update_settings } from "@/services";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, view } = props;
@@ -55,12 +57,95 @@ export const HomeLayout: ViewComponent = (props) => {
       logoutBtn.setLoading(false);
     },
   });
+  const settingsUpdateRequest = new RequestCore(update_settings, {
+    onLoading(loading) {
+      settingsDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["更新成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["更新失败", error.message],
+      });
+    },
+  });
   const settingsDialog = new DialogCore({
     title: "配置",
+    onOk() {
+      if (!notify1TokenInput.value) {
+        app.tip({
+          text: [notify1TokenInput.placeholder],
+        });
+        return;
+      }
+      settingsUpdateRequest.run({
+        push_deer_token: notify1TokenInput.value,
+      });
+    },
+  });
+  const notify1TokenInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入 push deer token",
+  });
+  const notify1TestRequest = new RequestCore(notify_test, {
+    onLoading(loading) {
+      notify1TestBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["发送成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["发送失败", error.message],
+      });
+    },
+  });
+  const notify1TestInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入文本测试消息推送",
+  });
+  const notify1TestBtn = new ButtonCore({
+    onClick() {
+      if (!notify1TokenInput.value) {
+        app.tip({
+          text: ["请输入推送 token"],
+        });
+        return;
+      }
+      if (!notify1TestInput.value) {
+        app.tip({
+          text: ["请输入推送文本"],
+        });
+        return;
+      }
+      notify1TestRequest.run({
+        text: notify1TestInput.value,
+        token: notify1TokenInput.value,
+      });
+    },
+  });
+  const settingsRequest = new RequestCore(fetch_settings, {
+    onLoading(loading) {
+      settingsBtn.setLoading(loading);
+    },
+    onSuccess(v) {
+      notify1TokenInput.change(v.push_deer_token);
+      settingsDialog.show();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["获取设置失败", error.message],
+      });
+    },
   });
   const settingsBtn = new ButtonCore({
     onClick() {
-      settingsDialog.show();
+      settingsRequest.run();
     },
   });
 
@@ -222,7 +307,14 @@ export const HomeLayout: ViewComponent = (props) => {
       </div>
       <TMDBSearcherDialog store={tmdbDialog} />
       <FileSearchDialog store={fileSearchDialog} />
-      <Dialog store={settingsDialog}>敬请期待</Dialog>
+      <Dialog store={settingsDialog}>
+        <div>PushDeer token</div>
+        <Textarea store={notify1TokenInput} />
+        <div class="flex items-center space-x-2">
+          <Input store={notify1TestInput} />
+          <Button store={notify1TestBtn}>发送</Button>
+        </div>
+      </Dialog>
     </>
   );
 };

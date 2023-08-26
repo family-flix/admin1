@@ -10,7 +10,7 @@ import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { consumeAction, homeLayout, homeMovieProfilePage, pendingActions } from "@/store";
@@ -55,6 +55,7 @@ export const MovieManagePage: ViewComponent = (props) => {
     },
   });
   const nameSearchInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入名称搜索",
     onEnter() {
       searchBtn.click();

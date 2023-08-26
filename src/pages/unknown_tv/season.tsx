@@ -7,7 +7,7 @@ import { Brush, RotateCw, Trash } from "lucide-solid";
 import { Button, Dialog, Input, ListView, LazyImage } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, InputCore, DialogCore } from "@/domains/ui";
 import { SelectionCore } from "@/domains/cur";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import {
   UnknownSeasonItem,
@@ -50,6 +50,7 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
     },
   });
   const seasonInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入季，如 S01、S02",
   });
   const bindSeasonDialog = new DialogCore({

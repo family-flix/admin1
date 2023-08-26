@@ -4,7 +4,7 @@ import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
 import { BaseDomain } from "@/domains/base";
 import { FetchParams, Response } from "@/domains/list/typing";
 import { ListCore } from "@/domains/list";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { request } from "@/utils/request";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 
@@ -74,7 +74,9 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
   dialog = new DialogCore();
   list = new ListCore(new RequestCore(searchDriveFiles));
   form = {
-    input: new InputCore(),
+    input: new InputCore({
+      defaultValue: "",
+    }),
     btn: new ButtonCore(),
     reset: new ButtonCore(),
   };

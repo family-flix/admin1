@@ -9,12 +9,14 @@ export const LoginPage: ViewComponent = (props) => {
   const { app, view } = props;
   const { user } = app;
   const emailInput = new InputCore({
+    defaultValue: "",
     placeholder: "请输入邮箱",
     onChange(v) {
       user.inputEmail(v);
     },
   });
   const passwordInput = new InputCore({
+    defaultValue: "",
     type: "password",
     placeholder: "请输入密码",
     onChange(v) {

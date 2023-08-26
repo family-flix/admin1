@@ -6,7 +6,7 @@ import { For, Show, createSignal } from "solid-js";
 import { ParsedVideoInfo, VideoKeys, parse_video_file_name } from "@/services";
 import { Button, Input } from "@/components/ui";
 import { ButtonCore, InputCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/client";
+import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { VIDEO_ALL_KEYS, VIDEO_KEY_NAME_MAP } from "@/utils";
 
@@ -19,6 +19,7 @@ export const VideoParsingPage: ViewComponent = (props) => {
     },
   });
   const input = new InputCore({
+    defaultValue: "",
     placeholder: "请输入要解析的文件名",
   });
   const btn = new ButtonCore({
