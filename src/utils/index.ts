@@ -88,6 +88,11 @@ export function update<T>(arr: T[], index: number, nextItem: T) {
   return [...arr.slice(0, index), nextItem, ...arr.slice(index + 1)];
 }
 
+/**
+ * 将对象转成 search 字符串，前面不带 ?
+ * @param query
+ * @returns
+ */
 export function query_stringify(query: Record<string, string | number | undefined>) {
   return Object.keys(query)
     .filter((key) => {

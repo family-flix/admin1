@@ -1,14 +1,16 @@
+/**
+ * @todo 如果删除当前选中的文件夹，子文件夹在视图上也要同步移除
+ */
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { FileType } from "@/constants";
 import { ScrollViewCore } from "@/domains/ui";
+import { FileType } from "@/constants";
 
 import { fetchDriveFiles, deleteFileOfDrive, renameFileOfDrive } from "./services";
 import { AliyunFilePath, AliyunDriveFile } from "./types";
-import { Result } from "@/types";
 
 type FileColumn = {
   list: ListCore<typeof fetchDriveFiles, AliyunDriveFile>;
@@ -205,29 +207,36 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     position: [number, number];
     onLoading?: (loading: boolean) => void;
     onFailed?: (error: Error) => void;
-    onSuccess?: (data: { job_id: string; deleteFile: () => void }) => void;
+    onSuccess?: (options: { job_id?: string; deleteFile: () => void }) => void;
   }) {
     const { file, position, onLoading, onFailed, onSuccess } = options;
     const [columnIndex, fileIndex] = position;
     const folderColumns = this.folderColumns;
+    function delete_file() {
+      const column = folderColumns[columnIndex];
+      column.list.deleteItem((f) => {
+        if (f.file_id === file.file_id) {
+          return true;
+        }
+        return false;
+      });
+    }
     const folderDeletingRequest = new RequestCore(deleteFileOfDrive, {
       onLoading,
       onFailed,
       onSuccess: (data) => {
         if (onSuccess) {
-          onSuccess({
-            job_id: data.job_id,
-            // @todo 这个实现很糟糕
-            deleteFile: () => {
-              const column = folderColumns[columnIndex];
-              column.list.deleteItem((f) => {
-                if (f.file_id === file.file_id) {
-                  return true;
+          onSuccess(
+            data
+              ? // @todo 这个实现很糟糕
+                {
+                  job_id: data.job_id,
+                  deleteFile: delete_file,
                 }
-                return false;
-              });
-            },
-          });
+              : {
+                  deleteFile: delete_file,
+                }
+          );
         }
       },
     });

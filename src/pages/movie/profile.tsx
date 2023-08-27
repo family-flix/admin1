@@ -4,14 +4,21 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft } from "lucide-solid";
 
-import { MovieProfile, delete_movie, fetch_movie_profile, update_movie_profile } from "@/services";
+import {
+  MovieProfile,
+  delete_movie,
+  fetch_movie_profile,
+  parse_video_file_name,
+  update_movie_profile,
+  upload_subtitle_for_movie,
+} from "@/services";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher/dialog";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher/store";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { DialogCore, ButtonCore, ScrollViewCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { appendAction, homeLayout, mediaPlayingPage, rootView } from "@/store";
+import { SelectionCore } from "@/domains/cur";
 
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -37,18 +44,102 @@ export const MovieProfilePage: ViewComponent = (props) => {
       profileRequest.reload();
     },
   });
+  const filenameParseRequest = new RequestCore(parse_video_file_name, {
+    onLoading(loading) {
+      subtitleUploadDialog.okBtn.setLoading(loading);
+    },
+  });
+  const uploadRequest = new RequestCore(upload_subtitle_for_movie, {
+    onLoading(loading) {
+      subtitleUploadDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["字幕上传成功"],
+      });
+      subtitleUploadDialog.hide();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["字幕上传失败", error.message],
+      });
+    },
+  });
+  const subtitleValues = new SelectionCore<{ drive_id: string; lang: string; file: File }>();
   const subtitleUploadInput = new InputCore({
     defaultValue: [],
     placeholder: "上传字幕文件",
     type: "file",
-    onChange(v) {
-      console.log(v);
+    async onChange(v) {
+      const file = v[0];
+      if (!file) {
+        return;
+      }
+      if (!profileRequest.response) {
+        app.tip({
+          text: ["请等待详情加载完成"],
+        });
+        return;
+      }
+      if (profileRequest.response.sources.length === 0) {
+        app.tip({
+          text: ["必须包含至少一个视频源"],
+        });
+        return;
+      }
+      const { name } = file;
+      const r = await filenameParseRequest.run({ name, keys: ["subtitle_lang"] });
+      if (r.error) {
+        app.tip({
+          text: ["文件名解析失败"],
+        });
+        return;
+      }
+      const { subtitle_lang } = r.data;
+      if (!subtitle_lang) {
+        app.tip({
+          text: ["文件名中没有解析出字幕语言"],
+        });
+        return;
+      }
+      const sources = profileRequest.response.sources;
+      const reference_id = sources[0].drive.id;
+      // 使用 every 方法遍历数组，检查每个元素的 drive.id 是否和参考 id 相同
+      const all_ids_equal = sources.every((source) => source.drive.id === reference_id);
+      if (!all_ids_equal) {
+        app.tip({
+          text: ["视频源在多个云盘内，请手动选择上传至哪个云盘"],
+        });
+        return;
+      }
+      subtitleValues.select({
+        drive_id: reference_id,
+        file,
+        lang: subtitle_lang,
+      });
+    },
+  });
+  const subtitleUploadBtn = new ButtonCore({
+    onClick() {
+      subtitleUploadDialog.show();
     },
   });
   const subtitleUploadDialog = new DialogCore({
     title: "上传字幕",
     onOk() {
-      // 开始上传字幕
+      if (!subtitleValues.value) {
+        app.tip({
+          text: ["请先上传字幕文件"],
+        });
+        return;
+      }
+      const { drive_id, lang, file } = subtitleValues.value;
+      uploadRequest.run({
+        movie_id: view.params.id,
+        drive_id,
+        lang,
+        file,
+      });
     },
   });
   const movieDeletingBtn = new ButtonCore({
@@ -115,7 +206,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
 
   const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
-  view.onShow(() => {
+  onMount(() => {
     const { id } = view.params;
     profileRequest.run({ movie_id: id });
   });
@@ -181,13 +272,18 @@ export const MovieProfilePage: ViewComponent = (props) => {
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4">
                   <Button store={movieRefreshDialogShowBtn}>修改详情</Button>
-                  <Button store={movieDeletingBtn}>删除</Button>
+                  <Button store={movieDeletingBtn} variant="subtle">
+                    删除
+                  </Button>
+                  <Button store={subtitleUploadBtn} variant="subtle">
+                    上传字幕
+                  </Button>
                 </div>
                 <div class="mt-8 text-2xl">可播放源</div>
                 <div class="mt-4 space-y-2">
                   <For each={profile()?.sources}>
                     {(source) => {
-                      const { file_id, file_name, parent_paths } = source;
+                      const { file_id, file_name, parent_paths, drive } = source;
                       return (
                         <div
                           class=""
@@ -200,7 +296,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
                           }}
                         >
                           <div class="">
-                            <div class="">
+                            <div class="" title={`[${drive.name}]${parent_paths}/${file_name}`}>
                               {parent_paths}/{file_name}
                             </div>
                           </div>

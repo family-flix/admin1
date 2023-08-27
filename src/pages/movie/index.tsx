@@ -178,7 +178,8 @@ export const MovieManagePage: ViewComponent = (props) => {
                           <div class="overflow-hidden mr-2 rounded-sm">
                             <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
                           </div>
-                          <div class="flex-1 p-4">
+                          <div class="flex-1 w-0 p-4">
+
                             <h2 class="text-2xl text-slate-800">{name}</h2>
                             <div class="mt-2 overflow-hidden text-ellipsis">
                               <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">

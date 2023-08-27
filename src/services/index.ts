@@ -9,6 +9,7 @@ import { request } from "@/utils/request";
 import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
 import { ReportTypeTexts, ReportTypes } from "@/constants";
+import { query_stringify } from "@/utils";
 
 /**
  * 获取电视剧列表
@@ -1098,9 +1099,15 @@ export async function fetch_movie_profile(body: { movie_id: string }) {
     air_date: string;
     tmdb_id: number;
     sources: {
+      id: string;
       file_id: string;
-      parent_paths: string;
       file_name: string;
+      parent_paths: string;
+      drive: {
+        id: string;
+        name: string;
+        avatar: string;
+      };
     }[];
   }>(`/api/admin/movie/${movie_id}`);
   return r;
@@ -1111,11 +1118,36 @@ export function upload_file(body: FormData) {
   return request.post("/api/admin/upload", body);
 }
 
-export function upload_subtitle_for_episode(params: { episode_id: string; drive_id: string; file: File }) {
-  const { episode_id, drive_id, file } = params;
+export function upload_subtitle_for_episode(params: {
+  tv_id: string;
+  season_text: string;
+  episode_text: string;
+  lang: string;
+  drive_id: string;
+  file: File;
+}) {
+  const { tv_id, drive_id, lang, season_text, episode_text, file } = params;
   const body = new FormData();
   body.append("file", file);
-  return request.post(`/api/admin/episode/${episode_id}/subtitle/add?drive_id=${drive_id}`, body);
+  body.append("drive", drive_id);
+  body.append("lang", lang);
+  body.append("season_text", season_text);
+  body.append("episode_text", episode_text);
+  const search = query_stringify({
+    tv_id,
+    drive_id,
+    lang,
+    season_text,
+    episode_text,
+  });
+  return request.post(`/api/admin/episode/subtitle/add?${search}`, body);
+}
+
+export function upload_subtitle_for_movie(params: { movie_id: string; drive_id: string; lang: string; file: File }) {
+  const { movie_id, drive_id, lang, file } = params;
+  const body = new FormData();
+  body.append("file", file);
+  return request.post(`/api/admin/movie/${movie_id}/subtitle/add?drive_id=${drive_id}&lang=${lang}`, body);
 }
 
 export function notify_test(values: { text: string; token: string }) {
@@ -1130,4 +1162,9 @@ export function fetch_settings() {
 export function update_settings(values: Partial<{ push_deer_token: string }>) {
   const { push_deer_token } = values;
   return request.post(`/api/admin/settings/update`, { push_deer_token });
+}
+
+export function sync_folder(values: { drive_id: string; file_id: string }) {
+  const { drive_id, file_id } = values;
+  return request.get<{ job_id: string }>(`/api/admin/file/${file_id}/sync`, { drive_id });
 }

@@ -12,6 +12,8 @@ import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
 import { createJob, homeLayout } from "@/store";
+import { RequestCore } from "@/domains/request";
+import { sync_folder } from "@/services";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -99,20 +101,18 @@ export const DriveProfilePage: ViewComponent = (props) => {
             text: ["删除文件失败", error.message],
           });
         },
-        onSuccess(data) {
+        onSuccess(opt) {
           app.tip({
-            text: ["开始删除，需要等待一会"],
+            text: ["删除成功"],
           });
+          opt.deleteFile();
           folderDeletingConfirmDialog.hide();
           fileSelect.clear();
+          if (!opt.job_id) {
+            return;
+          }
           createJob({
-            job_id: data.job_id,
-            onFinish() {
-              app.tip({
-                text: ["完成删除"],
-              });
-              data.deleteFile();
-            },
+            job_id: opt.job_id,
           });
         },
       });
@@ -179,6 +179,11 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
+  const syncFolderRequest = new RequestCore(sync_folder, {
+    // onLoading(loading) {
+    //   folderSyncItem.disable();
+    // },
+  });
   const folderDeletingItem = new MenuItemCore({
     label: "删除",
     async onClick() {
@@ -190,13 +195,50 @@ export const DriveProfilePage: ViewComponent = (props) => {
       }
       const [file] = driveFileManage.virtualSelectedFolder;
       fileSelect.select(driveFileManage.virtualSelectedFolder);
-      folderDeletingConfirmDialog.setTitle(`确认删除 '${file.name}' 吗？`);
+      folderDeletingConfirmDialog.setTitle(`删除文件`);
       folderDeletingConfirmDialog.show();
       fileMenu.hide();
     },
   });
   const linkSharedFileItem = new MenuItemCore({
     label: "关联分享资源",
+  });
+  const folderSyncItem = new MenuItemCore({
+    label: "同步资源",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请选择要同步的文件夹"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      if (file.type === FileType.File) {
+        app.tip({
+          text: ["请选择文件夹进行同步"],
+        });
+        return;
+      }
+      folderSyncItem.disable();
+      const r = await syncFolderRequest.run({
+        file_id: file.file_id,
+        drive_id: view.params.id,
+      });
+      folderSyncItem.enable();
+      if (r.error) {
+        app.tip({
+          text: ["同步失败", r.error.message],
+        });
+        return;
+      }
+      fileMenu.hide();
+      app.tip({
+        text: ["开始同步"],
+      });
+      createJob({
+        job_id: r.data.job_id,
+      });
+    },
   });
   const fileMenu = new DropdownMenuCore({
     side: "right",
@@ -219,6 +261,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
           // router.push(`/play/${file.file_id}`);
         },
       }),
+      folderSyncItem,
       folderDeletingItem,
     ],
     onHidden() {

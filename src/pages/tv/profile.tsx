@@ -148,13 +148,54 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const uploadRequest = new RequestCore(upload_subtitle_for_episode, {
+    onLoading(loading) {
+      subtitleUploadDialog.okBtn.setLoading(loading);
+    },
     onSuccess() {
       app.tip({
         text: ["字幕上传成功"],
       });
+      subtitleUploadDialog.hide();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["字幕上传失败", error.message],
+      });
     },
   });
   const filenameParseRequest = new RequestCore(parse_video_file_name);
+  const subtitleValues = new SelectionCore<{
+    episode_text: string;
+    season_text: string;
+    drive_id: string;
+    lang: string;
+    file: File;
+  }>();
+  const subtitleUploadDialog = new DialogCore({
+    title: "上传字幕",
+    onOk() {
+      if (!subtitleValues.value) {
+        app.tip({
+          text: ["请先上传字幕文件"],
+        });
+        return;
+      }
+      const { drive_id, lang, episode_text, season_text, file } = subtitleValues.value;
+      uploadRequest.run({
+        tv_id: view.params.id,
+        season_text,
+        episode_text,
+        drive_id,
+        lang,
+        file,
+      });
+    },
+  });
+  const subtitleUploadBtn = new ButtonCore({
+    onClick() {
+      subtitleUploadDialog.show();
+    },
+  });
   const subtitleUploadInput = new InputCore({
     defaultValue: [],
     type: "file",
@@ -177,7 +218,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      const { subtitle_lang, episode: episode_text } = r.data;
+      const { subtitle_lang, episode: episode_text, season: season_text } = r.data;
       if (!subtitle_lang) {
         app.tip({
           text: ["文件名中没有解析出字幕语言"],
@@ -211,12 +252,13 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      uploadRequest.run({
-        episode_id: matched_episode.id,
-        drive_id: sources[0].drive.id,
+      subtitleValues.select({
+        episode_text,
+        season_text,
+        drive_id: reference_id,
         file,
+        lang: subtitle_lang,
       });
-      console.log(r.data, subtitle_lang, matched_episode);
     },
   });
   const tvDeleteBtn = new ButtonCore({
@@ -286,8 +328,12 @@ export const TVProfilePage: ViewComponent = (props) => {
 
   const [profile, setProfile] = createSignal<TVProfile | null>(null);
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
+  const [parsedSubtitle, setParsedSubtitle] = createSignal(subtitleValues.value);
   const [curSeason, setCurSeason] = createSignal(curSeasonSelector.value);
 
+  subtitleValues.onStateChange((nextState) => {
+    setParsedSubtitle(nextState);
+  });
   curSeasonSelector.onStateChange((nextState) => {
     setCurSeason(nextState);
   });
@@ -370,9 +416,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                   <Button store={btn1}>修改详情</Button>
                   <Button store={refreshProfileBtn}>刷新详情</Button>
                   <Button store={tvDeleteBtn}>删除季</Button>
-                  <div class="flex items-center">
-                    <Input store={subtitleUploadInput} />
-                  </div>
+                  <Button store={subtitleUploadBtn}>上传字幕</Button>
                 </div>
                 <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
                   <For each={profile()?.seasons}>
@@ -482,6 +526,27 @@ export const TVProfilePage: ViewComponent = (props) => {
           <div>确认删除「{curSeason()?.name}」吗？</div>
           <div>同时还会删除关联的剧集</div>
           <div>请仅在需要重新索引关联的文件时进行删除操作</div>
+        </div>
+      </Dialog>
+      <Dialog store={subtitleUploadDialog}>
+        <Input store={subtitleUploadInput} />
+        <div class="mt-4 space-y-2">
+          {/* <div class="flex items-center">
+            <div class="w-6">名称</div>
+            <div>{parsedSubtitle()?.episode_text}</div>
+          </div> */}
+          <div class="flex items-center">
+            <div class="w-12">季</div>
+            <div>{parsedSubtitle()?.season_text}</div>
+          </div>
+          <div class="flex items-center">
+            <div class="w-12">集</div>
+            <div>{parsedSubtitle()?.episode_text}</div>
+          </div>
+          <div class="flex items-center">
+            <div class="w-12">语言</div>
+            <div>{parsedSubtitle()?.lang}</div>
+          </div>
         </div>
       </Dialog>
       <ContextMenu store={seasonContextMenu} />
