@@ -227,6 +227,14 @@ export const TVProfilePage: ViewComponent = (props) => {
       }
       const matched_episode = curEpisodeList.response.dataSource.find((episode) => {
         console.log("[]", episode, episode_text);
+        const a = episode.episode_number.match(/[0-9]{1,}/);
+        const b = episode_text.match(/[0-9]{1,}/);
+        if (!a || !b) {
+          return false;
+        }
+        if (parseInt(a[0]) === parseInt(b[0])) {
+          return true;
+        }
         return episode.episode_number === episode_text;
       });
       if (!matched_episode) {
@@ -253,7 +261,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         return;
       }
       subtitleValues.select({
-        episode_text,
+        episode_text: matched_episode.episode_number,
         season_text,
         drive_id: reference_id,
         file,

@@ -330,6 +330,7 @@ export class ListCore<
   }
   async initIfInitial() {
     if (!this.response.initial) {
+      this.emit(Events.StateChange, { ...this.response });
       return Result.Ok(this.response);
     }
     return this.init();

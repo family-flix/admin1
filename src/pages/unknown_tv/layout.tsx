@@ -31,8 +31,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   });
 
   return (
-    <ScrollView store={scrollView} class="flex flex-col box-border h-screen p-8">
-      <div class="">
+    <ScrollView store={scrollView} class="flex flex-col box-border h-screen">
+      <div class="p-8 pb-0">
         <h1 class="text-2xl">未识别的影视剧</h1>
         <div class="mt-8 space-x-2 border">
           <div
@@ -98,23 +98,20 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               </div>
             }
           >
-            <div class="relative w-full h-full">
-              <For each={subViews()}>
-                {(subView, i) => {
-                  const PageContent = subView.component as ViewComponent;
-                  return (
-                    <KeepAliveRouteView
-                      class={cn("relative")}
-                      view={subView}
-                      app={app}
-                      router={app.router}
-                      immediately={true}
-                      index={i()}
-                    />
-                  );
-                }}
-              </For>
-            </div>
+            <For each={subViews()}>
+              {(subView, i) => {
+                return (
+                  <KeepAliveRouteView
+                    class={cn("relative w-full h-full")}
+                    view={subView}
+                    app={app}
+                    router={app.router}
+                    immediately={true}
+                    index={i()}
+                  />
+                );
+              }}
+            </For>
           </Show>
         </div>
       </div>

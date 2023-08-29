@@ -1157,11 +1157,12 @@ export function notify_test(values: { text: string; token: string }) {
 export function fetch_settings() {
   return request.get<{
     push_deer_token: string;
+    extra_filename_rules: string;
   }>("/api/admin/settings");
 }
-export function update_settings(values: Partial<{ push_deer_token: string }>) {
-  const { push_deer_token } = values;
-  return request.post(`/api/admin/settings/update`, { push_deer_token });
+export function update_settings(values: Partial<{ push_deer_token: string; extra_filename_rules: string }>) {
+  const { push_deer_token, extra_filename_rules } = values;
+  return request.post(`/api/admin/settings/update`, { push_deer_token, extra_filename_rules });
 }
 
 export function sync_folder(values: { drive_id: string; file_id: string }) {

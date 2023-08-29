@@ -117,6 +117,10 @@ export class CheckboxGroupCore<T extends any> extends BaseDomain<TheTypesOfEvent
     for (let i = 0; this.options.length; i += 1) {
       const opt = this.options[i];
       opt.core.unmount();
+      // @todo 为什么会 undefined ？
+      // if (opt) {
+      //   opt.core.unmount();
+      // }
     }
     this.options = options.map((opt) => {
       const { label, value, checked, disabled } = opt;

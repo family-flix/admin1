@@ -21,6 +21,9 @@ export const VideoParsingPage: ViewComponent = (props) => {
   const input = new InputCore({
     defaultValue: "",
     placeholder: "请输入要解析的文件名",
+    onEnter() {
+      btn.click();
+    },
   });
   const btn = new ButtonCore({
     onClick() {

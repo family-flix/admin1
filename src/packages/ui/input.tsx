@@ -29,7 +29,12 @@ const Input = (
     store.setMounted();
   });
 
-  const value = () => state().value;
+  const value = () => {
+    if (typeof state().value === "string") {
+      return state().value;
+    }
+    return undefined;
+  };
   const placeholder = () => state().placeholder;
   const disabled = () => state().disabled;
   const type = () => state().type;
@@ -39,7 +44,7 @@ const Input = (
       ref={(e) => (ref = e)}
       class={cn(props.class)}
       style={props.style}
-      // value={value()}
+      value={value()}
       placeholder={placeholder()}
       disabled={disabled()}
       type={type()}

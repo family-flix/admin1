@@ -121,12 +121,24 @@ const Content = (props: { store: ScrollViewCore } & JSX.HTMLAttributes<HTMLDivEl
         store.endPulling();
       }}
       onScroll={(event) => {
-        const $page = event.currentTarget;
-        store.setRect({
-          height: $page.clientHeight,
-          contentHeight: $page.scrollHeight,
-        });
-        store.scroll({
+        const { scrollHeight, clientHeight } = event.currentTarget;
+        let needUpdateRect = false;
+        const nextRect: Partial<{
+          height: number;
+          contentHeight: number;
+        }> = {};
+        if (clientHeight !== store.rect.height) {
+          nextRect.height = clientHeight;
+          needUpdateRect = true;
+        }
+        if (scrollHeight !== store.rect.contentHeight) {
+          nextRect.contentHeight = scrollHeight;
+          needUpdateRect = true;
+        }
+        if (needUpdateRect) {
+          store.setRect(nextRect);
+        }
+        store.handleScroll({
           scrollTop: event.currentTarget.scrollTop,
         });
       }}

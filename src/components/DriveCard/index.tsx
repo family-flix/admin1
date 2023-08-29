@@ -179,7 +179,9 @@ export const DriveCard = (props: {
     label: "匹配解析结果",
     icon: <FolderSearch class="mr-2 w-4 h-4" />,
     async onClick() {
+      matchMediaItem.disable();
       const r = await drive.matchMediaFilesProfile();
+      matchMediaItem.enable();
       if (r.error) {
         return;
       }

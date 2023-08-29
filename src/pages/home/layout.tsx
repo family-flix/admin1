@@ -75,16 +75,48 @@ export const HomeLayout: ViewComponent = (props) => {
   const settingsDialog = new DialogCore({
     title: "配置",
     onOk() {
-      if (!notify1TokenInput.value) {
+      const values = {
+        push_deer_token: notify1TokenInput.value.trim(),
+        extra_filename_rules: filenameParseRuleInput.value.trim(),
+      };
+      if (Object.keys(values).length === 0) {
         app.tip({
-          text: [notify1TokenInput.placeholder],
+          text: ["配置不能均为空"],
         });
         return;
       }
-      settingsUpdateRequest.run({
-        push_deer_token: notify1TokenInput.value,
-      });
+      if (values.extra_filename_rules) {
+        const rules = values.extra_filename_rules.split("\n\n").map((rule) => {
+          const [regexp, placeholder] = rule.split("\n");
+          return {
+            regexp,
+            placeholder,
+          };
+        });
+        const invalid_rule = rules.some((rule) => {
+          const { regexp, placeholder } = rule;
+          if (!regexp || !placeholder) {
+            return true;
+          }
+          try {
+            new RegExp(regexp);
+          } catch (err) {
+            return true;
+          }
+        });
+        if (invalid_rule) {
+          app.tip({
+            text: ["存在不合法的解析规则，请检查后重新提交"],
+          });
+          return;
+        }
+      }
+      settingsUpdateRequest.run(values);
     },
+  });
+  const filenameParseRuleInput = new InputCore({
+    defaultValue: "",
+    placeholder: "额外解析规则",
   });
   const notify1TokenInput = new InputCore({
     defaultValue: "",
@@ -135,6 +167,7 @@ export const HomeLayout: ViewComponent = (props) => {
     },
     onSuccess(v) {
       notify1TokenInput.change(v.push_deer_token);
+      filenameParseRuleInput.change(v.extra_filename_rules);
       settingsDialog.show();
     },
     onFailed(error) {
@@ -308,11 +341,19 @@ export const HomeLayout: ViewComponent = (props) => {
       <TMDBSearcherDialog store={tmdbDialog} />
       <FileSearchDialog store={fileSearchDialog} />
       <Dialog store={settingsDialog}>
-        <div>PushDeer token</div>
-        <Textarea store={notify1TokenInput} />
-        <div class="flex items-center space-x-2">
-          <Input store={notify1TestInput} />
-          <Button store={notify1TestBtn}>发送</Button>
+        <div>
+          <div>PushDeer token</div>
+          <Textarea store={notify1TokenInput} />
+          <div class="mt-2 flex items-center space-x-2">
+            <Input store={notify1TestInput} />
+            <Button variant="subtle" store={notify1TestBtn}>
+              发送
+            </Button>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div>文件名解析规则</div>
+          <Textarea store={filenameParseRuleInput} />
         </div>
       </Dialog>
     </>
