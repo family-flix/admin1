@@ -127,15 +127,12 @@ export const HomePage: ViewComponent = (props) => {
                         driveList.refresh();
                       }}
                       onClick={() => {
-                        driveProfilePage.params = {
-                          id: drive.id,
-                        };
                         driveProfilePage.query = {
+                          id: drive.id,
                           name,
                           avatar,
                         };
-                        homeLayout.showSubView(driveProfilePage);
-                        // rootView.showSubView(driveProfilePage);
+                        app.showView(driveProfilePage);
                         // const url = `/home/drive/${drive.id}?${query_stringify({})}`;
                         // router.push(url);
                         // const pathname = `/home/drive/${drive.id}`;

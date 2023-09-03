@@ -1,24 +1,57 @@
 /**
  * @file 任务列表
  */
-import { For, JSX, createSignal } from "solid-js";
+import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
-import { fetchReportList } from "@/services";
-import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
-import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
+import {
+  MovieItem,
+  ReportItem,
+  TVSeasonItem,
+  fetchReportList,
+  fetch_movie_list,
+  fetch_season_list,
+  replyReport,
+} from "@/services";
+import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
+import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
+import { SelectionCore } from "@/domains/cur";
+import { NavigatorCore } from "@/domains/navigator";
 import { ListCore } from "@/domains/list";
-import { JobItem, clear_expired_job_list } from "@/domains/job";
+import { clear_expired_job_list } from "@/domains/job";
 import { ReportTypes } from "@/constants";
 import { ViewComponent } from "@/types";
+import { homeMovieProfilePage, homeTVProfilePage, refreshJobs } from "@/store";
 import { cn } from "@/utils";
-import { refreshJobs } from "@/store";
+
+function buildMsg(report: ReportItem) {
+  const { type, data, season, episode, movie } = report;
+  if (type === ReportTypes.Want) {
+    if (movie) {
+      return `${movie.name}」已收录，点击观看`;
+    }
+    if (season) {
+      return `${season.name}」已收录，点击观看`;
+    }
+    return "你想看的电视剧/电影已收录";
+  }
+  if (type === ReportTypes.Movie && movie) {
+    return `电影《${movie.name}》的问题 '${data}' 已解决`;
+  }
+  if (type === ReportTypes.TV && season) {
+    return `电视剧《${season.name}》的问题 '${data}' 已解决`;
+  }
+  return `你反馈的问题 '${data}' 已解决`;
+}
 
 export const HomeReportListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
+  const curReport = new SelectionCore<ReportItem>();
+  const curMovie = new SelectionCore<MovieItem>();
+  const curSeason = new SelectionCore<TVSeasonItem>();
   const reportList = new ListCore(new RequestCore(fetchReportList), {});
   const reportDeletingRequest = new RequestCore(clear_expired_job_list, {
     onLoading(loading) {
@@ -35,9 +68,211 @@ export const HomeReportListPage: ViewComponent = (props) => {
       });
     },
   });
-  const reportProfileBtn = new ButtonInListCore<JobItem>({
-    onClick(task) {
-      // router.push(`/home/task/${task.id}`);
+  const replyRequest = new RequestCore(replyReport, {});
+  const commentDialog = new DialogCore({
+    title: "回复",
+    async onOk() {
+      if (!curReport.value) {
+        app.tip({
+          text: ["请先选择要回复的问题/反馈"],
+        });
+        return;
+      }
+      if (!commentInput.value) {
+        app.tip({
+          text: [commentInput.placeholder],
+        });
+        return;
+      }
+      commentDialog.okBtn.setLoading(true);
+      const r = await replyRequest.run({
+        report_id: curReport.value.id,
+        content: commentInput.value,
+      });
+      commentDialog.okBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["回复失败", r.error.message],
+        });
+        return;
+      }
+      app.tip({
+        text: ["回复成功"],
+      });
+      commentDialog.hide();
+    },
+    onCancel() {
+      curReport.clear();
+      commentInput.clear();
+    },
+  });
+  const commentInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入回复内容",
+  });
+  const replyBtn = new ButtonInListCore<ReportItem>({
+    onClick(report) {
+      curReport.select(report);
+      commentInput.change(buildMsg(report));
+      commentDialog.show();
+    },
+  });
+  const tvNameSearchInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入名称搜索",
+    onEnter() {
+      tvSearchBtn.click();
+    },
+  });
+  const tvSearchBtn = new ButtonCore({
+    onClick() {
+      seasonList.search({ name: tvNameSearchInput.value });
+    },
+  });
+  const seasonList = new ListCore(new RequestCore(fetch_season_list), {
+    onLoadingChange(loading) {
+      tvSearchBtn.setLoading(loading);
+    },
+  });
+  const tvDialog = new DialogCore({
+    title: "选择电视剧",
+    async onOk() {
+      if (!curReport.value) {
+        app.tip({
+          text: ["请先选择要回复的问题/反馈"],
+        });
+        return;
+      }
+      if (!commentInput.value) {
+        app.tip({
+          text: [commentInput.placeholder],
+        });
+        return;
+      }
+      if (!curSeason.value) {
+        app.tip({
+          text: ["请选择电视剧"],
+        });
+        return;
+      }
+      tvDialog.okBtn.setLoading(true);
+      const r = await replyRequest.run({
+        report_id: curReport.value.id,
+        content: commentInput.value,
+        season: {
+          id: curSeason.value.id,
+          tv_id: curSeason.value.tv_id,
+          name: curSeason.value.name,
+          poster_path: curSeason.value.poster_path,
+          first_air_date: curSeason.value.first_air_date,
+        },
+      });
+      tvDialog.okBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["回复失败", r.error.message],
+        });
+        return;
+      }
+      app.tip({
+        text: ["回复成功"],
+      });
+      tvDialog.hide();
+    },
+    onCancel() {
+      curReport.clear();
+      curSeason.clear();
+      commentInput.clear();
+    },
+  });
+  const tvSelectBtn = new ButtonInListCore<ReportItem>({
+    onClick(report) {
+      curReport.select(report);
+      if (report.season) {
+        tvNameSearchInput.change(report.season.name);
+        seasonList.search({ name: report.season.name });
+      }
+      commentInput.change(buildMsg(report));
+      tvDialog.show();
+    },
+  });
+  const movieList = new ListCore(new RequestCore(fetch_movie_list), {
+    onLoadingChange(loading) {
+      movieSearchBtn.setLoading(loading);
+    },
+  });
+  const movieNameSearchInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入名称搜索",
+    onEnter() {
+      movieSearchBtn.click();
+    },
+  });
+  const movieSearchBtn = new ButtonCore({
+    onClick() {
+      movieList.search({ name: movieNameSearchInput.value });
+    },
+  });
+  const movieDialog = new DialogCore({
+    title: "选择电影",
+    async onOk() {
+      if (!curReport.value) {
+        app.tip({
+          text: ["请先选择要回复的问题/反馈"],
+        });
+        return;
+      }
+      if (!commentInput.value) {
+        app.tip({
+          text: [commentInput.placeholder],
+        });
+        return;
+      }
+      if (!curMovie.value) {
+        app.tip({
+          text: ["请选择电影"],
+        });
+        return;
+      }
+      movieDialog.okBtn.setLoading(true);
+      const r = await replyRequest.run({
+        report_id: curReport.value.id,
+        content: commentInput.value,
+        movie: {
+          id: curMovie.value.id,
+          name: curMovie.value.name,
+          poster_path: curMovie.value.poster_path,
+          first_air_date: curMovie.value.air_date,
+        },
+      });
+      movieDialog.okBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["回复失败", r.error.message],
+        });
+        return;
+      }
+      app.tip({
+        text: ["回复成功"],
+      });
+      movieDialog.hide();
+    },
+    onCancel() {
+      curReport.clear();
+      curMovie.clear();
+      commentInput.clear();
+    },
+  });
+  const movieSelectBtn = new ButtonInListCore<ReportItem>({
+    onClick(report) {
+      curReport.select(report);
+      console.log(report.movie);
+      if (report.movie) {
+        movieNameSearchInput.change(report.movie.name);
+        movieList.search({ name: report.movie.name });
+      }
+      commentInput.change(buildMsg(report));
+      movieDialog.show();
     },
   });
   const refreshBtn = new ButtonCore({
@@ -54,7 +289,24 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const scrollView = new ScrollViewCore();
 
   const [response, setResponse] = createSignal(reportList.response);
+  const [tvListResponse, setTVListResponse] = createSignal(seasonList.response);
+  const [movieListResponse, setMovieListResponse] = createSignal(movieList.response);
+  const [curMovieState, setCurMovieState] = createSignal(curMovie.value);
+  const [curSeasonState, setCurSeasonState] = createSignal(curSeason.value);
 
+  seasonList.onStateChange((nextState) => {
+    // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
+    setTVListResponse(nextState);
+  });
+  curSeason.onStateChange((nextState) => {
+    setCurSeasonState(nextState);
+  });
+  movieList.onStateChange((nextState) => {
+    setMovieListResponse(nextState);
+  });
+  curMovie.onStateChange((nextState) => {
+    setCurMovieState(nextState);
+  });
   reportList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
@@ -76,71 +328,275 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const dataSource = () => response().dataSource;
 
   return (
-    <ScrollView store={scrollView} class="h-screen p-8">
-      <h1 class="text-2xl">问题列表</h1>
-      <div class="mt-8 flex space-x-2">
-        <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
-          刷新
-        </Button>
-      </div>
-      <ListView
-        class="mt-4"
-        store={reportList}
-        skeleton={
-          <div class="p-4 rounded-sm bg-white">
-            <div class={cn("space-y-1")}>
-              <Skeleton class="w-[240px] h-8"></Skeleton>
-              <div class="flex space-x-4">
-                <Skeleton class="w-[320px] h-4"></Skeleton>
-              </div>
-              <div class="flex space-x-2">
-                <Skeleton class="w-24 h-8"></Skeleton>
-                <Skeleton class="w-24 h-8"></Skeleton>
+    <>
+      <ScrollView store={scrollView} class="h-screen p-8">
+        <h1 class="text-2xl">问题列表</h1>
+        <div class="mt-8 flex space-x-2">
+          <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+            刷新
+          </Button>
+        </div>
+        <ListView
+          class="mt-4"
+          store={reportList}
+          skeleton={
+            <div class="p-4 rounded-sm bg-white">
+              <div class={cn("space-y-1")}>
+                <Skeleton class="w-[240px] h-8"></Skeleton>
+                <div class="flex space-x-4">
+                  <Skeleton class="w-[320px] h-4"></Skeleton>
+                </div>
+                <div class="flex space-x-2">
+                  <Skeleton class="w-24 h-8"></Skeleton>
+                  <Skeleton class="w-24 h-8"></Skeleton>
+                </div>
               </div>
             </div>
-          </div>
-        }
-      >
-        <div class="space-y-4">
-          <For each={dataSource()}>
-            {(report, i) => {
-              const { id, type, typeText, data, member, created } = report;
-              return (
-                <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
-                  <div class="mr-4">
-                    <div class="relative">
-                      <div class="w-16 h-16 rounded-full bg-slate-200"></div>
-                      <div class="absolute left-[50%] translate-x-[-50%] bottom-0">
-                        <div class="px-2 text-sm bg-white rounded-sm">{member.name}</div>
+          }
+        >
+          <div class="space-y-4">
+            <For each={dataSource()}>
+              {(report, i) => {
+                const { id, type, typeText, data, answer, movie, season, member, created } = report;
+                return (
+                  <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
+                    <div class="mr-4">
+                      <div class="relative">
+                        <div class="w-16 h-16 rounded-full bg-slate-200"></div>
+                        <div class="absolute left-[50%] translate-x-[-50%] bottom-0">
+                          <div class="px-2 text-sm bg-white rounded-sm">{member.name}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex-1">
+                      <h2 class="text-xl">{data}</h2>
+                      <Show when={movie}>
+                        {(() => {
+                          if (!movie) {
+                            return null;
+                          }
+                          homeMovieProfilePage.query = {
+                            id: movie.id,
+                          };
+                          const url = homeMovieProfilePage.buildUrl();
+                          return (
+                            <div class="flex p-2 bg-gray-100 rounded-sm">
+                              <div class="overflow-hidden mr-2 rounded-sm">
+                                <LazyImage class="w-[68px] h-[102px]" src={movie.poster_path} alt={movie.name} />
+                              </div>
+                              <div class="flex-1 w-0">
+                                <div class="flex items-center">
+                                  <h2 class="text-2xl text-slate-800">
+                                    <a href={url}>{movie.name}</a>
+                                  </h2>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </Show>
+                      <Show when={season}>
+                        {(() => {
+                          if (!season) {
+                            return null;
+                          }
+                          homeTVProfilePage.query = {
+                            id: season.tv_id,
+                            season_id: season.id,
+                          };
+                          const url = homeTVProfilePage.buildUrl();
+                          return (
+                            <div class="flex p-2 bg-gray-100 rounded-sm">
+                              <div class="overflow-hidden mr-2 rounded-sm">
+                                <LazyImage class="w-[68px] h-[102px]" src={season.poster_path} alt={season.name} />
+                              </div>
+                              <div class="flex-1 w-0">
+                                <div class="flex items-center">
+                                  <h2 class="text-2xl text-slate-800">
+                                    <a href={url}>{season.name}</a>
+                                  </h2>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </Show>
+                      <Show when={!!answer}>
+                        <div class="my-2 p-2 bg-gray-100 rounded-sm">{answer}</div>
+                      </Show>
+                      <div class="flex space-x-4">
+                        <div>{created}</div>
+                        <div class="flex items-center space-x-1">
+                          <Dynamic component={typeIcons[type]} />
+                          <div class={cn({})}>{typeText}</div>
+                        </div>
+                      </div>
+                      <div class="mt-2 flex items-center space-x-2">
+                        <Button store={replyBtn.bind(report)} variant="subtle">
+                          回复
+                        </Button>
+                        <Button store={tvSelectBtn.bind(report)} variant="subtle">
+                          选择电视剧
+                        </Button>
+                        <Button store={movieSelectBtn.bind(report)} variant="subtle">
+                          选择电影
+                        </Button>
                       </div>
                     </div>
                   </div>
-                  <div class="flex-1">
-                    <h2 class="text-xl">{data}</h2>
-                    <div class="flex space-x-4">
-                      <div>{created}</div>
-                      <div class="flex items-center space-x-1">
-                        <Dynamic component={typeIcons[type]} />
-                        <div class={cn({})}>{typeText}</div>
-                      </div>
+                );
+              }}
+            </For>
+          </div>
+        </ListView>
+      </ScrollView>
+      <Dialog store={commentDialog}>
+        <Textarea store={commentInput} />
+      </Dialog>
+      <Dialog store={tvDialog}>
+        <div>
+          <Textarea store={commentInput} />
+        </div>
+        <div class="flex items-center space-x-2 mt-4">
+          <Input store={tvNameSearchInput} />
+          <Button store={tvSearchBtn} variant="subtle">
+            搜索
+          </Button>
+        </div>
+        <div class="mt-2">
+          <ListView
+            store={seasonList}
+            skeleton={
+              <div>
+                <div class="rounded-md border border-slate-300 bg-white shadow-sm">
+                  <div class="flex">
+                    <div class="overflow-hidden mr-2 rounded-sm">
+                      <Skeleton class="w-[120px] h-[180px]" />
                     </div>
-                    <div class="mt-2 space-x-2">
-                      {/* <Button store={reportProfileBtn.bind(report)} variant="subtle">
-                      详情
-                    </Button> */}
-                      {/* <Show when={status === TaskStatus.Running}>
-                      <Button store={pauseJobBtn.bind(report)} icon={<ParkingCircle class="w-4 h-4" />} variant="subtle">
-                        停止任务
-                      </Button>
-                    </Show> */}
+                    <div class="flex-1 p-4">
+                      <Skeleton class="h-[36px] w-[180px]"></Skeleton>
+                      <div class="mt-2 space-y-1">
+                        <Skeleton class="h-[24px] w-[120px]"></Skeleton>
+                        <Skeleton class="h-[24px] w-[240px]"></Skeleton>
+                      </div>
                     </div>
                   </div>
                 </div>
-              );
-            }}
-          </For>
+              </div>
+            }
+          >
+            <div class="space-y-4">
+              <For each={tvListResponse().dataSource}>
+                {(season) => {
+                  const { id, tv_id, name, overview, poster_path, season_text } = season;
+                  homeTVProfilePage.query = {
+                    id: season.tv_id,
+                    season_id: season.id,
+                  };
+                  const url = homeTVProfilePage.buildUrl();
+                  return (
+                    <div
+                      classList={{
+                        "rounded-md border border-slate-300 bg-white shadow-sm": true,
+                        "border-green-500": curSeasonState()?.id === id,
+                      }}
+                      onClick={() => {
+                        if (curReport.value?.type === ReportTypes.Want) {
+                          commentInput.change(`你想看的电视剧「${season.name}」已收录，点击观看`);
+                        }
+                        curSeason.select(season);
+                      }}
+                    >
+                      <div class="flex">
+                        <div class="overflow-hidden mr-2 rounded-sm">
+                          <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
+                        </div>
+                        <div class="flex-1 w-0 p-4">
+                          <div class="flex items-center">
+                            <h2 class="text-2xl text-slate-800">{name}</h2>
+                            <p class="ml-4 text-slate-500">{season_text}</p>
+                          </div>
+                          <div class="mt-2 overflow-hidden text-ellipsis">
+                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">{overview}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </ListView>
         </div>
-      </ListView>
-    </ScrollView>
+      </Dialog>
+      <Dialog store={movieDialog}>
+        <div>
+          <Textarea store={commentInput} />
+        </div>
+        <div class="flex items-center space-x-2 mt-4">
+          <Input store={movieNameSearchInput} />
+          <Button store={movieSearchBtn} variant="subtle">
+            搜索
+          </Button>
+        </div>
+        <div class="mt-2">
+          <ListView
+            store={movieList}
+            skeleton={
+              <div>
+                <div class="rounded-md border border-slate-300 bg-white shadow-sm">
+                  <div class="flex">
+                    <div class="overflow-hidden mr-2 rounded-sm">
+                      <Skeleton class="w-[120px] h-[180px]" />
+                    </div>
+                    <div class="flex-1 p-4">
+                      <Skeleton class="h-[36px] w-[180px]"></Skeleton>
+                      <div class="mt-2 space-y-1">
+                        <Skeleton class="h-[24px] w-[120px]"></Skeleton>
+                        <Skeleton class="h-[24px] w-[240px]"></Skeleton>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          >
+            <div class="space-y-4 max-h-[240px] overflow-y-auto">
+              <For each={movieListResponse().dataSource}>
+                {(movie) => {
+                  const { name, overview, poster_path, air_date, popularity, vote_average, runtime } = movie;
+                  return (
+                    <div
+                      classList={{
+                        "rounded-md border border-slate-300 bg-white shadow-sm": true,
+                        "border-green-500": curMovieState()?.id === movie.id,
+                      }}
+                      onClick={() => {
+                        if (curReport.value?.type === ReportTypes.Want) {
+                          commentInput.change(`你想看的电影「${movie.name}」已收录，点击观看`);
+                        }
+                        curMovie.select(movie);
+                      }}
+                    >
+                      <div class="flex">
+                        <div class="overflow-hidden mr-2 rounded-sm">
+                          <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
+                        </div>
+                        <div class="flex-1 w-0 p-4">
+                          <h2 class="text-2xl text-slate-800">{name}</h2>
+                          <div class="mt-2 overflow-hidden text-ellipsis">
+                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </ListView>
+        </div>
+      </Dialog>
+    </>
   );
 };

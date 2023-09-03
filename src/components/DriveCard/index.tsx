@@ -161,16 +161,17 @@ export const DriveCard = (props: {
     icon: <FolderSearch class="mr-2 w-4 h-4" />,
     async onClick() {
       dropdown.hide();
-      const r = await drive.startScrape({
+      const r = await drive.startAnalysis({
         quickly: true,
       });
       if (r.error) {
         return;
       }
       createJob({
-        job_id: r.data,
+        job_id: r.data.job_id,
         onFinish() {
           drive.finishAnalysis();
+          analysisBtn.setLoading(false);
         },
       });
     },
@@ -179,13 +180,17 @@ export const DriveCard = (props: {
     label: "匹配解析结果",
     icon: <FolderSearch class="mr-2 w-4 h-4" />,
     async onClick() {
-      matchMediaItem.disable();
+      dropdown.hide();
       const r = await drive.matchMediaFilesProfile();
-      matchMediaItem.enable();
       if (r.error) {
         return;
       }
-      dropdown.hide();
+      createJob({
+        job_id: r.data.job_id,
+        onFinish() {
+          drive.finishMediaMatch();
+        },
+      });
     },
   });
   const dropdown = new DropdownMenuCore({
@@ -248,14 +253,15 @@ export const DriveCard = (props: {
         });
         return;
       }
-      const r = await drive.startScrape();
+      const r = await drive.startAnalysis();
       if (r.error) {
         return;
       }
       createJob({
-        job_id: r.data,
+        job_id: r.data.job_id,
         onCompleted() {
           drive.finishAnalysis();
+          analysisBtn.setLoading(false);
         },
       });
     },

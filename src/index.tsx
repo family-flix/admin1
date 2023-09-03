@@ -17,10 +17,21 @@ app.onClickLink(({ href }) => {
   console.log(href);
   // router.push(href);
 });
-// app.onPopState((options) => {
-//   const { type, pathname } = options;
-//   router.handlePopState({ type, pathname });
-// });
+app.onPopState((options) => {
+  const { type, pathname } = options;
+  console.log("[]index.tsx - app.onPopState", type, pathname);
+  // router.handlePopState({ type, pathname });
+  const matched = pages.find((v) => {
+    return v.checkMatchRegexp(pathname);
+  });
+  // console.log(router.pathname, matched);
+  if (matched) {
+    matched.query = router.query;
+    app.showView(matched);
+    return;
+  }
+  app.showView(homeIndexPage);
+});
 // router.onBack(() => {
 //   homeLayout.showPrevView({ ignore: true });
 // });
@@ -78,16 +89,13 @@ function Application() {
     const matched = pages.find((v) => {
       return v.checkMatchRegexp(router.pathname);
     });
+    console.log(router.pathname, matched);
     if (matched) {
       matched.query = router.query;
-      // @todo 这样写只能展示 /home/xxx 路由，应该根据路由，找到多层级视图，即 rootView,homeLayout,homeIndexPage 这样
-      // rootView.showSubView(matched);
-      rootView.showSubView(homeLayout);
-      homeLayout.showSubView(matched);
+      app.showView(matched);
       return;
     }
-    rootView.showSubView(homeLayout);
-    homeLayout.showSubView(homeIndexPage);
+    app.showView(homeIndexPage);
   })();
   app.start({
     width: innerWidth,

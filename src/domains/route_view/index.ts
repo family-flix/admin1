@@ -69,6 +69,8 @@ type RouteViewProps = {
   key: string;
   title: string;
   component: unknown;
+  layers?: boolean;
+  children?: RouteViewCore[];
 };
 
 export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
@@ -95,6 +97,9 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   isMounted = false;
   visible = false;
   layered = false;
+  canLayer = false;
+  /** 父级视图 */
+  parent: RouteViewCore | null = null;
   /** 视图元素 */
   component: unknown;
   /** 用于路由匹配的 */
@@ -126,12 +131,17 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
 
   constructor(options: Partial<{ _name: string }> & RouteViewProps) {
     super(options);
-    const { key, title, component } = options;
+    const { key, title, component, layers = false, children = [] } = options;
     this.key = key;
     this.title = title;
     this._name = title;
     this.component = component;
     this.configs = [];
+    this.canLayer = layers;
+
+    for (let i = 0; i < children.length; i += 1) {
+      children[i].parent = this;
+    }
 
     this.presence.onStateChange((nextState) => {
       const { open, mounted } = nextState;
@@ -162,19 +172,9 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   checkMatchRegexp(url: string) {
-    const { regexp } = this;
-    if (!regexp) {
-      return false;
-    }
-    const strictMatch = regexp.test(url);
-    if (strictMatch) {
-      const { pathname } = parse(url);
-      const params = buildParams({
-        regexp,
-        targetPath: pathname,
-        keys: this.keys,
-      });
-      this.params = params;
+    const { pathname, query } = parse(url);
+    console.log(url, pathname);
+    if (pathname === this.key) {
       return true;
     }
     return false;

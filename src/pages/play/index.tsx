@@ -101,13 +101,13 @@ export const MediaPlayingPage: ViewComponent = (props) => {
     }
     player.load(url);
   });
-  // console.log("[PAGE]tv/play - before fetch tv profile", view.params.id);
+  // console.log("[PAGE]tv/play - before fetch tv profile", view.query.id);
   onMount(() => {
-    console.log("[PAGE]play/index - onMount", view.params.id);
-    fileRequest.run({ file_id: view.params.id });
+    console.log("[PAGE]play/index - onMount", view.query.id);
+    fileRequest.run({ file_id: view.query.id });
   });
   onCleanup(() => {
-    console.log("[PAGE]play/index - onCleanup", view.params.id);
+    console.log("[PAGE]play/index - onCleanup", view.query.id);
   });
 
   return (
@@ -116,7 +116,8 @@ export const MediaPlayingPage: ViewComponent = (props) => {
         <div
           class="z-10 absolute top-6 left-6 cursor-pointer"
           onClick={() => {
-            rootView.uncoverPrevView();
+            app.back();
+            // rootView.uncoverPrevView();
           }}
         >
           <ArrowLeft class="w-6 h-6 text-white" />

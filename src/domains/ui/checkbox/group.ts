@@ -114,13 +114,11 @@ export class CheckboxGroupCore<T extends any> extends BaseDomain<TheTypesOfEvent
     this.emit(Events.StateChange, { ...this.state });
   }
   setOptions(options: CheckboxGroupOption<T>[]) {
-    for (let i = 0; this.options.length; i += 1) {
+    // console.log("[DOMAIN]ui/checkbox/group - setOptions", this.options);
+    for (let i = 0; i < this.options.length; i += 1) {
       const opt = this.options[i];
+      // console.log("[DOMAIN]ui/checkbox/group - setOptions", opt, i);
       opt.core.unmount();
-      // @todo 为什么会 undefined ？
-      // if (opt) {
-      //   opt.core.unmount();
-      // }
     }
     this.options = options.map((opt) => {
       const { label, value, checked, disabled } = opt;

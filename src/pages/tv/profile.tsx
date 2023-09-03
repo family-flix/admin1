@@ -43,7 +43,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       curEpisodeList.modifySearch((search) => {
         return {
           ...search,
-          tv_id: view.params.id,
+          tv_id: view.query.id,
           season_id: view.query.season_id || v.seasons[0].id,
         };
       });
@@ -74,7 +74,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const tmdbSearchDialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
-      const id = view.params.id as string;
+      const id = view.query.id as string;
       if (!id) {
         app.tip({ text: ["更新详情失败", "缺少电视剧 id"] });
         return;
@@ -123,7 +123,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   const refreshProfileBtn = new ButtonCore({
     onClick() {
       refreshProfileBtn.setLoading(true);
-      refreshProfileRequest.run({ tv_id: view.params.id });
+      refreshProfileRequest.run({ tv_id: view.query.id });
     },
   });
   const seasonDeleteRequest = new RequestCore(delete_season, {
@@ -136,10 +136,11 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
       tvDeleteConfirmDialog.hide();
       appendAction("deleteTV", {
-        tv_id: view.params.id,
+        tv_id: view.query.id,
         id: view.query.season_id,
       });
-      homeLayout.showPrevView({ destroy: true });
+      app.back();
+      // homeLayout.showPrevView({ destroy: true });
     },
     onFailed(error) {
       app.tip({
@@ -182,7 +183,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       }
       const { drive_id, lang, episode_text, season_text, file } = subtitleValues.value;
       uploadRequest.run({
-        tv_id: view.params.id,
+        tv_id: view.query.id,
         season_text,
         episode_text,
         drive_id,
@@ -353,7 +354,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
 
   onMount(() => {
-    const { id } = view.params;
+    const { id } = view.query;
     const season_id = view.query.season_id;
     profileRequest.run({ tv_id: id, season_id });
   });
@@ -365,10 +366,8 @@ export const TVProfilePage: ViewComponent = (props) => {
           <div
             class="mb-2 cursor-pointer"
             onClick={() => {
-              // view.unload();
-              console.log("[PAGE]tv/profile - click arrow-left");
-              // debugger;
-              homeLayout.showPrevView({ destroy: true });
+              app.back();
+              // homeLayout.showPrevView({ destroy: true });
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -497,14 +496,15 @@ export const TVProfilePage: ViewComponent = (props) => {
                                       class="text-slate-500 break-all"
                                       title={`[${drive.name}]${parent_paths}/${file_name}`}
                                       onClick={() => {
-                                        mediaPlayingPage.params = {
+                                        mediaPlayingPage.query = {
                                           id: file_id,
                                         };
-                                        rootView.layerSubView(mediaPlayingPage);
+                                        app.showView(mediaPlayingPage);
+                                        // rootView.layerSubView(mediaPlayingPage);
                                         // router.push(`/play/${file_id}`);
                                       }}
                                     >
-                                      {parent_paths}/{file_name}
+                                      [{drive.name}]{parent_paths}/{file_name}
                                     </span>
                                   </div>
                                 );

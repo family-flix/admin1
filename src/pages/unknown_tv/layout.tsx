@@ -41,7 +41,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               underline: curSubView() === homeUnknownTVPage,
             }}
             onClick={() => {
-              homeUnknownMediaLayout.showSubView(homeUnknownTVPage);
+              app.showView(homeUnknownTVPage);
+              // homeUnknownMediaLayout.showSubView(homeUnknownTVPage);
               // router.push("/home/unknown_tv/tv");
             }}
           >
@@ -54,7 +55,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               underline: curSubView() === homeUnknownSeasonPage,
             }}
             onClick={() => {
-              homeUnknownMediaLayout.showSubView(homeUnknownSeasonPage);
+              app.showView(homeUnknownSeasonPage);
+              // homeUnknownMediaLayout.showSubView(homeUnknownSeasonPage);
               // router.push("/home/unknown_tv/season");
             }}
           >
@@ -67,7 +69,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               underline: curSubView() === homeUnknownEpisodePage,
             }}
             onClick={() => {
-              homeUnknownMediaLayout.showSubView(homeUnknownEpisodePage);
+              app.showView(homeUnknownEpisodePage);
+              // homeUnknownMediaLayout.showSubView(homeUnknownEpisodePage);
               // router.push("/home/unknown_tv/episode");
             }}
           >
@@ -80,7 +83,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
               underline: curSubView() === homeUnknownMoviePage,
             }}
             onClick={() => {
-              homeUnknownMediaLayout.showSubView(homeUnknownMoviePage);
+              app.showView(homeUnknownMoviePage);
+              // homeUnknownMediaLayout.showSubView(homeUnknownMoviePage);
               // router.push("/home/unknown_tv/movie");
             }}
           >

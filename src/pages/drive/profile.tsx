@@ -19,9 +19,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const driveFileManage = new AliyunDriveFilesCore({
-    id: view.params.id,
+    id: view.query.id,
   });
-  const drive = new DriveCore({ ...(view.query as unknown as DriveItem), id: view.params.id });
+  const drive = new DriveCore({ ...(view.query as unknown as DriveItem) });
   drive.list.pageSize = 50;
   const input = new InputCore({
     defaultValue: "",
@@ -58,7 +58,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       }
       const [file] = driveFileManage.virtualSelectedFolder;
       analysisItem.disable();
-      const r = await drive.startScrape({
+      const r = await drive.startAnalysis({
         target_folders: [file],
       });
       driveFileManage.clearVirtualSelected();
@@ -74,7 +74,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       }
       fileMenu.hide();
       createJob({
-        job_id: r.data,
+        job_id: r.data.job_id,
         onFinish() {
           drive.finishAnalysis();
         },
@@ -222,7 +222,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       folderSyncItem.disable();
       const r = await syncFolderRequest.run({
         file_id: file.file_id,
-        drive_id: view.params.id,
+        drive_id: view.query.id,
       });
       folderSyncItem.enable();
       if (r.error) {
@@ -298,7 +298,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
             <div
               class="cursor-pointer"
               onClick={() => {
-                homeLayout.showPrevView({ destroy: true });
+                app.back();
+                // homeLayout.showPrevView({ destroy: true });
               }}
             >
               <ArrowLeft class="w-6 h-6" />

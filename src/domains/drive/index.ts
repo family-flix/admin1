@@ -123,7 +123,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
    * 开始索引云盘
    * @param {boolean} [quickly=false] 是否增量索引
    */
-  async startScrape(
+  async startAnalysis(
     options: {
       target_folders?: AliyunDriveFile[];
       quickly?: boolean;
@@ -131,7 +131,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   ) {
     const { target_folders, quickly = false } = options;
     if (this.state.loading) {
-      this.tip({ text: ["索引正在进行中..."] });
+      this.tip({ text: ["索引正在进行中"] });
       return Result.Ok(null);
     }
     this.state.loading = true;
@@ -167,7 +167,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     const { job_id } = r.data;
-    return Result.Ok(job_id);
+    return Result.Ok({ job_id });
   }
   finishAnalysis() {
     this.state.loading = false;
@@ -193,7 +193,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.tip({ text: ["开始匹配，请等待一段时间后刷新查看"] });
     const { job_id } = r.data;
-    return Result.Ok(job_id);
+    return Result.Ok({ job_id });
   }
   finishMediaMatch() {
     this.state.loading = false;

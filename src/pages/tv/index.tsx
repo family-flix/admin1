@@ -28,7 +28,7 @@ import {
   refresh_tv_profile,
   run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
-  transfer_tv_to_another_drive,
+  transferSeasonToAnotherDrive,
   TVSeasonItem,
 } from "@/services";
 import {
@@ -181,18 +181,18 @@ export const TVManagePage: ViewComponent = (props) => {
       }
     },
   });
-  const transferRequest = new RequestCore(transfer_tv_to_another_drive, {
+  const transferRequest = new RequestCore(transferSeasonToAnotherDrive, {
     onLoading(loading) {
       transferConfirmDialog.okBtn.setLoading(loading);
     },
     onFailed(error) {
       app.tip({
-        text: ["复制失败", error.message],
+        text: ["归档失败", error.message],
       });
     },
     onSuccess(r) {
       app.tip({
-        text: ["开始复制，请等待一段时间"],
+        text: ["开始归档，请等待一段时间"],
       });
       createJob({
         job_id: r.job_id,
@@ -202,7 +202,7 @@ export const TVManagePage: ViewComponent = (props) => {
           }
           const { name } = tvSelection.value;
           app.tip({
-            text: [`完成电视剧 '${name}' 复制`],
+            text: [`完成电视剧 '${name}' 归档`],
           });
         },
       });
@@ -349,7 +349,7 @@ export const TVManagePage: ViewComponent = (props) => {
         return;
       }
       transferRequest.run({
-        tv_id: curTV.tv_id,
+        season_id: curTV.id,
         target_drive_id: driveSelection.value.id,
       });
     },
@@ -412,13 +412,12 @@ export const TVManagePage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
-      homeTVProfilePage.params = {
-        id: record.tv_id,
-      };
       homeTVProfilePage.query = {
+        id: record.tv_id,
         season_id: record.id,
       };
-      homeLayout.showSubView(homeTVProfilePage);
+      app.showView(homeTVProfilePage);
+      // homeLayout.showSubView(homeTVProfilePage);
       // router.push(`/home/tv/${record.tv_id}?season_id=${record.id}`);
     },
   });
@@ -687,7 +686,7 @@ export const TVManagePage: ViewComponent = (props) => {
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
                                 <h2 class="text-2xl text-slate-800">
-                                  <a href={`${NavigatorCore.prefix}/home/tv/${tv_id}?season_id=${id}`}>{name}</a>
+                                  <a href={`/home/tv/${tv_id}?season_id=${id}`}>{name}</a>
                                 </h2>
                                 <p class="ml-4 text-slate-500">{season_text}</p>
                               </div>
@@ -860,7 +859,7 @@ export const TVManagePage: ViewComponent = (props) => {
       <Dialog store={transferConfirmDialog}>
         <div>
           <div>选择了 {curDrive()?.name}</div>
-          <div class="mt-8 space-y-4">
+          <div class="mt-8 space-y-4 h-[320px] overflow-y-auto">
             <For each={driveResponse().dataSource}>
               {(drive) => {
                 const { id, name, state } = drive;

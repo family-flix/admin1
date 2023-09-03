@@ -18,7 +18,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
 
   const pauseBtn = new ButtonCore<JobProfile>({
     onClick() {
-      pauseJob.run(view.params.id);
+      pauseJob.run(view.query.id);
     },
   });
   const pauseJob = new RequestCore(pause_job, {
@@ -72,7 +72,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
     setLogResponse(nextResponse);
   });
   onMount(() => {
-    const { id } = view.params as { id?: string };
+    const { id } = view.query as { id?: string };
     if (!id) {
       return;
     }
@@ -92,10 +92,8 @@ export const TaskProfilePage: ViewComponent = (props) => {
         <div
           class="mb-2 cursor-pointer"
           onClick={() => {
-            // view.unload();
-            console.log("[PAGE]tv/profile - click arrow-left");
-            // debugger;
-            homeLayout.showPrevView({ destroy: true });
+            app.back();
+            // homeLayout.showPrevView({ destroy: true });
           }}
         >
           <ArrowLeft class="w-6 h-6" />

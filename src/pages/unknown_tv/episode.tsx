@@ -93,6 +93,10 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         }
         return item;
       });
+      app.tip({
+        text: ["重命名成功"],
+      });
+      renameFileDialog.hide();
     },
     onFailed(error) {
       app.tip({
@@ -110,7 +114,12 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
     onSuccess() {
       app.tip({ text: ["删除成功"] });
       deleteConfirmDialog.hide();
-      list.refresh();
+      list.deleteItem((item) => {
+        if (item.id === curEpisode.value?.id) {
+          return true;
+        }
+        return false;
+      });
     },
   });
   const deleteConfirmDialog = new DialogCore({

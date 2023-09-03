@@ -52,10 +52,11 @@ export const TaskListPage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      homeTaskProfilePage.params = {
+      homeTaskProfilePage.query = {
         id: task.id,
       };
-      homeLayout.showSubView(homeTaskProfilePage);
+      app.showView(homeTaskProfilePage);
+      // homeLayout.showSubView(homeTaskProfilePage);
       // router.push(`/home/task/${task.id}`);
     },
   });

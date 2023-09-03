@@ -1,7 +1,7 @@
 {
   "name": "@family-flix/admin",
   "private": true,
-  "version": "1.10.0",
+  "version": "1.11.0",
   "scripts": {
     "dev": "vite --port 3003 --host",
     "build": "tsc && vite build",

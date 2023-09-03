@@ -602,12 +602,16 @@ export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }
  * @param params
  * @returns
  */
-export async function fetch_members(params: FetchParams) {
+export async function fetchMemberList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
   const res = await request.get<
     ListResponse<{
       id: string;
       remark: string;
+      inviter: null | {
+        id: string;
+        remark: string;
+      };
       disabled: boolean;
       tokens: {
         id: string;
@@ -628,7 +632,7 @@ export async function fetch_members(params: FetchParams) {
     list: res.data.list,
   });
 }
-export type MemberItem = RequestedResource<typeof fetch_members>["list"][0];
+export type MemberItem = RequestedResource<typeof fetchMemberList>["list"][0];
 
 /**
  * 添加成员
@@ -843,9 +847,9 @@ export function run_all_file_sync_tasks() {
 /**
  * 执行所有电视剧同步任务
  */
-export function transfer_tv_to_another_drive(body: { tv_id: string; target_drive_id: string }) {
-  const { tv_id, target_drive_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/tv/${tv_id}/transfer`, {
+export function transferSeasonToAnotherDrive(body: { season_id: string; target_drive_id: string }) {
+  const { season_id, target_drive_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/transfer`, {
     target_drive_id,
   });
 }
@@ -857,6 +861,14 @@ export function transfer_tv_to_another_drive(body: { tv_id: string; target_drive
 export function delete_member(body: { id: string }) {
   const { id } = body;
   return request.get(`/api/admin/member/delete/${id}`);
+}
+
+export function updateMemberPermission(values: { member_id: string; permissions: string[] }) {
+  const { member_id, permissions } = values;
+  const body = {
+    permissions,
+  };
+  return request.post(`/api/admin/member/${member_id}/permission/update`, body);
 }
 
 /**
@@ -1060,6 +1072,28 @@ export async function fetchReportList(params: FetchParams) {
         name: string;
       };
       data: string;
+      answer: string;
+      movie?: {
+        id: string;
+        name: string;
+        poster_path: string;
+      };
+      tv?: {
+        id: string;
+        name: string;
+        poster_path: string;
+      };
+      season?: {
+        id: string;
+        tv_id: string;
+        name: string;
+        poster_path: string;
+        season_text: string;
+      };
+      episode?: {
+        id: string;
+        episode_text: string;
+      };
       created: string;
     }>
   >(`/api/admin/report/list`, params);
@@ -1070,18 +1104,24 @@ export async function fetchReportList(params: FetchParams) {
   return Result.Ok({
     ...rest,
     list: list.map((report) => {
-      const { id, type, member, data, created } = report;
+      const { id, type, answer, member, data, movie, season, episode, created } = report;
       return {
         id,
         type,
         typeText: ReportTypeTexts[type],
+        answer,
         member,
         data,
+        movie,
+        season,
+        episode,
         created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
       };
     }),
   });
 }
+export type ReportItem = RequestedResource<typeof fetchReportList>["list"][number];
+
 export function fetchReportProfile(params: { report_id: string }) {
   const { report_id } = params;
   return request.get(`/api/admin/report/${report_id}`);
@@ -1168,4 +1208,71 @@ export function update_settings(values: Partial<{ push_deer_token: string; extra
 export function sync_folder(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
   return request.get<{ job_id: string }>(`/api/admin/file/${file_id}/sync`, { drive_id });
+}
+
+type AnswerPayload = Partial<{
+  content: string;
+  season: {
+    id: string;
+    tv_id: string;
+    name: string;
+    first_air_date: string;
+    poster_path: string;
+  };
+  movie: {
+    id: string;
+    name: string;
+    first_air_date: string;
+    poster_path: string;
+  };
+}>;
+export function replyReport(
+  values: {
+    report_id: string;
+  } & AnswerPayload
+) {
+  const { report_id, content, movie, season } = values;
+  return request.post(`/api/admin/report/${report_id}/reply`, {
+    content,
+    movie,
+    season,
+  });
+}
+
+/**
+ * 获取权限列表
+ */
+export async function fetchPermissionList(params: FetchParams) {
+  const { pageSize, ...restParams } = params;
+  const r = await request.get<
+    ListResponse<{
+      code: string;
+      desc: string;
+    }>
+  >("/api/admin/permission/list", {
+    page_size: pageSize,
+    ...restParams,
+  });
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const { page, total, no_more, list } = r.data;
+  return Result.Ok({
+    page,
+    page_size: pageSize,
+    total,
+    no_more,
+    list,
+  });
+}
+
+/**
+ * 新增权限
+ */
+export function addPermission(values: { desc: string }) {
+  const { desc } = values;
+  const body = {
+    desc,
+  };
+  return request.post("/api/admin/permission/add", body);
 }

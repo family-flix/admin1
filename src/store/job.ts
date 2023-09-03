@@ -92,7 +92,7 @@ export function removeJob(job: JobCore) {
     return;
   }
   const targetJob = jobs[index];
-  targetJob.forceFinish();
+  // targetJob.forceFinish();
 }
 /**
  * job 工厂函数

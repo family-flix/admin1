@@ -16,6 +16,7 @@ import {
   FileSearch,
   File,
   CircuitBoard,
+  Lock,
 } from "lucide-solid";
 
 import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
@@ -23,6 +24,8 @@ import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSea
 import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
 import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
 import { RouteViewCore } from "@/domains/route_view";
+import { RequestCore } from "@/domains/request";
+import { Application } from "@/domains/app";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
 import {
@@ -35,9 +38,8 @@ import {
   homeTransferPage,
   homeUnknownMediaLayout,
 } from "@/store/views";
-import { homeLayout, homeReportListPage, onJobsChange } from "@/store";
+import { homeLayout, homePermissionListPage, homeReportListPage, onJobsChange } from "@/store";
 import { cn, sleep } from "@/utils";
-import { RequestCore } from "@/domains/request";
 import { fetch_settings, notify_test, update_settings } from "@/services";
 
 export const HomeLayout: ViewComponent = (props) => {
@@ -251,6 +253,11 @@ export const HomeLayout: ViewComponent = (props) => {
       view: homeMemberListPage,
     },
     {
+      text: "权限",
+      icon: <Lock class="w-6 h-6" />,
+      view: homePermissionListPage,
+    },
+    {
       text: "转存资源",
       icon: <FolderInput class="w-6 h-6" />,
       view: homeTransferPage,
@@ -292,6 +299,7 @@ export const HomeLayout: ViewComponent = (props) => {
                   const { icon, text, view, badge, onClick } = menu;
                   return (
                     <Menu
+                      app={app}
                       icon={icon}
                       highlight={(() => {
                         return curSubView() === view;
@@ -362,6 +370,7 @@ export const HomeLayout: ViewComponent = (props) => {
 
 function Menu(
   props: {
+    app: Application;
     highlight?: boolean;
     view?: RouteViewCore;
     icon: JSX.Element;
@@ -394,7 +403,7 @@ function Menu(
           if (!props.view) {
             return;
           }
-          homeLayout.showSubView(props.view);
+          props.app.showView(props.view);
         }}
       >
         {inner}

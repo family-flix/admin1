@@ -135,7 +135,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       }
       const { drive_id, lang, file } = subtitleValues.value;
       uploadRequest.run({
-        movie_id: view.params.id,
+        movie_id: view.query.id,
         drive_id,
         lang,
         file,
@@ -152,7 +152,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
     title: "删除电影",
     onOk() {
       deleteMovieRequest.run({
-        movie_id: view.params.id,
+        movie_id: view.query.id,
       });
     },
   });
@@ -171,15 +171,16 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
       movieDeletingConfirmDialog.hide();
       appendAction("deleteMovie", {
-        movie_id: view.params.id,
+        movie_id: view.query.id,
       });
-      homeLayout.showPrevView({ destroy: true });
+      app.back();
+      // homeLayout.showPrevView({ destroy: true });
     },
   });
   const movieRefreshDialog = new TMDBSearcherDialogCore({
     type: "movie",
     onOk(searched_movie) {
-      const id = view.params.id as string;
+      const id = view.query.id as string;
       if (!id) {
         app.tip({ text: ["更新详情失败", "缺少电影 id"] });
         return;
@@ -188,7 +189,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
         { movie_id: id },
         {
           ...searched_movie,
-          id: view.params.id,
+          id: view.query.id,
           tmdb_id: searched_movie.id,
         }
       );
@@ -207,7 +208,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
   const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
   onMount(() => {
-    const { id } = view.params;
+    const { id } = view.query;
     profileRequest.run({ movie_id: id });
   });
 
@@ -218,7 +219,8 @@ export const MovieProfilePage: ViewComponent = (props) => {
           <div
             class="mb-2 cursor-pointer"
             onClick={() => {
-              homeLayout.showPrevView({ destroy: true });
+              app.back();
+              // homeLayout.showPrevView({ destroy: true });
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -288,10 +290,11 @@ export const MovieProfilePage: ViewComponent = (props) => {
                         <div
                           class=""
                           onClick={() => {
-                            mediaPlayingPage.params = {
+                            mediaPlayingPage.query = {
                               id: file_id,
                             };
-                            rootView.layerSubView(mediaPlayingPage);
+                            app.showView(mediaPlayingPage);
+                            // rootView.layerSubView(mediaPlayingPage);
                             // router.push(`/play/${file_id}`);
                           }}
                         >

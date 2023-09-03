@@ -6,6 +6,7 @@ import { Handler } from "mitt";
 import { BaseDomain } from "@/domains/base";
 import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
+import { RouteViewCore } from "@/domains/route_view";
 import { Result } from "@/types";
 
 enum Events {
@@ -138,6 +139,31 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
     // console.log("[]Application - before start");
     return Result.Ok(null);
+  }
+  prevViews: RouteViewCore[] = [];
+  views: RouteViewCore[] = [];
+  showView(view: RouteViewCore) {
+    console.log("[DOMAIN]Application - showView", view._name, view.parent);
+    this.prevViews = this.views;
+    this.views = [];
+    const _show = (view: RouteViewCore) => {
+      if (view.parent) {
+        _show(view.parent);
+        (() => {
+          if (view.parent.canLayer) {
+            view.parent.layerSubView(view);
+            return;
+          }
+          view.parent.showSubView(view);
+        })();
+      }
+      view.show();
+      this.views.push(view);
+    };
+    _show(view);
+    // console.log("[DOMAIN]Application - after show", this.views);
+  }
+  back() {
   }
   /** 手机震动 */
   vibrate() {}

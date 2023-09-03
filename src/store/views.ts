@@ -25,6 +25,7 @@ import { TestPage } from "@/pages/test";
 import { RegisterPage } from "@/pages/register";
 import { LoginPage } from "@/pages/login";
 import { HomeReportListPage } from "@/pages/report";
+import { HomePermissionPage } from "@/pages/permission";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -43,7 +44,7 @@ export const homeIndexPage = new RouteViewCore({
   },
 });
 export const driveProfilePage = new RouteViewCore({
-  key: "/home/drive/:id",
+  key: "/home/drive_profile",
   title: "云盘详情",
   component: async () => {
     // const { DriveProfilePage } = await import("@/pages/drive/profile");
@@ -51,7 +52,7 @@ export const driveProfilePage = new RouteViewCore({
   },
 });
 export const homeTaskProfilePage = new RouteViewCore({
-  key: "/home/task/:id",
+  key: "/home/task_profile",
   title: "任务详情",
   // component: TaskProfilePage,
   component: async () => {
@@ -78,7 +79,7 @@ export const homeTransferPage = new RouteViewCore({
   },
 });
 export const homeTVProfilePage = new RouteViewCore({
-  key: "/home/tv/:id",
+  key: "/home/tv_profile",
   title: "电视剧详情",
   // component: TVProfilePage,
   component: async () => {
@@ -96,7 +97,7 @@ export const homeTVListPage = new RouteViewCore({
   },
 });
 export const homeMovieProfilePage = new RouteViewCore({
-  key: "/home/movie/:id",
+  key: "/home/movie_profile",
   title: "电影详情",
   // component: MovieProfilePage,
   component: async () => {
@@ -163,9 +164,7 @@ export const homeUnknownMediaLayout = new RouteViewCore({
     // const { UnknownMediaLayout } = await import("@/pages/unknown_tv/layout");
     return UnknownMediaLayout;
   },
-});
-homeUnknownMediaLayout.onShow(() => {
-  homeUnknownMediaLayout.showSubView(homeUnknownTVPage);
+  children: [homeUnknownTVPage, homeUnknownSeasonPage, homeUnknownEpisodePage, homeUnknownMoviePage],
 });
 // homeUnknownMediaLayout.replaceSubViews([homeUnknownTVPage, homeUnknownSeasonPage, homeUnknownMoviePage]);
 export const homeFilenameParsingPage = new RouteViewCore({
@@ -175,6 +174,15 @@ export const homeFilenameParsingPage = new RouteViewCore({
   component: async () => {
     // const { VideoParsingPage } = await import("@/pages/parse");
     return VideoParsingPage;
+  },
+});
+export const homePermissionListPage = new RouteViewCore({
+  key: "/home/permission",
+  title: "权限列表",
+  // component: MemberManagePage,
+  component: async () => {
+    // const { MemberManagePage } = await import("@/pages/member");
+    return HomePermissionPage;
   },
 });
 export const homeMemberListPage = new RouteViewCore({
@@ -201,9 +209,25 @@ export const homeLayout = new RouteViewCore({
     // const { HomeLayout } = await import("@/pages/home/layout");
     return HomeLayout;
   },
+  children: [
+    homeIndexPage,
+    homeTVListPage,
+    homeTVProfilePage,
+    homeMovieListPage,
+    homeMovieProfilePage,
+    homeTaskListPage,
+    homeTaskProfilePage,
+    homePermissionListPage,
+    homeMemberListPage,
+    homeUnknownMediaLayout,
+    homeReportListPage,
+    homeTransferPage,
+    homeFilenameParsingPage,
+    driveProfilePage,
+  ],
 });
 export const mediaPlayingPage = new RouteViewCore({
-  key: "/preview/:id",
+  key: "/preview",
   title: "文件播放",
   // component: MovieManagePage,
   component: async () => {
@@ -238,4 +262,10 @@ export const testPage = new RouteViewCore({
     return TestPage;
   },
 });
-export const rootView = new RouteViewCore({ key: "/", title: "ROOT", component: "div" });
+export const rootView = new RouteViewCore({
+  key: "/",
+  title: "ROOT",
+  component: "div",
+  layers: true,
+  children: [homeLayout, mediaPlayingPage, registerPage, loginPage, testPage],
+});

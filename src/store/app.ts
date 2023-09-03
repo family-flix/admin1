@@ -10,7 +10,7 @@ import { Result } from "@/types";
 
 import { cache } from "./cache";
 import { user } from "./user";
-import { homeIndexPage, homeLayout, loginPage, registerPage, rootView } from "./views";
+import { homeIndexPage, loginPage, registerPage } from "./views";
 
 NavigatorCore.prefix = "/admin";
 
@@ -26,11 +26,13 @@ export const app = new Application({
       }
       const { existing } = r.data;
       if (!existing) {
-        rootView.showSubView(registerPage);
+        app.showView(registerPage);
+        // rootView.showSubView(registerPage);
         user.needRegister = true;
         return Result.Ok(null);
       }
-      rootView.showSubView(loginPage);
+      app.showView(loginPage);
+      // rootView.showSubView(loginPage);
       return Result.Ok(null);
     }
     await app.user.validate();
@@ -42,13 +44,15 @@ user.onTip((msg) => {
 });
 user.onLogin((profile) => {
   cache.set("user", profile);
-  homeLayout.showSubView(homeIndexPage);
-  rootView.showSubView(homeLayout);
+  app.showView(homeIndexPage);
+  // homeLayout.showSubView(homeIndexPage);
+  // rootView.showSubView(homeLayout);
   // router.push("/home/index");
 });
 user.onLogout(() => {
   cache.clear("user");
-  rootView.showSubView(loginPage);
+  app.showView(loginPage);
+  // rootView.showSubView(loginPage);
   // router.push("/login");
 });
 user.onExpired(() => {

@@ -2,24 +2,49 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
-import { Edit2, Gem, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
+import { Check, Edit2, Gem, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
-import { add_member, create_member_auth_link, delete_member, fetch_members, MemberItem } from "@/services";
-import { Button, Dialog, Input, ListView, Skeleton, ScrollView } from "@/components/ui";
+import {
+  add_member,
+  create_member_auth_link,
+  delete_member,
+  fetchMemberList,
+  fetchPermissionList,
+  MemberItem,
+  updateMemberPermission,
+} from "@/services";
+import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
 import { Qrcode } from "@/components/Qrcode";
-import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
+import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxGroupCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { SelectionCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
+import { MultipleSelectionCore } from "@/domains/multiple";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const memberList = new ListCore(new RequestCore(fetch_members), {
+  const memberList = new ListCore(new RequestCore(fetchMemberList), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
+    },
+  });
+  const memberPermissionUpdateRequest = new RequestCore(updateMemberPermission, {
+    onLoading(loading) {
+      permissionDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["权限更新成功"],
+      });
+      permissionDialog.hide();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["权限更新失败", error.message],
+      });
     },
   });
   const memberSelect = new SelectionCore<MemberItem>();
@@ -48,6 +73,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       memberList.refresh();
     },
   });
+  const curMember = new SelectionCore<MemberItem>();
   const addMemberDialog = new DialogCore({
     title: "新增成员",
     onOk() {
@@ -63,6 +89,9 @@ export const MemberManagePage: ViewComponent = (props) => {
   const remarkInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入备注",
+    onEnter() {
+      addMemberDialog.okBtn.click();
+    },
   });
   const addMemberBtn = new ButtonCore({
     onClick() {
@@ -113,7 +142,9 @@ export const MemberManagePage: ViewComponent = (props) => {
   });
   const updateMemberBtn = new ButtonInListCore<MemberItem>({
     onClick(member) {
-      app.tip({ text: ["敬请期待"] });
+      curMember.select(member);
+      permissionList.init();
+      permissionDialog.show();
     },
   });
   const deleteMemberBtn = new ButtonInListCore<MemberItem>({
@@ -155,8 +186,31 @@ export const MemberManagePage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore();
+  const permissionList = new ListCore(new RequestCore(fetchPermissionList));
+  const permissionDialog = new DialogCore({
+    title: "权限配置",
+    onOk() {
+      if (!curMember.value) {
+        app.tip({
+          text: ["请先选择成员"],
+        });
+        return;
+      }
+      console.log(permissionMultipleSelect.values);
+      memberPermissionUpdateRequest.run({
+        member_id: curMember.value.id,
+        permissions: permissionMultipleSelect.values.map((p) => p.code),
+      });
+    },
+  });
+  const permissionMultipleSelect = new MultipleSelectionCore<{ code: string }>({});
 
   const [response, setResponse] = createSignal(memberList.response);
+  const [permissionResponse, setPermissionResponse] = createSignal(permissionList.response);
+
+  permissionList.onStateChange((nextState) => {
+    setPermissionResponse(nextState);
+  });
   memberList.onStateChange((nextState) => {
     // console.log("list ", nextState);
     setResponse(nextState);
@@ -222,15 +276,21 @@ export const MemberManagePage: ViewComponent = (props) => {
               <div class="space-y-8">
                 <For each={response().dataSource}>
                   {(member) => {
-                    const { remark, tokens } = member;
+                    const { inviter, remark, tokens } = member;
                     return (
                       <div class="card rounded-sm bg-white p-4">
                         <div class="flex items-center">
                           <div class="flex items-center justify-center w-12 h-12 bg-slate-300 rounded-full mr-2">
                             <div class="text-3xl text-slate-500">{remark.slice(0, 1).toUpperCase()}</div>
                           </div>
-                          <div>
-                            <p class="text-2xl">{remark}</p>
+                          <div class="flex text-2xl">
+                            <Show when={inviter}>
+                              <div class="flex items-center text-gray-600">
+                                <div>{inviter?.remark}</div>
+                                <div class="mx-2">/</div>
+                              </div>
+                            </Show>
+                            <p class="">{remark}</p>
                           </div>
                         </div>
                         <div class="mt-4">
@@ -326,6 +386,30 @@ export const MemberManagePage: ViewComponent = (props) => {
       </Dialog>
       <Dialog title="删除成员" store={confirmDeleteMemberDialog}>
         <div>确认删除该成员吗？</div>
+      </Dialog>
+      <Dialog store={permissionDialog}>
+        <ListView store={permissionList} class="space-y-8">
+          <For each={permissionResponse().dataSource}>
+            {(permission) => {
+              const { code, desc } = permission;
+              return (
+                <div
+                  class="flex items-center space-x-2 px-8 py-4"
+                  onClick={() => {
+                    permissionMultipleSelect.toggle(permission);
+                  }}
+                >
+                  <div class="w-5 h-5">
+                    <Show when={permissionMultipleSelect.values.includes(permission)}>
+                      <Check class="w-4 h-4" />
+                    </Show>
+                  </div>
+                  <div class="">{desc}</div>
+                </div>
+              );
+            }}
+          </For>
+        </ListView>
       </Dialog>
     </>
   );
