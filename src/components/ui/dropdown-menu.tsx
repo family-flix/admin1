@@ -24,9 +24,11 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
 
   return (
     <DropdownMenuPrimitive.Root store={store}>
-      <DropdownMenuPrimitive.Trigger class="inline-block" store={store}>
-        {props.children}
-      </DropdownMenuPrimitive.Trigger>
+      <Show when={props.children}>
+        <DropdownMenuPrimitive.Trigger class="inline-block" store={store}>
+          {props.children}
+        </DropdownMenuPrimitive.Trigger>
+      </Show>
       <DropdownMenuPrimitive.Portal store={store.menu}>
         <DropdownMenuPrimitive.Content
           class={cn(

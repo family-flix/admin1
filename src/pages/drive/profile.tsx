@@ -14,29 +14,36 @@ import { FileType } from "@/constants";
 import { createJob, homeLayout } from "@/store";
 import { RequestCore } from "@/domains/request";
 import { sync_folder } from "@/services";
+import { DriveFileCard } from "@/components/DriveFileCard";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
+  const syncFolderRequest = new RequestCore(sync_folder, {
+    // onLoading(loading) {
+    //   folderSyncItem.disable();
+    // },
+  });
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.query.id,
   });
   const drive = new DriveCore({ ...(view.query as unknown as DriveItem) });
   drive.list.pageSize = 50;
-  const input = new InputCore({
-    defaultValue: "",
-  });
-  const fileSelect = new SelectionCore<[AliyunDriveFile, [number, number]]>();
-  const btn = new ButtonCore({
-    onClick() {
-      if (!input.value) {
-        app.tip({
-          text: ["请输入要查询的文件名"],
-        });
-        return;
-      }
-    },
-  });
+  // const input = new InputCore({
+  //   defaultValue: "",
+  // });
+  const curFileWithPosition = new SelectionCore<[AliyunDriveFile, [number, number]]>();
+  const curFile = new SelectionCore<AliyunDriveFile>();
+  // const btn = new ButtonCore({
+  //   onClick() {
+  //     if (!input.value) {
+  //       app.tip({
+  //         text: ["请输入要查询的文件名"],
+  //       });
+  //       return;
+  //     }
+  //   },
+  // });
   const scrollView = new ScrollViewCore();
   const formatBtn = new ButtonCore({
     onClick() {
@@ -44,8 +51,105 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const formatDialog = new DialogCore();
+  const fileProfileDialog = new DialogCore({
+    footer: false,
+  });
+  const folderDeletingConfirmDialog = new DialogCore({
+    async onOk() {
+      if (!curFileWithPosition.value) {
+        app.tip({
+          text: ["请先选择要删除的文件"],
+        });
+        return;
+      }
+      const [file, position] = curFileWithPosition.value;
+      driveFileManage.deleteFile({
+        file,
+        position,
+        onLoading(loading) {
+          folderDeletingConfirmDialog.okBtn.setLoading(loading);
+        },
+        onFailed(error) {
+          app.tip({
+            text: ["删除文件失败", error.message],
+          });
+        },
+        onSuccess(opt) {
+          app.tip({
+            text: ["删除成功"],
+          });
+          opt.deleteFile();
+          folderDeletingConfirmDialog.hide();
+          curFileWithPosition.clear();
+          if (!opt.job_id) {
+            return;
+          }
+          createJob({
+            job_id: opt.job_id,
+          });
+        },
+      });
+    },
+  });
+  const nameModifyInput = new InputCore({
+    defaultValue: "",
+  });
+  const nameModifyDialog = new DialogCore({
+    title: "修改名称",
+    onOk() {
+      if (!curFileWithPosition.value) {
+        app.tip({
+          text: ["请先选择要修改的文件"],
+        });
+        return;
+      }
+      const [file, position] = curFileWithPosition.value;
+      if (file.name === nameModifyInput.value) {
+        app.tip({
+          text: ["名称没有变化"],
+        });
+        return;
+      }
+      driveFileManage.rename({
+        file: {
+          file_id: file.file_id,
+          name: nameModifyInput.value,
+        },
+        position,
+        onLoading(loading) {
+          nameModifyDialog.okBtn.setLoading(loading);
+        },
+        onFailed(error) {
+          app.tip({
+            text: ["重命名失败", error.message],
+          });
+        },
+        onSuccess() {
+          app.tip({
+            text: ["重命名成功"],
+          });
+          nameModifyDialog.hide();
+          nameModifyInput.clear();
+          curFileWithPosition.clear();
+        },
+      });
+    },
+  });
   const profileItem = new MenuItemCore({
     label: "详情",
+    onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      curFile.select(file);
+      fileMenu.hide();
+      fileProfileDialog.setTitle(file.name);
+      fileProfileDialog.show();
+    },
   });
   const analysisItem = new MenuItemCore({
     label: "索引",
@@ -81,87 +185,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const folderDeletingConfirmDialog = new DialogCore({
-    async onOk() {
-      if (!fileSelect.value) {
-        app.tip({
-          text: ["请先选择要删除的文件"],
-        });
-        return;
-      }
-      const [file, position] = fileSelect.value;
-      driveFileManage.deleteFile({
-        file,
-        position,
-        onLoading(loading) {
-          folderDeletingConfirmDialog.okBtn.setLoading(loading);
-        },
-        onFailed(error) {
-          app.tip({
-            text: ["删除文件失败", error.message],
-          });
-        },
-        onSuccess(opt) {
-          app.tip({
-            text: ["删除成功"],
-          });
-          opt.deleteFile();
-          folderDeletingConfirmDialog.hide();
-          fileSelect.clear();
-          if (!opt.job_id) {
-            return;
-          }
-          createJob({
-            job_id: opt.job_id,
-          });
-        },
-      });
-    },
-  });
-  const nameModifyInput = new InputCore({
-    defaultValue: "",
-  });
-  const nameModifyDialog = new DialogCore({
-    title: "修改名称",
-    onOk() {
-      if (!fileSelect.value) {
-        app.tip({
-          text: ["请先选择要修改的文件"],
-        });
-        return;
-      }
-      const [file, position] = fileSelect.value;
-      if (file.name === nameModifyInput.value) {
-        app.tip({
-          text: ["名称没有变化"],
-        });
-        return;
-      }
-      driveFileManage.rename({
-        file: {
-          file_id: file.file_id,
-          name: nameModifyInput.value,
-        },
-        position,
-        onLoading(loading) {
-          nameModifyDialog.okBtn.setLoading(loading);
-        },
-        onFailed(error) {
-          app.tip({
-            text: ["重命名失败", error.message],
-          });
-        },
-        onSuccess() {
-          app.tip({
-            text: ["重命名成功"],
-          });
-          nameModifyDialog.hide();
-          nameModifyInput.clear();
-          fileSelect.clear();
-        },
-      });
-    },
-  });
   const nameModifyItem = new MenuItemCore({
     label: "修改名称",
     async onClick() {
@@ -172,18 +195,14 @@ export const DriveProfilePage: ViewComponent = (props) => {
         return;
       }
       const [file] = driveFileManage.virtualSelectedFolder;
-      fileSelect.select(driveFileManage.virtualSelectedFolder);
+      curFileWithPosition.select(driveFileManage.virtualSelectedFolder);
       nameModifyDialog.setTitle(`修改 '${file.name}' 名称`);
       nameModifyInput.change(file.name);
       nameModifyDialog.show();
       fileMenu.hide();
     },
   });
-  const syncFolderRequest = new RequestCore(sync_folder, {
-    // onLoading(loading) {
-    //   folderSyncItem.disable();
-    // },
-  });
+
   const folderDeletingItem = new MenuItemCore({
     label: "删除",
     async onClick() {
@@ -194,7 +213,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         return;
       }
       const [file] = driveFileManage.virtualSelectedFolder;
-      fileSelect.select(driveFileManage.virtualSelectedFolder);
+      curFileWithPosition.select(driveFileManage.virtualSelectedFolder);
       folderDeletingConfirmDialog.setTitle(`删除文件`);
       folderDeletingConfirmDialog.show();
       fileMenu.hide();
@@ -244,6 +263,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     side: "right",
     align: "start",
     items: [
+      profileItem,
       analysisItem,
       nameModifyItem,
       new MenuItemCore({
@@ -370,6 +390,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                 }}
                                 onClick={() => {
                                   driveFileManage.select(folder, [columnIndex(), fileIndex]);
+                                  // curFileWithPosition.select([folder, [columnIndex(), fileIndex]]);
                                 }}
                               >
                                 <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis" title={name}>
@@ -407,6 +428,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={nameModifyDialog}>
         <Input store={nameModifyInput} />
+      </Dialog>
+      <Dialog store={fileProfileDialog}>
+        <DriveFileCard store={curFile} />
       </Dialog>
     </>
   );

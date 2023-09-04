@@ -51,7 +51,7 @@ export function Dialog(
 }
 
 const Root = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLElement>) => {
-  return <div>{props.children}</div>;
+  return props.children;
 };
 
 const Portal = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLElement>) => {

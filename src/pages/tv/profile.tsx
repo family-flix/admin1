@@ -2,7 +2,7 @@
  * @file 电视剧详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft } from "lucide-solid";
+import { ArrowLeft, Play, Trash } from "lucide-solid";
 
 import {
   fetch_tv_profile,
@@ -15,6 +15,7 @@ import {
   SeasonInTVProfile,
   parse_video_file_name,
   upload_subtitle_for_episode,
+  delete_unknown_episode,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
@@ -49,9 +50,52 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const sourceDeleteRequest = new RequestCore(delete_unknown_episode, {
+    onLoading(loading) {
+      fileDeletingConfirmDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      const the_episode = curEpisode.value;
+      const the_source = curFile.value;
+      if (!the_episode || !the_source) {
+        app.tip({
+          text: ["删除成功，请刷新页面"],
+        });
+        return;
+      }
+      curEpisodeList.modifyResponse((response) => {
+        return {
+          ...response,
+          dataSource: response.dataSource.map((episode) => {
+            if (episode.id !== the_episode.id) {
+              return episode;
+            }
+            return {
+              ...episode,
+              sources: episode.sources.filter((source) => {
+                if (source.id !== the_source.id) {
+                  return true;
+                }
+                return false;
+              }),
+            };
+          }),
+        };
+      });
+      fileDeletingConfirmDialog.hide();
+      app.tip({
+        text: ["删除成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除视频源失败", error.message],
+      });
+    },
+  });
   const curSeasonSelector = new SelectionCore<SeasonInTVProfile>();
   const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
-
+  const curEpisode = new SelectionCore<EpisodeItemInSeason>();
   const curFile = new SelectionCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
   const updateTVProfileRequest = new RequestCore(refresh_tv_profile, {
@@ -326,6 +370,21 @@ export const TVProfilePage: ViewComponent = (props) => {
       seasonContextMenu.hide();
     },
   });
+  const fileDeletingConfirmDialog = new DialogCore({
+    title: "删除视频源",
+    onOk() {
+      const theSource = curFile.value;
+      if (!theSource) {
+        app.tip({
+          text: ["请先选择要删除的源"],
+        });
+        return;
+      }
+      sourceDeleteRequest.run({
+        id: theSource.id,
+      });
+    },
+  });
   const seasonContextMenu = new ContextMenuCore({
     items: [deleteSeasonMenuItem],
   });
@@ -491,21 +550,35 @@ export const TVProfilePage: ViewComponent = (props) => {
                               {(source) => {
                                 const { file_id, file_name, parent_paths, drive } = source;
                                 return (
-                                  <div>
-                                    <span
-                                      class="text-slate-500 break-all"
-                                      title={`[${drive.name}]${parent_paths}/${file_name}`}
-                                      onClick={() => {
-                                        mediaPlayingPage.query = {
-                                          id: file_id,
-                                        };
-                                        app.showView(mediaPlayingPage);
-                                        // rootView.layerSubView(mediaPlayingPage);
-                                        // router.push(`/play/${file_id}`);
-                                      }}
-                                    >
+                                  <div class="flex items-center space-x-4 text-slate-500">
+                                    <span class="break-all" title={`[${drive.name}]${parent_paths}/${file_name}`}>
                                       [{drive.name}]{parent_paths}/{file_name}
                                     </span>
+                                    <div class="flex items-center space-x-2">
+                                      <div
+                                        class="p-1 cursor-pointer"
+                                        title="播放"
+                                        onClick={() => {
+                                          mediaPlayingPage.query = {
+                                            id: file_id,
+                                          };
+                                          app.showView(mediaPlayingPage);
+                                        }}
+                                      >
+                                        <Play class="w-4 h-4" />
+                                      </div>
+                                      <div
+                                        class="p-1 cursor-pointer"
+                                        title="删除源"
+                                        onClick={() => {
+                                          curEpisode.select(episode);
+                                          curFile.select(source);
+                                          fileDeletingConfirmDialog.show();
+                                        }}
+                                      >
+                                        <Trash class="w-4 h-4" />
+                                      </div>
+                                    </div>
                                   </div>
                                 );
                               }}
@@ -556,6 +629,10 @@ export const TVProfilePage: ViewComponent = (props) => {
             <div>{parsedSubtitle()?.lang}</div>
           </div>
         </div>
+      </Dialog>
+      <Dialog store={fileDeletingConfirmDialog}>
+        <div>该操作仅删除解析结果</div>
+        <div>不影响云盘内文件</div>
       </Dialog>
       <ContextMenu store={seasonContextMenu} />
     </>
