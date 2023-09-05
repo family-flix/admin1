@@ -15,55 +15,61 @@ export function ListView(
   const [response, setResponse] = createSignal(store.response);
 
   store.onStateChange((nextState) => {
-    // console.log("[COMPONENT]ListView - store.onStateChange", nextState);
+    console.log("[COMPONENT]ListView - store.onStateChange", nextState.noMore, nextState.initial, nextState.error);
     setResponse(nextState);
   });
 
   return (
-    <div class={cn("relative", props.class)}>
-      <Show
-        when={!response().error}
-        fallback={
-          <div class="w-full h-[480px] center flex items-center justify-center">
-            <div class="flex flex-col items-center justify-center text-slate-500">
-              <AlertCircle class="w-24 h-24" />
-              <div class="mt-4 flex items-center space-x-2">
-                <div class="text-xl">{response().error?.message}</div>
+    <div class={cn("relative")}>
+      <div class={props.class}>
+        <Show when={response().initial && skeleton}>{skeleton}</Show>
+        <Show
+          when={!response().empty}
+          fallback={
+            <div class="w-full h-[480px] center flex items-center justify-center">
+              <div class="flex flex-col items-center justify-center text-slate-500">
+                <Bird class="w-24 h-24" />
+                <div class="mt-4 flex items-center space-x-2">
+                  <Show when={response().loading}>
+                    <Loader class="w-6 h-6 animate-spin" />
+                  </Show>
+                  <div class="text-center text-xl">{response().loading ? "加载中" : "列表为空"}</div>
+                </div>
               </div>
             </div>
-          </div>
-        }
-      >
-        <Show when={response().empty}>
-          <div class="w-full h-[480px] center flex items-center justify-center">
-            <div class="flex flex-col items-center justify-center text-slate-500">
-              <Bird class="w-24 h-24" />
-              <div class="mt-4 flex items-center space-x-2">
-                <Show when={response().loading}>
+          }
+        >
+          {props.children}
+        </Show>
+      </div>
+      <Show
+        when={!!response().error}
+        fallback={
+          <Show when={!response().noMore && !response().initial}>
+            <div class="mt-4 flex justify-center py-4 text-slate-500">
+              <div
+                class="flex items-center space-x-2 cursor-pointer"
+                onClick={() => {
+                  store.loadMore();
+                }}
+              >
+                <Show when={response().loading} fallback={<ArrowDown class="w-6 h-6" />}>
                   <Loader class="w-6 h-6 animate-spin" />
                 </Show>
-                <div class="text-center text-xl">{response().loading ? "加载中" : "列表为空"}</div>
+                <div class="text-center text-xl">{response().loading ? "加载中" : "加载更多"}</div>
               </div>
             </div>
-          </div>
-        </Show>
-        <Show when={response().initial && skeleton}>{skeleton}</Show>
-        {props.children}
-        <Show when={!response().noMore && !response().initial}>
-          <div class="mt-4 flex justify-center py-4 text-slate-500">
-            <div
-              class="flex items-center space-x-2 cursor-pointer"
-              onClick={() => {
-                store.loadMore();
-              }}
-            >
-              <Show when={response().loading} fallback={<ArrowDown class="w-6 h-6" />}>
-                <Loader class="w-6 h-6 animate-spin" />
-              </Show>
-              <div class="text-center text-xl">{response().loading ? "加载中" : "加载更多"}</div>
+          </Show>
+        }
+      >
+        <div class="w-full h-[480px] center flex items-center justify-center">
+          <div class="flex flex-col items-center justify-center text-slate-500">
+            <AlertCircle class="w-24 h-24" />
+            <div class="mt-4 flex items-center space-x-2">
+              <div class="text-xl">{response().error?.message}</div>
             </div>
           </div>
-        </Show>
+        </div>
       </Show>
       <Show when={response().noMore && !response().empty}>
         <div class="mt-4 flex justify-center py-4 text-slate-500">

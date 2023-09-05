@@ -327,7 +327,7 @@ export const DriveCard = (props: {
           </div>
           <div class="flex">
             <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" src={avatar()} alt={name()} />
-            <div class="flex-1 pr-12">
+            <div class="flex-1 w-0 pr-12">
               <div class="text-xl">{name()}</div>
               <Progress class="mt-2" store={progress} />
               <div class="mt-2">

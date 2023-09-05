@@ -899,10 +899,13 @@ export async function fetch_tv_profile(body: { tv_id: string; season_id?: string
       id: string;
       name: string;
       overview: string;
+      season_number: number;
+      season_text: string;
     }[];
     cur_season: {
       id: string;
       name: string;
+      season_text: string;
     };
     cur_season_episodes: {
       id: string;

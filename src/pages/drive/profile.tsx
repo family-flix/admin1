@@ -93,6 +93,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
   });
   const nameModifyInput = new InputCore({
     defaultValue: "",
+    onEnter() {
+      nameModifyDialog.okBtn.click();
+    },
   });
   const nameModifyDialog = new DialogCore({
     title: "修改名称",

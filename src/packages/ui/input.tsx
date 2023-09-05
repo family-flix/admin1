@@ -6,6 +6,7 @@ import { createSignal, JSX, onMount } from "solid-js";
 import { InputCore } from "@/domains/ui/input";
 import { connect } from "@/domains/ui/input/connect.web";
 import { cn } from "@/utils";
+import { effect } from "solid-js/web";
 
 const Input = (
   props: {
@@ -16,10 +17,11 @@ const Input = (
 
   let ref: HTMLInputElement;
   const [state, setState] = createSignal(store.state);
+  // const [v, setV] = createSignal();
+
   store.onStateChange((nextState) => {
     setState(nextState);
   });
-
   onMount(() => {
     const $input = ref;
     if (!$input) {
@@ -30,10 +32,11 @@ const Input = (
   });
 
   const value = () => {
-    if (typeof state().value === "string") {
-      return state().value;
+    const { type, value } = state();
+    if (type === "file") {
+      return "";
     }
-    return undefined;
+    return value;
   };
   const placeholder = () => state().placeholder;
   const disabled = () => state().disabled;
@@ -44,12 +47,13 @@ const Input = (
       ref={(e) => (ref = e)}
       class={cn(props.class)}
       style={props.style}
+      multiple
       value={value()}
       placeholder={placeholder()}
       disabled={disabled()}
       type={type()}
       onInput={(event: Event & { currentTarget: HTMLInputElement }) => {
-        // console.log("[COMPONENT]ui/input onInput");
+        console.log("[COMPONENT]ui/input onInput", event.currentTarget.value);
         store.handleChange(event);
       }}
       // onChange={(event) => {

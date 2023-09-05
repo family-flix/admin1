@@ -3,13 +3,17 @@ import { For, JSX, onMount } from "solid-js";
 import { MoreVertical } from "lucide-solid";
 
 import { Input } from "@/components/ui";
-import { InputCore, CheckboxCore, MenuCore, MenuItemCore, DropdownMenuCore } from "@/domains/ui";
+import { InputCore, CheckboxCore, MenuCore, MenuItemCore, DropdownMenuCore, SelectCore } from "@/domains/ui";
 import { TreeCore } from "@/domains/ui/tree";
 import * as TreePrimitive from "@/packages/ui/tree";
+import * as PopperPrimitive from "@/packages/ui/popper";
 import { ViewComponent } from "@/types";
 import { RequestCore } from "@/domains/request";
 import { createWithFolders, fetchTokenOfDrive } from "@/domains/drive";
 import { upload_file } from "@/services";
+import { Select } from "@/components/ui/select";
+import { SelectItemCore } from "@/domains/ui/select/item";
+import { PopperCore } from "@/domains/ui/popper";
 
 export const TestPage: ViewComponent = (props) => {
   const { app } = props;
@@ -59,17 +63,76 @@ export const TestPage: ViewComponent = (props) => {
       uploadRequest.run(body);
     },
   });
+  const options = [
+    {
+      value: 1,
+      label: "Light",
+    },
+    {
+      value: 2,
+      label: "Dark",
+    },
+  ].map((opt) => {
+    const { label, value } = opt;
+    return new SelectItemCore({
+      value,
+      label,
+    });
+  });
+  const select = new SelectCore({
+    defaultValue: null,
+    // options,
+    options: [],
+  });
+  const popper = new PopperCore({
+    side: "right",
+    align: "end",
+  });
 
   return (
     <div class="p-4 bg-white">
-      <div
+      {/* <div
         onClick={() => {
           app.tip({ text: ["Hello"] });
         }}
       >
         Click it
       </div>
-      <Input store={input} />
+      <Input store={input} /> */}
+      <div class="my-4">
+        <Select store={select}></Select>
+      </div>
+      <div
+        onClick={() => {
+          // select.select(2);
+        }}
+      >
+        选择
+      </div>
+      <div
+        onClick={() => {
+          console.log(select.value);
+        }}
+      >
+        打印
+      </div>
+      {/* <div
+        onClick={() => {
+          popper.place();
+        }}
+      >
+        Show
+      </div> */}
+      {/* <PopperPrimitive.Root>
+        <div class="ml-12 mt-12">
+          <PopperPrimitive.Anchor class="inline-block" store={popper}>
+            参考元素
+          </PopperPrimitive.Anchor>
+        </div>
+        <PopperPrimitive.Content store={popper}>
+          <div>Content after show</div>
+        </PopperPrimitive.Content>
+      </PopperPrimitive.Root> */}
       {/* <div class="flex items-center space-x-2">
         <Checkbox id="check" store={check} />
         <label html-for="check">点击选中</label>

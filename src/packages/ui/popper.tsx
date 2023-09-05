@@ -53,7 +53,7 @@ const Content = (
     store: PopperCore;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store, class: className, ref } = props;
+  const { store } = props;
   // const store = useContext(PopperContext);
   const [state, setState] = createSignal(store.state);
 
@@ -62,7 +62,9 @@ const Content = (
   store.onStateChange((nextState) => {
     setState(nextState);
   });
+
   onMount(() => {
+    console.log("[COMPONENT]PopperContent - getRect of floating", $content);
     store.setFloating({
       getRect() {
         const rect = $content.getBoundingClientRect();
@@ -81,7 +83,6 @@ const Content = (
 
   return (
     <div
-      // {...restProps}
       ref={(el) => {
         $content = el;
         if (typeof props.ref === "function") {
@@ -91,13 +92,14 @@ const Content = (
         props.ref = el;
       }}
       role={props.role}
+      // class={props.class}
+      // classList={props.classList}
       style={{
         position: strategy(),
         left: 0,
         top: 0,
-        transform: isPlaced()
-          ? `translate3d(${Math.round(x())}px, ${Math.round(y())}px, 0)`
-          : "translate3d(0, -200%, 0)", // keep off the page when measuring
+        // prettier-ignore
+        transform: isPlaced() ? `translate3d(${Math.round(x())}px, ${Math.round(y())}px, 0)` : "translate3d(0, -200%, 0)",
         "min-width": "max-content",
         "z-index": 999,
         // zIndex: contentZIndex,
@@ -108,7 +110,6 @@ const Content = (
       }}
       tabIndex={-1}
       onPointerEnter={() => {
-        // console.log("[]PopperContent - pointerEnter");
         store.enter();
       }}
       onPointerLeave={() => {
@@ -116,9 +117,8 @@ const Content = (
       }}
     >
       <div
-        // {...restProps}
         class={cn("popper__content", props.class)}
-        // class={cn("popper__content-child")}
+        classList={props.classList}
         data-side={placedSide()}
         data-align={placedAlign()}
         // style={{

@@ -217,3 +217,23 @@ export const ReportTypeTexts = {
   [ReportTypes.Question]: "问题反馈",
   [ReportTypes.Want]: "想看",
 };
+export enum SubtitleLanguages {
+  Chi = "chi",
+  Cht = "cht",
+  Eng = "eng",
+  Jpn = "jpn",
+  ChiWithEng = "chi&eng",
+}
+export const SubtitleLanguageTexts = {
+  [SubtitleLanguages.Chi]: "中文",
+  [SubtitleLanguages.Cht]: "中文繁体",
+  [SubtitleLanguages.Eng]: "英文",
+  [SubtitleLanguages.Jpn]: "日文",
+  [SubtitleLanguages.ChiWithEng]: "中英对照",
+};
+export const SubtitleLanguageOptions = Object.keys(SubtitleLanguageTexts).map((lang) => {
+  return {
+    value: lang,
+    label: SubtitleLanguageTexts[lang as keyof typeof SubtitleLanguageTexts],
+  };
+});

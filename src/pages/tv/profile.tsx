@@ -19,13 +19,23 @@ import {
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore, InputCore } from "@/domains/ui";
+import {
+  MenuItemCore,
+  ContextMenuCore,
+  ScrollViewCore,
+  DialogCore,
+  ButtonCore,
+  InputCore,
+  SelectCore,
+} from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { SelectionCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { createJob, appendAction, rootView, mediaPlayingPage, homeLayout } from "@/store";
+import { createJob, appendAction, mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
+import { Select } from "@/components/ui/select";
+import { SubtitleLanguageOptions } from "@/constants";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -39,13 +49,17 @@ export const TVProfilePage: ViewComponent = (props) => {
       if (v.seasons.length === 0) {
         return;
       }
-      curEpisodeList.setDataSource(v.curSeasonEpisodes);
-      curSeasonSelector.select(v.curSeason);
-      curEpisodeList.modifySearch((search) => {
+      curSeasonStore.select(v.curSeason);
+      curEpisodeList.modifyResponse((response) => {
         return {
-          ...search,
-          tv_id: view.query.id,
-          season_id: view.query.season_id || v.seasons[0].id,
+          ...response,
+          dataSource: v.curSeasonEpisodes,
+          initial: false,
+          noMore: false,
+          search: {
+            ...response.search,
+            season_id: response.search.season_id || v.seasons[0].id,
+          },
         };
       });
     },
@@ -93,8 +107,14 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const curSeasonSelector = new SelectionCore<SeasonInTVProfile>();
-  const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season));
+  const tmpSeasonStore = new SelectionCore<SeasonInTVProfile>();
+  const curSeasonStore = new SelectionCore<SeasonInTVProfile>();
+  const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season), {
+    search: {
+      tv_id: view.query.id,
+      season_id: view.query.season_id,
+    },
+  });
   const curEpisode = new SelectionCore<EpisodeItemInSeason>();
   const curFile = new SelectionCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
@@ -210,11 +230,11 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const filenameParseRequest = new RequestCore(parse_video_file_name);
   const subtitleValues = new SelectionCore<{
+    file: File;
+    lang?: string;
     episode_text: string;
     season_text: string;
     drive_id: string;
-    lang: string;
-    file: File;
   }>();
   const subtitleUploadDialog = new DialogCore({
     title: "上传字幕",
@@ -225,7 +245,15 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      const { drive_id, lang, episode_text, season_text, file } = subtitleValues.value;
+      const { drive_id, episode_text, season_text, file } = subtitleValues.value;
+      // console.log(subtitleLanguageSelect.value);
+      const lang = subtitleLanguageSelect.value;
+      if (!lang) {
+        app.tip({
+          text: ["请选择字幕语言"],
+        });
+        return;
+      }
       uploadRequest.run({
         tv_id: view.query.id,
         season_text,
@@ -264,14 +292,14 @@ export const TVProfilePage: ViewComponent = (props) => {
         return;
       }
       const { subtitle_lang, episode: episode_text, season: season_text } = r.data;
-      if (!subtitle_lang) {
-        app.tip({
-          text: ["文件名中没有解析出字幕语言"],
-        });
-        return;
-      }
+      // if (!subtitle_lang) {
+      //   app.tip({
+      //     text: ["文件名中没有解析出字幕语言"],
+      //   });
+      //   return;
+      // }
       const matched_episode = curEpisodeList.response.dataSource.find((episode) => {
-        console.log("[]", episode, episode_text);
+        // console.log("[]", episode, episode_text);
         const a = episode.episode_number.match(/[0-9]{1,}/);
         const b = episode_text.match(/[0-9]{1,}/);
         if (!a || !b) {
@@ -305,14 +333,28 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      subtitleValues.select({
+      const payload: {
+        file: File;
+        episode_text: string;
+        season_text: string;
+        drive_id: string;
+        lang?: string;
+      } = {
         episode_text: matched_episode.episode_number,
         season_text,
         drive_id: reference_id,
         file,
-        lang: subtitle_lang,
-      });
+      };
+      if (subtitle_lang) {
+        subtitleLanguageSelect.select(subtitle_lang);
+        payload.lang = subtitle_lang;
+      }
+      subtitleValues.select(payload);
     },
+  });
+  const subtitleLanguageSelect = new SelectCore({
+    defaultValue: null,
+    options: SubtitleLanguageOptions,
   });
   const tvDeleteBtn = new ButtonCore({
     onClick() {
@@ -397,19 +439,23 @@ export const TVProfilePage: ViewComponent = (props) => {
   const [profile, setProfile] = createSignal<TVProfile | null>(null);
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
   const [parsedSubtitle, setParsedSubtitle] = createSignal(subtitleValues.value);
-  const [curSeason, setCurSeason] = createSignal(curSeasonSelector.value);
+  const [curSeason, setCurSeason] = createSignal(curSeasonStore.value);
 
   subtitleValues.onStateChange((nextState) => {
     setParsedSubtitle(nextState);
   });
-  curSeasonSelector.onStateChange((nextState) => {
+  curSeasonStore.onStateChange((nextState) => {
     setCurSeason(nextState);
   });
   curEpisodeList.onStateChange((nextResponse) => {
     setCurEpisodeResponse(nextResponse);
   });
   curEpisodeList.onComplete(() => {
-    curSeasonSelector.select({ id: curEpisodeList.params.season_id as string, name: curSeason()?.name ?? "" });
+    curSeasonStore.select({
+      id: curEpisodeList.params.season_id as string,
+      name: tmpSeasonStore.value?.name ?? "",
+      season_text: tmpSeasonStore.value?.season_text ?? "",
+    });
   });
 
   onMount(() => {
@@ -495,6 +541,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                             event.preventDefault();
                             const { x, y } = event;
                             selectedSeason.select(season);
+                            tmpSeasonStore.select(season);
                             seasonContextMenu.show({
                               x,
                               y,
@@ -597,14 +644,14 @@ export const TVProfilePage: ViewComponent = (props) => {
       <TMDBSearcherDialog store={tmdbSearchDialog} />
       <Dialog store={tvDeleteConfirmDialog}>
         <div class="">
-          <div>确认删除「{curSeason()?.name}」吗？</div>
+          <div>确认删除「{curSeason()?.season_text}」吗？</div>
           <div>仅删除本地索引记录</div>
           <div>删除云盘文件请到云盘详情页操作</div>
         </div>
       </Dialog>
       <Dialog store={seasonDeletingConfirmDialog}>
         <div class="space-y-1">
-          <div>确认删除「{curSeason()?.name}」吗？</div>
+          <div>确认删除「{curSeason()?.season_text}」吗？</div>
           <div>同时还会删除关联的剧集</div>
           <div>请仅在需要重新索引关联的文件时进行删除操作</div>
         </div>
@@ -614,7 +661,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         <div class="mt-4 space-y-2">
           {/* <div class="flex items-center">
             <div class="w-6">名称</div>
-            <div>{parsedSubtitle()?.episode_text}</div>
+            <div>{parsedSubtitle()?.name}</div>
           </div> */}
           <div class="flex items-center">
             <div class="w-12">季</div>
@@ -626,7 +673,9 @@ export const TVProfilePage: ViewComponent = (props) => {
           </div>
           <div class="flex items-center">
             <div class="w-12">语言</div>
-            <div>{parsedSubtitle()?.lang}</div>
+            <div>
+              <Select store={subtitleLanguageSelect} />
+            </div>
           </div>
         </div>
       </Dialog>

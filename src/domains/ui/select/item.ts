@@ -1,4 +1,6 @@
-// @ts-nocheck
+/**
+ * @file Select 选项
+ */
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
@@ -12,64 +14,70 @@ enum Events {
   Focus,
   Blur,
 }
-type TheTypesOfEvents = {
-  [Events.StateChange]: SelectItemState;
+type TheTypesOfEvents<T> = {
+  [Events.StateChange]: SelectItemState<T>;
   [Events.Select]: void;
   [Events.Leave]: void;
   [Events.Enter]: void;
   [Events.Focus]: void;
   [Events.Blur]: void;
 };
-type SelectItemState = {
+type SelectItemState<T> = {
   /** 标志唯一值 */
-  value: string;
+  value: T | null;
   selected: boolean;
   focused: boolean;
   disabled: boolean;
 };
-export class SelectItemCore extends BaseDomain<TheTypesOfEvents> {
+type SelectItemProps<T> = {
+  name?: string;
+  label: string;
+  value: T;
+  selected?: boolean;
+  focused?: boolean;
+  disabled?: boolean;
+  $node?: () => HTMLElement;
+  getRect?: () => DOMRect;
+  getStyles?: () => CSSStyleDeclaration;
+};
+
+export class SelectItemCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   name = "SelectItemCore";
   debug = true;
 
-  value: unknown = undefined;
-  state: SelectItemState = {
-    value: undefined,
-    selected: false,
-    focused: false,
-    disabled: false,
-  };
+  text: string;
+  value: T | null = null;
+  selected: boolean = false;
+  focused: boolean = false;
+  disabled: boolean = false;
 
-  text: {
-    $node: () => HTMLElement;
-    getRect: () => DOMRect;
-    getStyles: () => CSSStyleDeclaration;
-  } | null;
+  // text: {
+  //   $node: () => HTMLElement;
+  //   getRect: () => DOMRect;
+  //   getStyles: () => CSSStyleDeclaration;
+  // } | null = null;
 
   _leave = false;
   _enter = false;
 
-  constructor(
-    options: Partial<{
-      name: string;
-      value: string;
-      state: Partial<SelectItemState>;
-      $node: () => HTMLElement;
-      getRect: () => DOMRect;
-      getStyles: () => CSSStyleDeclaration;
-    }> = {}
-  ) {
+  get state(): SelectItemState<T> {
+    return {
+      value: this.value,
+      selected: this.selected,
+      focused: this.focused,
+      disabled: this.disabled,
+    };
+  }
+
+  constructor(options: Partial<{ _name: string }> & SelectItemProps<T>) {
     super(options);
-    const { name, value, state, $node, getRect, getStyles } = options;
-    // console.log("[SelectItemCore]constructor", state);
-    this.state.value = value;
+
+    const { name, label, value, $node, getRect, getStyles } = options;
+    this.text = label;
+    this.value = value;
     if (name) {
       this.name = `${this.name}_${name}`;
     }
-    this.value = value;
-    this.state = {
-      ...this.state,
-      ...state,
-    };
     if ($node) {
       this.$node = $node;
     }
@@ -95,7 +103,7 @@ export class SelectItemCore extends BaseDomain<TheTypesOfEvents> {
   get offsetTop() {
     return this.$node()?.offsetTop ?? 0;
   }
-  setText(text: SelectItemCore["text"]) {
+  setText(text: SelectItemCore<T>["text"]) {
     this.text = text;
   }
   select() {
@@ -147,19 +155,19 @@ export class SelectItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Enter);
   }
 
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    this.on(Events.StateChange, handler);
+  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
   }
-  onLeave(handler: Handler<TheTypesOfEvents[Events.Leave]>) {
-    this.on(Events.Leave, handler);
+  onLeave(handler: Handler<TheTypesOfEvents<T>[Events.Leave]>) {
+    return this.on(Events.Leave, handler);
   }
-  onEnter(handler: Handler<TheTypesOfEvents[Events.Enter]>) {
-    this.on(Events.Enter, handler);
+  onEnter(handler: Handler<TheTypesOfEvents<T>[Events.Enter]>) {
+    return this.on(Events.Enter, handler);
   }
-  onFocus(handler: Handler<TheTypesOfEvents[Events.Focus]>) {
-    this.on(Events.Focus, handler);
+  onFocus(handler: Handler<TheTypesOfEvents<T>[Events.Focus]>) {
+    return this.on(Events.Focus, handler);
   }
-  onBlur(handler: Handler<TheTypesOfEvents[Events.Blur]>) {
-    this.on(Events.Blur, handler);
+  onBlur(handler: Handler<TheTypesOfEvents<T>[Events.Blur]>) {
+    return this.on(Events.Blur, handler);
   }
 }

@@ -1,6 +1,7 @@
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
+import { Rect } from "@/types";
 
 import type {
   Alignment,
@@ -14,7 +15,6 @@ import type {
   Axis,
   Length,
 } from "./types";
-import { Rect } from "@/types";
 
 const SIDE_OPTIONS = ["top", "right", "bottom", "left"] as const;
 const ALIGN_OPTIONS = ["start", "center", "end"] as const;
@@ -180,7 +180,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
   setConfig(config: { placement?: Placement; strategy?: Strategy }) {}
   /** 计算浮动元素位置 */
   async place() {
-    // console.log(...this.log("place", this.reference, this.floating));
+    console.log(...this.log("place", this.reference, this.floating));
     this.middleware = [
       // arrow({
       //   element: this.floating,

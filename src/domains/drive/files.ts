@@ -75,7 +75,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   createColumn(folder: { file_id: string; name: string }) {
     const { file_id } = folder;
     const list = new ListCore<typeof fetchDriveFiles, AliyunDriveFile>(new RequestCore(fetchDriveFiles), {
-      pageSize: 30,
+      pageSize: 50,
       search: {
         drive_id: this.id,
         file_id,

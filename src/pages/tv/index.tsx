@@ -80,7 +80,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetch_partial_season);
-  const tvSelection = new SelectionCore<TVSeasonItem>();
+  const curSeasonStore = new SelectionCore<TVSeasonItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
       seasonList.search({
@@ -128,7 +128,7 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const driveSelection = new SelectionCore<DriveCore>({
+  const curDriveStore = new SelectionCore<DriveCore>({
     onChange(v) {
       setCurDrive(v);
     },
@@ -197,10 +197,10 @@ export const TVManagePage: ViewComponent = (props) => {
       createJob({
         job_id: r.job_id,
         onFinish() {
-          if (!tvSelection.value) {
+          if (!curSeasonStore.value) {
             return;
           }
-          const { name } = tvSelection.value;
+          const { name } = curSeasonStore.value;
           app.tip({
             text: [`完成电视剧 '${name}' 归档`],
           });
@@ -218,7 +218,7 @@ export const TVManagePage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择文件夹"] });
         return;
       }
-      if (!tvSelection.value) {
+      if (!curSeasonStore.value) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
       }
@@ -228,7 +228,7 @@ export const TVManagePage: ViewComponent = (props) => {
       }
       const { file_id, file_name } = record;
       addFileSyncTask.run({
-        tv_id: tvSelection.value.tv_id,
+        tv_id: curSeasonStore.value.tv_id,
         url: sharedResourceUrlInput.value,
         target_file_id: file_id,
         target_file_name: file_name,
@@ -236,7 +236,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const refreshPartialTV = async (id?: string) => {
-    const season_id = id || tvSelection.value?.id;
+    const season_id = id || curSeasonStore.value?.id;
     if (!season_id) {
       return Result.Err("缺少季 id");
     }
@@ -281,7 +281,7 @@ export const TVManagePage: ViewComponent = (props) => {
   const folderCanAddSyncTaskList = new ListCore(new RequestCore(fetch_folder_can_add_sync_task));
   const dialog = new TMDBSearcherDialogCore({
     onOk(searchedTV) {
-      const tvId = tvSelection.value?.tv_id;
+      const tvId = curSeasonStore.value?.tv_id;
       if (!tvId) {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
@@ -326,12 +326,12 @@ export const TVManagePage: ViewComponent = (props) => {
   const sharedResource = new SharedResourceCore();
   const sharedResourceBtn = new ButtonCore({
     onClick() {
-      if (!tvSelection.value) {
+      if (!curSeasonStore.value) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
       }
       addFileSyncTask.run({
-        tv_id: tvSelection.value.tv_id,
+        tv_id: curSeasonStore.value.tv_id,
         url: sharedResourceUrlInput.value,
       });
     },
@@ -339,19 +339,23 @@ export const TVManagePage: ViewComponent = (props) => {
   const transferConfirmDialog = new DialogCore({
     title: "移动到其他云盘",
     onOk() {
-      if (!driveSelection.value) {
+      if (!curDriveStore.value) {
         app.tip({ text: ["请先选择目标云盘"] });
         return;
       }
-      const curTV = tvSelection.value;
-      if (!curTV) {
+      const curSeason = curSeasonStore.value;
+      if (!curSeason) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
       }
       transferRequest.run({
-        season_id: curTV.id,
-        target_drive_id: driveSelection.value.id,
+        season_id: curSeason.id,
+        target_drive_id: curDriveStore.value.id,
       });
+    },
+    onCancel() {
+      curDriveStore.clear();
+      transferConfirmDialog.hide();
     },
   });
   const folderSearcher = new FileSearcherCore({
@@ -365,7 +369,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      tvSelection.select(record);
+      curSeasonStore.select(record);
       transferConfirmDialog.show();
     },
   });
@@ -374,7 +378,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      tvSelection.select(record);
+      curSeasonStore.select(record);
       addSyncTaskDialog.show();
     },
   });
@@ -383,7 +387,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      tvSelection.select(record);
+      curSeasonStore.select(record);
       addSyncTaskDialog.setTitle("修改更新任务");
       addSyncTaskDialog.show();
     },
@@ -393,7 +397,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      tvSelection.select(record);
+      curSeasonStore.select(record);
       runFileSyncTask.run({ id: record.tv_id });
     },
   });
@@ -499,7 +503,7 @@ export const TVManagePage: ViewComponent = (props) => {
   // const [resourceState, setResourceState] = createSignal(sharedResource.state);
   const [tips, setTips] = createSignal<string[]>([]);
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
-  const [curDrive, setCurDrive] = createSignal(driveSelection.value);
+  const [curDrive, setCurDrive] = createSignal(curDriveStore.value);
   const [hasSearch, setHasSearch] = createSignal(false);
   const [sharedFileSaveResponse, setSharedFileSaveResponse] = createSignal(sharedFileSaveList.response);
   // effect(() => {
@@ -760,7 +764,6 @@ export const TVManagePage: ViewComponent = (props) => {
                                     归档
                                   </Button>
                                 </Show>
-
                                 <Show
                                   when={sync_task}
                                   fallback={
@@ -858,25 +861,28 @@ export const TVManagePage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={transferConfirmDialog}>
         <div>
-          <div>选择了 {curDrive()?.name}</div>
-          <div class="mt-8 space-y-4 h-[320px] overflow-y-auto">
+          <div class="mt-2 space-y-4 h-[320px] overflow-y-auto">
             <For each={driveResponse().dataSource}>
               {(drive) => {
                 const { id, name, state } = drive;
                 return (
-                  <div>
-                    {id}
+                  <div
+                    classList={{
+                      "bg-gray-100 border rounded-sm p-2 cursor-pointer hover:bg-gray-200": true,
+                      "border-green-500": curDrive()?.id === id,
+                    }}
+                    onClick={() => {
+                      curDriveStore.select(drive);
+                    }}
+                  >
                     <div
-                      class={cn("py-2 cursor-pointer", {
-                        underline: curDrive()?.id === id,
-                      })}
-                      onClick={() => {
-                        driveSelection.select(drive);
+                      classList={{
+                        "py-2": true,
                       }}
                     >
-                      <div class="text-lg">{name}</div>
+                      <div class="text-xl">{name}</div>
                     </div>
-                    <div>
+                    <div class="text-slate-500 text-sm">
                       {state.used_size}/{state.total_size}
                     </div>
                   </div>
