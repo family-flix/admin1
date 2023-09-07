@@ -11,7 +11,7 @@ import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { consumeAction, homeLayout, homeMovieProfilePage, pendingActions } from "@/store";
 
@@ -25,7 +25,7 @@ export const MovieManagePage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
-  const movieSelection = new SelectionCore<MovieItem>();
+  const movieSelection = new RefCore<MovieItem>();
   const bindSearchedMovieForMovie = new RequestCore(bind_profile_for_unknown_movie, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });

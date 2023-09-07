@@ -146,7 +146,7 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
     this.list.refresh();
   }
   input(name: string) {
-    this.form.input.change(name);
+    this.form.input.setValue(name);
   }
 
   onOk(handler: Handler<TheTypesOfEvents[Events.Ok]>) {

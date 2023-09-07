@@ -1,8 +1,8 @@
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { AliyunDriveFile } from "@/domains/drive";
 import { createSignal } from "solid-js";
 
-export const DriveFileCard = (props: { store: SelectionCore<AliyunDriveFile> }) => {
+export const DriveFileCard = (props: { store: RefCore<AliyunDriveFile> }) => {
   const { store } = props;
   const [state, setState] = createSignal(store.value);
 

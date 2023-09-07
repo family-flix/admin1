@@ -18,13 +18,13 @@ import { clamp } from "./utils";
 const CONTENT_MARGIN = 10;
 enum Events {
   StateChange,
-  ValueChange,
+  Change,
   Focus,
   Placed,
 }
 type TheTypesOfEvents<T> = {
   [Events.StateChange]: SelectState<T>;
-  [Events.ValueChange]: T;
+  [Events.Change]: T | null;
   [Events.Focus]: void;
   [Events.Placed]: void;
 };
@@ -44,7 +44,8 @@ type SelectState<T> = {
 type SelectProps<T> = {
   defaultValue: T | null;
   // options: SelectItemCore<T>[];
-  options: { value: T; label: string }[];
+  options?: { value: T; label: string }[];
+  onChange?: (v: T | null) => void;
 };
 
 export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
@@ -99,12 +100,17 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   constructor(props: Partial<{ _name: string }> & SelectProps<T>) {
     super(props);
 
-    const { defaultValue, options } = props;
-    this.value = defaultValue;
+    const { defaultValue, options = [], onChange } = props;
+    console.log("[DOMAIN]ui/select/index - constructor", defaultValue);
     this.options = options.map((opt) => {
       return opt;
     });
-
+    this.value = defaultValue;
+    const matched = this.options.find((opt) => opt.value === defaultValue);
+    if (matched) {
+      this.emit(Events.StateChange, { ...this.state });
+      this.emit(Events.Change, defaultValue);
+    }
     this.popper = new PopperCore();
     this.layer = new DismissableLayerCore();
     this.collection = new CollectionCore();
@@ -125,6 +131,9 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
       console.log(...this.log("this.layer.onDismiss"));
       this.hide();
     });
+    if (onChange) {
+      this.onChange(onChange);
+    }
   }
 
   setTriggerPointerDownPos(pos: { x: number; y: number }) {
@@ -208,7 +217,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     // this.value = item.value;
     // this.state.value = item.value;
     this.emit(Events.StateChange, { ...this.state });
-    this.emit(Events.ValueChange, value);
+    this.emit(Events.Change, value);
     // item.select/unselect 必须放在 select.emit 后面
     for (let i = 0; i < this.options.length; i += 1) {
       const it = this.options[i];
@@ -221,6 +230,40 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   focus() {
     this.emit(Events.Focus);
+  }
+  setOptions(options: NonNullable<SelectProps<T>["options"]>) {
+    this.options = options;
+    if (this.value === null) {
+      return;
+    }
+    const matched = this.options.find((opt) => opt.value === this.value);
+    if (matched) {
+      return;
+    }
+    this.value = null;
+    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, this.value);
+  }
+  setValue(v: T | null) {
+    if (v === null) {
+      this.value = v;
+      this.emit(Events.StateChange, { ...this.state });
+      this.emit(Events.Change, v);
+      return;
+    }
+    const matched = this.options.find((opt) => opt.value === v);
+    console.log("[DOMAIN]ui/select - setValue", v, matched, this.options);
+    if (!matched) {
+      return;
+    }
+    this.value = v;
+    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, v);
+  }
+  clear() {
+    this.value = null;
+    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, this.value);
   }
   setPosition() {
     // const { dir } = this.state;
@@ -373,13 +416,104 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);
   }
-  onValueChange(handler: Handler<TheTypesOfEvents<T>[Events.ValueChange]>) {
-    return this.on(Events.ValueChange, handler);
+  onValueChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+    return this.on(Events.Change, handler);
   }
-  onChange(handler: Handler<TheTypesOfEvents<T>[Events.ValueChange]>) {
-    return this.on(Events.ValueChange, handler);
+  onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+    return this.on(Events.Change, handler);
   }
   onFocus(handler: Handler<TheTypesOfEvents<T>[Events.Focus]>) {
     return this.on(Events.Focus, handler);
+  }
+}
+
+type SelectInListProps<T = unknown> = {
+  onChange: (record: T) => void;
+} & SelectProps<T>;
+type TheTypesInListOfEvents<K extends object, T> = {
+  [Events.Change]: [K, T | null];
+  [Events.StateChange]: SelectProps<T>;
+};
+
+export class SelectInListCore<K extends object, T> extends BaseDomain<TheTypesInListOfEvents<K, T>> {
+  options: SelectProps<T>["options"] = [];
+  list: SelectCore<T>[] = [];
+  cached = new WeakMap<K, SelectCore<T>>();
+  values: Map<K, T | null> = new Map();
+
+  constructor(props: Partial<{ _name: string } & SelectInListProps<T>> = {}) {
+    super(props);
+
+    const { options = [] } = props;
+    this.options = options;
+  }
+
+  bind(
+    unique_id: K,
+    extra?: {
+      defaultValue: T | null;
+    }
+  ) {
+    const { defaultValue } = extra || { defaultValue: null };
+    console.log("[DOMAIN]ui/select/index - bind", defaultValue);
+    const existing = this.cached.get(unique_id);
+    if (existing) {
+      return existing;
+    }
+    const select = new SelectCore<T>({
+      defaultValue,
+      options: this.options,
+      onChange: (value) => {
+        this.values.set(unique_id, value);
+        this.emit(Events.Change, [unique_id, value]);
+      },
+    });
+    this.list.push(select);
+    this.values.set(unique_id, defaultValue);
+    this.cached.set(unique_id, select);
+    return select;
+  }
+  setOptions(options: NonNullable<SelectProps<T>["options"]>) {
+    if (this.list.length === 0) {
+      this.options = options;
+      return;
+    }
+    for (let i = 0; i < this.list.length; i += 1) {
+      const item = this.list[i];
+      item.setOptions(options);
+    }
+  }
+  setValue(v: T | null) {
+    for (let i = 0; i < this.list.length; i += 1) {
+      const item = this.list[i];
+      item.setValue(v);
+    }
+  }
+  getValue(key: K) {
+    return this.values.get(key) ?? null;
+  }
+  clear() {
+    this.list = [];
+    this.cached = new WeakMap();
+    this.values = new Map();
+  }
+  toJson<R>(handler: (value: [K, T | null]) => R) {
+    const result: R[] = [];
+    for (const [obj, value] of this.values) {
+      const r = handler([obj, value]);
+      result.push(r);
+    }
+    return result;
+  }
+  /** 清空触发点击事件时保存的按钮 */
+  // clear() {
+  //   this.cur = null;
+  // }
+
+  onChange(handler: Handler<TheTypesInListOfEvents<K, T>[Events.Change]>) {
+    this.on(Events.Change, handler);
+  }
+  onStateChange(handler: Handler<TheTypesInListOfEvents<K, T>[Events.StateChange]>) {
+    this.on(Events.StateChange, handler);
   }
 }

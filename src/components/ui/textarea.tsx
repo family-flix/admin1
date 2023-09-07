@@ -30,7 +30,7 @@ const Textarea = (props: { store: InputCore<string> } & JSX.HTMLAttributes<HTMLT
       disabled={disabled()}
       onInput={(event: Event & { currentTarget: HTMLTextAreaElement }) => {
         const { value } = event.currentTarget;
-        store.change(value);
+        store.setValue(value);
       }}
       {...restProps}
     />

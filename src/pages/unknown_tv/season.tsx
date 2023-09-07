@@ -6,7 +6,7 @@ import { Brush, RotateCw, Trash } from "lucide-solid";
 
 import { Button, Dialog, Input, ListView, LazyImage } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, InputCore, DialogCore } from "@/domains/ui";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import {
@@ -29,7 +29,7 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
       list.refresh();
     },
   });
-  const cur = new SelectionCore<UnknownSeasonItem>();
+  const cur = new RefCore<UnknownSeasonItem>();
   const bindSeasonRequest = new RequestCore(update_unknown_season_number, {
     onLoading(loading) {
       bindSeasonDialog.okBtn.setLoading(loading);

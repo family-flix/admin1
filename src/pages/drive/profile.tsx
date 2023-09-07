@@ -8,7 +8,7 @@ import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView } from "@/c
 import { List } from "@/components/List";
 import { DialogCore, DropdownMenuCore, ButtonCore, InputCore, MenuItemCore, ScrollViewCore } from "@/domains/ui";
 import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
 import { createJob, homeLayout } from "@/store";
@@ -32,8 +32,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
   // const input = new InputCore({
   //   defaultValue: "",
   // });
-  const curFileWithPosition = new SelectionCore<[AliyunDriveFile, [number, number]]>();
-  const curFile = new SelectionCore<AliyunDriveFile>();
+  const curFileWithPosition = new RefCore<[AliyunDriveFile, [number, number]]>();
+  const curFile = new RefCore<AliyunDriveFile>();
   // const btn = new ButtonCore({
   //   onClick() {
   //     if (!input.value) {
@@ -200,7 +200,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       const [file] = driveFileManage.virtualSelectedFolder;
       curFileWithPosition.select(driveFileManage.virtualSelectedFolder);
       nameModifyDialog.setTitle(`修改 '${file.name}' 名称`);
-      nameModifyInput.change(file.name);
+      nameModifyInput.setValue(file.name);
       nameModifyDialog.show();
       fileMenu.hide();
     },

@@ -18,7 +18,7 @@ import { DialogCore, ButtonCore, ScrollViewCore, InputCore } from "@/domains/ui"
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { appendAction, homeLayout, mediaPlayingPage, rootView } from "@/store";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -65,7 +65,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const subtitleValues = new SelectionCore<{ drive_id: string; lang: string; file: File }>();
+  const subtitleValues = new RefCore<{ drive_id: string; lang: string; file: File }>();
   const subtitleUploadInput = new InputCore({
     defaultValue: [],
     placeholder: "上传字幕文件",

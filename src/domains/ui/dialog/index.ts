@@ -39,7 +39,7 @@ type DialogState = {
   title: string;
   footer?: boolean;
 };
-type DialogProps = {
+export type DialogProps = {
   title?: string;
   footer?: boolean;
   onCancel?: () => void;

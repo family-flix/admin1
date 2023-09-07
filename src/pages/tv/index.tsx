@@ -59,7 +59,7 @@ import {
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { SharedResourceCore, fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { DriveCore } from "@/domains/drive";
@@ -80,7 +80,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetch_partial_season);
-  const curSeasonStore = new SelectionCore<TVSeasonItem>();
+  const curSeasonStore = new RefCore<TVSeasonItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
       seasonList.search({
@@ -128,7 +128,7 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const curDriveStore = new SelectionCore<DriveCore>({
+  const curDriveStore = new RefCore<DriveCore>({
     onChange(v) {
       setCurDrive(v);
     },
@@ -438,7 +438,7 @@ export const TVManagePage: ViewComponent = (props) => {
   const addSyncFromSharedRecordBtn = new ButtonInListCore<SharedFileSaveItem>({
     onClick(record) {
       sharedFileSaveListDialog.hide();
-      sharedResourceUrlInput.change(record.url);
+      sharedResourceUrlInput.setValue(record.url);
       sharedResourceBtn.click();
     },
   });

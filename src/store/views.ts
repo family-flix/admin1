@@ -26,6 +26,8 @@ import { RegisterPage } from "@/pages/register";
 import { LoginPage } from "@/pages/login";
 import { HomeReportListPage } from "@/pages/report";
 import { HomePermissionPage } from "@/pages/permission";
+import { HomeSubtitleUploadPage } from "@/pages/subtitle/add";
+import { HomeSubtitleListPage } from "@/pages/subtitle";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -202,6 +204,22 @@ export const homeReportListPage = new RouteViewCore({
     return HomeReportListPage;
   },
 });
+export const homeSubtitleListPage = new RouteViewCore({
+  key: "/home/subtitle",
+  title: "字幕列表",
+  component: async () => {
+    // const { LoginPage } = await import("@/pages/login");
+    return HomeSubtitleListPage;
+  },
+});
+export const homeSubtitleAddingPage = new RouteViewCore({
+  key: "/home/subtitle_upload",
+  title: "上传字幕",
+  component: async () => {
+    // const { LoginPage } = await import("@/pages/login");
+    return HomeSubtitleUploadPage;
+  },
+});
 export const homeLayout = new RouteViewCore({
   key: "/home",
   title: "首页",
@@ -222,6 +240,8 @@ export const homeLayout = new RouteViewCore({
     homeUnknownMediaLayout,
     homeReportListPage,
     homeTransferPage,
+    homeSubtitleAddingPage,
+    homeSubtitleListPage,
     homeFilenameParsingPage,
     driveProfilePage,
   ],

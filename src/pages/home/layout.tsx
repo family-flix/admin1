@@ -38,7 +38,14 @@ import {
   homeTransferPage,
   homeUnknownMediaLayout,
 } from "@/store/views";
-import { homeLayout, homePermissionListPage, homeReportListPage, onJobsChange } from "@/store";
+import {
+  homeLayout,
+  homePermissionListPage,
+  homeReportListPage,
+  homeSubtitleAddingPage,
+  homeSubtitleListPage,
+  onJobsChange,
+} from "@/store";
 import { cn, sleep } from "@/utils";
 import { fetch_settings, notify_test, update_settings } from "@/services";
 
@@ -168,8 +175,8 @@ export const HomeLayout: ViewComponent = (props) => {
       settingsBtn.setLoading(loading);
     },
     onSuccess(v) {
-      notify1TokenInput.change(v.push_deer_token);
-      filenameParseRuleInput.change(v.extra_filename_rules);
+      notify1TokenInput.setValue(v.push_deer_token);
+      filenameParseRuleInput.setValue(v.extra_filename_rules);
       settingsDialog.show();
     },
     onFailed(error) {
@@ -215,6 +222,11 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
       view: homeMovieListPage,
+    },
+    {
+      text: "字幕管理",
+      icon: <Film class="w-6 h-6" />,
+      view: homeSubtitleListPage,
     },
     {
       text: "未识别影视剧",

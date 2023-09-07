@@ -16,7 +16,7 @@ import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSea
 import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 
 export const UnknownMoviePage: ViewComponent = (props) => {
@@ -32,7 +32,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       list.refresh();
     },
   });
-  const cur = new SelectionCore<UnknownMovieItem>();
+  const cur = new RefCore<UnknownMovieItem>();
   const selectMatchedProfileBtn = new ButtonInListCore<UnknownMovieItem>({
     onClick(record) {
       cur.select(record);

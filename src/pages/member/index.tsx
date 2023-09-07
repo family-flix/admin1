@@ -18,7 +18,7 @@ import { Qrcode } from "@/components/Qrcode";
 import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxGroupCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { MultipleSelectionCore } from "@/domains/multiple";
@@ -47,7 +47,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const memberSelect = new SelectionCore<MemberItem>();
+  const memberSelect = new RefCore<MemberItem>();
   const generateToken = new RequestCore(create_member_auth_link, {
     onLoading(loading) {
       generateTokenBtn.setLoading(loading);
@@ -73,7 +73,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       memberList.refresh();
     },
   });
-  const curMember = new SelectionCore<MemberItem>();
+  const curMember = new RefCore<MemberItem>();
   const addMemberDialog = new DialogCore({
     title: "新增成员",
     onOk() {

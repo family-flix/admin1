@@ -29,7 +29,7 @@ import {
   SelectCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { createJob, appendAction, mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
@@ -107,16 +107,16 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const tmpSeasonStore = new SelectionCore<SeasonInTVProfile>();
-  const curSeasonStore = new SelectionCore<SeasonInTVProfile>();
+  const tmpSeasonStore = new RefCore<SeasonInTVProfile>();
+  const curSeasonStore = new RefCore<SeasonInTVProfile>();
   const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season), {
     search: {
       tv_id: view.query.id,
       season_id: view.query.season_id,
     },
   });
-  const curEpisode = new SelectionCore<EpisodeItemInSeason>();
-  const curFile = new SelectionCore<EpisodeItemInSeason["sources"][number]>();
+  const curEpisode = new RefCore<EpisodeItemInSeason>();
+  const curFile = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
   const updateTVProfileRequest = new RequestCore(refresh_tv_profile, {
     onLoading(loading) {
@@ -229,7 +229,7 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const filenameParseRequest = new RequestCore(parse_video_file_name);
-  const subtitleValues = new SelectionCore<{
+  const subtitleValues = new RefCore<{
     file: File;
     lang?: string;
     episode_text: string;
@@ -291,65 +291,24 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      const { subtitle_lang, episode: episode_text, season: season_text } = r.data;
-      // if (!subtitle_lang) {
-      //   app.tip({
-      //     text: ["文件名中没有解析出字幕语言"],
-      //   });
-      //   return;
+      // const { subtitle_lang, episode: episode_text, season: season_text } = r.data;
+      // const payload: {
+      //   file: File;
+      //   episode_text: string;
+      //   season_text: string;
+      //   drive_id: string;
+      //   lang?: string;
+      // } = {
+      //   episode_text: matched_episode.episode_number,
+      //   season_text,
+      //   drive_id: reference_id,
+      //   file,
+      // };
+      // if (subtitle_lang) {
+      //   subtitleLanguageSelect.select(subtitle_lang);
+      //   payload.lang = subtitle_lang;
       // }
-      const matched_episode = curEpisodeList.response.dataSource.find((episode) => {
-        // console.log("[]", episode, episode_text);
-        const a = episode.episode_number.match(/[0-9]{1,}/);
-        const b = episode_text.match(/[0-9]{1,}/);
-        if (!a || !b) {
-          return false;
-        }
-        if (parseInt(a[0]) === parseInt(b[0])) {
-          return true;
-        }
-        return episode.episode_number === episode_text;
-      });
-      if (!matched_episode) {
-        app.tip({
-          text: ["文件名中没有解析出集数"],
-        });
-        return;
-      }
-      // @todo 还需要判断季是否匹配
-      const { sources } = matched_episode;
-      if (sources.length === 0) {
-        app.tip({
-          text: ["没有可播放源"],
-        });
-        return;
-      }
-      const reference_id = sources[0].drive.id;
-      // 使用 every 方法遍历数组，检查每个元素的 drive.id 是否和参考 id 相同
-      const all_ids_equal = sources.every((source) => source.drive.id === reference_id);
-      if (!all_ids_equal) {
-        app.tip({
-          text: ["视频源在多个云盘内，请手动选择上传至哪个云盘"],
-        });
-        return;
-      }
-      const payload: {
-        file: File;
-        episode_text: string;
-        season_text: string;
-        drive_id: string;
-        lang?: string;
-      } = {
-        episode_text: matched_episode.episode_number,
-        season_text,
-        drive_id: reference_id,
-        file,
-      };
-      if (subtitle_lang) {
-        subtitleLanguageSelect.select(subtitle_lang);
-        payload.lang = subtitle_lang;
-      }
-      subtitleValues.select(payload);
+      // subtitleValues.select(payload);
     },
   });
   const subtitleLanguageSelect = new SelectCore({
@@ -373,7 +332,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       seasonDeleteRequest.run({ season_id: view.query.season_id });
     },
   });
-  const selectedSeason = new SelectionCore<{ id: string; name: string }>();
+  const selectedSeason = new RefCore<{ id: string; name: string }>();
   const deleteSeasonRequest = new RequestCore(deleteSeason, {
     onLoading(loading) {
       seasonDeletingConfirmDialog.okBtn.setLoading(loading);

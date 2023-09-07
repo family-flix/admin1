@@ -1279,3 +1279,102 @@ export function addPermission(values: { desc: string }) {
   };
   return request.post("/api/admin/permission/add", body);
 }
+
+/**
+ * 校验字幕文件名是否合法
+ */
+export function validateSubtitleFiles(values: { tv_id?: string; filenames: string[] }) {
+  const { tv_id, filenames } = values;
+  return request.post<{
+    files: {
+      filename: string;
+      season: {
+        id: string;
+        name: string;
+      } | null;
+      season_text: string;
+      episode: {
+        id: string;
+        name: string;
+      } | null;
+      episode_text: string;
+      language: string;
+    }[];
+    tvs: {
+      id: string;
+      name: string;
+      original_name: string;
+      poster_path: string;
+      seasons: {
+        id: string;
+        season_text: string;
+      }[];
+      episodes: {
+        id: string;
+        episode_text: string;
+      }[];
+    }[];
+    drives: {
+      id: string;
+    }[];
+  }>("/api/admin/subtitle/validate", {
+    tv_id,
+    filenames,
+  });
+}
+
+export function batchUploadSubtitles(params: {
+  tv_id: string;
+  drive_id: string;
+  files: {
+    filename: string;
+    season_id: string;
+    episode_id: string;
+    language: string;
+    file: File;
+  }[];
+}) {
+  const { tv_id, drive_id, files } = params;
+  const body = new FormData();
+  for (const payload of files) {
+    const { file, ...restPayload } = payload;
+    const { episode_id } = restPayload;
+    if (payload.file) {
+      body.append(episode_id, payload.file);
+    }
+    body.append("payloads", JSON.stringify(restPayload));
+  }
+  body.append("drive", drive_id);
+  body.append("tv", tv_id);
+  const search = query_stringify({
+    tv_id,
+    drive_id,
+  });
+  return request.post(`/api/admin/subtitle/batch_add?${search}`, body);
+}
+
+export function fetchSubtitleList(params: FetchParams) {
+  return request.post<
+    ListResponse<{
+      id: string;
+      name: string;
+      poster_path: string;
+      episodes: {
+        id: string;
+        episode_text: string;
+        subtitles: {
+          id: string;
+          file_id: string;
+          name: string;
+          language: string;
+        }[];
+      }[];
+    }>
+  >("/api/admin/subtitle/list", params);
+}
+export type SubtitleItem = RequestedResource<typeof fetchSubtitleList>["list"][number];
+
+export function deleteSubtitle(values: { subtitle_id: string }) {
+  const { subtitle_id } = values;
+  return request.get(`/api/admin/subtitle/${subtitle_id}/delete`);
+}

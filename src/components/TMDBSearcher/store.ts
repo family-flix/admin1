@@ -84,7 +84,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     this.tmdb.list.refresh();
   }
   input(name: string) {
-    this.tmdb.input.change(name);
+    this.tmdb.input.setValue(name);
   }
 
   onOk(handler: Handler<TheTypesOfEvents[Events.Ok]>) {

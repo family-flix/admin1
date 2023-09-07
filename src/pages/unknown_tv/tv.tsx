@@ -10,7 +10,7 @@ import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSea
 import { ButtonCore, ButtonInListCore, DialogCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 
 export const UnknownTVPage: ViewComponent = (props) => {
@@ -55,7 +55,7 @@ export const UnknownTVPage: ViewComponent = (props) => {
       tvDeletingConfirmDialog.show();
     },
   });
-  const cur = new SelectionCore<UnknownTVItem>();
+  const cur = new RefCore<UnknownTVItem>();
   const bindTVBtn = new ButtonInListCore<UnknownTVItem>({
     onClick(record) {
       cur.select(record);

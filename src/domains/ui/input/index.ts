@@ -39,7 +39,7 @@ type InputState<T> = {
 };
 
 export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
-  _defaultValue: T;
+  defaultValue: T;
   value: T;
   placeholder: string;
   disabled: boolean;
@@ -77,7 +77,7 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.placeholder = placeholder;
     this.type = type;
     this.disabled = disabled;
-    this._defaultValue = defaultValue;
+    this.defaultValue = defaultValue;
     this.value = defaultValue;
     this.valueUsed = defaultValue;
     if (onChange) {
@@ -119,14 +119,14 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     if (this.type === "file") {
       const { target } = event as { target: { files: T } };
       const { files: v } = target;
-      this.change(v);
+      this.setValue(v);
       return;
     }
     const { target } = event as { target: { value: T } };
     const { value: v } = target;
-    this.change(v);
+    this.setValue(v);
   }
-  change(value: T) {
+  setValue(value: T) {
     this.value = value;
     this.emit(Events.Change, value);
     this.emit(Events.StateChange, { ...this.state });
@@ -140,11 +140,11 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.emit(Events.StateChange, { ...this.state });
   }
   clear() {
-    this.value = this._defaultValue;
+    this.value = this.defaultValue;
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
-    this.value = this._defaultValue;
+    this.value = this.defaultValue;
     this.emit(Events.StateChange, { ...this.state });
   }
 
@@ -165,5 +165,80 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   onEnter(handler: Handler<TheTypesOfEvents<T>[Events.Enter]>) {
     return this.on(Events.Enter, handler);
+  }
+}
+
+type InputInListProps<T = unknown> = {
+  onChange: (record: T) => void;
+} & InputProps<T>;
+type TheTypesInListOfEvents<K extends object, T> = {
+  [Events.Change]: [K, T];
+  [Events.StateChange]: InputProps<T>;
+};
+
+export class InputInListCore<K extends object, T> extends BaseDomain<TheTypesInListOfEvents<K, T>> {
+  list: InputCore<T>[] = [];
+  cached = new WeakMap<K, InputCore<T>>();
+  values: Map<K, T | null> = new Map();
+
+  constructor(props: Partial<{ _name: string } & InputInListProps<T>> = {}) {
+    super(props);
+  }
+
+  bind(
+    unique_id: K,
+    options: {
+      defaultValue: T;
+    }
+  ) {
+    const { defaultValue } = options;
+    const existing = this.cached.get(unique_id);
+    if (existing) {
+      return existing;
+    }
+    const select = new InputCore<T>({
+      defaultValue,
+      onChange: (value) => {
+        this.values.set(unique_id, value);
+        this.emit(Events.Change, [unique_id, value]);
+      },
+    });
+    this.list.push(select);
+    this.values.set(unique_id, defaultValue);
+    this.cached.set(unique_id, select);
+    return select;
+  }
+  setValue(v: T) {
+    for (let i = 0; i < this.list.length; i += 1) {
+      const item = this.list[i];
+      item.setValue(v);
+    }
+  }
+  clear() {
+    this.list = [];
+    this.cached = new WeakMap();
+    this.values = new Map();
+  }
+  getValue(key: K) {
+    return this.values.get(key) ?? null;
+  }
+  toJson<R>(handler: (value: [K, T | null]) => R) {
+    const result: R[] = [];
+    for (const [obj, value] of this.values) {
+      const r = handler([obj, value]);
+      result.push(r);
+    }
+    return result;
+  }
+  /** 清空触发点击事件时保存的按钮 */
+  // clear() {
+  //   this.cur = null;
+  // }
+
+  onChange(handler: Handler<TheTypesInListOfEvents<K, T>[Events.Change]>) {
+    this.on(Events.Change, handler);
+  }
+  onStateChange(handler: Handler<TheTypesInListOfEvents<K, T>[Events.StateChange]>) {
+    this.on(Events.StateChange, handler);
   }
 }

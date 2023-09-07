@@ -15,7 +15,7 @@ import { renameFileOfDrive } from "@/domains/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
@@ -33,7 +33,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       list.refresh();
     },
   });
-  const curEpisode = new SelectionCore<UnknownEpisodeItem>();
+  const curEpisode = new RefCore<UnknownEpisodeItem>();
   const bindEpisodeBtn = new ButtonInListCore<UnknownEpisodeItem>({
     onClick(record) {
       curEpisode.select(record);
@@ -268,7 +268,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                           class="p-1 cursor-pointer"
                           onClick={() => {
                             curEpisode.select(episode);
-                            renameFileInput.change(episode.file_name);
+                            renameFileInput.setValue(episode.file_name);
                             renameFileDialog.show();
                           }}
                         >

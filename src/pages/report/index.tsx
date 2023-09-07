@@ -15,9 +15,10 @@ import {
   replyReport,
 } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
+import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { SelectionCore } from "@/domains/cur";
+import { RefCore } from "@/domains/cur";
 import { NavigatorCore } from "@/domains/navigator";
 import { ListCore } from "@/domains/list";
 import { clear_expired_job_list } from "@/domains/job";
@@ -49,9 +50,8 @@ function buildMsg(report: ReportItem) {
 export const HomeReportListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const curReport = new SelectionCore<ReportItem>();
-  const curMovie = new SelectionCore<MovieItem>();
-  const curSeason = new SelectionCore<TVSeasonItem>();
+  const curReport = new RefCore<ReportItem>();
+  const curMovie = new RefCore<MovieItem>();
   const reportList = new ListCore(new RequestCore(fetchReportList), {});
   const reportDeletingRequest = new RequestCore(clear_expired_job_list, {
     onLoading(loading) {
@@ -113,28 +113,18 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const replyBtn = new ButtonInListCore<ReportItem>({
     onClick(report) {
       curReport.select(report);
-      commentInput.change(buildMsg(report));
+      commentInput.setValue(buildMsg(report));
       commentDialog.show();
     },
   });
-  const tvNameSearchInput = new InputCore({
-    defaultValue: "",
-    placeholder: "请输入名称搜索",
-    onEnter() {
-      tvSearchBtn.click();
+  const seasonSelect = new TVSeasonSelectCore({
+    onSelect(season) {
+      if (curReport.value?.type === ReportTypes.Want) {
+        commentInput.setValue(`你想看的电视剧「${season.name}」已收录，点击观看`);
+      }
     },
   });
-  const tvSearchBtn = new ButtonCore({
-    onClick() {
-      seasonList.search({ name: tvNameSearchInput.value });
-    },
-  });
-  const seasonList = new ListCore(new RequestCore(fetch_season_list), {
-    onLoadingChange(loading) {
-      tvSearchBtn.setLoading(loading);
-    },
-  });
-  const tvDialog = new DialogCore({
+  const seasonSelectDialog = new DialogCore({
     title: "选择电视剧",
     async onOk() {
       if (!curReport.value) {
@@ -149,25 +139,26 @@ export const HomeReportListPage: ViewComponent = (props) => {
         });
         return;
       }
-      if (!curSeason.value) {
+      if (!seasonSelect.value) {
         app.tip({
           text: ["请选择电视剧"],
         });
         return;
       }
-      tvDialog.okBtn.setLoading(true);
+      seasonSelectDialog.okBtn.setLoading(true);
+      const { id, tv_id, name, poster_path, first_air_date } = seasonSelect.value;
       const r = await replyRequest.run({
         report_id: curReport.value.id,
         content: commentInput.value,
         season: {
-          id: curSeason.value.id,
-          tv_id: curSeason.value.tv_id,
-          name: curSeason.value.name,
-          poster_path: curSeason.value.poster_path,
-          first_air_date: curSeason.value.first_air_date,
+          id,
+          tv_id,
+          name,
+          poster_path,
+          first_air_date,
         },
       });
-      tvDialog.okBtn.setLoading(false);
+      seasonSelectDialog.okBtn.setLoading(false);
       if (r.error) {
         app.tip({
           text: ["回复失败", r.error.message],
@@ -177,11 +168,11 @@ export const HomeReportListPage: ViewComponent = (props) => {
       app.tip({
         text: ["回复成功"],
       });
-      tvDialog.hide();
+      seasonSelectDialog.hide();
     },
     onCancel() {
       curReport.clear();
-      curSeason.clear();
+      seasonSelect.clear();
       commentInput.clear();
     },
   });
@@ -189,13 +180,14 @@ export const HomeReportListPage: ViewComponent = (props) => {
     onClick(report) {
       curReport.select(report);
       if (report.season) {
-        tvNameSearchInput.change(report.season.name);
-        seasonList.search({ name: report.season.name });
+        seasonSelect.nameInput.setValue(report.season.name);
+        seasonSelect.list.search({ name: report.season.name });
       }
-      commentInput.change(buildMsg(report));
-      tvDialog.show();
+      commentInput.setValue(buildMsg(report));
+      seasonSelectDialog.show();
     },
   });
+
   const movieList = new ListCore(new RequestCore(fetch_movie_list), {
     onLoadingChange(loading) {
       movieSearchBtn.setLoading(loading);
@@ -268,10 +260,10 @@ export const HomeReportListPage: ViewComponent = (props) => {
       curReport.select(report);
       console.log(report.movie);
       if (report.movie) {
-        movieNameSearchInput.change(report.movie.name);
+        movieNameSearchInput.setValue(report.movie.name);
         movieList.search({ name: report.movie.name });
       }
-      commentInput.change(buildMsg(report));
+      commentInput.setValue(buildMsg(report));
       movieDialog.show();
     },
   });
@@ -289,18 +281,9 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const scrollView = new ScrollViewCore();
 
   const [response, setResponse] = createSignal(reportList.response);
-  const [tvListResponse, setTVListResponse] = createSignal(seasonList.response);
   const [movieListResponse, setMovieListResponse] = createSignal(movieList.response);
   const [curMovieState, setCurMovieState] = createSignal(curMovie.value);
-  const [curSeasonState, setCurSeasonState] = createSignal(curSeason.value);
 
-  seasonList.onStateChange((nextState) => {
-    // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
-    setTVListResponse(nextState);
-  });
-  curSeason.onStateChange((nextState) => {
-    setCurSeasonState(nextState);
-  });
   movieList.onStateChange((nextState) => {
     setMovieListResponse(nextState);
   });
@@ -453,81 +436,11 @@ export const HomeReportListPage: ViewComponent = (props) => {
       <Dialog store={commentDialog}>
         <Textarea store={commentInput} />
       </Dialog>
-      <Dialog store={tvDialog}>
+      <Dialog store={seasonSelectDialog}>
         <div>
           <Textarea store={commentInput} />
         </div>
-        <div class="flex items-center space-x-2 mt-4">
-          <Input store={tvNameSearchInput} />
-          <Button store={tvSearchBtn} variant="subtle">
-            搜索
-          </Button>
-        </div>
-        <div class="mt-2">
-          <ListView
-            store={seasonList}
-            skeleton={
-              <div>
-                <div class="rounded-md border border-slate-300 bg-white shadow-sm">
-                  <div class="flex">
-                    <div class="overflow-hidden mr-2 rounded-sm">
-                      <Skeleton class="w-[120px] h-[180px]" />
-                    </div>
-                    <div class="flex-1 p-4">
-                      <Skeleton class="h-[36px] w-[180px]"></Skeleton>
-                      <div class="mt-2 space-y-1">
-                        <Skeleton class="h-[24px] w-[120px]"></Skeleton>
-                        <Skeleton class="h-[24px] w-[240px]"></Skeleton>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          >
-            <div class="space-y-4">
-              <For each={tvListResponse().dataSource}>
-                {(season) => {
-                  const { id, tv_id, name, overview, poster_path, season_text } = season;
-                  homeTVProfilePage.query = {
-                    id: season.tv_id,
-                    season_id: season.id,
-                  };
-                  const url = homeTVProfilePage.buildUrl();
-                  return (
-                    <div
-                      classList={{
-                        "rounded-md border border-slate-300 bg-white shadow-sm": true,
-                        "border-green-500": curSeasonState()?.id === id,
-                      }}
-                      onClick={() => {
-                        if (curReport.value?.type === ReportTypes.Want) {
-                          commentInput.change(`你想看的电视剧「${season.name}」已收录，点击观看`);
-                        }
-                        curSeason.select(season);
-                      }}
-                    >
-                      <div class="flex">
-                        <div class="overflow-hidden mr-2 rounded-sm">
-                          <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
-                        </div>
-                        <div class="flex-1 w-0 p-4">
-                          <div class="flex items-center">
-                            <h2 class="text-2xl text-slate-800">{name}</h2>
-                            <p class="ml-4 text-slate-500">{season_text}</p>
-                          </div>
-                          <div class="mt-2 overflow-hidden text-ellipsis">
-                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">{overview}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }}
-              </For>
-            </div>
-          </ListView>
-        </div>
+        <TVSeasonSelect store={seasonSelect} />
       </Dialog>
       <Dialog store={movieDialog}>
         <div>
@@ -573,7 +486,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
                       }}
                       onClick={() => {
                         if (curReport.value?.type === ReportTypes.Want) {
-                          commentInput.change(`你想看的电影「${movie.name}」已收录，点击观看`);
+                          commentInput.setValue(`你想看的电影「${movie.name}」已收录，点击观看`);
                         }
                         curMovie.select(movie);
                       }}

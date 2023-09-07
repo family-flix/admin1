@@ -1,8 +1,10 @@
 /**
- * @file 列表中单选
+ * @file 一个缓存/当前值
+ * 类似 useRef
  */
-import { BaseDomain } from "@/domains/base";
 import { Handler } from "mitt";
+
+import { BaseDomain } from "@/domains/base";
 
 enum Events {
   StateChange,
@@ -10,14 +12,14 @@ enum Events {
 type TheTypesOfEvents<T> = {
   [Events.StateChange]: T;
 };
-type SelectionProps<T> = {
+type RefProps<T> = {
   onChange?: (v: T) => void;
 };
 type SelectionState = {};
-export class SelectionCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
+export class RefCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   value: T | null = null;
 
-  constructor(options: Partial<{ _name: string }> & SelectionProps<T> = {}) {
+  constructor(options: Partial<{ _name: string }> & RefProps<T> = {}) {
     super(options);
 
     const { onChange } = options;
