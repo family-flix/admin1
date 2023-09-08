@@ -2,7 +2,7 @@
  * @file 字幕列表
  */
 import { For, JSX, Show, createSignal } from "solid-js";
-import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
+import { Eye, Film, Loader, Mails, RotateCw, Tv } from "lucide-solid";
 
 import { SubtitleItem, deleteSubtitle, fetchSubtitleList, replyReport } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, LazyImage, Dialog } from "@/components/ui";
@@ -12,14 +12,16 @@ import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ReportTypes } from "@/constants";
 import { ViewComponent } from "@/types";
-import { refreshJobs } from "@/store";
+import { homeSubtitleAddingPage, refreshJobs } from "@/store";
 import { cn } from "@/utils";
 
 export const HomeSubtitleListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
+  const curSeasonRef = new RefCore<SubtitleItem>();
+  const curEpisodeRef = new RefCore<SubtitleItem["episodes"][number]>();
   const curSubtitleRef = new RefCore<SubtitleItem["episodes"][number]["subtitles"][number]>();
-  const subtitleList = new ListCore(new RequestCore(fetchSubtitleList), {});
+  const seasonList = new ListCore(new RequestCore(fetchSubtitleList), {});
   const subtitleDeletingRequest = new RequestCore(deleteSubtitle, {
     onLoading(loading) {
       subtitleDeletingConfirmDialog.okBtn.setLoading(loading);
@@ -29,6 +31,35 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
         text: ["删除成功"],
       });
       subtitleDeletingConfirmDialog.hide();
+      const curSeasonId = curSeasonRef.value?.id;
+      const curEpisodeId = curEpisodeRef.value?.id;
+      const curSubtitleId = curSubtitleRef.value?.id;
+      seasonList.modifyDataSource((item) => {
+        if (item.id !== curSeasonId) {
+          return item;
+        }
+        const { episodes } = item;
+        return {
+          ...item,
+          episodes: episodes.map((episode) => {
+            if (episode.id !== curEpisodeId) {
+              return episode;
+            }
+            return {
+              ...episode,
+              subtitles: episode.subtitles.filter((subtitle) => {
+                if (subtitle.id !== curSubtitleId) {
+                  return true;
+                }
+                return false;
+              }),
+            };
+          }),
+        };
+      });
+      curSeasonRef.clear();
+      curEpisodeRef.clear();
+      curSubtitleRef.clear();
     },
     onFailed(error) {
       app.tip({
@@ -50,7 +81,12 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const refreshBtn = new ButtonCore({
     onClick() {
       refreshJobs();
-      subtitleList.refresh();
+      seasonList.refresh();
+    },
+  });
+  const gotoUploadBtn = new ButtonCore({
+    onClick() {
+      app.showView(homeSubtitleAddingPage);
     },
   });
   //   const subtitleDeletingBtn = new ButtonCore({
@@ -59,18 +95,18 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   //   });
   const scrollView = new ScrollViewCore();
 
-  const [response, setResponse] = createSignal(subtitleList.response);
+  const [response, setResponse] = createSignal(seasonList.response);
 
-  subtitleList.onLoadingChange((loading) => {
+  seasonList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
-  subtitleList.onStateChange((nextState) => {
+  seasonList.onStateChange((nextState) => {
     setResponse(nextState);
   });
   scrollView.onReachBottom(() => {
-    subtitleList.loadMore();
+    seasonList.loadMore();
   });
-  subtitleList.init();
+  seasonList.init();
 
   const typeIcons: Record<ReportTypes, () => JSX.Element> = {
     [ReportTypes.TV]: () => <Tv class="w-4 h-4" />,
@@ -89,10 +125,13 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
           <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
             刷新
           </Button>
+          <Button class="space-x-1" store={gotoUploadBtn}>
+            新增
+          </Button>
         </div>
         <ListView
           class="mt-4"
-          store={subtitleList}
+          store={seasonList}
           skeleton={
             <div class="p-4 rounded-sm bg-white">
               <div class={cn("space-y-1")}>
@@ -134,6 +173,8 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
                                             <div>{language}</div>
                                             <div
                                               onClick={() => {
+                                                curSeasonRef.select(season);
+                                                curEpisodeRef.select(episode);
                                                 curSubtitleRef.select(subtitle);
                                                 subtitleDeletingConfirmDialog.show();
                                               }}

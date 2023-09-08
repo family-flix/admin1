@@ -2,7 +2,7 @@
  * @file 成员管理
  */
 import { createSignal, For, Show } from "solid-js";
-import { Check, Edit2, Gem, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
+import { Check, Edit2, Gem, Lock, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
 import {
   add_member,
@@ -22,6 +22,7 @@ import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { MultipleSelectionCore } from "@/domains/multiple";
+import { homePermissionListPage } from "@/store";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -91,6 +92,11 @@ export const MemberManagePage: ViewComponent = (props) => {
     placeholder: "请输入备注",
     onEnter() {
       addMemberDialog.okBtn.click();
+    },
+  });
+  const permissionBtn = new ButtonCore({
+    onClick() {
+      app.showView(homePermissionListPage);
     },
   });
   const addMemberBtn = new ButtonCore({
@@ -232,6 +238,9 @@ export const MemberManagePage: ViewComponent = (props) => {
             </Button>
             <Button store={addMemberBtn} icon={<UserPlus class="w-4 h-4" />}>
               新增成员
+            </Button>
+            <Button store={permissionBtn} icon={<Lock class="w-4 h-4" />}>
+              权限
             </Button>
           </div>
           <div class="flex items-center space-x-2 mt-4">

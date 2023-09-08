@@ -4,10 +4,10 @@
  */
 import qs from "qs";
 import { Handler } from "mitt";
+import parse from "url-parse";
 
 import { BaseDomain } from "@/domains/base";
 import { JSONObject } from "@/types";
-import { query_stringify } from "@/utils";
 
 enum Events {
   PushState,
@@ -80,6 +80,17 @@ type NavigatorState = {
 
 export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   static prefix: string | null = null;
+  static parse(url: string) {
+    const { pathname, ...rest } = parse(url);
+    if (NavigatorCore.prefix && pathname.startsWith(NavigatorCore.prefix)) {
+      return { ...rest, pathname: pathname.replace(NavigatorCore.prefix, "") };
+    }
+    return {
+      ...rest,
+      pathname,
+    };
+  }
+
   _name = "NavigatorCore";
   debug = false;
 
@@ -148,7 +159,6 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     ];
     this.emit(Events.PathnameChange, { ...this._pending });
   }
-
   private setPrevPathname(p: string) {
     this.prevPathname = p;
   }

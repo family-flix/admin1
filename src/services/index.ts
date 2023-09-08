@@ -883,7 +883,7 @@ export function delete_aliyun_file(body: { file_id: string }) {
   return request.get(`/api/admin/aliyun/delete/${file_id}`);
 }
 
-export async function fetch_tv_profile(body: { tv_id: string; season_id?: string }) {
+export async function fetchTVProfile(body: { tv_id: string; season_id?: string }) {
   const { tv_id, season_id } = body;
   const r = await request.get<{
     id: string;
@@ -972,8 +972,8 @@ export async function fetch_tv_profile(body: { tv_id: string; season_id?: string
     curSeasonEpisodes: cur_season_episodes,
   });
 }
-export type TVProfile = RequestedResource<typeof fetch_tv_profile>;
-export type SeasonInTVProfile = RequestedResource<typeof fetch_tv_profile>["curSeason"];
+export type TVProfile = RequestedResource<typeof fetchTVProfile>;
+export type SeasonInTVProfile = RequestedResource<typeof fetchTVProfile>["curSeason"];
 export async function delete_episode_in_tv(body: { id: string; tv_id: string }) {
   const { id, tv_id } = body;
   const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
@@ -1350,7 +1350,7 @@ export function batchUploadSubtitles(params: {
     tv_id,
     drive_id,
   });
-  return request.post(`/api/admin/subtitle/batch_add?${search}`, body);
+  return request.post<{ job_id: string }>(`/api/admin/subtitle/batch_add?${search}`, body);
 }
 
 export function fetchSubtitleList(params: FetchParams) {

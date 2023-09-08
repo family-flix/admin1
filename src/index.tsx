@@ -7,37 +7,42 @@ import { Toast } from "./components/ui/toast";
 import { RouteView } from "./components/ui/route-view";
 import { connect } from "./domains/app/connect.web";
 import { ToastCore } from "./domains/ui/toast";
-import { rootView, homeIndexPage, homeLayout } from "./store/views";
+import { NavigatorCore } from "./domains/navigator";
+import { rootView, homeIndexPage } from "./store/views";
 import { app, router, initializeJobs, pages } from "./store";
 import { sleep } from "./utils";
 
 import "./style.css";
 
 app.onClickLink(({ href }) => {
-  console.log(href);
-  // router.push(href);
-});
-app.onPopState((options) => {
-  const { type, pathname } = options;
-  console.log("[]index.tsx - app.onPopState", type, pathname);
-  // router.handlePopState({ type, pathname });
+  const { pathname } = NavigatorCore.parse(href);
   const matched = pages.find((v) => {
-    return v.checkMatchRegexp(pathname);
+    return v.key === pathname;
   });
-  // console.log(router.pathname, matched);
   if (matched) {
     matched.query = router.query;
     app.showView(matched);
     return;
   }
+  app.tip({
+    text: ["没有匹配的页面"],
+  });
+  // app.showView(homeIndexPage);
+});
+app.onPopState((options) => {
+  const { pathname } = NavigatorCore.parse(options.pathname);
+  const matched = pages.find((v) => {
+    return v.key === pathname;
+  });
+  if (matched) {
+    matched.isShowForBack = true;
+    matched.query = router.query;
+    app.showView(matched);
+    return;
+  }
+  homeIndexPage.isShowForBack = true;
   app.showView(homeIndexPage);
 });
-// router.onBack(() => {
-//   homeLayout.showPrevView({ ignore: true });
-// });
-// router.onHistoriesChange((histories) => {
-//   console.log(histories.map((h) => h.pathname));
-// });
 connect(app);
 
 function Application() {
@@ -86,10 +91,10 @@ function Application() {
   const { innerWidth, innerHeight, location } = window;
   router.prepare(location);
   (() => {
+    const { pathname } = NavigatorCore.parse(router.pathname);
     const matched = pages.find((v) => {
-      return v.checkMatchRegexp(router.pathname);
+      return v.key === pathname;
     });
-    console.log(router.pathname, matched);
     if (matched) {
       matched.query = router.query;
       app.showView(matched);

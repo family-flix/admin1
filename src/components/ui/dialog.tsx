@@ -53,18 +53,20 @@ export function Dialog(
             </DialogPrimitive.Title>
           </DialogPrimitive.Header>
           {props.children}
-          <DialogPrimitive.Close
-            class={cn(
-              "absolute top-4 right-4 cursor-pointer rounded-sm",
-              "opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:pointer-events-none",
-              "dark:focus:ring-slate-400 dark:focus:ring-offset-slate-900",
-              "data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-slate-800"
-            )}
-            store={store}
-          >
-            <X width={15} height={15} />
-            <span class="sr-only">Close</span>
-          </DialogPrimitive.Close>
+          <Show when={state().closeable}>
+            <DialogPrimitive.Close
+              class={cn(
+                "absolute top-4 right-4 cursor-pointer rounded-sm",
+                "opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:pointer-events-none",
+                "dark:focus:ring-slate-400 dark:focus:ring-offset-slate-900",
+                "data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-slate-800"
+              )}
+              store={store}
+            >
+              <X width={15} height={15} />
+              <span class="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          </Show>
           <Show when={footer()}>
             <DialogPrimitive.Footer class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
               <div class="space-x-2">

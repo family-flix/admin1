@@ -2,14 +2,14 @@
  * @file 上传字幕
  */
 import { For, Show, createSignal } from "solid-js";
-import { ChevronRight, Eye, Folder, FolderInput, MoreHorizontal, Scroll, Search, Send } from "lucide-solid";
+import { ChevronRight, Eye, Folder, FolderInput, Loader, MoreHorizontal, Scroll, Search, Send } from "lucide-solid";
 
 import { TVSeasonItem, batchUploadSubtitles, validateSubtitleFiles } from "@/services";
 import { Button, Dialog, DropdownMenu, Input, LazyImage, ScrollView } from "@/components/ui";
 import { ButtonCore, DialogCore, ScrollViewCore, SelectCore, SelectInListCore, InputInListCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { driveList } from "@/store";
+import { createJob, driveList } from "@/store";
 import { SubtitleLanguageOptions } from "@/constants";
 import { DragZoneCore } from "@/domains/ui/drag-zone";
 import { TVSeasonSelect } from "@/components/TVSeasonSelect/main";
@@ -78,20 +78,30 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
           l.setValue(file.language);
         }
       }
-      setResults(v);
     },
   });
   const batchUploadSubtitleRequest = new RequestCore(batchUploadSubtitles, {
-    onLoading(loading) {
-      submitBtn.setLoading(loading);
-    },
     onSuccess(v) {
-      console.log(v);
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          app.tip({
+            text: ["上传完成"],
+          });
+          uploadLoadingDialog.hide();
+          filenameValidatingRequest.clear();
+          seasonController.clear();
+          langController.clear();
+          tvSelect.clear();
+          driveSelect.clear();
+        },
+      });
     },
     onFailed(error) {
       app.tip({
         text: ["上传失败", error.message],
       });
+      uploadLoadingDialog.hide();
     },
   });
   const curSeason = new RefCore<{ id: string; name: string; poster_path: string }>();
@@ -101,7 +111,6 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
       langController.clear();
       langSelect.clear();
       tvSelect.clear();
-      // curSeason.clear();
       filenameValidatingRequest.run({
         filenames: files.map((file) => file.name),
       });
@@ -199,6 +208,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
         });
         return;
       }
+      uploadLoadingDialog.show();
       batchUploadSubtitleRequest.run({
         tv_id: tvSelect.value.id,
         drive_id: driveSelect.value,
@@ -232,6 +242,11 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
     title: "内容预览",
     footer: false,
   });
+  const uploadLoadingDialog = new DialogCore({
+    title: "上传字幕",
+    footer: false,
+    closeable: false,
+  });
   const fileReader = new SubtitleReaderCore({});
   const scrollView = new ScrollViewCore();
 
@@ -255,8 +270,14 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
   uploadZone.onStateChange((nextState) => {
     setState(nextState);
   });
+  tvSelect.onClear(() => {
+    setSelectedSeason(null);
+  });
   tvSelect.onSelect((nextState) => {
     setSelectedSeason(nextState);
+  });
+  filenameValidatingRequest.onResponseChange((v) => {
+    setResults(v);
   });
   // curSeason.onStateChange((nextState) => {
   //   setSelectedSeason(nextState);
@@ -266,26 +287,12 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView store={scrollView} class="h-screen p-8">
+      <ScrollView store={scrollView} class="relative h-screen p-8">
         <h1 class="text-2xl">上传字幕</h1>
         <div class="mt-8">
-          <div class="flex items-center space-x-2">
-            <Show when={selectedSeason()} fallback={<Button store={tvSelectBtn}>选择电视剧</Button>}>
-              <div class="flex">
-                <div class="w-[120px] mr-4">
-                  <LazyImage src={selectedSeason()?.poster_path} />
-                </div>
-                <div class="flex-1">
-                  <div>{selectedSeason()?.name}</div>
-                  <Button store={tvSelectBtn}>重新选择</Button>
-                </div>
-              </div>
-            </Show>
-          </div>
           <div
             classList={{
-              "flex items-center justify-center w-full min-h-[180px] my-4 rounded-sm bg-slate-200 border border-2 cursor-pointer":
-                true,
+              "relative w-full min-h-[180px] rounded-sm bg-slate-200 border border-2 cursor-pointer": true,
               "border-green-500 border-dash": state().hovering,
             }}
             onDragOver={(event) => {
@@ -303,9 +310,11 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
             <Show
               when={!!results()}
               fallback={
-                <div class="p-4 text-center">
-                  <p>将文件拖拽至此或点击选择文件</p>
-                  <input type="file" id="file-input" style="display: none;" />
+                <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
+                  <div class="p-4 text-center">
+                    <p>将文件拖拽至此或点击选择文件</p>
+                    <input type="file" class="absolute inset-0 opacity-0" />
+                  </div>
                 </div>
               }
             >
@@ -318,14 +327,14 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
                     <Select store={langController} />
                   </div>
                 </div>
-                <div class="grid grid-cols-4 gap-2 mt-8">
+                <div class="space-y-2 mt-8">
                   <For each={results()?.files}>
                     {(result) => {
                       const { filename } = result;
                       return (
                         <div class="p-4 bg-white rounded-sm space-y-2">
                           <div class="flex items-center space-x-2">
-                            <div>{filename}</div>
+                            <div class="break-all">{filename}</div>
                             <div
                               class=""
                               onClick={() => {
@@ -361,8 +370,27 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
               </div>
             </Show>
           </div>
-          <Select store={driveSelect} />
-          <Button store={submitBtn}>上传</Button>
+          <div class="flex items-center space-x-2">
+            <Show when={selectedSeason()}>
+              <div class="flex">
+                <div class="w-[120px] mr-4">
+                  <LazyImage src={selectedSeason()?.poster_path} />
+                </div>
+                <div class="flex-1">
+                  <div>{selectedSeason()?.name}</div>
+                  <Button store={tvSelectBtn}>重新选择</Button>
+                </div>
+              </div>
+            </Show>
+          </div>
+          <div class="py-4">
+            <Select store={driveSelect} />
+          </div>
+        </div>
+        <div class="absolute bottom-0 py-4">
+          <div class="flex rows-reverse">
+            <Button store={submitBtn}>上传</Button>
+          </div>
         </div>
       </ScrollView>
       <Dialog store={tvSelectDialog}>
@@ -370,6 +398,14 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={subtitlePreview}>
         <SubtitlePreview store={fileReader} />
+      </Dialog>
+      <Dialog store={uploadLoadingDialog}>
+        <div class="flex flex-col items-center">
+          <div>
+            <Loader class="w-8 h-8 animate animate-spin" />
+          </div>
+          <div class="mt-4">正在上传中，请等待</div>
+        </div>
       </Dialog>
     </>
   );

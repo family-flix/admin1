@@ -15,14 +15,18 @@ enum Events {
   Success,
   Failed,
   Completed,
+  StateChange,
+  ResponseChange,
 }
-type TheTypesOfEvents<T> = {
+type TheTypesOfEvents<T extends (...args: any[]) => Promise<Result<any>>> = {
   [Events.LoadingChange]: boolean;
   [Events.BeforeRequest]: void;
   [Events.AfterRequest]: void;
   [Events.Success]: T;
   [Events.Failed]: BizError;
   [Events.Completed]: void;
+  [Events.StateChange]: RequestState;
+  [Events.ResponseChange]: UnpackedResult<Unpacked<ReturnType<T>>> | null;
 };
 type RequestState = {};
 type RequestProps<T> = {
@@ -45,12 +49,20 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
   /** 原始 service 函数 */
   private _service: T;
   delay: null | number = 800;
+  loading = false;
   /** 处于请求中的 promise */
   pending: ReturnType<T> | null = null;
   /** 调用 prepare 方法暂存的参数 */
   args: Parameters<T> | null = null;
   /** 请求的响应 */
   response: UnpackedResult<Unpacked<ReturnType<T>>> | null = null;
+
+  get state(): RequestState {
+    return {
+      loading: this.loading,
+      response: this.response,
+    };
+  }
 
   constructor(service: T, props: Partial<RequestProps<UnpackedResult<Unpacked<ReturnType<T>>>>> = {}) {
     super();
@@ -90,11 +102,13 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     }
     this.args = args;
     this.emit(Events.LoadingChange, true);
+    this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.BeforeRequest);
     const pending = this._service(...args, this.token) as ReturnType<T>;
     this.pending = pending;
     const [r] = await Promise.all([pending, this.delay === null ? null : sleep(this.delay)]);
     this.emit(Events.LoadingChange, false);
+    this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.Completed);
     this.pending = null;
     console.log("[DOMAIN]client - run", r.error);
@@ -105,6 +119,8 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     this.response = r.data;
     const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
     this.emit(Events.Success, d);
+    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.ResponseChange, this.response);
     return Result.Ok(d);
   }
   /** 使用当前参数再请求一次 */
@@ -113,6 +129,11 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
       return;
     }
     this.run(...this.args);
+  }
+  clear() {
+    this.response = null;
+    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.ResponseChange, this.response);
   }
 
   onLoadingChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.LoadingChange]>) {
@@ -133,5 +154,11 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
   }
   onCompleted(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Completed]>) {
     return this.on(Events.Completed, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
+  }
+  onResponseChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.ResponseChange]>) {
+    return this.on(Events.ResponseChange, handler);
   }
 }

@@ -17,6 +17,7 @@ import {
   File,
   CircuitBoard,
   Lock,
+  Subtitles,
 } from "lucide-solid";
 
 import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
@@ -225,7 +226,7 @@ export const HomeLayout: ViewComponent = (props) => {
     },
     {
       text: "字幕管理",
-      icon: <Film class="w-6 h-6" />,
+      icon: <Subtitles class="w-6 h-6" />,
       view: homeSubtitleListPage,
     },
     {
@@ -263,11 +264,6 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
       view: homeMemberListPage,
-    },
-    {
-      text: "权限",
-      icon: <Lock class="w-6 h-6" />,
-      view: homePermissionListPage,
     },
     {
       text: "转存资源",

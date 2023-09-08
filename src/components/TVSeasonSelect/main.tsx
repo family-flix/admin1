@@ -14,10 +14,12 @@ enum Events {
   ResponseChange,
   Change,
   Select,
+  Clear,
 }
 type TheTypesOfEvents = {
   //   [Events.Change]: TVSeasonItem;
   [Events.Select]: TVSeasonItem;
+  [Events.Clear]: void;
 };
 type TVSeasonSelectProps = {
   onSelect?: (v: TVSeasonItem) => void;
@@ -70,6 +72,9 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
     });
     this.curSeason.onStateChange((nextState) => {
       this.value = nextState;
+      if (nextState === null) {
+        this.emit(Events.Clear);
+      }
     });
     if (onSelect) {
       this.onSelect(onSelect);
@@ -100,6 +105,9 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   onSelect(handler: Handler<TheTypesOfEvents[Events.Select]>) {
     return this.on(Events.Select, handler);
   }
+  onClear(handler: Handler<TheTypesOfEvents[Events.Clear]>) {
+    return this.on(Events.Clear, handler);
+  }
 }
 
 export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
@@ -112,7 +120,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
     setTVListResponse(nextState);
   });
   store.onCurSeasonChange((nextState) => {
-//     console.log("[COMPONENT]TVSeasonSelect - store.onCurSeasonChange", nextState);
+    //     console.log("[COMPONENT]TVSeasonSelect - store.onCurSeasonChange", nextState);
     setCurSeason(nextState);
   });
 
@@ -163,7 +171,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                       "border-slate-300 ": curSeason()?.id !== id,
                     }}
                     onClick={() => {
-                //       console.log("[COMPONENT]TVSeasonSelect - onClick", season);
+                      //       console.log("[COMPONENT]TVSeasonSelect - onClick", season);
                       store.select(season);
                     }}
                   >

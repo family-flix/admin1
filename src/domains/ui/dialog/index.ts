@@ -38,10 +38,13 @@ type DialogState = {
   open: boolean;
   title: string;
   footer?: boolean;
+  /** 能否手动关闭 */
+  closeable?: boolean;
 };
 export type DialogProps = {
   title?: string;
   footer?: boolean;
+  closeable?: boolean;
   onCancel?: () => void;
   onOk?: () => void;
   onUnmounted?: () => void;
@@ -51,6 +54,7 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
   open = false;
   title: string = "";
   footer: boolean = true;
+  closeable: boolean = true;
 
   present = new PresenceCore();
   okBtn = new ButtonCore();
@@ -61,17 +65,19 @@ export class DialogCore extends BaseDomain<TheTypesOfEvents> {
       open: this.open,
       title: this.title,
       footer: this.footer,
+      closeable: this.closeable,
     };
   }
 
   constructor(options: Partial<{ _name: string }> & DialogProps = {}) {
     super(options);
 
-    const { title, footer = true, onOk, onCancel, onUnmounted } = options;
+    const { title, footer = true, closeable = true, onOk, onCancel, onUnmounted } = options;
     if (title) {
       this.title = title;
     }
     this.footer = footer;
+    this.closeable = closeable;
     if (onOk) {
       this.onOk(onOk);
     }

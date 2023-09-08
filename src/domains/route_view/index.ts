@@ -172,8 +172,13 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   checkMatchRegexp(url: string) {
-    const { pathname, query } = parse(url);
-    console.log(url, pathname);
+    const pathname = (() => {
+      if (url.startsWith("http")) {
+        return parse(url).pathname;
+      }
+      return url;
+    })();
+    console.log(pathname);
     if (pathname === this.key) {
       return true;
     }

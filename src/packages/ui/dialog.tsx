@@ -80,6 +80,9 @@ const Overlay = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLDivElemen
       data-state={getState(state().open)}
       class={cn(props.class)}
       onClick={() => {
+        if (!store.closeable) {
+          return;
+        }
         store.hide();
       }}
     />

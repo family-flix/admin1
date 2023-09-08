@@ -5,7 +5,7 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
 import {
-  fetch_tv_profile,
+  fetchTVProfile,
   TVProfile,
   refresh_tv_profile,
   fetch_episodes_of_season,
@@ -18,6 +18,7 @@ import {
   delete_unknown_episode,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
+import { Select } from "@/components/ui/select";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import {
   MenuItemCore,
@@ -31,16 +32,15 @@ import {
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
+import { SubtitleLanguageOptions } from "@/constants";
 import { createJob, appendAction, mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
-import { Select } from "@/components/ui/select";
-import { SubtitleLanguageOptions } from "@/constants";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const profileRequest = new RequestCore(fetch_tv_profile, {
+  const profileRequest = new RequestCore(fetchTVProfile, {
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },
@@ -419,6 +419,7 @@ export const TVProfilePage: ViewComponent = (props) => {
 
   onMount(() => {
     const { id } = view.query;
+    console.log('[PAGE]tv/profile - onMount', id);
     const season_id = view.query.season_id;
     profileRequest.run({ tv_id: id, season_id });
   });

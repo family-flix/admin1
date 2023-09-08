@@ -582,8 +582,11 @@ export class ListCore<
    * 手动修改当前 dataSource
    * @param fn
    */
-  modifyDataSource(dataSource: T[]) {
-    this.response.dataSource = dataSource;
+  modifyDataSource(fn: (v: T) => T) {
+    this.response.dataSource = this.response.dataSource.map((item) => {
+      return fn(item);
+    });
+    this.emit(Events.StateChange, { ...this.response });
     this.emit(Events.DataSourceChange, [...this.response.dataSource]);
   }
   /**
