@@ -736,6 +736,11 @@ export const TVManagePage: ViewComponent = (props) => {
                         episode_count,
                         need_bind,
                       } = season;
+                      homeTVProfilePage.query = {
+                        id: tv_id,
+                        season_id: id,
+                      };
+                      const url = homeTVProfilePage.buildUrl();
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
@@ -745,7 +750,7 @@ export const TVManagePage: ViewComponent = (props) => {
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
                                 <h2 class="text-2xl text-slate-800">
-                                  <a href={`/home/tv/${tv_id}?season_id=${id}`}>{name}</a>
+                                  <a href={url}>{name}</a>
                                 </h2>
                                 <p class="ml-4 text-slate-500">{season_text}</p>
                               </div>

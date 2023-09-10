@@ -333,6 +333,10 @@ export const MovieManagePage: ViewComponent = (props) => {
                 <For each={state().dataSource}>
                   {(movie) => {
                     const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime } = movie;
+                    homeMovieProfilePage.query = {
+                      id,
+                    };
+                    const url = homeMovieProfilePage.buildUrl();
                     return (
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">
@@ -340,7 +344,9 @@ export const MovieManagePage: ViewComponent = (props) => {
                             <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
                           </div>
                           <div class="flex-1 w-0 p-4">
-                            <h2 class="text-2xl text-slate-800">{name}</h2>
+                            <h2 class="text-2xl text-slate-800">
+                              <a href={url}>{name}</a>
+                            </h2>
                             <div class="mt-2 overflow-hidden text-ellipsis">
                               <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
                                 {overview}

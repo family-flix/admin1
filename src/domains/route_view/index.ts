@@ -8,7 +8,7 @@ import parse from "url-parse";
 
 import { BaseDomain } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
-import { RouteAction } from "@/domains/navigator";
+import { NavigatorCore, RouteAction } from "@/domains/navigator";
 import { Result } from "@/types";
 
 import { buildUrl } from "./utils";
@@ -348,7 +348,8 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.ViewsChange, [...this.subViews]);
   }
   buildUrl() {
-    return buildUrl(this.key, this.params, this.query);
+    const url = buildUrl(this.key, this.params, this.query);
+    return NavigatorCore.prefix + url;
   }
   ready() {
     this.emit(Events.Ready);
