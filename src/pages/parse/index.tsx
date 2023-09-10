@@ -8,7 +8,7 @@ import { Button, Input } from "@/components/ui";
 import { ButtonCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { VIDEO_ALL_KEYS, VIDEO_KEY_NAME_MAP } from "@/utils";
+import { VIDEO_ALL_KEYS, VIDEO_KEY_NAME_MAP, bytes_to_size } from "@/utils";
 
 export const VideoParsingPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -37,6 +37,25 @@ export const VideoParsingPage: ViewComponent = (props) => {
       });
     },
   });
+  const sizeInput = new InputCore({
+    defaultValue: "",
+    onEnter(v) {
+      sizeBtn.click();
+    },
+  });
+  const sizeBtn = new ButtonCore({
+    onClick() {
+      if (!sizeInput.value) {
+        app.tip({
+          text: ["请先输入数字"],
+        });
+        return;
+      }
+      const v = bytes_to_size(Number(sizeInput.value));
+      setSize(v);
+    },
+  });
+
   request.onSuccess((data) => {
     console.log("request success", data);
     setInfo(data);
@@ -52,6 +71,7 @@ export const VideoParsingPage: ViewComponent = (props) => {
   });
 
   const [info, setInfo] = createSignal<ParsedVideoInfo | null>(null);
+  const [size, setSize] = createSignal("");
 
   const keys = () => {
     const i = info();
@@ -88,6 +108,18 @@ export const VideoParsingPage: ViewComponent = (props) => {
             </For>
           </div>
         </Show>
+        <div>
+          <div>size 转换</div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <Input store={sizeInput} />
+              <Button store={sizeBtn} class="btn btn--primary btn--block">
+                转换
+              </Button>
+            </div>
+            <div>{size()}</div>
+          </div>
+        </div>
       </div>
     </div>
   );

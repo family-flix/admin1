@@ -220,7 +220,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
             class="mb-2 cursor-pointer"
             onClick={() => {
               app.back();
-              // homeLayout.showPrevView({ destroy: true });
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -294,13 +293,11 @@ export const MovieProfilePage: ViewComponent = (props) => {
                               id: file_id,
                             };
                             app.showView(mediaPlayingPage);
-                            // rootView.layerSubView(mediaPlayingPage);
-                            // router.push(`/play/${file_id}`);
                           }}
                         >
                           <div class="">
                             <div class="" title={`[${drive.name}]${parent_paths}/${file_name}`}>
-                              {parent_paths}/{file_name}
+                              [{drive.name}]{parent_paths}/{file_name}
                             </div>
                           </div>
                         </div>

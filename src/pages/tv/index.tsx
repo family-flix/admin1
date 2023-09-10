@@ -25,6 +25,7 @@ import {
   fetch_folder_can_add_sync_task,
   fetch_partial_season,
   fetch_season_list,
+  moveSeasonToResourceDrive,
   refresh_tv_profile,
   run_all_file_sync_tasks,
   run_file_sync_task_of_tv,
@@ -79,8 +80,36 @@ export const TVManagePage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
+  const moveToResourceDriveRequest = new RequestCore(moveSeasonToResourceDrive, {
+    onLoading(loading) {
+      moveToResourceDriveConfirmDialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["移动失败", error.message],
+      });
+    },
+    onSuccess(r) {
+      app.tip({
+        text: ["开始移动，请等待一段时间"],
+      });
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          if (!seasonRef.value) {
+            return;
+          }
+          const { name } = seasonRef.value;
+          app.tip({
+            text: [`完成电视剧 '${name}' 移动到资源盘`],
+          });
+        },
+      });
+      moveToResourceDriveConfirmDialog.hide();
+    },
+  });
   const partialSeasonRequest = new RequestCore(fetch_partial_season);
-  const curSeasonStore = new RefCore<TVSeasonItem>();
+  const seasonRef = new RefCore<TVSeasonItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
       seasonList.search({
@@ -128,7 +157,7 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const curDriveStore = new RefCore<DriveCore>({
+  const driveRef = new RefCore<DriveCore>({
     onChange(v) {
       setCurDrive(v);
     },
@@ -197,10 +226,10 @@ export const TVManagePage: ViewComponent = (props) => {
       createJob({
         job_id: r.job_id,
         onFinish() {
-          if (!curSeasonStore.value) {
+          if (!seasonRef.value) {
             return;
           }
-          const { name } = curSeasonStore.value;
+          const { name } = seasonRef.value;
           app.tip({
             text: [`完成电视剧 '${name}' 归档`],
           });
@@ -218,7 +247,7 @@ export const TVManagePage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择文件夹"] });
         return;
       }
-      if (!curSeasonStore.value) {
+      if (!seasonRef.value) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
       }
@@ -228,7 +257,7 @@ export const TVManagePage: ViewComponent = (props) => {
       }
       const { file_id, file_name } = record;
       addFileSyncTask.run({
-        tv_id: curSeasonStore.value.tv_id,
+        tv_id: seasonRef.value.tv_id,
         url: sharedResourceUrlInput.value,
         target_file_id: file_id,
         target_file_name: file_name,
@@ -236,7 +265,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const refreshPartialTV = async (id?: string) => {
-    const season_id = id || curSeasonStore.value?.id;
+    const season_id = id || seasonRef.value?.id;
     if (!season_id) {
       return Result.Err("缺少季 id");
     }
@@ -281,7 +310,7 @@ export const TVManagePage: ViewComponent = (props) => {
   const folderCanAddSyncTaskList = new ListCore(new RequestCore(fetch_folder_can_add_sync_task));
   const dialog = new TMDBSearcherDialogCore({
     onOk(searchedTV) {
-      const tvId = curSeasonStore.value?.tv_id;
+      const tvId = seasonRef.value?.tv_id;
       if (!tvId) {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
@@ -326,12 +355,12 @@ export const TVManagePage: ViewComponent = (props) => {
   const sharedResource = new SharedResourceCore();
   const sharedResourceBtn = new ButtonCore({
     onClick() {
-      if (!curSeasonStore.value) {
+      if (!seasonRef.value) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
       }
       addFileSyncTask.run({
-        tv_id: curSeasonStore.value.tv_id,
+        tv_id: seasonRef.value.tv_id,
         url: sharedResourceUrlInput.value,
       });
     },
@@ -339,22 +368,22 @@ export const TVManagePage: ViewComponent = (props) => {
   const transferConfirmDialog = new DialogCore({
     title: "移动到其他云盘",
     onOk() {
-      if (!curDriveStore.value) {
+      if (!driveRef.value) {
         app.tip({ text: ["请先选择目标云盘"] });
         return;
       }
-      const curSeason = curSeasonStore.value;
+      const curSeason = seasonRef.value;
       if (!curSeason) {
         app.tip({ text: ["请先选择电视剧"] });
         return;
       }
       transferRequest.run({
         season_id: curSeason.id,
-        target_drive_id: curDriveStore.value.id,
+        target_drive_id: driveRef.value.id,
       });
     },
     onCancel() {
-      curDriveStore.clear();
+      driveRef.clear();
       transferConfirmDialog.hide();
     },
   });
@@ -369,7 +398,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      curSeasonStore.select(record);
+      seasonRef.select(record);
       transferConfirmDialog.show();
     },
   });
@@ -378,7 +407,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      curSeasonStore.select(record);
+      seasonRef.select(record);
       addSyncTaskDialog.show();
     },
   });
@@ -387,7 +416,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      curSeasonStore.select(record);
+      seasonRef.select(record);
       addSyncTaskDialog.setTitle("修改更新任务");
       addSyncTaskDialog.show();
     },
@@ -397,7 +426,7 @@ export const TVManagePage: ViewComponent = (props) => {
       if (record === null) {
         return;
       }
-      curSeasonStore.select(record);
+      seasonRef.select(record);
       runFileSyncTask.run({ id: record.tv_id });
     },
   });
@@ -473,6 +502,32 @@ export const TVManagePage: ViewComponent = (props) => {
       syncAllTVRequest.run();
     },
   });
+  const moveToResourceDriveConfirmDialog = new DialogCore({
+    title: "移动到资源盘",
+    onOk() {
+      const curSeason = seasonRef.value;
+      if (!curSeason) {
+        app.tip({ text: ["请先选择电视剧"] });
+        return;
+      }
+      moveToResourceDriveRequest.run({
+        season_id: curSeason.id,
+      });
+    },
+    onCancel() {
+      driveRef.clear();
+      transferConfirmDialog.hide();
+    },
+  });
+  const moveToResourceDriveBtn = new ButtonInListCore<TVSeasonItem>({
+    onClick(record) {
+      if (record === null) {
+        return;
+      }
+      seasonRef.select(record);
+      moveToResourceDriveConfirmDialog.show();
+    },
+  });
   const refreshBtn = new ButtonCore({
     onClick() {
       seasonList.refresh();
@@ -503,7 +558,7 @@ export const TVManagePage: ViewComponent = (props) => {
   // const [resourceState, setResourceState] = createSignal(sharedResource.state);
   const [tips, setTips] = createSignal<string[]>([]);
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
-  const [curDrive, setCurDrive] = createSignal(curDriveStore.value);
+  const [curDrive, setCurDrive] = createSignal(driveRef.value);
   const [hasSearch, setHasSearch] = createSignal(false);
   const [sharedFileSaveResponse, setSharedFileSaveResponse] = createSignal(sharedFileSaveList.response);
   // effect(() => {
@@ -763,6 +818,13 @@ export const TVManagePage: ViewComponent = (props) => {
                                   >
                                     归档
                                   </Button>
+                                  <Button
+                                    store={moveToResourceDriveBtn.bind(season)}
+                                    variant="subtle"
+                                    icon={<BookOpen class="w-4 h-4" />}
+                                  >
+                                    移动到资源盘
+                                  </Button>
                                 </Show>
                                 <Show
                                   when={sync_task}
@@ -860,7 +922,7 @@ export const TVManagePage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <Dialog store={transferConfirmDialog}>
-        <div>
+        <div class="w-[520px]">
           <div class="mt-2 space-y-4 h-[320px] overflow-y-auto">
             <For each={driveResponse().dataSource}>
               {(drive) => {
@@ -872,7 +934,7 @@ export const TVManagePage: ViewComponent = (props) => {
                       "border-green-500": curDrive()?.id === id,
                     }}
                     onClick={() => {
-                      curDriveStore.select(drive);
+                      driveRef.select(drive);
                     }}
                   >
                     <div
@@ -951,6 +1013,9 @@ export const TVManagePage: ViewComponent = (props) => {
             </For>
           </ListView>
         </ScrollView>
+      </Dialog>
+      <Dialog store={moveToResourceDriveConfirmDialog}>
+        <div>将电视剧移动到资源盘后才能公开分享</div>
       </Dialog>
       <Popover
         store={tipPopover}

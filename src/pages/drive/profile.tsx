@@ -6,15 +6,15 @@ import { ArrowLeft, ChevronRight } from "lucide-solid";
 
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView } from "@/components/ui";
 import { List } from "@/components/List";
+import { DriveFileCard } from "@/components/DriveFileCard";
 import { DialogCore, DropdownMenuCore, ButtonCore, InputCore, MenuItemCore, ScrollViewCore } from "@/domains/ui";
 import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
-import { createJob, homeLayout } from "@/store";
+import { createJob } from "@/store";
 import { RequestCore } from "@/domains/request";
 import { sync_folder } from "@/services";
-import { DriveFileCard } from "@/components/DriveFileCard";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -392,6 +392,12 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                   "outline outline-2 outline-slate-800": hover,
                                 }}
                                 onClick={() => {
+                                  if (folder.type === FileType.File) {
+                                    curFile.select(folder);
+                                    fileProfileDialog.setTitle(folder.name);
+                                    fileProfileDialog.show();
+                                    return;
+                                  }
                                   driveFileManage.select(folder, [columnIndex(), fileIndex]);
                                   // curFileWithPosition.select([folder, [columnIndex(), fileIndex]]);
                                 }}

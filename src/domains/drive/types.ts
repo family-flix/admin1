@@ -4,6 +4,7 @@ export type AliyunDriveFile = {
   type: FileType;
   file_id: string;
   name: string;
+  size: number;
   parent_paths: AliyunFilePath[];
   children?: AliyunDriveFile[];
 };

@@ -28,14 +28,15 @@ async function parseJSONStr<T extends JSONObject>(json: string) {
  * @param {object} body 提交体
  * @param {string} body.payload 从阿里云盘页面通过脚本生成的云盘信息 json 字符串
  */
-export async function addAliyunDrive(body: { payload: string }) {
-  const { payload } = body;
+export async function addAliyunDrive(body: { type?: number; payload: string }) {
+  const { type = 0, payload } = body;
   const r = await parseJSONStr(payload);
   if (r.error) {
     return Result.Err(r.error);
   }
   return request.post<{ id: string }>("/api/admin/drive/add", {
-    type: "aliyun",
+    // 阿里云备份盘
+    type,
     payload: r.data,
   });
 }
@@ -325,6 +326,7 @@ export async function fetchDriveFiles(
         file_id,
         name,
         type: type === "file" ? FileType.File : FileType.Folder,
+        size,
         parent_paths: [
           {
             file_id: parent_file_id,
@@ -348,7 +350,11 @@ export async function fetchDriveFiles(
  */
 export async function addFolderInDrive(body: { drive_id: string; name: string; parent_file_id?: string }) {
   const { drive_id, name, parent_file_id = "root" } = body;
-  return request.post<void>(`/api/admin/drive/files/add/${drive_id}`, {
+  return request.post<{
+    file_id: string;
+    name: string;
+    parent_file_id: string;
+  }>(`/api/admin/drive/files/add/${drive_id}`, {
     name,
     parent_file_id,
   });

@@ -845,13 +845,39 @@ export function run_all_file_sync_tasks() {
 }
 
 /**
- * 执行所有电视剧同步任务
+ * 转存指定季到指定云盘
  */
 export function transferSeasonToAnotherDrive(body: { season_id: string; target_drive_id: string }) {
   const { season_id, target_drive_id } = body;
   return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/transfer`, {
     target_drive_id,
   });
+}
+
+/**
+ * 转存指定电影到指定云盘
+ */
+export function transferMovieToAnotherDrive(body: { movie_id: string; target_drive_id: string }) {
+  const { movie_id, target_drive_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/transfer`, {
+    target_drive_id,
+  });
+}
+
+/**
+ * 移动指定电视剧到资源盘
+ */
+export function moveSeasonToResourceDrive(body: { season_id: string }) {
+  const { season_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/to_resource_drive`, {});
+}
+
+/**
+ * 移动指定电影到资源盘
+ */
+export function moveMovieToResourceDrive(body: { movie_id: string }) {
+  const { movie_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/to_resource_drive`, {});
 }
 
 /**

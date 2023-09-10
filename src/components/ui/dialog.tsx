@@ -12,9 +12,10 @@ import { cn } from "@/utils";
 export function Dialog(
   props: {
     store: DialogCore;
+    width?: string;
   } & JSX.HTMLAttributes<HTMLElement>
 ) {
-  const { store } = props;
+  const { store, width = "w-full sm:max-w-lg" } = props;
 
   const [state, setState] = createSignal(store.state);
 
@@ -39,7 +40,7 @@ export function Dialog(
         />
         <DialogPrimitive.Content
           class={cn(
-            "fixed z-50 grid w-full gap-4 rounded-b-lg bg-white p-6 sm:max-w-lg sm:rounded-lg",
+            "fixed z-50 grid gap-4 rounded-b-lg bg-white p-6 sm:rounded-lg",
             "sm:zoom-in-90",
             "dark:bg-slate-900",
             "animate-in data-[state=open]:fade-in-90",

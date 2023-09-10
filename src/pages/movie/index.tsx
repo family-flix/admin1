@@ -4,20 +4,91 @@
 import { createSignal, For } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
-import { bind_profile_for_unknown_movie, fetch_movie_list, MovieItem } from "@/services";
-import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox } from "@/components/ui";
+import {
+  bind_profile_for_unknown_movie,
+  fetch_movie_list,
+  moveMovieToResourceDrive,
+  MovieItem,
+  transferMovieToAnotherDrive,
+} from "@/services";
+import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox, Dialog } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore } from "@/domains/ui";
+import {
+  InputCore,
+  ButtonCore,
+  ButtonInListCore,
+  ScrollViewCore,
+  CheckboxCore,
+  DialogCore,
+  CheckboxGroupCore,
+} from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
-import { consumeAction, homeLayout, homeMovieProfilePage, pendingActions } from "@/store";
+import { consumeAction, createJob, driveList, homeMovieProfilePage, pendingActions } from "@/store";
+import { DriveCore } from "@/domains/drive";
 
 export const MovieManagePage: ViewComponent = (props) => {
   const { app, view } = props;
 
+  const transferRequest = new RequestCore(transferMovieToAnotherDrive, {
+    onLoading(loading) {
+      transferConfirmDialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["归档失败", error.message],
+      });
+    },
+    onSuccess(r) {
+      app.tip({
+        text: ["开始归档，请等待一段时间"],
+      });
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          if (!movieRef.value) {
+            return;
+          }
+          const { name } = movieRef.value;
+          app.tip({
+            text: [`完成电影 '${name}' 归档`],
+          });
+        },
+      });
+      transferConfirmDialog.hide();
+    },
+  });
+  const movieToResourceDriveRequest = new RequestCore(moveMovieToResourceDrive, {
+    onLoading(loading) {
+      moveToResourceDriveConfirmDialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["移动失败", error.message],
+      });
+    },
+    onSuccess(r) {
+      app.tip({
+        text: ["开始移动，请等待一段时间"],
+      });
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          if (!movieRef.value) {
+            return;
+          }
+          const { name } = movieRef.value;
+          app.tip({
+            text: [`完成电影 '${name}' 移动到资源盘`],
+          });
+        },
+      });
+      moveToResourceDriveConfirmDialog.hide();
+    },
+  });
   const movieList = new ListCore(new RequestCore(fetch_movie_list), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
@@ -25,7 +96,12 @@ export const MovieManagePage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
-  const movieSelection = new RefCore<MovieItem>();
+  const movieRef = new RefCore<MovieItem>();
+  const driveRef = new RefCore<DriveCore>({
+    onChange(v) {
+      setCurDrive(v);
+    },
+  });
   const bindSearchedMovieForMovie = new RequestCore(bind_profile_for_unknown_movie, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
@@ -40,11 +116,11 @@ export const MovieManagePage: ViewComponent = (props) => {
   });
   const dialog = new TMDBSearcherDialogCore({
     onOk(searchedTV) {
-      if (!movieSelection.value?.id) {
+      if (!movieRef.value?.id) {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
       }
-      bindSearchedMovieForMovie.run(movieSelection.value.id, searchedTV);
+      bindSearchedMovieForMovie.run(movieRef.value.id, searchedTV);
     },
   });
   const duplicatedCheckbox = new CheckboxCore({
@@ -83,14 +159,88 @@ export const MovieManagePage: ViewComponent = (props) => {
       // router.push(`/home/movie/${record.id}`);
     },
   });
+  const transferConfirmDialog = new DialogCore({
+    title: "移动到其他云盘",
+    onOk() {
+      if (!driveRef.value) {
+        app.tip({ text: ["请先选择目标云盘"] });
+        return;
+      }
+      const curMovie = movieRef.value;
+      if (!curMovie) {
+        app.tip({ text: ["请先选择电影"] });
+        return;
+      }
+      transferRequest.run({
+        movie_id: curMovie.id,
+        target_drive_id: driveRef.value.id,
+      });
+    },
+    onCancel() {
+      driveRef.clear();
+      transferConfirmDialog.hide();
+    },
+  });
+  const transferBtn = new ButtonInListCore<MovieItem>({
+    onClick(record) {
+      if (record === null) {
+        return;
+      }
+      movieRef.select(record);
+      transferConfirmDialog.show();
+    },
+  });
+  const moveToResourceDriveConfirmDialog = new DialogCore({
+    title: "移动到资源盘",
+    onOk() {
+      const curMovie = movieRef.value;
+      if (!curMovie) {
+        app.tip({ text: ["请先选择电影"] });
+        return;
+      }
+      movieToResourceDriveRequest.run({
+        movie_id: curMovie.id,
+      });
+    },
+    onCancel() {
+      driveRef.clear();
+      transferConfirmDialog.hide();
+    },
+  });
+  const moveToResourceDriveBtn = new ButtonInListCore<MovieItem>({
+    onClick(record) {
+      if (record === null) {
+        return;
+      }
+      movieRef.select(record);
+      moveToResourceDriveConfirmDialog.show();
+    },
+  });
   const refreshBtn = new ButtonCore({
     onClick() {
       movieList.refresh();
     },
   });
+  const driveCheckboxGroup = new CheckboxGroupCore({
+    options: driveList.response.dataSource.map((d) => {
+      const { name, id } = d;
+      return {
+        value: id,
+        label: name,
+      };
+    }),
+    onChange(options) {
+      // setHasSearch(!!options.length);
+      // seasonList.search({
+      //   drive_ids: options.join("|"),
+      // });
+    },
+  });
   const scrollView = new ScrollViewCore();
 
   const [state, setState] = createSignal(movieList.response);
+  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  const [curDrive, setCurDrive] = createSignal(driveRef.value);
 
   view.onShow(() => {
     const { deleteMovie } = pendingActions;
@@ -111,9 +261,19 @@ export const MovieManagePage: ViewComponent = (props) => {
   movieList.onStateChange((nextState) => {
     setState(nextState);
   });
+  driveList.onStateChange((nextResponse) => {
+    const driveCheckBoxGroupOptions = nextResponse.dataSource.map((d) => {
+      const { name, id } = d;
+      return {
+        value: id,
+        label: name,
+      };
+    });
+    driveCheckboxGroup.setOptions(driveCheckBoxGroupOptions);
+    setDriveResponse(nextResponse);
+  });
   movieList.init();
-
-  const dataSource = () => state().dataSource;
+  driveList.initIfInitial();
 
   return (
     <>
@@ -170,7 +330,7 @@ export const MovieManagePage: ViewComponent = (props) => {
               }
             >
               <div class="space-y-4">
-                <For each={dataSource()}>
+                <For each={state().dataSource}>
                   {(movie) => {
                     const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime } = movie;
                     return (
@@ -212,6 +372,20 @@ export const MovieManagePage: ViewComponent = (props) => {
                               >
                                 详情
                               </Button>
+                              <Button
+                                store={transferBtn.bind(movie)}
+                                variant="subtle"
+                                icon={<BookOpen class="w-4 h-4" />}
+                              >
+                                归档
+                              </Button>
+                              <Button
+                                store={moveToResourceDriveBtn.bind(movie)}
+                                variant="subtle"
+                                icon={<BookOpen class="w-4 h-4" />}
+                              >
+                                移动到资源盘
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -224,6 +398,42 @@ export const MovieManagePage: ViewComponent = (props) => {
           </div>
         </div>
       </ScrollView>
+      <Dialog store={transferConfirmDialog}>
+        <div class="w-[520px]">
+          <div class="mt-2 space-y-4 h-[320px] overflow-y-auto">
+            <For each={driveResponse().dataSource}>
+              {(drive) => {
+                const { id, name, state } = drive;
+                return (
+                  <div
+                    classList={{
+                      "bg-gray-100 border rounded-sm p-2 cursor-pointer hover:bg-gray-200": true,
+                      "border-green-500": curDrive()?.id === id,
+                    }}
+                    onClick={() => {
+                      driveRef.select(drive);
+                    }}
+                  >
+                    <div
+                      classList={{
+                        "py-2": true,
+                      }}
+                    >
+                      <div class="text-xl">{name}</div>
+                    </div>
+                    <div class="text-slate-500 text-sm">
+                      {state.used_size}/{state.total_size}
+                    </div>
+                  </div>
+                );
+              }}
+            </For>
+          </div>
+        </div>
+      </Dialog>
+      <Dialog store={moveToResourceDriveConfirmDialog}>
+        <div>将电影移动到资源盘后才能公开分享</div>
+      </Dialog>
       <TMDBSearcherDialog store={dialog} />
     </>
   );

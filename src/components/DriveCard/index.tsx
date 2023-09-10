@@ -29,8 +29,9 @@ import {
 } from "@/components/ui";
 import { List } from "@/components/List";
 import { InputCore, ButtonCore, DropdownMenuCore, DialogCore, ProgressCore, MenuItemCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
-import { DriveCore } from "@/domains/drive";
+import { DriveCore, addAliyunDrive } from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
 import { FileType } from "@/constants";
 import { createJob } from "@/store";
@@ -43,6 +44,18 @@ export const DriveCard = (props: {
 }) => {
   const { app, store: drive, onClick, onRefresh } = props;
 
+  const createResourceDriveRequest = new RequestCore(addAliyunDrive, {
+    onSuccess() {
+      app.tip({
+        text: ["资源盘创建成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["资源盘创建失败", error.message],
+      });
+    },
+  });
   const driveFileManage = new AliyunDriveFilesCore({ id: drive.id });
   const rootFolderConfirmDialog = new DialogCore({
     async onOk() {
@@ -81,11 +94,18 @@ export const DriveCard = (props: {
     async onOk() {
       createFolderModal.okBtn.setLoading(true);
       const r = await drive.addFolder();
-      createFolderModal.okBtn.setLoading(false);
       if (r.error) {
+        createFolderModal.okBtn.setLoading(false);
         app.tip({ text: ["新增文件夹失败", r.error.message] });
         return;
       }
+      const r2 = await drive.setRootFolder(r.data.file_id);
+      createFolderModal.okBtn.setLoading(false);
+      if (r2.error) {
+        app.tip({ text: ["设置索引目录失败", r2.error.message] });
+        return;
+      }
+      app.tip({ text: ["设置索引目录成功"] });
       createFolderModal.hide();
     },
   });
@@ -193,6 +213,19 @@ export const DriveCard = (props: {
       });
     },
   });
+  const createResourceDrive = new MenuItemCore({
+    label: "初始化资源盘",
+    icon: <Puzzle class="mr-2 w-4 h-4" />,
+    onClick() {
+      createResourceDriveRequest.run({
+        type: 1,
+        payload: JSON.stringify({
+          drive_id: drive.id,
+        }),
+      });
+      dropdown.hide();
+    },
+  });
   const dropdown = new DropdownMenuCore({
     items: [
       new MenuItemCore({
@@ -209,8 +242,17 @@ export const DriveCard = (props: {
       receiveRewardsItem,
       analysisQuicklyItem,
       matchMediaItem,
+      createResourceDrive,
       exportItem,
       setRootFolderItem,
+      new MenuItemCore({
+        label: "创建索引根目录",
+        icon: <Edit3 class="mr-2 w-4 h-4" />,
+        onClick() {
+          dropdown.hide();
+          createFolderModal.show();
+        },
+      }),
       new MenuItemCore({
         label: "设置 refresh_token",
         icon: <Edit3 class="mr-2 w-4 h-4" />,

@@ -97,7 +97,7 @@ export const HomePage: ViewComponent = (props) => {
           <ListView
             store={driveList}
             skeleton={
-              <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
+              <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2">
                 <div class="relative p-4 bg-white rounded-xl border border-1">
                   <div class="flex">
                     <Skeleton class="w-16 h-16 mr-4 rounded"></Skeleton>
@@ -115,7 +115,7 @@ export const HomePage: ViewComponent = (props) => {
               </div>
             }
           >
-            <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2">
               <For each={driveResponse().dataSource}>
                 {(drive) => {
                   const { name, avatar, used_percent, used_size } = drive.state;
