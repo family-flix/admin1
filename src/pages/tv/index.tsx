@@ -27,8 +27,8 @@ import {
   fetch_season_list,
   moveSeasonToResourceDrive,
   refresh_tv_profile,
-  run_all_file_sync_tasks,
-  run_file_sync_task_of_tv,
+  runSyncTaskList,
+  runSyncTask,
   transferSeasonToAnotherDrive,
   TVSeasonItem,
 } from "@/services";
@@ -286,7 +286,7 @@ export const TVManagePage: ViewComponent = (props) => {
     });
     return Result.Ok(null);
   };
-  const runFileSyncTask = new RequestCore(run_file_sync_task_of_tv, {
+  const runFileSyncTask = new RequestCore(runSyncTask, {
     beforeRequest() {
       execSyncTaskBtn.setLoading(true);
     },
@@ -471,7 +471,7 @@ export const TVManagePage: ViewComponent = (props) => {
       sharedResourceBtn.click();
     },
   });
-  const syncAllTVRequest = new RequestCore(run_all_file_sync_tasks, {
+  const syncAllTVRequest = new RequestCore(runSyncTaskList, {
     beforeRequest() {
       syncAllTVBtn.setLoading(true);
     },

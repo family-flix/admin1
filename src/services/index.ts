@@ -9,7 +9,7 @@ import { request } from "@/utils/request";
 import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
 import { ReportTypeTexts, ReportTypes } from "@/constants";
-import { query_stringify } from "@/utils";
+import { bytes_to_size, query_stringify } from "@/utils";
 
 /**
  * 获取电视剧列表
@@ -812,9 +812,9 @@ export type FolderCanAddingSyncTaskItem = RequestedResource<typeof fetch_folder_
  * @param body
  * @returns
  */
-export function run_file_sync_task_of_tv(body: { id: string }) {
+export function runSyncTask(body: { id: string }) {
   const { id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/tv/sync/${id}`);
+  return request.get<{ job_id: string }>(`/api/admin/sync_task/${id}/run`);
 }
 
 /**
@@ -840,8 +840,8 @@ export function add_file_sync_task_of_tv(body: {
 /**
  * 执行所有电视剧同步任务
  */
-export function run_all_file_sync_tasks() {
-  return request.get<{ job_id: string }>("/api/admin/shared_file_sync/sync");
+export function runSyncTaskList() {
+  return request.get<{ job_id: string }>("/api/admin/sync_task/run");
 }
 
 /**
@@ -945,7 +945,7 @@ export async function fetchTVProfile(body: { tv_id: string; season_id?: string }
         file_id: string;
         file_name: string;
         parent_paths: string;
-        size: string;
+        size: number;
         drive: {
           id: string;
           name: string;
@@ -1026,7 +1026,7 @@ export function fetch_episodes_of_season(body: { tv_id: string; season_id: strin
         file_id: string;
         file_name: string;
         parent_paths: string;
-        size: string;
+        size: number;
         drive: {
           id: string;
           name: string;
@@ -1156,6 +1156,56 @@ export function fetchReportProfile(params: { report_id: string }) {
   return request.get(`/api/admin/report/${report_id}`);
 }
 
+export async function fetch_shared_files_histories(body: FetchParams) {
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      url: string;
+      title: string;
+      created: string;
+    }>
+  >("/api/admin/shared_file/list", body as unknown as JSONObject);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((f) => {
+      const { created, ...rest } = f;
+      return {
+        ...rest,
+        // created: relative_time_from_now(created),
+      };
+    }),
+  });
+}
+export type SharedFileHistoryItem = RequestedResource<typeof fetch_shared_files_histories>["list"][0];
+
+export async function fetch_shared_files_transfer_list(body: FetchParams) {
+  const r = await request.get<
+    ListResponse<{
+      id: string;
+      url: string;
+      name: string;
+      created: string;
+    }>
+  >("/api/admin/shared_file_save/list", body as unknown as JSONObject);
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((f) => {
+      const { created, ...rest } = f;
+      return {
+        ...rest,
+        // created: relative_time_from_now(created),
+      };
+    }),
+  });
+}
+export type SharedFileTransferItem = RequestedResource<typeof fetch_shared_files_transfer_list>["list"][0];
+
 export async function fetch_movie_profile(body: { movie_id: string }) {
   const { movie_id } = body;
   const r = await request.get<{
@@ -1172,6 +1222,7 @@ export async function fetch_movie_profile(body: { movie_id: string }) {
       file_id: string;
       file_name: string;
       parent_paths: string;
+      size: number;
       drive: {
         id: string;
         name: string;
@@ -1179,7 +1230,17 @@ export async function fetch_movie_profile(body: { movie_id: string }) {
       };
     }[];
   }>(`/api/admin/movie/${movie_id}`);
-  return r;
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const source_size_count = r.data.sources.reduce((count, cur) => {
+    return count + cur.size;
+  }, 0);
+  return Result.Ok({
+    ...r.data,
+    source_size_count,
+    source_size_text: bytes_to_size(source_size_count),
+  });
 }
 export type MovieProfile = RequestedResource<typeof fetch_movie_profile>;
 
@@ -1403,4 +1464,75 @@ export type SubtitleItem = RequestedResource<typeof fetchSubtitleList>["list"][n
 export function deleteSubtitle(values: { subtitle_id: string }) {
   const { subtitle_id } = values;
   return request.get(`/api/admin/subtitle/${subtitle_id}/delete`);
+}
+
+/** 获取同步任务列表 */
+export function fetchSyncTaskList(params: FetchParams & { in_production: number; invalid: number; name: string }) {
+  return request.get<
+    ListResponse<{
+      id: string;
+      resource_file_id: string;
+      resource_file_name: string;
+      drive_file_id: string;
+      drive_file_name: string;
+      url: string;
+      season: null | {
+        id: string;
+        name: string;
+        overview: string;
+        poster_path: string;
+        cur_episode_count: number;
+        episode_count: number;
+      };
+      drive: {
+        id: string;
+      };
+    }>
+  >(`/api/admin/sync_task/list`, params);
+}
+export type SyncTaskItem = RequestedResource<typeof fetchSyncTaskList>["list"][number];
+
+/** 获取同步任务列表 */
+export function fetchPartialSyncTask(params: { id: string }) {
+  return request.get<{
+    id: string;
+    resource_file_id: string;
+    resource_file_name: string;
+    drive_file_id: string;
+    drive_file_name: string;
+    url: string;
+    season: null | {
+      id: string;
+      name: string;
+      overview: string;
+      poster_path: string;
+      cur_episode_count: number;
+      episode_count: number;
+    };
+    drive: {
+      id: string;
+    };
+  }>(`/api/admin/sync_task/${params.id}/partial`, {});
+}
+
+/** 获取同步任务列表 */
+export function updateSyncTask(params: { id: string; season_id: string }) {
+  const { id, season_id } = params;
+  return request.get<{
+    id: string;
+    resource_file_id: string;
+    resource_file_name: string;
+    drive_file_id: string;
+    drive_file_name: string;
+    url: string;
+    season: null | {
+      id: string;
+      name: string;
+      overview: string;
+      poster_path: string;
+    };
+    drive: {
+      id: string;
+    };
+  }>(`/api/admin/sync_task/${id}/update`, { season_id });
 }

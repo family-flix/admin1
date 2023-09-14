@@ -17,7 +17,7 @@ import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSea
 import { DialogCore, ButtonCore, ScrollViewCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { appendAction, homeLayout, mediaPlayingPage, rootView } from "@/store";
+import { appendAction, mediaPlayingPage } from "@/store";
 import { RefCore } from "@/domains/cur";
 
 export const MovieProfilePage: ViewComponent = (props) => {
@@ -264,6 +264,9 @@ export const MovieProfilePage: ViewComponent = (props) => {
                         <div class="mt-2">{profile()?.overview}</div>
                         <div class="mt-4 space-x-2">
                           <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>TMDB</a>
+                        </div>
+                        <div class="mt-4 space-x-2">
+                          {profile()?.source_size_text}
                         </div>
                       </div>
                     </div>

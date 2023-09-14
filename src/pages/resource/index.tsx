@@ -9,7 +9,7 @@ import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from 
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { FolderCard } from "@/components/FolderCard";
 import { ViewComponent } from "@/types";
-import { createJob, driveList } from "@/store";
+import { createJob, driveList, sharedFilesHistoryPage, sharedFilesTransferListPage } from "@/store";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -58,8 +58,16 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       sharedFileRequestBtn.setLoading(false);
     },
   });
-  const searchHistoryBtn = new ButtonCore({});
-  const transferHistoryBtn = new ButtonCore({});
+  const searchHistoryBtn = new ButtonCore({
+    onClick() {
+      app.showView(sharedFilesHistoryPage);
+    },
+  });
+  const transferHistoryBtn = new ButtonCore({
+    onClick() {
+      app.showView(sharedFilesTransferListPage);
+    },
+  });
 
   driveList.onStateChange((nextResponse) => {
     driveSubMenu.setItems(

@@ -154,7 +154,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
             </div>
           }
         >
-          <div class="space-y-4">
+          <div class="space-y-4 h-[480px] overflow-y-auto">
             <For each={tvListResponse().dataSource}>
               {(season) => {
                 const { id, tv_id, name, overview, poster_path, season_text } = season;

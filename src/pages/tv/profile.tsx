@@ -35,7 +35,7 @@ import { ListCore } from "@/domains/list";
 import { SubtitleLanguageOptions } from "@/constants";
 import { createJob, appendAction, mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
-import { cn } from "@/utils";
+import { bytes_to_size, cn } from "@/utils";
 
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -399,6 +399,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
   const [parsedSubtitle, setParsedSubtitle] = createSignal(subtitleValues.value);
   const [curSeason, setCurSeason] = createSignal(curSeasonStore.value);
+  const [sizeCount, setSizeCount] = createSignal<string | null>(null);
 
   subtitleValues.onStateChange((nextState) => {
     setParsedSubtitle(nextState);
@@ -407,6 +408,13 @@ export const TVProfilePage: ViewComponent = (props) => {
     setCurSeason(nextState);
   });
   curEpisodeList.onStateChange((nextResponse) => {
+    const sourceSizeCount = nextResponse.dataSource.reduce((count, cur) => {
+      const curCount = cur.sources.reduce((total, cur) => {
+        return total + cur.size;
+      }, 0);
+      return count + curCount;
+    }, 0);
+    setSizeCount(bytes_to_size(sourceSizeCount));
     setCurEpisodeResponse(nextResponse);
   });
   curEpisodeList.onComplete(() => {
@@ -419,7 +427,7 @@ export const TVProfilePage: ViewComponent = (props) => {
 
   onMount(() => {
     const { id } = view.query;
-    console.log('[PAGE]tv/profile - onMount', id);
+    console.log("[PAGE]tv/profile - onMount", id);
     const season_id = view.query.season_id;
     profileRequest.run({ tv_id: id, season_id });
   });
@@ -478,6 +486,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                         <div class="mt-4">
                           <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>TMDB</a>
                         </div>
+                        <div>{sizeCount()}</div>
                       </div>
                     </div>
                   </div>

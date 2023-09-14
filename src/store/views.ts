@@ -7,7 +7,7 @@ import { HomePage } from "@/pages/home";
 import { TaskListPage } from "@/pages/job";
 import { TaskProfilePage } from "@/pages/job/profile";
 import { DriveProfilePage } from "@/pages/drive/profile";
-import { SharedFilesTransferPage } from "@/pages/shared_files";
+import { SharedFilesTransferPage } from "@/pages/resource";
 import { MovieManagePage } from "@/pages/movie";
 import { MovieProfilePage } from "@/pages/movie/profile";
 import { TVManagePage } from "@/pages/tv";
@@ -18,6 +18,7 @@ import { UnknownTVPage } from "@/pages/unknown_tv/tv";
 import { UnknownSeasonPage } from "@/pages/unknown_tv/season";
 import { UnknownEpisodePage } from "@/pages/unknown_tv/episode";
 import { UnknownMoviePage } from "@/pages/unknown_tv/movie";
+import { SyncTaskListPage } from "@/pages/sync_task";
 import { MemberManagePage } from "@/pages/member";
 import { VideoParsingPage } from "@/pages/parse";
 import { HomeLayout } from "@/pages/home/layout";
@@ -28,6 +29,8 @@ import { HomeReportListPage } from "@/pages/report";
 import { HomePermissionPage } from "@/pages/permission";
 import { HomeSubtitleUploadPage } from "@/pages/subtitle/add";
 import { HomeSubtitleListPage } from "@/pages/subtitle";
+import { SharedFilesHistoryPage } from "@/pages/resource/list";
+import { SharedFilesTransferListPage } from "@/pages/resource/transfer";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -69,15 +72,6 @@ export const homeTaskListPage = new RouteViewCore({
   component: async () => {
     // const { TaskListPage } = await import("@/pages/job");
     return TaskListPage;
-  },
-});
-export const homeTransferPage = new RouteViewCore({
-  key: "/home/shared_files",
-  title: "文件转存",
-  // component: SharedFilesTransferPage,
-  component: async () => {
-    // const { SharedFilesTransferPage } = await import("@/pages/shared_files");
-    return SharedFilesTransferPage;
   },
 });
 export const homeTVProfilePage = new RouteViewCore({
@@ -220,6 +214,42 @@ export const homeSubtitleAddingPage = new RouteViewCore({
     return HomeSubtitleUploadPage;
   },
 });
+export const homeTransferPage = new RouteViewCore({
+  key: "/home/shared_files",
+  title: "文件转存",
+  // component: SharedFilesTransferPage,
+  component: async () => {
+    // const { SharedFilesTransferPage } = await import("@/pages/shared_files");
+    return SharedFilesTransferPage;
+  },
+});
+export const sharedFilesHistoryPage = new RouteViewCore({
+  key: "/home/shared_files/history",
+  title: "分享文件查询记录",
+  // component: SharedFilesTransferPage,
+  component: async () => {
+    // const { SharedFilesTransferPage } = await import("@/pages/shared_files");
+    return SharedFilesHistoryPage;
+  },
+});
+export const sharedFilesTransferListPage = new RouteViewCore({
+  key: "/home/shared_files/transfer",
+  title: "分享文件转存记录",
+  // component: SharedFilesTransferPage,
+  component: async () => {
+    // const { SharedFilesTransferPage } = await import("@/pages/shared_files");
+    return SharedFilesTransferListPage;
+  },
+});
+export const syncTaskListPage = new RouteViewCore({
+  key: "/home/sync_task",
+  title: "同步任务",
+  // component: SharedFilesTransferPage,
+  component: async () => {
+    // const { SharedFilesTransferPage } = await import("@/pages/shared_files");
+    return SyncTaskListPage;
+  },
+});
 export const homeLayout = new RouteViewCore({
   key: "/home",
   title: "首页",
@@ -240,6 +270,9 @@ export const homeLayout = new RouteViewCore({
     homeUnknownMediaLayout,
     homeReportListPage,
     homeTransferPage,
+    syncTaskListPage,
+    sharedFilesHistoryPage,
+    sharedFilesTransferListPage,
     homeSubtitleAddingPage,
     homeSubtitleListPage,
     homeFilenameParsingPage,

@@ -437,10 +437,12 @@ export const HomeReportListPage: ViewComponent = (props) => {
         <Textarea store={commentInput} />
       </Dialog>
       <Dialog store={seasonSelectDialog}>
-        <div>
-          <Textarea store={commentInput} />
+        <div class="w-[520px]">
+          <div>
+            <Textarea store={commentInput} />
+          </div>
+          <TVSeasonSelect store={seasonSelect} />
         </div>
-        <TVSeasonSelect store={seasonSelect} />
       </Dialog>
       <Dialog store={movieDialog}>
         <div>

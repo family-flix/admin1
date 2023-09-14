@@ -52,15 +52,13 @@ user.onLogin((profile) => {
 user.onLogout(() => {
   cache.clear("user");
   app.showView(loginPage);
-  // rootView.showSubView(loginPage);
-  // router.push("/login");
 });
 user.onExpired(() => {
   cache.clear("user");
   app.tip({
     text: ["token 已过期，请重新登录"],
   });
-  // router.replace("/login");
+  app.showView(loginPage);
 });
 
 ListCore.commonProcessor = <T>(

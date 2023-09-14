@@ -46,6 +46,7 @@ import {
   homeSubtitleAddingPage,
   homeSubtitleListPage,
   onJobsChange,
+  syncTaskListPage,
 } from "@/store";
 import { cn, sleep } from "@/utils";
 import { fetch_settings, notify_test, update_settings } from "@/services";
@@ -229,6 +230,12 @@ export const HomeLayout: ViewComponent = (props) => {
       icon: <Subtitles class="w-6 h-6" />,
       view: homeSubtitleListPage,
     },
+    {
+      text: "同步任务",
+      icon: <Subtitles class="w-6 h-6" />,
+      view: syncTaskListPage,
+    },
+
     {
       text: "未识别影视剧",
       icon: <EyeOff class="w-6 h-6" />,
