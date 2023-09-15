@@ -16,6 +16,7 @@ import {
   parse_video_file_name,
   upload_subtitle_for_episode,
   delete_unknown_episode,
+  deleteSourceFile,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { Select } from "@/components/ui/select";
@@ -64,7 +65,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const sourceDeleteRequest = new RequestCore(delete_unknown_episode, {
+  const sourceDeleteRequest = new RequestCore(deleteSourceFile, {
     onLoading(loading) {
       fileDeletingConfirmDialog.okBtn.setLoading(loading);
     },
@@ -440,7 +441,6 @@ export const TVProfilePage: ViewComponent = (props) => {
             class="mb-2 cursor-pointer"
             onClick={() => {
               app.back();
-              // homeLayout.showPrevView({ destroy: true });
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -564,7 +564,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                           <div class="pl-4 space-y-1">
                             <For each={sources}>
                               {(source) => {
-                                const { file_id, file_name, parent_paths, drive } = source;
+                                const { id, file_name, parent_paths, drive } = source;
                                 return (
                                   <div class="flex items-center space-x-4 text-slate-500">
                                     <span class="break-all" title={`[${drive.name}]${parent_paths}/${file_name}`}>
@@ -576,7 +576,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                                         title="播放"
                                         onClick={() => {
                                           mediaPlayingPage.query = {
-                                            id: file_id,
+                                            id,
                                           };
                                           app.showView(mediaPlayingPage);
                                         }}

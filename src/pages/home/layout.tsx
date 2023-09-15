@@ -49,11 +49,41 @@ import {
   syncTaskListPage,
 } from "@/store";
 import { cn, sleep } from "@/utils";
-import { fetch_settings, notify_test, update_settings } from "@/services";
+import { fetchSettings, notify_test, updateSettings } from "@/services";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, view } = props;
 
+  const settingsRequest = new RequestCore(fetchSettings, {
+    onLoading(loading) {
+      settingsBtn.setLoading(loading);
+    },
+    onSuccess(v) {
+      notify1TokenInput.setValue(v.push_deer_token);
+      filenameParseRuleInput.setValue(v.extra_filename_rules);
+      settingsDialog.show();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["获取设置失败", error.message],
+      });
+    },
+  });
+  const expiredDeletingRequest = new RequestCore(fetchSettings, {
+    onLoading(loading) {
+      expiredDeletingBtn.setLoading(loading);
+    },
+    onSuccess(v) {
+      app.tip({
+        text: ["清除成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["获取设置失败", error.message],
+      });
+    },
+  });
   const tmdbDialog = new TMDBSearcherDialogCore({
     footer: false,
   });
@@ -68,7 +98,7 @@ export const HomeLayout: ViewComponent = (props) => {
       logoutBtn.setLoading(false);
     },
   });
-  const settingsUpdateRequest = new RequestCore(update_settings, {
+  const settingsUpdateRequest = new RequestCore(updateSettings, {
     onLoading(loading) {
       settingsDialog.okBtn.setLoading(loading);
     },
@@ -172,26 +202,12 @@ export const HomeLayout: ViewComponent = (props) => {
       });
     },
   });
-  const settingsRequest = new RequestCore(fetch_settings, {
-    onLoading(loading) {
-      settingsBtn.setLoading(loading);
-    },
-    onSuccess(v) {
-      notify1TokenInput.setValue(v.push_deer_token);
-      filenameParseRuleInput.setValue(v.extra_filename_rules);
-      settingsDialog.show();
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["获取设置失败", error.message],
-      });
-    },
-  });
   const settingsBtn = new ButtonCore({
     onClick() {
       settingsRequest.run();
     },
   });
+  const expiredDeletingBtn = new ButtonCore({});
 
   const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
@@ -364,19 +380,25 @@ export const HomeLayout: ViewComponent = (props) => {
       <TMDBSearcherDialog store={tmdbDialog} />
       <FileSearchDialog store={fileSearchDialog} />
       <Dialog store={settingsDialog}>
-        <div>
-          <div>PushDeer token</div>
-          <Textarea store={notify1TokenInput} />
-          <div class="mt-2 flex items-center space-x-2">
-            <Input store={notify1TestInput} />
-            <Button variant="subtle" store={notify1TestBtn}>
-              发送
-            </Button>
+        <div class="w-[520px]">
+          <div>
+            <div>PushDeer token</div>
+            <Textarea store={notify1TokenInput} />
+            <div class="mt-2 flex items-center space-x-2">
+              <Input store={notify1TestInput} />
+              <Button variant="subtle" store={notify1TestBtn}>
+                发送
+              </Button>
+            </div>
           </div>
-        </div>
-        <div class="mt-4">
-          <div>文件名解析规则</div>
-          <Textarea store={filenameParseRuleInput} />
+          <div class="mt-4">
+            <div>文件名解析规则</div>
+            <Textarea store={filenameParseRuleInput} />
+          </div>
+          <div class="mt-4">
+            <div>其他</div>
+            <Button store={expiredDeletingBtn}>清除失效视频源</Button>
+          </div>
         </div>
       </Dialog>
     </>

@@ -831,35 +831,6 @@ export const TVManagePage: ViewComponent = (props) => {
                                     移动到资源盘
                                   </Button>
                                 </Show>
-                                <Show
-                                  when={sync_task}
-                                  fallback={
-                                    <Button
-                                      store={addSyncTaskBtn.bind(season)}
-                                      variant="subtle"
-                                      icon={<BellPlus class="w-4 h-4" />}
-                                    >
-                                      创建更新任务
-                                    </Button>
-                                  }
-                                >
-                                  <>
-                                    <Button
-                                      store={execSyncTaskBtn.bind(season)}
-                                      variant="subtle"
-                                      icon={<Bell class="w-4 h-4" />}
-                                    >
-                                      更新
-                                    </Button>
-                                    <Button
-                                      store={modifySyncTaskBtn.bind(season)}
-                                      variant="subtle"
-                                      icon={<Pen class="w-4 h-4" />}
-                                    >
-                                      修改更新任务
-                                    </Button>
-                                  </>
-                                </Show>
                               </div>
                             </div>
                           </div>

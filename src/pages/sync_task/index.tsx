@@ -31,6 +31,7 @@ import {
   SyncTaskItem,
   transferSeasonToAnotherDrive,
   updateSyncTask,
+  modifyResourceForSyncTask,
 } from "@/services";
 import {
   Skeleton,
@@ -63,10 +64,9 @@ import { RefCore } from "@/domains/cur";
 import { SharedResourceCore, fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource";
 import { JobCore } from "@/domains/job";
 import { DriveCore } from "@/domains/drive";
-import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, homeLayout } from "@/store";
+import { createJob, driveList, consumeAction, pendingActions } from "@/store";
 import { Result, ViewComponent } from "@/types";
-import { FileType, MediaSourceOptions, TVGenresOptions } from "@/constants";
-import { cn } from "@/utils";
+import { FileType } from "@/constants";
 
 export const SyncTaskListPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -80,6 +80,15 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   });
   const partialTaskRequest = new RequestCore(fetchPartialSyncTask);
   const taskUpdateRequest = new RequestCore(updateSyncTask);
+  const overrideResourceRequest = new RequestCore(modifyResourceForSyncTask, {
+    onLoading(loading) {
+      sharedResourceBtn.setLoading(loading);
+    },
+    onSuccess() {
+      folderSearcher.dialog.hide();
+      refreshPartialTask();
+    },
+  });
   const taskRef = new RefCore<SyncTaskItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
@@ -92,24 +101,6 @@ export const SyncTaskListPage: ViewComponent = (props) => {
     onChange(checked) {
       syncTaskList.search({
         duplicated: Number(checked),
-      });
-    },
-  });
-  const sourceCheckboxGroup = new CheckboxGroupCore({
-    options: MediaSourceOptions,
-    onChange(options) {
-      setHasSearch(!!options.length);
-      syncTaskList.search({
-        language: options.join("|"),
-      });
-    },
-  });
-  const tvGenresCheckboxGroup = new CheckboxGroupCore({
-    options: TVGenresOptions,
-    onChange(options) {
-      setHasSearch(!!options.length);
-      syncTaskList.search({
-        genres: options.join("|"),
       });
     },
   });
@@ -144,7 +135,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       sharedResourceUrlInput.clear();
       addSyncTaskDialog.hide();
       folderSearcher.dialog.hide();
-      refreshPartialTV();
+      refreshPartialTask();
     },
     onFailed(error) {
       console.log("[PAGE]tv/index - addFileSyncTask onFailed 1", error.code, error.data);
@@ -194,7 +185,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       // });
     },
   });
-  const refreshPartialTV = async (id?: string) => {
+  const refreshPartialTask = async (id?: string) => {
     const task_id = id || taskRef.value?.id;
     if (!task_id) {
       return Result.Err("缺少任务 id");
@@ -225,7 +216,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
         job_id: resp.job_id,
         onFinish() {
           execSyncTaskBtn.setLoading(false);
-          refreshPartialTV();
+          refreshPartialTask();
         },
         onTip(msg) {
           app.tip(msg);
@@ -273,13 +264,17 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   const sharedResourceBtn = new ButtonCore({
     onClick() {
       if (!taskRef.value) {
-        app.tip({ text: ["请先选择电视剧"] });
+        app.tip({ text: ["请选择同步任务"] });
         return;
       }
-      // addFileSyncTask.run({
-      //   tv_id: taskRef.value.tv_id,
-      //   url: sharedResourceUrlInput.value,
-      // });
+      if (!sharedResourceUrlInput.value) {
+        app.tip({ text: [sharedResourceUrlInput.placeholder] });
+        return;
+      }
+      overrideResourceRequest.run({
+        id: taskRef.value.id,
+        url: sharedResourceUrlInput.value,
+      });
     },
   });
   const folderSearcher = new FileSearcherCore({
@@ -335,6 +330,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
         return;
       }
       seasonSelect.clear();
+      refreshPartialTask(taskRef.value.id);
       seasonSelectDialog.hide();
     },
   });
@@ -358,7 +354,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   const refreshPartialBtn = new ButtonInListCore<SyncTaskItem>({
     async onClick(record) {
       refreshPartialBtn.setLoading(true);
-      const r = await refreshPartialTV(record.id);
+      const r = await refreshPartialTask(record.id);
       refreshPartialBtn.setLoading(false);
       if (r.error) {
         return;
@@ -389,22 +385,15 @@ export const SyncTaskListPage: ViewComponent = (props) => {
     beforeRequest() {
       runTaskListBtn.setLoading(true);
     },
-    async onSuccess(resp) {
+    async onSuccess(r) {
       app.tip({ text: ["开始同步所有电视剧"] });
-      const job_res = await JobCore.New({ id: resp.job_id });
-      if (job_res.error) {
-        app.tip({ text: [job_res.error.message] });
-        return;
-      }
-      const job = job_res.data;
-      job.onFinish(() => {
-        syncTaskList.refresh();
-        runTaskListBtn.setLoading(false);
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          syncTaskList.refresh();
+          runTaskListBtn.setLoading(false);
+        },
       });
-      job.onPause(() => {
-        runTaskListBtn.setLoading(false);
-      });
-      job.waitFinish();
     },
     onFailed(error) {
       app.tip({ text: ["同步更新失败", error.message] });
@@ -629,6 +618,13 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                   icon={<Pen class="w-4 h-4" />}
                                 >
                                   修改
+                                </Button>
+                                <Button
+                                  store={modifySyncTaskBtn.bind(task)}
+                                  variant="subtle"
+                                  icon={<Pen class="w-4 h-4" />}
+                                >
+                                  删除
                                 </Button>
                               </div>
                             </div>

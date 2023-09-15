@@ -2,10 +2,11 @@
  * @file 电影详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft } from "lucide-solid";
+import { ArrowLeft, Play, Trash } from "lucide-solid";
 
 import {
   MovieProfile,
+  deleteSourceFile,
   delete_movie,
   fetch_movie_profile,
   parse_video_file_name,
@@ -65,7 +66,50 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const subtitleValues = new RefCore<{ drive_id: string; lang: string; file: File }>();
+  const sourceDeleteRequest = new RequestCore(deleteSourceFile, {
+    onLoading(loading) {
+      fileDeletingConfirmDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      const the_source = sourceRef.value;
+      if (!the_source) {
+        app.tip({
+          text: ["删除成功，请刷新页面"],
+        });
+        return;
+      }
+      // curEpisodeList.modifyResponse((response) => {
+      //   return {
+      //     ...response,
+      //     dataSource: response.dataSource.map((episode) => {
+      //       if (episode.id !== the_episode.id) {
+      //         return episode;
+      //       }
+      //       return {
+      //         ...episode,
+      //         sources: episode.sources.filter((source) => {
+      //           if (source.id !== the_source.id) {
+      //             return true;
+      //           }
+      //           return false;
+      //         }),
+      //       };
+      //     }),
+      //   };
+      // });
+      fileDeletingConfirmDialog.hide();
+      app.tip({
+        text: ["删除成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除视频源失败", error.message],
+      });
+    },
+  });
+  const subtitleRef = new RefCore<{ drive_id: string; lang: string; file: File }>();
+  const sourceRef = new RefCore<{ file_id: string }>();
   const subtitleUploadInput = new InputCore({
     defaultValue: [],
     placeholder: "上传字幕文件",
@@ -112,7 +156,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      subtitleValues.select({
+      subtitleRef.select({
         drive_id: reference_id,
         file,
         lang: subtitle_lang,
@@ -127,13 +171,13 @@ export const MovieProfilePage: ViewComponent = (props) => {
   const subtitleUploadDialog = new DialogCore({
     title: "上传字幕",
     onOk() {
-      if (!subtitleValues.value) {
+      if (!subtitleRef.value) {
         app.tip({
           text: ["请先上传字幕文件"],
         });
         return;
       }
-      const { drive_id, lang, file } = subtitleValues.value;
+      const { drive_id, lang, file } = subtitleRef.value;
       uploadRequest.run({
         movie_id: view.query.id,
         drive_id,
@@ -175,6 +219,21 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
       app.back();
       // homeLayout.showPrevView({ destroy: true });
+    },
+  });
+  const fileDeletingConfirmDialog = new DialogCore({
+    title: "删除视频源",
+    onOk() {
+      const theSource = sourceRef.value;
+      if (!theSource) {
+        app.tip({
+          text: ["请先选择要删除的源"],
+        });
+        return;
+      }
+      sourceDeleteRequest.run({
+        id: theSource.file_id,
+      });
     },
   });
   const movieRefreshDialog = new TMDBSearcherDialogCore({
@@ -265,9 +324,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
                         <div class="mt-4 space-x-2">
                           <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>TMDB</a>
                         </div>
-                        <div class="mt-4 space-x-2">
-                          {profile()?.source_size_text}
-                        </div>
+                        <div class="mt-4 space-x-2">{profile()?.source_size_text}</div>
                       </div>
                     </div>
                   </div>
@@ -287,20 +344,36 @@ export const MovieProfilePage: ViewComponent = (props) => {
                 <div class="mt-4 space-y-2">
                   <For each={profile()?.sources}>
                     {(source) => {
-                      const { file_id, file_name, parent_paths, drive } = source;
+                      const { id, file_id, file_name, parent_paths, drive } = source;
                       return (
-                        <div
-                          class=""
-                          onClick={() => {
-                            mediaPlayingPage.query = {
-                              id: file_id,
-                            };
-                            app.showView(mediaPlayingPage);
-                          }}
-                        >
-                          <div class="">
-                            <div class="" title={`[${drive.name}]${parent_paths}/${file_name}`}>
+                        <div class="">
+                          <div class="flex items-center space-x-4 text-slate-500">
+                            <span class="break-all" title={`[${drive.name}]${parent_paths}/${file_name}`}>
                               [{drive.name}]{parent_paths}/{file_name}
+                            </span>
+                            <div class="flex items-center space-x-2">
+                              <div
+                                class="p-1 cursor-pointer"
+                                title="播放"
+                                onClick={() => {
+                                  mediaPlayingPage.query = {
+                                    id,
+                                  };
+                                  app.showView(mediaPlayingPage);
+                                }}
+                              >
+                                <Play class="w-4 h-4" />
+                              </div>
+                              <div
+                                class="p-1 cursor-pointer"
+                                title="删除源"
+                                onClick={() => {
+                                  sourceRef.select(source);
+                                  fileDeletingConfirmDialog.show();
+                                }}
+                              >
+                                <Trash class="w-4 h-4" />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -323,6 +396,10 @@ export const MovieProfilePage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={subtitleUploadDialog}>
         <Input store={subtitleUploadInput} />
+      </Dialog>
+      <Dialog store={fileDeletingConfirmDialog}>
+        <div>该操作仅删除解析结果</div>
+        <div>不影响云盘内文件</div>
       </Dialog>
     </>
   );

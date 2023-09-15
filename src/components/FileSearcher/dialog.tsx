@@ -8,7 +8,9 @@ export function FileSearchDialog(props: { store: FileSearcherCore }) {
 
   return (
     <Dialog store={store.dialog}>
-      <FileSearcher store={store} />
+      <div class="w-[520px]">
+        <FileSearcher store={store} />
+      </div>
     </Dialog>
   );
 }

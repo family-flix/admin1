@@ -1038,8 +1038,8 @@ export function fetch_episodes_of_season(body: { tv_id: string; season_id: strin
 }
 export type EpisodeItemInSeason = RequestedResource<typeof fetch_episodes_of_season>["list"][number];
 
-export async function fetch_video_preview_info(body: { file_id: string }) {
-  const { file_id } = body;
+export async function fetchSourcePreviewInfo(body: { id: string }) {
+  const { id } = body;
   const r = await request.get<{
     url: string;
     thumbnail: string;
@@ -1053,13 +1053,13 @@ export async function fetch_video_preview_info(body: { file_id: string }) {
       width: number;
       height: number;
     }[];
-  }>(`/api/admin/file/${file_id}/preview`);
+  }>(`/api/admin/source/${id}/preview`);
   if (r.error) {
     return Result.Err(r.error);
   }
   const { url, width, height, type, other, thumbnail } = r.data;
   return Result.Ok({
-    file_id,
+    file_id: id,
     url,
     width,
     height,
@@ -1069,7 +1069,7 @@ export async function fetch_video_preview_info(body: { file_id: string }) {
     resolutions: other.map((r) => {
       const { url, width, height, type, thumbnail } = r;
       return {
-        file_id,
+        file_id: id,
         url,
         width,
         height,
@@ -1284,15 +1284,32 @@ export function notify_test(values: { text: string; token: string }) {
   const { text, token } = values;
   return request.post(`/api/admin/notify/test`, { text, token });
 }
-export function fetch_settings() {
+
+/**
+ * 获取用户配置
+ * 1. PushDeer token
+ * 2. filename parse rules
+ */
+export function fetchSettings() {
   return request.get<{
     push_deer_token: string;
     extra_filename_rules: string;
   }>("/api/admin/settings");
 }
-export function update_settings(values: Partial<{ push_deer_token: string; extra_filename_rules: string }>) {
+
+/**
+ * 更新用户配置
+ */
+export function updateSettings(values: Partial<{ push_deer_token: string; extra_filename_rules: string }>) {
   const { push_deer_token, extra_filename_rules } = values;
   return request.post(`/api/admin/settings/update`, { push_deer_token, extra_filename_rules });
+}
+
+/**
+ * 更新用户配置
+ */
+export function deleteExpiredSourceFiles() {
+  return request.post(`/api/admin/settings/expired_file/delete`, {});
 }
 
 export function sync_folder(values: { drive_id: string; file_id: string }) {
@@ -1492,6 +1509,14 @@ export function fetchSyncTaskList(params: FetchParams & { in_production: number;
 }
 export type SyncTaskItem = RequestedResource<typeof fetchSyncTaskList>["list"][number];
 
+/** 给指定同步任务覆盖另一个分享资源 */
+export function modifyResourceForSyncTask(values: { id: string; url: string }) {
+  const { id, url } = values;
+  return request.post<{}>(`/api/admin/sync_task/${id}/override_resource`, {
+    url,
+  });
+}
+
 /** 获取同步任务列表 */
 export function fetchPartialSyncTask(params: { id: string }) {
   return request.get<{
@@ -1535,4 +1560,9 @@ export function updateSyncTask(params: { id: string; season_id: string }) {
       id: string;
     };
   }>(`/api/admin/sync_task/${id}/update`, { season_id });
+}
+
+export function deleteSourceFile(params: { id: string }) {
+  const { id } = params;
+  return request.get(`/api/admin/source/${id}/delete`);
 }

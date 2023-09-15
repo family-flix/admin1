@@ -4,7 +4,7 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { ArrowLeft } from "lucide-solid";
 
-import { fetch_video_preview_info } from "@/services";
+import { fetchSourcePreviewInfo } from "@/services";
 import { Video } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { PlayerCore } from "@/domains/player";
@@ -15,7 +15,7 @@ export const MediaPlayingPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const player = new PlayerCore({ app });
-  const fileRequest = new RequestCore(fetch_video_preview_info, {
+  const fileRequest = new RequestCore(fetchSourcePreviewInfo, {
     onSuccess(v) {
       setProfile(v);
       player.setSize({
@@ -104,7 +104,7 @@ export const MediaPlayingPage: ViewComponent = (props) => {
   // console.log("[PAGE]tv/play - before fetch tv profile", view.query.id);
   onMount(() => {
     console.log("[PAGE]play/index - onMount", view.query.id);
-    fileRequest.run({ file_id: view.query.id });
+    fileRequest.run({ id: view.query.id });
   });
   onCleanup(() => {
     console.log("[PAGE]play/index - onCleanup", view.query.id);
