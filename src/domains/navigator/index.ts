@@ -81,12 +81,14 @@ type NavigatorState = {
 export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   static prefix: string | null = null;
   static parse(url: string) {
-    const { pathname, ...rest } = parse(url);
+    const { pathname, query: queryStr, ...rest } = parse(url);
+    const query = qs.parse(queryStr, { ignoreQueryPrefix: true });
     if (NavigatorCore.prefix && pathname.startsWith(NavigatorCore.prefix)) {
-      return { ...rest, pathname: pathname.replace(NavigatorCore.prefix, "") };
+      return { ...rest, query, pathname: pathname.replace(NavigatorCore.prefix, "") };
     }
     return {
       ...rest,
+      query,
       pathname,
     };
   }

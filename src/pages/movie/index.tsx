@@ -9,6 +9,7 @@ import {
   fetch_movie_list,
   moveMovieToResourceDrive,
   MovieItem,
+  refreshMovieProfiles,
   transferMovieToAnotherDrive,
 } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox, Dialog } from "@/components/ui";
@@ -94,6 +95,31 @@ export const MovieManagePage: ViewComponent = (props) => {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
       refreshBtn.setLoading(loading);
+    },
+  });
+  const refreshMovieProfilesRequest = new RequestCore(refreshMovieProfiles, {
+    beforeRequest() {
+      refreshMovieListBtn.setLoading(true);
+    },
+    async onSuccess(r) {
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          app.tip({ text: ["更新成功"] });
+          movieList.refresh();
+          refreshMovieListBtn.setLoading(false);
+        },
+      });
+    },
+    onFailed(error) {
+      app.tip({ text: ["更新失败", error.message] });
+      refreshMovieListBtn.setLoading(false);
+    },
+  });
+  const refreshMovieListBtn = new ButtonCore({
+    onClick() {
+      app.tip({ text: ["开始更新"] });
+      refreshMovieProfilesRequest.run();
     },
   });
   const movieRef = new RefCore<MovieItem>();
@@ -284,6 +310,9 @@ export const MovieManagePage: ViewComponent = (props) => {
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
+            <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshMovieListBtn}>
+              更新近3月内电影详情
+            </Button>
             <div class="flex items-center space-x-2">
               <Checkbox store={duplicatedCheckbox}></Checkbox>
               <span>重复内容</span>
@@ -336,7 +365,7 @@ export const MovieManagePage: ViewComponent = (props) => {
                     homeMovieProfilePage.query = {
                       id,
                     };
-                    const url = homeMovieProfilePage.buildUrl();
+                    const url = homeMovieProfilePage.buildUrlWithPrefix();
                     return (
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">

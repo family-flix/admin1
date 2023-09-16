@@ -26,8 +26,8 @@ import {
   fetch_partial_season,
   fetch_season_list,
   moveSeasonToResourceDrive,
-  refresh_tv_profile,
-  runSyncTaskList,
+  refreshTVProfile,
+  refreshTVProfiles,
   runSyncTask,
   transferSeasonToAnotherDrive,
   TVSeasonItem,
@@ -109,6 +109,26 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetch_partial_season);
+  const refreshProfileRequest = new RequestCore(refreshTVProfile, {
+    onSuccess(r) {
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          refreshProfileBtn.setLoading(false);
+          refreshPartialTV();
+        },
+        onTip(msg) {
+          app.tip(msg);
+        },
+      });
+    },
+    onFailed(error) {
+      refreshProfileBtn.setLoading(false);
+      app.tip({
+        text: ["更新失败", error.message],
+      });
+    },
+  });
   const seasonRef = new RefCore<TVSeasonItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
@@ -162,7 +182,7 @@ export const TVManagePage: ViewComponent = (props) => {
       setCurDrive(v);
     },
   });
-  const bindSearchedTVForTVRequest = new RequestCore(refresh_tv_profile, {
+  const bindSearchedTVForTVRequest = new RequestCore(refreshTVProfile, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
@@ -443,6 +463,15 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
+  const refreshProfileBtn = new ButtonInListCore<TVSeasonItem>({
+    onClick(record) {
+      app.tip({
+        text: ["开始更新"],
+      });
+      refreshProfileBtn.setLoading(true);
+      refreshProfileRequest.run({ tv_id: record.tv_id });
+    },
+  });
   const profileBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       homeTVProfilePage.query = {
@@ -471,35 +500,29 @@ export const TVManagePage: ViewComponent = (props) => {
       sharedResourceBtn.click();
     },
   });
-  const syncAllTVRequest = new RequestCore(runSyncTaskList, {
+  const refreshSeasonProfilesRequest = new RequestCore(refreshTVProfiles, {
     beforeRequest() {
-      syncAllTVBtn.setLoading(true);
+      refreshSeasonListBtn.setLoading(true);
     },
-    async onSuccess(resp) {
-      app.tip({ text: ["开始同步所有电视剧"] });
-      const job_res = await JobCore.New({ id: resp.job_id });
-      if (job_res.error) {
-        app.tip({ text: [job_res.error.message] });
-        return;
-      }
-      const job = job_res.data;
-      job.onFinish(() => {
-        seasonList.refresh();
-        syncAllTVBtn.setLoading(false);
+    async onSuccess(r) {
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          app.tip({ text: ["更新成功"] });
+          seasonList.refresh();
+          refreshSeasonListBtn.setLoading(false);
+        },
       });
-      job.onPause(() => {
-        syncAllTVBtn.setLoading(false);
-      });
-      job.waitFinish();
     },
     onFailed(error) {
-      app.tip({ text: ["同步更新失败", error.message] });
-      syncAllTVBtn.setLoading(false);
+      app.tip({ text: ["更新失败", error.message] });
+      refreshSeasonListBtn.setLoading(false);
     },
   });
-  const syncAllTVBtn = new ButtonCore({
+  const refreshSeasonListBtn = new ButtonCore({
     onClick() {
-      syncAllTVRequest.run();
+      app.tip({ text: ["开始更新"] });
+      refreshSeasonProfilesRequest.run();
     },
   });
   const moveToResourceDriveConfirmDialog = new DialogCore({
@@ -640,8 +663,8 @@ export const TVManagePage: ViewComponent = (props) => {
               <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
                 刷新
               </Button>
-              <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={syncAllTVBtn}>
-                更新所有电视剧
+              <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
+                更新近3月内电视剧详情
               </Button>
               <div class="flex items-center space-x-2">
                 <Checkbox store={onlyInvalidCheckbox}></Checkbox>
@@ -740,7 +763,7 @@ export const TVManagePage: ViewComponent = (props) => {
                         id: tv_id,
                         season_id: id,
                       };
-                      const url = homeTVProfilePage.buildUrl();
+                      const url = homeTVProfilePage.buildUrlWithPrefix();
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
@@ -808,6 +831,13 @@ export const TVManagePage: ViewComponent = (props) => {
                                   variant="subtle"
                                   icon={<RotateCw class="w-4 h-4" />}
                                 ></Button>
+                                <Button
+                                  store={refreshProfileBtn.bind(season)}
+                                  variant="subtle"
+                                  icon={<BookOpen class="w-4 h-4" />}
+                                >
+                                  更新详情
+                                </Button>
                                 <Button
                                   store={profileBtn.bind(season)}
                                   variant="subtle"

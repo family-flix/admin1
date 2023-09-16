@@ -15,12 +15,12 @@ import { sleep } from "./utils";
 import "./style.css";
 
 app.onClickLink(({ href }) => {
-  const { pathname } = NavigatorCore.parse(href);
+  const { pathname, query } = NavigatorCore.parse(href);
   const matched = pages.find((v) => {
     return v.key === pathname;
   });
   if (matched) {
-    matched.query = router.query;
+    matched.query = query as Record<string, string>;
     app.showView(matched);
     return;
   }
@@ -32,6 +32,8 @@ app.onClickLink(({ href }) => {
 app.onPopState((options) => {
   const { pathname } = NavigatorCore.parse(options.pathname);
   const matched = pages.find((v) => {
+    // console.log(v.key, pathname);
+    // return [NavigatorCore.prefix, v.key].join("/") === pathname;
     return v.key === pathname;
   });
   if (matched) {
@@ -64,7 +66,7 @@ function Application() {
       return;
     }
     const r = curView.buildUrl();
-    console.log("[PAGE]index.tsx - onViewShow", curView.title);
+    app.setTitle(`${curView.title} - FamilyFlix`);
     router.pushState(r);
   });
   rootView.onSubViewsChange((nextSubViews) => {

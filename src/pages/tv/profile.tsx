@@ -7,15 +7,13 @@ import { ArrowLeft, Play, Trash } from "lucide-solid";
 import {
   fetchTVProfile,
   TVProfile,
-  refresh_tv_profile,
+  refreshTVProfile,
   fetch_episodes_of_season,
-  deleteSeason,
   EpisodeItemInSeason,
-  delete_season,
+  deleteSeason,
   SeasonInTVProfile,
   parse_video_file_name,
   upload_subtitle_for_episode,
-  delete_unknown_episode,
   deleteSourceFile,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
@@ -119,7 +117,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   const curEpisode = new RefCore<EpisodeItemInSeason>();
   const curFile = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
-  const updateTVProfileRequest = new RequestCore(refresh_tv_profile, {
+  const updateTVProfileRequest = new RequestCore(refreshTVProfile, {
     onLoading(loading) {
       tmdbSearchDialog.okBtn.setLoading(loading);
     },
@@ -158,7 +156,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       tmdbSearchDialog.show();
     },
   });
-  const refreshProfileRequest = new RequestCore(refresh_tv_profile, {
+  const refreshProfileRequest = new RequestCore(refreshTVProfile, {
     // onLoading(loading) {
     //   refreshProfileBtn.setLoading(loading);
     // },
@@ -191,7 +189,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       refreshProfileRequest.run({ tv_id: view.query.id });
     },
   });
-  const seasonDeleteRequest = new RequestCore(delete_season, {
+  const seasonDeleteRequest = new RequestCore(deleteSeason, {
     onLoading(loading) {
       tvDeleteConfirmDialog.okBtn.setLoading(loading);
     },

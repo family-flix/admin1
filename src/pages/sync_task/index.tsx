@@ -2,36 +2,20 @@
  * @file 同步列表
  */
 import { createSignal, For, Show } from "solid-js";
-import {
-  ArrowUpCircle,
-  Award,
-  Bell,
-  BellPlus,
-  BookOpen,
-  Calendar,
-  Check,
-  Info,
-  Package,
-  Pen,
-  RotateCw,
-  Search,
-  Send,
-  Smile,
-} from "lucide-solid";
+import { ArrowUpCircle, Bell, Check, Pen, RotateCw, Search, Send, Smile, Trash } from "lucide-solid";
 
 import {
   add_file_sync_task_of_tv,
   fetch_folder_can_add_sync_task,
-  fetch_partial_season,
   fetchPartialSyncTask,
   fetchSyncTaskList,
-  refresh_tv_profile,
-  runSyncTaskList,
+  refreshTVProfiles,
   runSyncTask,
   SyncTaskItem,
-  transferSeasonToAnotherDrive,
   updateSyncTask,
   modifyResourceForSyncTask,
+  completeSyncTask,
+  deleteSyncTask,
 } from "@/services";
 import {
   Skeleton,
@@ -89,6 +73,8 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       refreshPartialTask();
     },
   });
+  const completeTaskRequest = new RequestCore(completeSyncTask);
+  const deleteTaskRequest = new RequestCore(deleteSyncTask);
   const taskRef = new RefCore<SyncTaskItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
@@ -292,6 +278,62 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       addSyncTaskDialog.show();
     },
   });
+  const completeTaskBtn = new ButtonInListCore<SyncTaskItem>({
+    async onClick(record) {
+      completeTaskBtn.setLoading(true);
+      const r = await completeTaskRequest.run({ id: record.id });
+      completeTaskBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["请求失败", r.error.message],
+        });
+        return;
+      }
+      app.tip({
+        text: ["操作成功"],
+      });
+      syncTaskList.deleteItem((item) => {
+        if (item.id === record.id) {
+          return true;
+        }
+        return false;
+      });
+    },
+  });
+  const deleteTaskDialog = new DialogCore({
+    title: "删除同步任务",
+    async onOk() {
+      if (!taskRef.value) {
+        return;
+      }
+      const { id } = taskRef.value;
+      deleteTaskDialog.okBtn.setLoading(true);
+      const r = await deleteTaskRequest.run({ id });
+      deleteTaskDialog.okBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["删除失败", r.error.message],
+        });
+        return;
+      }
+      deleteTaskDialog.hide();
+      app.tip({
+        text: ["删除成功"],
+      });
+      syncTaskList.deleteItem((item) => {
+        if (item.id === id) {
+          return true;
+        }
+        return false;
+      });
+    },
+  });
+  const deleteTaskBtn = new ButtonInListCore<SyncTaskItem>({
+    async onClick(record) {
+      taskRef.select(record);
+      deleteTaskDialog.show();
+    },
+  });
   const modifySyncTaskBtn = new ButtonInListCore<SyncTaskItem>({
     onClick(record) {
       if (record === null) {
@@ -381,7 +423,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       sharedResourceBtn.click();
     },
   });
-  const runTaskListRequest = new RequestCore(runSyncTaskList, {
+  const runTaskListRequest = new RequestCore(refreshTVProfiles, {
     beforeRequest() {
       runTaskListBtn.setLoading(true);
     },
@@ -560,7 +602,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                 <div class="space-y-4">
                   <For each={tvListResponse().dataSource}>
                     {(task) => {
-                      const { id, resource_file_name, drive_file_name, season } = task;
+                      const { id, resource_file_name, invalid, drive_file_name, season } = task;
                       const name = `${resource_file_name} -> ${drive_file_name}`;
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
@@ -570,7 +612,14 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                             </div>
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
-                                <h2 class="text-2xl text-slate-800">{name}</h2>
+                                <h2
+                                  classList={{
+                                    "text-2xl text-slate-800": true,
+                                    "opacity-20": invalid === 1,
+                                  }}
+                                >
+                                  {name}
+                                </h2>
                               </div>
                               <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
                                 <Show when={season}>
@@ -620,9 +669,16 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                   修改
                                 </Button>
                                 <Button
-                                  store={modifySyncTaskBtn.bind(task)}
+                                  store={completeTaskBtn.bind(task)}
                                   variant="subtle"
                                   icon={<Pen class="w-4 h-4" />}
+                                >
+                                  完成
+                                </Button>
+                                <Button
+                                  store={deleteTaskBtn.bind(task)}
+                                  variant="subtle"
+                                  icon={<Trash class="w-4 h-4" />}
                                 >
                                   删除
                                 </Button>
@@ -748,6 +804,11 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       <Dialog store={seasonSelectDialog}>
         <div class="w-[520px]">
           <TVSeasonSelect store={seasonSelect} />
+        </div>
+      </Dialog>
+      <Dialog store={deleteTaskDialog}>
+        <div class="w-[520px]">
+          <p>确认删除该同步任务吗？</p>
         </div>
       </Dialog>
       <BackToTop store={scrollView} />

@@ -200,14 +200,14 @@ export function delete_tv(body: {
 }
 
 /** 刷新电视剧详情 */
-export function refresh_tv_profile(body: { tv_id: string; tmdb_id?: number }) {
+export function refreshTVProfile(body: { tv_id: string; tmdb_id?: number }) {
   const { tv_id, tmdb_id } = body;
   return request.post<{ job_id: string }>(`/api/admin/tv/refresh_profile/${tv_id}`, {
     tmdb_id,
   });
 }
 
-export function delete_season(body: { season_id: string }) {
+export function deleteSeason(body: { season_id: string }) {
   const { season_id } = body;
   return request.get<void>(`/api/admin/season/${season_id}/delete`);
 }
@@ -838,10 +838,17 @@ export function add_file_sync_task_of_tv(body: {
 }
 
 /**
- * 执行所有电视剧同步任务
+ * 更新所有电视剧详情
  */
-export function runSyncTaskList() {
-  return request.get<{ job_id: string }>("/api/admin/sync_task/run");
+export function refreshTVProfiles() {
+  return request.get<{ job_id: string }>("/api/admin/tv/refresh_profile");
+}
+
+/**
+ * 更新所有电影详情
+ */
+export function refreshMovieProfiles() {
+  return request.get<{ job_id: string }>("/api/admin/movie/refresh_profile");
 }
 
 /**
@@ -1079,16 +1086,6 @@ export async function fetchSourcePreviewInfo(body: { id: string }) {
       };
     }),
   });
-}
-
-/**
- * 删除指定季
- * @param body
- * @returns
- */
-export function deleteSeason(body: { season_id: string }) {
-  const { season_id } = body;
-  return request.get(`/api/admin/season/${season_id}/delete`);
 }
 
 export async function fetchReportList(params: FetchParams) {
@@ -1493,6 +1490,7 @@ export function fetchSyncTaskList(params: FetchParams & { in_production: number;
       drive_file_id: string;
       drive_file_name: string;
       url: string;
+      invalid: number;
       season: null | {
         id: string;
         name: string;
@@ -1526,6 +1524,7 @@ export function fetchPartialSyncTask(params: { id: string }) {
     drive_file_id: string;
     drive_file_name: string;
     url: string;
+    invalid: number;
     season: null | {
       id: string;
       name: string;
@@ -1560,6 +1559,18 @@ export function updateSyncTask(params: { id: string; season_id: string }) {
       id: string;
     };
   }>(`/api/admin/sync_task/${id}/update`, { season_id });
+}
+
+/** 标记同步任务已完结 */
+export function completeSyncTask(params: { id: string }) {
+  const { id } = params;
+  return request.get<{}>(`/api/admin/sync_task/${id}/complete`, {});
+}
+
+/** 删除同步任务 */
+export function deleteSyncTask(params: { id: string }) {
+  const { id } = params;
+  return request.get<{}>(`/api/admin/sync_task/${id}/delete`, {});
 }
 
 export function deleteSourceFile(params: { id: string }) {

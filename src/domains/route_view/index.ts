@@ -349,6 +349,10 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
   }
   buildUrl() {
     const url = buildUrl(this.key, this.params, this.query);
+    return url;
+  }
+  buildUrlWithPrefix() {
+    const url = buildUrl(this.key, this.params, this.query);
     return NavigatorCore.prefix + url;
   }
   ready() {

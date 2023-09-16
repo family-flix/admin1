@@ -361,7 +361,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
                           homeMovieProfilePage.query = {
                             id: movie.id,
                           };
-                          const url = homeMovieProfilePage.buildUrl();
+                          const url = homeMovieProfilePage.buildUrlWithPrefix();
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">
@@ -387,7 +387,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
                             id: season.tv_id,
                             season_id: season.id,
                           };
-                          const url = homeTVProfilePage.buildUrl();
+                          const url = homeTVProfilePage.buildUrlWithPrefix();
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">
