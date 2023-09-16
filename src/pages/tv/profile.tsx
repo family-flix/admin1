@@ -15,6 +15,7 @@ import {
   parse_video_file_name,
   upload_subtitle_for_episode,
   deleteSourceFile,
+  updateSeasonProfileManually,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { Select } from "@/components/ui/select";
@@ -106,14 +107,31 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const tmpSeasonStore = new RefCore<SeasonInTVProfile>();
-  const curSeasonStore = new RefCore<SeasonInTVProfile>();
+  const profileUpdateRequest = new RequestCore(updateSeasonProfileManually, {
+    onLoading(loading) {
+      profileUpdateDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["更新成功"],
+      });
+      profileUpdateDialog.hide();
+      profileRequest.reload();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["更新失败", error.message],
+      });
+    },
+  });
   const curEpisodeList = new ListCore(new RequestCore(fetch_episodes_of_season), {
     search: {
       tv_id: view.query.id,
       season_id: view.query.season_id,
     },
   });
+  const tmpSeasonStore = new RefCore<SeasonInTVProfile>();
+  const curSeasonStore = new RefCore<SeasonInTVProfile>();
   const curEpisode = new RefCore<EpisodeItemInSeason>();
   const curFile = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
@@ -148,7 +166,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const btn1 = new ButtonCore({
+  const profileChangeBtn = new ButtonCore({
     onClick() {
       if (profileRequest.response) {
         tmdbSearchDialog.input(profileRequest.response.name);
@@ -157,9 +175,6 @@ export const TVProfilePage: ViewComponent = (props) => {
     },
   });
   const refreshProfileRequest = new RequestCore(refreshTVProfile, {
-    // onLoading(loading) {
-    //   refreshProfileBtn.setLoading(loading);
-    // },
     onSuccess(resp) {
       app.tip({
         text: ["开始刷新"],
@@ -203,7 +218,6 @@ export const TVProfilePage: ViewComponent = (props) => {
         id: view.query.season_id,
       });
       app.back();
-      // homeLayout.showPrevView({ destroy: true });
     },
     onFailed(error) {
       app.tip({
@@ -314,7 +328,7 @@ export const TVProfilePage: ViewComponent = (props) => {
     defaultValue: null,
     options: SubtitleLanguageOptions,
   });
-  const tvDeleteBtn = new ButtonCore({
+  const seasonDeletingBtn = new ButtonCore({
     onClick() {
       tvDeleteConfirmDialog.show();
     },
@@ -387,6 +401,37 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const seasonContextMenu = new ContextMenuCore({
     items: [deleteSeasonMenuItem],
+  });
+  const profileTitleInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入电视剧标题",
+  });
+  const profileEpisodeCountInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入季剧集总数",
+  });
+  const profileUpdateBtn = new ButtonCore({
+    onClick() {
+      profileUpdateDialog.show();
+    },
+  });
+  const profileUpdateDialog = new DialogCore({
+    title: "手动修改详情",
+    onOk() {
+      const title = profileTitleInput.value;
+      const episodeCount = profileEpisodeCountInput.value;
+      if (!title && !episodeCount) {
+        app.tip({
+          text: ["请至少输入一个变更项"],
+        });
+        return;
+      }
+      profileUpdateRequest.run({
+        season_id: view.query.season_id,
+        title,
+        episode_count: Number(episodeCount),
+      });
+    },
   });
   const scrollView = new ScrollViewCore({
     onReachBottom() {
@@ -492,9 +537,10 @@ export const TVProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4 whitespace-nowrap">
-                  <Button store={btn1}>修改详情</Button>
+                  <Button store={profileUpdateBtn}>修改详情</Button>
+                  <Button store={profileChangeBtn}>变更详情</Button>
                   <Button store={refreshProfileBtn}>刷新详情</Button>
-                  <Button store={tvDeleteBtn}>删除季</Button>
+                  <Button store={seasonDeletingBtn}>删除季</Button>
                   <Button store={subtitleUploadBtn}>上传字幕</Button>
                 </div>
                 <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
@@ -609,6 +655,20 @@ export const TVProfilePage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <TMDBSearcherDialog store={tmdbSearchDialog} />
+      <Dialog store={profileUpdateDialog}>
+        <div class="w-[520px]">
+          <div class="space-y-4">
+            <div class="space-y-1">
+              <div>标题</div>
+              <Input store={profileTitleInput} />
+            </div>
+            <div class="space-y-1">
+              <div>集数</div>
+              <Input store={profileEpisodeCountInput} />
+            </div>
+          </div>
+        </div>
+      </Dialog>
       <Dialog store={tvDeleteConfirmDialog}>
         <div class="">
           <div>确认删除「{curSeason()?.season_text}」吗？</div>

@@ -58,7 +58,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
-export async function fetch_season_list(
+export async function fetchSeasonList(
   params: FetchParams &
     Partial<{
       name: string;
@@ -109,7 +109,7 @@ export async function fetch_season_list(
     }),
   });
 }
-export type TVSeasonItem = RequestedResource<typeof fetch_season_list>["list"][number];
+export type TVSeasonItem = RequestedResource<typeof fetchSeasonList>["list"][number];
 
 /*
  * 获取电视剧部分详情
@@ -147,7 +147,7 @@ export async function fetch_partial_tv(params: { tv_id: string }) {
 /*
  * 获取电视剧部分详情
  */
-export async function fetch_partial_season(params: { season_id: string }) {
+export async function fetchPartialSeason(params: { season_id: string }) {
   const { season_id } = params;
   const resp = await request.get<{
     id: string;
@@ -818,26 +818,6 @@ export function runSyncTask(body: { id: string }) {
 }
 
 /**
- * 添加分享资源的同步任务
- * @param body
- * @returns
- */
-export function add_file_sync_task_of_tv(body: {
-  tv_id: string;
-  url: string;
-  target_file_id?: string;
-  target_file_name?: string;
-}) {
-  const { tv_id, url, target_file_id, target_file_name } = body;
-  return request.post<{}>(`/api/admin/shared_file_sync/add`, {
-    tv_id,
-    url,
-    target_file_id,
-    target_file_name,
-  });
-}
-
-/**
  * 更新所有电视剧详情
  */
 export function refreshTVProfiles() {
@@ -1011,6 +991,14 @@ export async function delete_episode_in_tv(body: { id: string; tv_id: string }) 
   const { id, tv_id } = body;
   const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
   return r;
+}
+
+/**
+ * 手动修改电视剧详情
+ */
+export function updateSeasonProfileManually(body: { season_id: string; title?: string; episode_count?: number }) {
+  const { season_id, title, episode_count } = body;
+  return request.post(`/api/admin/season/${season_id}/update`, { name: title, episode_count });
 }
 
 /**
@@ -1508,10 +1496,17 @@ export function fetchSyncTaskList(params: FetchParams & { in_production: number;
 export type SyncTaskItem = RequestedResource<typeof fetchSyncTaskList>["list"][number];
 
 /** 给指定同步任务覆盖另一个分享资源 */
-export function modifyResourceForSyncTask(values: { id: string; url: string }) {
-  const { id, url } = values;
+export function overrideResourceForSyncTask(values: {
+  id: string;
+  url: string;
+  resource_file_id?: string;
+  resource_file_name?: string;
+}) {
+  const { id, url, resource_file_id, resource_file_name } = values;
   return request.post<{}>(`/api/admin/sync_task/${id}/override_resource`, {
     url,
+    resource_file_id,
+    resource_file_name,
   });
 }
 
@@ -1539,6 +1534,30 @@ export function fetchPartialSyncTask(params: { id: string }) {
   }>(`/api/admin/sync_task/${params.id}/partial`, {});
 }
 
+/**
+ * 添加分享资源的同步任务
+ * @param body
+ * @returns
+ */
+export function createSyncTaskWithUrl(body: {
+  url: string;
+  resource_file_id?: string;
+  resource_file_name?: string;
+  drive_file_id?: string;
+  drive_file_name?: string;
+  drive_id?: string;
+}) {
+  const { url, resource_file_id, resource_file_name, drive_file_id, drive_file_name, drive_id } = body;
+  return request.post<{}>(`/api/admin/sync_task/create`, {
+    url,
+    resource_file_id,
+    resource_file_name,
+    drive_file_id,
+    drive_file_name,
+    drive_id,
+  });
+}
+
 /** 获取同步任务列表 */
 export function updateSyncTask(params: { id: string; season_id: string }) {
   const { id, season_id } = params;
@@ -1559,6 +1578,13 @@ export function updateSyncTask(params: { id: string; season_id: string }) {
       id: string;
     };
   }>(`/api/admin/sync_task/${id}/update`, { season_id });
+}
+
+/**
+ * 执行所有电视剧同步任务
+ */
+export function runSyncTaskList() {
+  return request.get<{ job_id: string }>("/api/admin/sync_task/run");
 }
 
 /** 标记同步任务已完结 */

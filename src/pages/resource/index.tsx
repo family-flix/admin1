@@ -100,12 +100,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
     app.tip(msg);
   });
   sharedResource.onStateChange((values) => {
-    const { url, files, paths } = values;
-    setState({
-      url,
-      files,
-      paths,
-    });
+    setState(values);
   });
   driveList.initIfInitial();
 

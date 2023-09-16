@@ -1,3 +1,6 @@
+/**
+ * @file 阿里云 分享资源
+ */
 import { Handler } from "mitt";
 
 import { BaseDomain } from "@/domains/base";
@@ -16,6 +19,7 @@ import {
 enum Events {
   /** 输入分享链接 */
   Input,
+  LoadingChange,
   /** 获取文件列表成功 */
   StateChange,
   /** 分享文件夹绑定云盘内文件夹成功 */
@@ -27,6 +31,7 @@ enum Events {
 }
 type TheTypesOfEvents = {
   [Events.Input]: string;
+  [Events.LoadingChange]: boolean;
   [Events.Tip]: string;
   [Events.Error]: Error;
   [Events.BindSuccess]: void;
@@ -42,17 +47,11 @@ type TheTypesOfEvents = {
     /** 首播时间 */
     firstAirDate: string;
   };
-  [Events.StateChange]: {
-    url: string;
-    paths: {
-      file_id: string;
-      name: string;
-    }[];
-    files: AliyunFolderItem[];
-  };
+  [Events.StateChange]: SharedResourceState;
 };
 type SharedResourceState = {
-  url: string;
+  url?: string;
+  loading: boolean;
   paths: {
     file_id: string;
     name: string;
@@ -90,11 +89,14 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
   /** 是否处于请求中 */
   loading = false;
 
-  state: SharedResourceState = {
-    url: "",
-    paths: [],
-    files: [],
-  };
+  get state(): SharedResourceState {
+    return {
+      url: this.url,
+      loading: this.loading,
+      paths: this.paths,
+      files: this.files,
+    };
+  }
 
   constructor(options: Partial<{ name: string } & SharedResourceProps> = {}) {
     super();
@@ -109,7 +111,6 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.code = code;
     this.emit(Events.Input, code);
   }
-
   async _fetch(file_id: string) {
     this.file_id = file_id;
     if (this.loading) {
@@ -119,6 +120,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       return Result.Err("请先指定分享链接");
     }
     this.loading = true;
+    this.emit(Events.LoadingChange, this.loading);
     const [r] = await Promise.all([
       fetch_shared_files({
         url: this.url,
@@ -129,6 +131,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       sleep(1200),
     ]);
     this.loading = false;
+    this.emit(Events.LoadingChange, this.loading);
     if (r.error) {
       return Result.Err(r.error);
     }
@@ -179,11 +182,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     })();
     this.files = [...r.data.items];
     this.next_marker = r.data.next_marker;
-    this.emit(Events.StateChange, {
-      url: this.url,
-      paths: [...this.paths],
-      files: [...this.files],
-    });
+    this.emit(Events.StateChange, { ...this.state });
     return Result.Ok(null);
   }
   async loadMore() {
@@ -198,11 +197,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.files = this.files.concat(r.data.items);
     this.next_marker = r.data.next_marker;
-    this.emit(Events.StateChange, {
-      url: this.url,
-      paths: [...this.paths],
-      files: [...this.files],
-    });
+    this.emit(Events.StateChange, { ...this.state });
   }
   bindSelectedFolderInDrive() {
     if (this.selectedFolder === null) {
@@ -301,19 +296,28 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     });
     return Result.Ok(resp.data);
   }
+  clear() {
+    this.url = "";
+    this.files = [];
+    this.paths = [];
+    this.emit(Events.StateChange, { ...this.state });
+  }
 
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
-    this.on(Events.Input, handler);
+    return this.on(Events.Input, handler);
+  }
+  onLoadingChange(handler: Handler<TheTypesOfEvents[Events.LoadingChange]>) {
+    return this.on(Events.LoadingChange, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    this.on(Events.StateChange, handler);
+    return this.on(Events.StateChange, handler);
   }
   onBindSuccess(handler: Handler<TheTypesOfEvents[Events.BindSuccess]>) {
-    this.on(Events.BindSuccess, handler);
+    return this.on(Events.BindSuccess, handler);
   }
   onShowTVProfile(handler: Handler<TheTypesOfEvents[Events.ShowTVProfile]>) {
-    this.on(Events.ShowTVProfile, handler);
+    return this.on(Events.ShowTVProfile, handler);
   }
 }
 
-export * from './services';
+export * from "./services";

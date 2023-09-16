@@ -5,7 +5,7 @@ import { ButtonCore, ButtonInListCore, DialogCore, DialogProps, InputCore } from
 import { Button, Dialog, Input, LazyImage, ListView, Skeleton, Textarea } from "@/components/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { TVSeasonItem, fetch_season_list } from "@/services";
+import { TVSeasonItem, fetchSeasonList } from "@/services";
 import { RefCore } from "@/domains/cur";
 import { BaseDomain } from "@/domains/base";
 
@@ -47,7 +47,7 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   /** 弹窗取消按钮 */
   cancelBtn: ButtonCore;
   /** 季列表 */
-  list = new ListCore(new RequestCore(fetch_season_list), {
+  list = new ListCore(new RequestCore(fetchSeasonList), {
     onLoadingChange: (loading) => {
       this.searchBtn.setLoading(loading);
     },

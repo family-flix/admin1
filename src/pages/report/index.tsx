@@ -5,21 +5,11 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
-import {
-  MovieItem,
-  ReportItem,
-  TVSeasonItem,
-  fetchReportList,
-  fetch_movie_list,
-  fetch_season_list,
-  replyReport,
-} from "@/services";
+import { MovieItem, ReportItem, fetchReportList, fetch_movie_list, replyReport } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
-import { NavigatorCore } from "@/domains/navigator";
 import { ListCore } from "@/domains/list";
 import { clear_expired_job_list } from "@/domains/job";
 import { ReportTypes } from "@/constants";

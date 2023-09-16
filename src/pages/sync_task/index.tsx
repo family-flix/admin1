@@ -2,55 +2,40 @@
  * @file 同步列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { ArrowUpCircle, Bell, Check, Pen, RotateCw, Search, Send, Smile, Trash } from "lucide-solid";
+import { ArrowUpCircle, Bell, ChevronRight, Folder, Pen, RotateCw, Search, Send, Smile, Trash } from "lucide-solid";
 
 import {
-  add_file_sync_task_of_tv,
-  fetch_folder_can_add_sync_task,
+  createSyncTaskWithUrl,
   fetchPartialSyncTask,
   fetchSyncTaskList,
-  refreshTVProfiles,
   runSyncTask,
   SyncTaskItem,
   updateSyncTask,
-  modifyResourceForSyncTask,
+  overrideResourceForSyncTask,
   completeSyncTask,
   deleteSyncTask,
+  runSyncTaskList,
 } from "@/services";
-import {
-  Skeleton,
-  Popover,
-  ScrollView,
-  Input,
-  Button,
-  LazyImage,
-  Dialog,
-  Checkbox,
-  BackToTop,
-  ListView,
-} from "@/components/ui";
+import { Skeleton, ScrollView, Input, Button, LazyImage, Dialog, Checkbox, BackToTop, ListView } from "@/components/ui";
 import { FileSearcherCore } from "@/components/FileSearcher";
 import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
-import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import {
   ScrollViewCore,
   DialogCore,
-  PopoverCore,
   InputCore,
   ButtonCore,
   ButtonInListCore,
   CheckboxCore,
-  CheckboxGroupCore,
+  PresenceCore,
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { SharedResourceCore, fetch_shared_file_save_list, SharedFileSaveItem } from "@/domains/shared_resource";
-import { JobCore } from "@/domains/job";
-import { DriveCore } from "@/domains/drive";
-import { createJob, driveList, consumeAction, pendingActions } from "@/store";
+import { SharedResourceCore } from "@/domains/shared_resource";
+import { createJob } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { FileType } from "@/constants";
+import { Presence } from "@/components/ui/presence";
 
 export const SyncTaskListPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -63,19 +48,88 @@ export const SyncTaskListPage: ViewComponent = (props) => {
     },
   });
   const partialTaskRequest = new RequestCore(fetchPartialSyncTask);
-  const taskUpdateRequest = new RequestCore(updateSyncTask);
-  const overrideResourceRequest = new RequestCore(modifyResourceForSyncTask, {
+  const syncTaskUpdateRequest = new RequestCore(updateSyncTask);
+  const syncTaskOverrideRequest = new RequestCore(overrideResourceForSyncTask, {
     onLoading(loading) {
-      sharedResourceBtn.setLoading(loading);
+      syncTaskCreateBtn.setLoading(loading);
     },
     onSuccess() {
-      folderSearcher.dialog.hide();
+      app.tip({
+        text: ["修改成功"],
+      });
+      syncTaskOverrideDialog.hide();
       refreshPartialTask();
     },
+    onFailed(error) {
+      app.tip({
+        text: ["修改失败", error.message],
+      });
+    },
   });
-  const completeTaskRequest = new RequestCore(completeSyncTask);
-  const deleteTaskRequest = new RequestCore(deleteSyncTask);
+  const syncTaskCompleteRequest = new RequestCore(completeSyncTask);
+  const syncTaskDeletingRequest = new RequestCore(deleteSyncTask);
+  const syncTaskCreateRequest = new RequestCore(createSyncTaskWithUrl, {
+    onLoading(loading) {
+      syncTaskCreateDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({ text: ["新增同步任务成功"] });
+      setFolders([]);
+      resourceUrlInput.clear();
+      sharedResource.clear();
+      syncTaskCreateDialog.hide();
+      refreshPartialTask();
+    },
+    onFailed(error) {
+      // console.log("[PAGE]tv/index - addFileSyncTask onFailed 1", error.code, error.data);
+      app.tip({ text: ["新增同步任务失败", error.message] });
+      if (error.code === 20001) {
+        folderPresence.show();
+      }
+    },
+  });
+  const runTaskListRequest = new RequestCore(runSyncTaskList, {
+    beforeRequest() {
+      runTaskListBtn.setLoading(true);
+    },
+    async onSuccess(r) {
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          syncTaskList.refresh();
+          runTaskListBtn.setLoading(false);
+        },
+      });
+    },
+    onFailed(error) {
+      app.tip({ text: ["同步更新失败", error.message] });
+      runTaskListBtn.setLoading(false);
+    },
+  });
+  const syncTaskRunningRequest = new RequestCore(runSyncTask, {
+    beforeRequest() {
+      execSyncTaskBtn.setLoading(true);
+    },
+    onSuccess(resp) {
+      createJob({
+        job_id: resp.job_id,
+        onFinish() {
+          execSyncTaskBtn.setLoading(false);
+          refreshPartialTask();
+        },
+        onTip(msg) {
+          app.tip(msg);
+        },
+      });
+    },
+    onFailed(error) {
+      app.tip({ text: ["更新失败", error.message] });
+      execSyncTaskBtn.setLoading(false);
+    },
+  });
   const taskRef = new RefCore<SyncTaskItem>();
+  const folderRef = new RefCore<{ file_id: string }>();
+  const resourceRef = new RefCore<{ file_id: string }>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
       syncTaskList.search({
@@ -88,87 +142,6 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       syncTaskList.search({
         duplicated: Number(checked),
       });
-    },
-  });
-  const driveCheckboxGroup = new CheckboxGroupCore({
-    options: driveList.response.dataSource.map((d) => {
-      const { name, id } = d;
-      return {
-        value: id,
-        label: name,
-      };
-    }),
-    onChange(options) {
-      setHasSearch(!!options.length);
-      syncTaskList.search({
-        drive_ids: options.join("|"),
-      });
-    },
-  });
-  const driveRef = new RefCore<DriveCore>({
-    onChange(v) {
-      setCurDrive(v);
-    },
-  });
-  const addFileSyncTask = new RequestCore(add_file_sync_task_of_tv, {
-    onLoading(loading) {
-      sharedResourceBtn.setLoading(loading);
-      folderSelectBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({ text: ["新增更新任务成功"] });
-      setFolders([]);
-      sharedResourceUrlInput.clear();
-      addSyncTaskDialog.hide();
-      folderSearcher.dialog.hide();
-      refreshPartialTask();
-    },
-    onFailed(error) {
-      console.log("[PAGE]tv/index - addFileSyncTask onFailed 1", error.code, error.data);
-      app.tip({ text: ["新增更新任务失败", error.message] });
-      const { code, data } = error;
-      if (code === 20001) {
-        const folders = data as {
-          file_id: string;
-          file_name: string;
-          parent_paths: string;
-          drive: {
-            id: string;
-            name: string;
-          };
-        }[];
-        console.log("[PAGE]tv/index - addFileSyncTask onFailed", data);
-        setFolders(folders);
-        return;
-      }
-      if (code === 20002) {
-        folderSearcher.dialog.show();
-      }
-    },
-  });
-  const tipPopover = new PopoverCore({
-    align: "end",
-  });
-  const folderSelectBtn = new ButtonInListCore<{ file_name: string; file_id: string }>({
-    onClick(record) {
-      if (!record) {
-        app.tip({ text: ["请先选择文件夹"] });
-        return;
-      }
-      if (!taskRef.value) {
-        app.tip({ text: ["请先选择电视剧"] });
-        return;
-      }
-      if (!sharedResourceUrlInput.value) {
-        app.tip({ text: ["请先输入资源链接"] });
-        return;
-      }
-      const { file_id, file_name } = record;
-      // addFileSyncTask.run({
-      //   url: sharedResourceUrlInput.value,
-      //   target_file_id: file_id,
-      //   target_file_name: file_name,
-      // });
     },
   });
   const refreshPartialTask = async (id?: string) => {
@@ -193,31 +166,47 @@ export const SyncTaskListPage: ViewComponent = (props) => {
     });
     return Result.Ok(null);
   };
-  const runFileSyncTask = new RequestCore(runSyncTask, {
-    beforeRequest() {
-      execSyncTaskBtn.setLoading(true);
-    },
-    onSuccess(resp) {
-      createJob({
-        job_id: resp.job_id,
-        onFinish() {
-          execSyncTaskBtn.setLoading(false);
-          refreshPartialTask();
-        },
-        onTip(msg) {
-          app.tip(msg);
-        },
+  const folderPresence = new PresenceCore();
+  const syncTaskOverrideDialog = new DialogCore({
+    title: "修改同步任务",
+    onOk() {
+      if (!taskRef.value) {
+        app.tip({ text: ["请选择同步任务"] });
+        return;
+      }
+      if (!resourceUrlInput.value) {
+        app.tip({ text: [resourceUrlInput.placeholder] });
+        return;
+      }
+      syncTaskOverrideRequest.run({
+        id: taskRef.value.id,
+        url: resourceUrlInput.value,
       });
     },
-    onFailed(error) {
-      app.tip({ text: ["更新失败", error.message] });
-      execSyncTaskBtn.setLoading(false);
-    },
   });
-  const folderCanAddSyncTaskList = new ListCore(new RequestCore(fetch_folder_can_add_sync_task));
-  const addSyncTaskDialog = new DialogCore({
-    title: "新增更新任务",
-    footer: false,
+  const syncTaskCreateDialog = new DialogCore({
+    title: "新增同步任务",
+    onOk() {
+      if (!resourceUrlInput.value) {
+        app.tip({
+          text: ["请输入分享资源链接"],
+        });
+        return;
+      }
+      if (sharedResource.files.length === 0) {
+        app.tip({
+          text: ["请先获取分享资源内容"],
+        });
+        return;
+      }
+      if (sharedResource.files.length !== 1) {
+        app.tip({
+          text: ["请手动选择左边的分享资源"],
+        });
+        return;
+      }
+      syncTaskCreateRequest.run({ url: resourceUrlInput.value });
+    },
   });
   const nameSearchInput = new InputCore({
     defaultValue: "",
@@ -239,49 +228,33 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       nameSearchInput.clear();
     },
   });
-  const sharedResourceUrlInput = new InputCore({
+  const resourceUrlInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入资源链接",
     onChange(v) {
       sharedResource.input(v);
     },
+    onEnter() {
+      resourceFetchBtn.click();
+    },
   });
-  const sharedResource = new SharedResourceCore();
-  const sharedResourceBtn = new ButtonCore({
+  const resourceFetchBtn = new ButtonCore({
     onClick() {
-      if (!taskRef.value) {
-        app.tip({ text: ["请选择同步任务"] });
+      if (!resourceUrlInput.value) {
         return;
       }
-      if (!sharedResourceUrlInput.value) {
-        app.tip({ text: [sharedResourceUrlInput.placeholder] });
-        return;
-      }
-      overrideResourceRequest.run({
-        id: taskRef.value.id,
-        url: sharedResourceUrlInput.value,
-      });
+      sharedResource.fetch();
     },
   });
-  const folderSearcher = new FileSearcherCore({
-    search: {
-      type: FileType.Folder,
-    },
-    footer: false,
-  });
-  const addSyncTaskBtn = new ButtonInListCore<SyncTaskItem>({
-    onClick(record) {
-      if (record === null) {
-        return;
-      }
-      taskRef.select(record);
-      addSyncTaskDialog.show();
+  const syncTaskCreateBtn = new ButtonCore<SyncTaskItem>({
+    onClick() {
+      syncTaskCreateDialog.show();
     },
   });
   const completeTaskBtn = new ButtonInListCore<SyncTaskItem>({
     async onClick(record) {
       completeTaskBtn.setLoading(true);
-      const r = await completeTaskRequest.run({ id: record.id });
+      const r = await syncTaskCompleteRequest.run({ id: record.id });
       completeTaskBtn.setLoading(false);
       if (r.error) {
         app.tip({
@@ -308,7 +281,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       }
       const { id } = taskRef.value;
       deleteTaskDialog.okBtn.setLoading(true);
-      const r = await deleteTaskRequest.run({ id });
+      const r = await syncTaskDeletingRequest.run({ id });
       deleteTaskDialog.okBtn.setLoading(false);
       if (r.error) {
         app.tip({
@@ -334,14 +307,13 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       deleteTaskDialog.show();
     },
   });
-  const modifySyncTaskBtn = new ButtonInListCore<SyncTaskItem>({
+  const syncTaskOverrideBtn = new ButtonInListCore<SyncTaskItem>({
     onClick(record) {
       if (record === null) {
         return;
       }
       taskRef.select(record);
-      addSyncTaskDialog.setTitle("修改更新任务");
-      addSyncTaskDialog.show();
+      syncTaskOverrideDialog.show();
     },
   });
   const seasonSelectDialog = new DialogCore({
@@ -360,14 +332,14 @@ export const SyncTaskListPage: ViewComponent = (props) => {
         return;
       }
       seasonSelectDialog.okBtn.setLoading(true);
-      const r = await taskUpdateRequest.run({
+      const r = await syncTaskUpdateRequest.run({
         id: taskRef.value.id,
         season_id: seasonSelect.value.id,
       });
       seasonSelectDialog.okBtn.setLoading(false);
       if (r.error) {
         app.tip({
-          text: ["更新失败", r.error.message],
+          text: ["关联失败", r.error.message],
         });
         return;
       }
@@ -376,7 +348,6 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       seasonSelectDialog.hide();
     },
   });
-  const seasonSelect = new TVSeasonSelectCore({});
   const linkSeasonBtn = new ButtonInListCore<SyncTaskItem>({
     onClick(record) {
       taskRef.select(record);
@@ -390,7 +361,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
         return;
       }
       taskRef.select(record);
-      runFileSyncTask.run({ id: record.id });
+      syncTaskRunningRequest.run({ id: record.id });
     },
   });
   const refreshPartialBtn = new ButtonInListCore<SyncTaskItem>({
@@ -406,44 +377,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       });
     },
   });
-  const sharedFileSaveListDialog = new DialogCore({
-    title: "最近的转存记录",
-    footer: false,
-  });
-  const sharedFileSaveList = new ListCore(new RequestCore(fetch_shared_file_save_list));
-  const sharedFileSaveScrollView = new ScrollViewCore({
-    onReachBottom() {
-      sharedFileSaveList.loadMore();
-    },
-  });
-  const addSyncFromSharedRecordBtn = new ButtonInListCore<SharedFileSaveItem>({
-    onClick(record) {
-      sharedFileSaveListDialog.hide();
-      sharedResourceUrlInput.setValue(record.url);
-      sharedResourceBtn.click();
-    },
-  });
-  const runTaskListRequest = new RequestCore(refreshTVProfiles, {
-    beforeRequest() {
-      runTaskListBtn.setLoading(true);
-    },
-    async onSuccess(r) {
-      app.tip({ text: ["开始同步所有电视剧"] });
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          syncTaskList.refresh();
-          runTaskListBtn.setLoading(false);
-        },
-      });
-    },
-    onFailed(error) {
-      app.tip({ text: ["同步更新失败", error.message] });
-      runTaskListBtn.setLoading(false);
-    },
-  });
   const runTaskListBtn = new ButtonCore({
     onClick() {
+      app.tip({ text: ["开始同步所有文件夹"] });
       runTaskListRequest.run();
     },
   });
@@ -452,17 +388,23 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       syncTaskList.refresh();
     },
   });
+  const sharedResource = new SharedResourceCore();
+  const folderSearcher = new FileSearcherCore({
+    search: {
+      type: FileType.Folder,
+    },
+    footer: false,
+  });
+  const seasonSelect = new TVSeasonSelectCore({});
   const scrollView = new ScrollViewCore({
     pullToRefresh: false,
     onReachBottom() {
       syncTaskList.loadMore();
     },
-    onScroll() {
-      tipPopover.hide();
-    },
   });
 
   const [tvListResponse, setTVListResponse] = createSignal(syncTaskList.response);
+  const [resourceState, setResponseState] = createSignal(sharedResource.state);
   const [folders, setFolders] = createSignal<
     {
       file_id: string;
@@ -474,70 +416,30 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       };
     }[]
   >([]);
-  // const [resourceState, setResourceState] = createSignal(sharedResource.state);
-  const [tips, setTips] = createSignal<string[]>([]);
-  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
-  const [curDrive, setCurDrive] = createSignal(driveRef.value);
-  const [hasSearch, setHasSearch] = createSignal(false);
-  const [sharedFileSaveResponse, setSharedFileSaveResponse] = createSignal(sharedFileSaveList.response);
-  // effect(() => {
-  //   console.log(tvListResponse().dataSource[0]?.name);
-  // });
+  const [curDriveFolder, setCurFolder] = createSignal(folderRef.value);
+  const [curResourceFolder, setCurResourceFolder] = createSignal(resourceRef.value);
 
-  driveList.onStateChange((nextResponse) => {
-    const driveCheckBoxGroupOptions = nextResponse.dataSource.map((d) => {
-      const { name, id } = d;
-      return {
-        value: id,
-        label: name,
-      };
-    });
-    driveCheckboxGroup.setOptions(driveCheckBoxGroupOptions);
-    setDriveResponse(nextResponse);
-  });
   syncTaskList.onStateChange((nextState) => {
     // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
     setTVListResponse(nextState);
-  });
-  folderCanAddSyncTaskList.onStateChange((nextState) => {
-    setFolders(
-      nextState.dataSource.map((folder) => {
-        const { file_id, name } = folder;
-        return {
-          file_id,
-          file_name: name,
-          parent_paths: "",
-          drive: {
-            id: "",
-            name: "",
-          },
-        };
-      })
-    );
-  });
-  sharedFileSaveList.onStateChange((nextResponse) => {
-    setSharedFileSaveResponse(nextResponse);
   });
   folderSearcher.onStateChange((nextState) => {
     const { list } = nextState;
     setFolders(list.dataSource);
   });
-  view.onShow(() => {
-    const { deleteTV } = pendingActions;
-    // console.log("[PAGE]tv/index - view.onShow", deleteTV);
-    if (!deleteTV) {
-      return;
-    }
-    consumeAction("deleteTV");
-    syncTaskList.deleteItem((season) => {
-      if (season.id === deleteTV.id) {
-        return true;
-      }
-      return false;
-    });
+  folderRef.onStateChange((nextState) => {
+    setCurFolder(nextState);
+  });
+  resourceRef.onStateChange((nextState) => {
+    setCurResourceFolder(nextState);
+  });
+  sharedResource.onLoadingChange((loading) => {
+    resourceFetchBtn.setLoading(loading);
+  });
+  sharedResource.onStateChange((values) => {
+    setResponseState(values);
   });
   syncTaskList.init();
-  driveList.initIfInitial();
 
   return (
     <>
@@ -550,6 +452,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
             <div class="flex items-center space-x-2">
               <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
                 刷新
+              </Button>
+              <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={syncTaskCreateBtn}>
+                新增同步任务
               </Button>
               <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={runTaskListBtn}>
                 同步所有文件夹
@@ -662,7 +567,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                   运行
                                 </Button>
                                 <Button
-                                  store={modifySyncTaskBtn.bind(task)}
+                                  store={syncTaskOverrideBtn.bind(task)}
                                   variant="subtle"
                                   icon={<Pen class="w-4 h-4" />}
                                 >
@@ -695,112 +600,195 @@ export const SyncTaskListPage: ViewComponent = (props) => {
           </div>
         </div>
       </ScrollView>
-      <Dialog store={addSyncTaskDialog}>
-        <div class="w-[520px]">
+      <Dialog store={syncTaskCreateDialog}>
+        <div class="w-[680px] min-h-[360px]">
           <div class="grid grid-cols-12 gap-2">
             <div class="col-span-9">
-              <Input store={sharedResourceUrlInput} />
+              <Input store={resourceUrlInput} />
             </div>
             <div class="col-span-3 grid">
-              <Button store={sharedResourceBtn}>确定</Button>
+              <Button store={resourceFetchBtn}>获取</Button>
             </div>
           </div>
-          <div class="max-h-[360px] overflow-auto">
-            <For each={folders()}>
-              {(file) => {
-                const { file_name, parent_paths, drive } = file;
-                return (
-                  <div class="flex items-center justify-between py-4">
-                    <div class="">
-                      <div class="text-sm">{drive.name}</div>
-                      <div>{[parent_paths, file_name].filter(Boolean).join("/")}</div>
-                    </div>
-                    <Button
-                      store={folderSelectBtn.bind(file)}
-                      class="ml-4 cursor-pointer"
-                      icon={<Check class="w-4 h-4" />}
-                    >
-                      选择
-                    </Button>
-                  </div>
-                );
-              }}
-            </For>
-          </div>
-        </div>
-      </Dialog>
-      <Dialog store={folderSearcher.dialog}>
-        <div class="grid grid-cols-12 gap-2">
-          <div class="col-span-9">
-            <Input store={folderSearcher.form.input} />
-          </div>
-          <div class="col-span-3 grid">
-            <Button store={folderSearcher.form.btn}>确定</Button>
-          </div>
-        </div>
-        <div class="h-[360px] overflow-y-auto">
-          <For each={folders()}>
-            {(file) => {
-              const { file_name, parent_paths, drive } = file;
-              return (
-                <div class="flex items-center justify-between py-4 space-x-2">
-                  <div>
-                    <div class="text-sm text-slate-500">{drive.name}</div>
-                    <div>
-                      {parent_paths}/{file_name}
-                    </div>
-                  </div>
-                  <Button
-                    store={folderSelectBtn.bind(file)}
-                    class="ml-4 cursor-pointer"
-                    icon={<Check class="w-4 h-4" />}
-                  ></Button>
-                </div>
-              );
-            }}
-          </For>
-        </div>
-      </Dialog>
-      <Dialog store={sharedFileSaveListDialog}>
-        <ScrollView store={sharedFileSaveScrollView} class="h-[360px] overflow-y-auto">
-          <ListView store={sharedFileSaveList}>
-            <For each={sharedFileSaveResponse().dataSource}>
-              {(save) => {
-                return (
-                  <div>
-                    <div class="flex items-center justify-between py-4 space-x-2">
-                      <div>
-                        <div class="text-sm text-slate-500">{save.drive.name}</div>
-                        <div>
-                          <div>{save.url}</div>
-                          <div class="break-all">{save.name}</div>
-                        </div>
+          <div class="flex mt-4">
+            <div class="flex-[50%]">
+              <Show when={resourceState().files.length}>
+                <div class="p-4 bg-white rounded-sm">
+                  <div class="">
+                    <Show when={resourceState().paths.length}>
+                      <div class="flex items-center space-x-2">
+                        <Folder class="w-4 h-4" />
+                        <For each={resourceState().paths}>
+                          {(path, index) => {
+                            const { file_id, name } = path;
+                            return (
+                              <div class="flex items-center">
+                                <div class="cursor-pointer hover:text-blue-500">{name}</div>
+                                {index() === resourceState().paths.length - 1 ? null : (
+                                  <div class="mx-1">
+                                    <ChevronRight class="w-4 h-4" />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }}
+                        </For>
                       </div>
-                      <Button
-                        store={addSyncFromSharedRecordBtn.bind(save)}
-                        class="ml-4 cursor-pointer"
-                        icon={<Check class="w-4 h-4" />}
-                      ></Button>
+                    </Show>
+                  </div>
+                  <div class="mt-2 max-h-[360px] overflow-auto">
+                    <For each={resourceState().files}>
+                      {(file) => {
+                        const { file_id, name, type } = file;
+                        return (
+                          <div class="relative">
+                            <div
+                              classList={{
+                                "w-full p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-500": true,
+                                "bg-slate-200": curResourceFolder()?.file_id === file_id,
+                              }}
+                              onClick={() => {
+                                resourceRef.select(file);
+                              }}
+                            >
+                              <div class="flex">
+                                <div class="w-[36px] mr-4">
+                                  <LazyImage
+                                    class="max-w-full max-h-full object-contain"
+                                    src={(() => {
+                                      if (type === "folder") {
+                                        return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                                      }
+                                      return "https://img.alicdn.com/imgextra/i2/O1CN01ROG7du1aV18hZukHC_!!6000000003334-2-tps-140-140.png";
+                                    })()}
+                                  />
+                                </div>
+                                <div>{name}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    </For>
+                  </div>
+                </div>
+              </Show>
+            </div>
+            <div class="flex-[50%]">
+              <Presence store={folderPresence}>
+                <div class="p-4">
+                  <div class="grid grid-cols-12 gap-2">
+                    <div class="col-span-9">
+                      <Input store={folderSearcher.form.input} />
+                    </div>
+                    <div class="col-span-3 grid">
+                      <Button store={folderSearcher.form.btn}>搜索</Button>
                     </div>
                   </div>
-                );
-              }}
-            </For>
-          </ListView>
-        </ScrollView>
-      </Dialog>
-      <Popover
-        store={tipPopover}
-        content={
-          <div class="space-y-2">
-            <For each={tips()}>
-              {(tip) => {
-                return <div class="text-sm text-slate-800">{tip}</div>;
-              }}
-            </For>
+                  <div class="mt-2 max-h-[360px] overflow-auto">
+                    <For each={folders()}>
+                      {(file) => {
+                        const { file_id, file_name, parent_paths, drive } = file;
+                        return (
+                          <div class="flex items-center justify-between py-4">
+                            <div
+                              classList={{
+                                "bg-slate-200": curDriveFolder()?.file_id === file_id,
+                              }}
+                              onClick={() => {
+                                folderRef.select(file);
+                              }}
+                            >
+                              <div class="text-sm">{drive.name}</div>
+                              <div>{[parent_paths, file_name].filter(Boolean).join("/")}</div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    </For>
+                  </div>
+                </div>
+              </Presence>
+            </div>
           </div>
-        }
-      ></Popover>
+        </div>
+      </Dialog>
+      <Dialog store={syncTaskOverrideDialog}>
+        <div class="w-[680px] min-h-[360px]">
+          <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-9">
+              <Input store={resourceUrlInput} />
+            </div>
+            <div class="col-span-3 grid">
+              <Button store={resourceFetchBtn}>获取</Button>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div class="">
+              <Show when={resourceState().files.length}>
+                <div class="p-4 bg-white rounded-sm">
+                  <div class="">
+                    <Show when={resourceState().paths.length}>
+                      <div class="flex items-center space-x-2">
+                        <Folder class="w-4 h-4" />
+                        <For each={resourceState().paths}>
+                          {(path, index) => {
+                            const { file_id, name } = path;
+                            return (
+                              <div class="flex items-center">
+                                <div
+                                  class="cursor-pointer hover:text-blue-500"
+                                  onClick={() => {
+                                    sharedResource.fetch({ file_id, name });
+                                  }}
+                                >
+                                  {name}
+                                </div>
+                                {index() === resourceState().paths.length - 1 ? null : (
+                                  <div class="mx-1">
+                                    <ChevronRight class="w-4 h-4" />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }}
+                        </For>
+                      </div>
+                    </Show>
+                  </div>
+                  <div class="mt-2 max-h-[360px] overflow-auto">
+                    <For each={resourceState().files}>
+                      {(file) => {
+                        const { name, type } = file;
+                        return (
+                          <div class="relative">
+                            <div class="w-full p-4 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-500">
+                              <div class="flex">
+                                <div class="w-[36px] mr-4">
+                                  <LazyImage
+                                    class="max-w-full max-h-full object-contain"
+                                    src={(() => {
+                                      if (type === "folder") {
+                                        return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                                      }
+                                      return "https://img.alicdn.com/imgextra/i2/O1CN01ROG7du1aV18hZukHC_!!6000000003334-2-tps-140-140.png";
+                                    })()}
+                                  />
+                                </div>
+                                <div>{name}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    </For>
+                  </div>
+                </div>
+              </Show>
+            </div>
+          </div>
+        </div>
+      </Dialog>
       <Dialog store={seasonSelectDialog}>
         <div class="w-[520px]">
           <TVSeasonSelect store={seasonSelect} />

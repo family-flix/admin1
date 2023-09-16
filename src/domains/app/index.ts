@@ -164,6 +164,7 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     // console.log("[DOMAIN]Application - after show", this.views);
   }
   back() {
+    history.back();
   }
   /** 手机震动 */
   vibrate() {}
