@@ -9,6 +9,7 @@ import { MovieItem, ReportItem, fetchReportList, fetch_movie_list, replyReport }
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { clear_expired_job_list } from "@/domains/job";
