@@ -1481,8 +1481,10 @@ export function fetchSyncTaskList(params: FetchParams & { in_production: number;
       invalid: number;
       season: null | {
         id: string;
+        tv_id: string;
         name: string;
         overview: string;
+        air_date: string;
         poster_path: string;
         cur_episode_count: number;
         episode_count: number;
@@ -1522,8 +1524,10 @@ export function fetchPartialSyncTask(params: { id: string }) {
     invalid: number;
     season: null | {
       id: string;
+      tv_id: string;
       name: string;
       overview: string;
+      air_date: string;
       poster_path: string;
       cur_episode_count: number;
       episode_count: number;

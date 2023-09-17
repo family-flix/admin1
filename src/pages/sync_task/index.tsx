@@ -32,7 +32,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
-import { createJob } from "@/store";
+import { createJob, homeTVProfilePage } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { FileType } from "@/constants";
 import { Presence } from "@/components/ui/presence";
@@ -128,8 +128,8 @@ export const SyncTaskListPage: ViewComponent = (props) => {
     },
   });
   const taskRef = new RefCore<SyncTaskItem>();
-  const folderRef = new RefCore<{ file_id: string }>();
-  const resourceRef = new RefCore<{ file_id: string }>();
+  const folderRef = new RefCore<{ file_id: string; file_name: string }>();
+  const resourceRef = new RefCore<{ file_id: string; file_name: string }>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
       syncTaskList.search({
@@ -205,7 +205,18 @@ export const SyncTaskListPage: ViewComponent = (props) => {
         });
         return;
       }
-      syncTaskCreateRequest.run({ url: resourceUrlInput.value });
+      const payload: Parameters<typeof createSyncTaskWithUrl>[0] = { url: resourceUrlInput.value };
+      console.log("[PAGE]", folderRef.value);
+      console.log("[PAGE]", resourceRef.value);
+      if (folderRef.value) {
+        payload.drive_file_id = folderRef.value.file_id;
+        payload.drive_file_name = folderRef.value.file_name;
+      }
+      if (resourceRef.value) {
+        payload.resource_file_id = resourceRef.value.file_id;
+        payload.resource_file_name = resourceRef.value.file_name;
+      }
+      syncTaskCreateRequest.run(payload);
     },
   });
   const nameSearchInput = new InputCore({
@@ -403,7 +414,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
     },
   });
 
-  const [tvListResponse, setTVListResponse] = createSignal(syncTaskList.response);
+  const [syncTaskListState, setSyncTaskListState] = createSignal(syncTaskList.response);
   const [resourceState, setResponseState] = createSignal(sharedResource.state);
   const [folders, setFolders] = createSignal<
     {
@@ -421,7 +432,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
 
   syncTaskList.onStateChange((nextState) => {
     // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
-    setTVListResponse(nextState);
+    setSyncTaskListState(nextState);
   });
   folderSearcher.onStateChange((nextState) => {
     const { list } = nextState;
@@ -446,7 +457,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       <ScrollView class="h-screen p-8" store={scrollView}>
         <div class="relative">
           <div class="flex items-center space-x-4">
-            <h1 class="text-2xl">同步任务列表</h1>
+            <h1 class="text-2xl">同步任务列表({syncTaskListState().total})</h1>
           </div>
           <div class="mt-8">
             <div class="flex items-center space-x-2">
@@ -505,46 +516,72 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                 }
               >
                 <div class="space-y-4">
-                  <For each={tvListResponse().dataSource}>
+                  <For each={syncTaskListState().dataSource}>
                     {(task) => {
-                      const { id, resource_file_name, invalid, drive_file_name, season } = task;
+                      const { id, url, resource_file_name, invalid, drive_file_name, season } = task;
                       const name = `${resource_file_name} -> ${drive_file_name}`;
+                      homeTVProfilePage.query = season
+                        ? {
+                            id: season.tv_id,
+                            season_id: season.id,
+                          }
+                        : {};
+                      const seasonURL = homeTVProfilePage.buildUrlWithPrefix();
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
                             <div class="overflow-hidden mr-2 rounded-sm">
-                              <LazyImage class="w-[180px] h-[272px]" src={season?.poster_path} alt={name} />
+                              <Show
+                                when={season}
+                                fallback={
+                                  <LazyImage class="w-[180px] h-[272px]" src={season?.poster_path} alt={name} />
+                                }
+                              >
+                                <a href={seasonURL}>
+                                  <LazyImage class="w-[180px] h-[272px]" src={season?.poster_path} alt={name} />
+                                </a>
+                              </Show>
                             </div>
                             <div class="flex-1 w-0 p-4">
-                              <div class="flex items-center">
-                                <h2
-                                  classList={{
-                                    "text-2xl text-slate-800": true,
-                                    "opacity-20": invalid === 1,
-                                  }}
-                                >
-                                  {name}
-                                </h2>
-                              </div>
-                              <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
-                                <Show when={season}>
-                                  <Show
-                                    when={season?.cur_episode_count !== season?.episode_count}
-                                    fallback={
-                                      <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
-                                        <Smile class="w-4 h-4" />
-                                        <div>全{season?.episode_count}集</div>
-                                      </div>
-                                    }
+                              <div
+                                classList={{
+                                  "opacity-20": invalid === 1,
+                                }}
+                              >
+                                <div class="flex items-center">
+                                  <h2
+                                    classList={{
+                                      "text-2xl text-slate-800": true,
+                                    }}
                                   >
-                                    <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
-                                      <Send class="w-4 h-4" />
-                                      <div>
-                                        {season?.cur_episode_count}/{season?.episode_count}
+                                    {name}
+                                  </h2>
+                                </div>
+                                <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
+                                  <Show when={season}>
+                                    <Show
+                                      when={season?.cur_episode_count !== season?.episode_count}
+                                      fallback={
+                                        <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                          <Smile class="w-4 h-4" />
+                                          <div>全{season?.episode_count}集</div>
+                                        </div>
+                                      }
+                                    >
+                                      <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                        <Send class="w-4 h-4" />
+                                        <div>
+                                          {season?.cur_episode_count}/{season?.episode_count}
+                                        </div>
                                       </div>
-                                    </div>
+                                    </Show>
                                   </Show>
-                                </Show>
+                                </div>
+                                <div class="mt-2 text-slate-500">
+                                  <a href={url} target="_blank">
+                                    {url}
+                                  </a>
+                                </div>
                               </div>
                               <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
                                 <Button
@@ -648,7 +685,10 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                 "bg-slate-200": curResourceFolder()?.file_id === file_id,
                               }}
                               onClick={() => {
-                                resourceRef.select(file);
+                                resourceRef.select({
+                                  file_id,
+                                  file_name: name,
+                                });
                               }}
                             >
                               <div class="flex">

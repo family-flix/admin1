@@ -1,13 +1,17 @@
+/**
+ * @file 电视剧选择
+ */
 import { Handler } from "mitt";
-import { For, createSignal } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
+import { Calendar, Send, Smile } from "lucide-solid";
 
-import { ButtonCore, ButtonInListCore, DialogCore, DialogProps, InputCore } from "@/domains/ui";
-import { Button, Dialog, Input, LazyImage, ListView, Skeleton, Textarea } from "@/components/ui";
+import { TVSeasonItem, fetchSeasonList } from "@/services";
+import { BaseDomain } from "@/domains/base";
+import { ButtonCore, DialogCore, DialogProps, InputCore, ScrollViewCore } from "@/domains/ui";
+import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { TVSeasonItem, fetchSeasonList } from "@/services";
-import { RefCore } from "@/domains/cur";
-import { BaseDomain } from "@/domains/base";
+import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 
 enum Events {
   StateChange,
@@ -116,6 +120,12 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
   const [tvListResponse, setTVListResponse] = createSignal(store.response);
   const [curSeason, setCurSeason] = createSignal(store.value);
 
+  const scrollView = new ScrollViewCore({
+    onReachBottom() {
+      store.list.loadMore();
+    },
+  });
+
   store.onResponseChange((nextState) => {
     setTVListResponse(nextState);
   });
@@ -132,7 +142,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
           搜索
         </Button>
       </div>
-      <div class="mt-2">
+      <ScrollView class="mt-2 h-[480px] overflow-y-auto" store={scrollView}>
         <ListView
           store={store.list}
           skeleton={
@@ -154,15 +164,20 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
             </div>
           }
         >
-          <div class="space-y-4 h-[480px] overflow-y-auto">
+          <div class="space-y-4">
             <For each={tvListResponse().dataSource}>
               {(season) => {
-                const { id, tv_id, name, overview, poster_path, season_text } = season;
-                // homeTVProfilePage.query = {
-                //   id: season.tv_id,
-                //   season_id: season.id,
-                // };
-                // const url = homeTVProfilePage.buildUrl();
+                const {
+                  id,
+                  tv_id,
+                  name,
+                  overview,
+                  cur_episode_count,
+                  episode_count,
+                  first_air_date,
+                  poster_path,
+                  season_text,
+                } = season;
                 return (
                   <div
                     classList={{
@@ -171,7 +186,6 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                       "border-slate-300 ": curSeason()?.id !== id,
                     }}
                     onClick={() => {
-                      //       console.log("[COMPONENT]TVSeasonSelect - onClick", season);
                       store.select(season);
                     }}
                   >
@@ -187,6 +201,28 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                         <div class="mt-2 overflow-hidden text-ellipsis">
                           <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">{overview}</p>
                         </div>
+                        <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
+                          <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
+                            <Calendar class="w-4 h-4 text-slate-800" />
+                            <div class="break-keep whitespace-nowrap">{first_air_date}</div>
+                          </div>
+                          <Show
+                            when={cur_episode_count !== episode_count}
+                            fallback={
+                              <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                <Smile class="w-4 h-4" />
+                                <div>全{episode_count}集</div>
+                              </div>
+                            }
+                          >
+                            <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                              <Send class="w-4 h-4" />
+                              <div>
+                                {cur_episode_count}/{episode_count}
+                              </div>
+                            </div>
+                          </Show>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -195,7 +231,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
             </For>
           </div>
         </ListView>
-      </div>
+      </ScrollView>
     </div>
   );
 };
