@@ -108,6 +108,7 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
           //   return;
           // }
           this.emit(Events.Pause);
+          this.emit(Events.Finish);
         })();
         if (this.timer) {
           clearInterval(this.timer);

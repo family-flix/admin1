@@ -443,3 +443,11 @@ export async function fetchTokenOfDrive(drive_id: string) {
   }
   return Result.Ok(r.data);
 }
+
+export function renameChildFilesName(values: { drive_id: string; file_id: string; regexp: string; replace: string }) {
+  const { drive_id, file_id, regexp, replace } = values;
+  return request.post<{ job_id: string }>(`/api/admin/drive/${drive_id}/file/${file_id}/rename_children`, {
+    regexp,
+    replace,
+  });
+}

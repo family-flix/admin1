@@ -4,17 +4,25 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, ChevronRight } from "lucide-solid";
 
-import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView } from "@/components/ui";
+import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
 import { DialogCore, DropdownMenuCore, ButtonCore, InputCore, MenuItemCore, ScrollViewCore } from "@/domains/ui";
-import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
+import {
+  DriveCore,
+  AliyunDriveFilesCore,
+  DriveItem,
+  AliyunDriveFile,
+  fetchDriveFiles,
+  renameChildFilesName,
+} from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
 import { createJob } from "@/store";
 import { RequestCore } from "@/domains/request";
 import { sync_folder } from "@/services";
+import { buildRegexp } from "@/utils";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -24,6 +32,30 @@ export const DriveProfilePage: ViewComponent = (props) => {
     //   folderSyncItem.disable();
     // },
   });
+  const filesRenameRequest = new RequestCore(renameChildFilesName, {
+    // onLoading(loading) {
+    //   childNamesModifyDialog.okBtn.setLoading(loading);
+    // },
+    onSuccess(r) {
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          app.tip({
+            text: ["修改成功"],
+          });
+          childNamesModifyDialog.okBtn.setLoading(false);
+          childNamesModifyDialog.hide();
+        },
+      });
+    },
+    onFailed(error) {
+      childNamesModifyDialog.okBtn.setLoading(false);
+      app.tip({
+        text: ["修改失败", error.message],
+      });
+    },
+  });
+  const filesRequest = new RequestCore(fetchDriveFiles);
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.query.id,
   });
@@ -34,6 +66,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
   // });
   const curFileWithPosition = new RefCore<[AliyunDriveFile, [number, number]]>();
   const curFile = new RefCore<AliyunDriveFile>();
+  const filesRef = new RefCore<{ name: string }[]>();
   // const btn = new ButtonCore({
   //   onClick() {
   //     if (!input.value) {
@@ -205,7 +238,119 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
-
+  const childNamesModifyInput1 = new InputCore({
+    defaultValue: "",
+  });
+  const childNamesModifyInput2 = new InputCore({
+    defaultValue: "",
+  });
+  const childNameModifyPreviewBtn = new ButtonCore({
+    async onClick() {
+      if (!childNamesModifyInput1.value) {
+        app.tip({
+          text: ["请输入正则"],
+        });
+        return;
+      }
+      const regexp_res = buildRegexp(childNamesModifyInput1.value);
+      if (regexp_res.error) {
+        app.tip({
+          text: ["不符合正则格式", regexp_res.error.message],
+        });
+        return;
+      }
+      if (!childNamesModifyInput2.value) {
+        app.tip({
+          text: ["请输入替换后的正则"],
+        });
+        return;
+      }
+      const regexp = regexp_res.data;
+      const group1 = filesRef.value || [];
+      setFileNameModifyState({
+        group1,
+        group2: group1.map((file) => {
+          return {
+            name: file.name.replace(regexp, childNamesModifyInput2.value),
+          };
+        }),
+      });
+    },
+  });
+  const childNamesModifyDialog = new DialogCore({
+    onOk() {
+      const regexp = childNamesModifyInput1.value;
+      if (!regexp) {
+        app.tip({
+          text: ["请输入正则"],
+        });
+        return;
+      }
+      const replace = childNamesModifyInput2.value;
+      if (!replace) {
+        app.tip({
+          text: ["请输入替换后的正则"],
+        });
+        return;
+      }
+      if (!curFileWithPosition.value) {
+        app.tip({
+          text: ["请选择文件"],
+        });
+        return;
+      }
+      const [file] = curFileWithPosition.value;
+      childNamesModifyDialog.okBtn.setLoading(true);
+      filesRenameRequest.run({
+        drive_id: view.query.id,
+        file_id: file.file_id,
+        regexp,
+        replace,
+      });
+      app.tip({
+        text: ["开始修改"],
+      });
+    },
+  });
+  const childNamesModifyItem = new MenuItemCore({
+    label: "修改子文件名称",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要修改的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      curFileWithPosition.select(driveFileManage.virtualSelectedFolder);
+      childNamesModifyDialog.setTitle(`修改 '${file.name}' 子文件名称`);
+      childNamesModifyDialog.show();
+      fileMenu.hide();
+      const r = await filesRequest.run({
+        file_id: file.file_id,
+        drive_id: view.query.id,
+        next_marker: "",
+        page: 1,
+        pageSize: 20,
+      });
+      if (r.error) {
+        app.tip({
+          text: ["获取子文件失败", r.error.message],
+        });
+        return;
+      }
+      const { list } = r.data;
+      filesRef.select(list);
+      setFileNameModifyState({
+        group1: list.map((file) => {
+          return {
+            name: file.name,
+          };
+        }),
+        group2: [],
+      });
+    },
+  });
   const folderDeletingItem = new MenuItemCore({
     label: "删除",
     async onClick() {
@@ -269,6 +414,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       profileItem,
       analysisItem,
       nameModifyItem,
+      childNamesModifyItem,
       new MenuItemCore({
         label: "播放",
         onClick() {
@@ -295,6 +441,13 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const [state, setState] = createSignal(drive.state);
   const [paths, setPaths] = createSignal(driveFileManage.paths);
   const [columns, setColumns] = createSignal(driveFileManage.folderColumns);
+  const [fileNameModifyState, setFileNameModifyState] = createSignal<{
+    group1: { name: string }[];
+    group2: { name: string }[];
+  }>({
+    group1: [],
+    group2: [],
+  });
 
   drive.onStateChange((nextState) => {
     // console.log("[PAGE]drive/profile - drive.onStateChange", nextState);
@@ -423,23 +576,62 @@ export const DriveProfilePage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <Dialog store={formatDialog}>
-        <div>
+        <div class="w-[520px]">
           <p>该操作将删除云盘所有文件</p>
           <p>已索引到的影视剧将无法观看，请谨慎操作</p>
         </div>
       </Dialog>
       <DropdownMenu store={fileMenu}></DropdownMenu>
       <Dialog store={folderDeletingConfirmDialog}>
-        <div>
+        <div class="w-[520px]">
           <p>该操作将删除云盘文件</p>
           <p>该文件对应影视剧将无法观看，请谨慎操作</p>
         </div>
       </Dialog>
       <Dialog store={nameModifyDialog}>
-        <Input store={nameModifyInput} />
+        <div class="w-[520px]">
+          <Input store={nameModifyInput} />
+        </div>
+      </Dialog>
+      <Dialog store={childNamesModifyDialog}>
+        <div class="w-[520px]">
+          <div class="space-y-1">
+            <Input store={childNamesModifyInput1} />
+            <div class="flex items-center space-x-2">
+              <Input store={childNamesModifyInput2} />
+              <Button store={childNameModifyPreviewBtn}>测试</Button>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-2">
+            <div class="h-[360px] overflow-y-auto">
+              <For each={fileNameModifyState().group1}>
+                {(file) => {
+                  return (
+                    <div class="p-2">
+                      <div>{file.name}</div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+            <div class="h-[360px] overflow-y-auto">
+              <For each={fileNameModifyState().group2}>
+                {(file) => {
+                  return (
+                    <div class="p-2">
+                      <div>{file.name}</div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </div>
+        </div>
       </Dialog>
       <Dialog store={fileProfileDialog}>
-        <DriveFileCard store={curFile} />
+        <div class="w-[520px]">
+          <DriveFileCard store={curFile} />
+        </div>
       </Dialog>
     </>
   );

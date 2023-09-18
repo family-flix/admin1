@@ -306,13 +306,17 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         <div>仅删除该记录，不删除云盘文件。</div>
       </Dialog>
       <Dialog store={deleteListConfirmDialog}>
-        <div>该操作并不会删除云盘内文件</div>
-        <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
+        <div class="w-[520px]">
+          <div>该操作并不会删除云盘内文件</div>
+          <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
+        </div>
       </Dialog>
       <Dialog store={renameFileDialog}>
-        <div>该操作将修改云盘内的文件名称</div>
-        <div>
-          <Input store={renameFileInput} />
+        <div class="w-[520px]">
+          <div>该操作将修改云盘内的文件名称</div>
+          <div>
+            <Input store={renameFileInput} />
+          </div>
         </div>
       </Dialog>
     </>

@@ -429,7 +429,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       profileUpdateRequest.run({
         season_id: view.query.season_id,
         title,
-        episode_count: Number(episodeCount),
+        episode_count: episodeCount ? Number(episodeCount) : undefined,
       });
     },
   });

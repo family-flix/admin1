@@ -51,7 +51,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   const syncTaskUpdateRequest = new RequestCore(updateSyncTask);
   const syncTaskOverrideRequest = new RequestCore(overrideResourceForSyncTask, {
     onLoading(loading) {
-      syncTaskCreateBtn.setLoading(loading);
+      syncTaskOverrideDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({
@@ -206,8 +206,8 @@ export const SyncTaskListPage: ViewComponent = (props) => {
         return;
       }
       const payload: Parameters<typeof createSyncTaskWithUrl>[0] = { url: resourceUrlInput.value };
-      console.log("[PAGE]", folderRef.value);
-      console.log("[PAGE]", resourceRef.value);
+      // console.log("[PAGE]", folderRef.value);
+      // console.log("[PAGE]", resourceRef.value);
       if (folderRef.value) {
         payload.drive_file_id = folderRef.value.file_id;
         payload.drive_file_name = folderRef.value.file_name;
