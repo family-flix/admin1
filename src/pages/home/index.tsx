@@ -69,7 +69,7 @@ export const HomePage: ViewComponent = (props) => {
     setDriveResponse(nextState);
   });
 
-  driveList.initIfInitial();
+  driveList.initAny();
 
   return (
     <>
@@ -152,7 +152,7 @@ export const HomePage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <Dialog store={addingDriveDialog}>
-        <div class="p-4">
+        <div class="w-[520px] p-4">
           <p>1、在网页端登录阿里云盘</p>
           <p
             onClick={() => {

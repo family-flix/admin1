@@ -328,7 +328,8 @@ export class ListCore<
     this.emit(Events.DataSourceChange, [...this.response.dataSource]);
     return Result.Ok({ ...this.response });
   }
-  async initIfInitial() {
+  /** 无论如何都会触发一次 state change */
+  async initAny() {
     if (!this.response.initial) {
       this.emit(Events.StateChange, { ...this.response });
       return Result.Ok(this.response);
@@ -388,6 +389,7 @@ export class ListCore<
     this.emit(Events.DataSourceChange, [...this.response.dataSource]);
     return Result.Ok({ ...this.response });
   }
+  nextWithCursor() {}
   /**
    * 无限加载时使用的下一页
    */

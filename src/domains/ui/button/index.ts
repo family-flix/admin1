@@ -138,6 +138,12 @@ export class ButtonInListCore<T> extends BaseDomain<TheTypesInListOfEvents<T>> {
     }
     this.cur.setLoading(loading);
   }
+  click() {
+    if (this.cur === null) {
+      return;
+    }
+    this.cur.click();
+  }
 
   onClick(handler: Handler<TheTypesInListOfEvents<T>[Events.Click]>) {
     this.on(Events.Click, handler);

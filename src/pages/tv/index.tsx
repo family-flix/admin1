@@ -53,7 +53,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage } from "@/store";
+import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, seasonArchivePage } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
@@ -330,6 +330,11 @@ export const TVManagePage: ViewComponent = (props) => {
       refreshSeasonProfilesRequest.run();
     },
   });
+  const gotoSeasonArchivePageBtn = new ButtonCore({
+    onClick() {
+      app.showView(seasonArchivePage);
+    },
+  });
   const moveToResourceDriveConfirmDialog = new DialogCore({
     title: "移动到资源盘",
     onOk() {
@@ -371,14 +376,14 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
 
-  const [tvListResponse, setTVListResponse] = createSignal(seasonList.response);
+  const [seasonListState, setSeasonListState] = createSignal(seasonList.response);
   const [tips, setTips] = createSignal<string[]>([]);
-  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  const [driveListState, setDriveListState] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(driveRef.value);
   const [hasSearch, setHasSearch] = createSignal(false);
 
-  driveList.onStateChange((nextResponse) => {
-    const driveCheckBoxGroupOptions = nextResponse.dataSource.map((d) => {
+  driveList.onStateChange((nextState) => {
+    const driveCheckBoxGroupOptions = nextState.dataSource.map((d) => {
       const { name, id } = d;
       return {
         value: id,
@@ -386,15 +391,13 @@ export const TVManagePage: ViewComponent = (props) => {
       };
     });
     driveCheckboxGroup.setOptions(driveCheckBoxGroupOptions);
-    setDriveResponse(nextResponse);
+    setDriveListState(nextState);
   });
   seasonList.onStateChange((nextState) => {
-    // console.log("[PAGE]tv/index - tvList.onStateChange", nextState.dataSource[0]);
-    setTVListResponse(nextState);
+    setSeasonListState(nextState);
   });
   view.onShow(() => {
     const { deleteTV } = pendingActions;
-    // console.log("[PAGE]tv/index - view.onShow", deleteTV);
     if (!deleteTV) {
       return;
     }
@@ -407,30 +410,22 @@ export const TVManagePage: ViewComponent = (props) => {
     });
   });
   seasonList.init();
-  driveList.initIfInitial();
+  driveList.initAny();
 
   return (
     <>
       <ScrollView class="h-screen p-8" store={scrollView}>
         <div class="relative">
           <div class="flex items-center space-x-4">
-            {/* <div
-              class="cursor-pointer"
-              onClick={() => {
-                homeLayout.showPrevView();
-              }}
-            >
-              <ArrowLeft class="w-6 h-6" />
-            </div> */}
-            <h1 class="text-2xl">电视剧列表</h1>
+            <h1 class="text-2xl">电视剧列表({seasonListState().total})</h1>
           </div>
           <div class="mt-8">
             <div class="flex items-center space-x-2">
               <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
                 刷新
               </Button>
-              <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
-                更新近3月内电视剧详情
+              <Button class="" store={resetBtn}>
+                重置
               </Button>
               <div class="flex items-center space-x-2">
                 <Checkbox store={onlyInvalidCheckbox}></Checkbox>
@@ -473,9 +468,6 @@ export const TVManagePage: ViewComponent = (props) => {
               <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
                 搜索
               </Button>
-              <Button class="" store={resetBtn}>
-                重置
-              </Button>
             </div>
             <div class="mt-4">
               <ListView
@@ -509,7 +501,7 @@ export const TVManagePage: ViewComponent = (props) => {
                 }
               >
                 <div class="space-y-4">
-                  <For each={tvListResponse().dataSource}>
+                  <For each={seasonListState().dataSource}>
                     {(season) => {
                       const {
                         id,
@@ -640,10 +632,20 @@ export const TVManagePage: ViewComponent = (props) => {
           </div>
         </div>
       </ScrollView>
+      <div class="fixed right-12 top-12">
+        <div class="p-4 rounded-xl">
+          <div class="flex space-x-2">
+            <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
+              更新近3月内电视剧详情
+            </Button>
+            <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button>
+          </div>
+        </div>
+      </div>
       <Dialog store={transferConfirmDialog}>
         <div class="w-[520px]">
           <div class="mt-2 space-y-4 h-[320px] overflow-y-auto">
-            <For each={driveResponse().dataSource}>
+            <For each={driveListState().dataSource}>
               {(drive) => {
                 const { id, name, state } = drive;
                 return (

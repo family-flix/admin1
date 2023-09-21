@@ -283,7 +283,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
   //   setSelectedSeason(nextState);
   // });
 
-  driveList.initIfInitial();
+  driveList.initAny();
 
   return (
     <>

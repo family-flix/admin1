@@ -271,16 +271,16 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   async receiveRewards() {
     const r = await receiveCheckInRewardOfDrive({ drive_id: this.id });
     if (r.error) {
-      this.tip({ text: ["领取失败", r.error.message] });
-      return;
+      return Result.Err(r.error.message);
     }
-    const r2 = await this._refresh();
-    if (r2.error) {
-      this.tip({ text: ["领取成功，请手动刷新页面"] });
-      return;
-    }
-    this.tip({ text: ["领取成功"] });
-    this.emit(Events.StateChange, { ...this.state });
+    return Result.Ok({ job_id: r.data.job_id });
+    // const r2 = await this._refresh();
+    // if (r2.error) {
+    //   this.tip({ text: ["领取成功，请手动刷新页面"] });
+    //   return;
+    // }
+    // this.tip({ text: ["领取成功"] });
+    // this.emit(Events.StateChange, { ...this.state });
   }
   /** 设置云盘索引根目录 */
   async setRootFolder(file_id: string) {

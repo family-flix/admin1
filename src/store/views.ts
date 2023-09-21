@@ -31,6 +31,7 @@ import { HomeSubtitleUploadPage } from "@/pages/subtitle/add";
 import { HomeSubtitleListPage } from "@/pages/subtitle";
 import { SharedFilesHistoryPage } from "@/pages/resource/list";
 import { SharedFilesTransferListPage } from "@/pages/resource/transfer";
+import { SeasonArchivePage } from "@/pages/archive";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -279,6 +280,13 @@ export const homeLayout = new RouteViewCore({
     driveProfilePage,
   ],
 });
+export const seasonArchivePage = new RouteViewCore({
+  key: "/season_archive",
+  title: "电视剧归档",
+  component: async () => {
+    return SeasonArchivePage;
+  },
+});
 export const mediaPlayingPage = new RouteViewCore({
   key: "/preview",
   title: "文件播放",
@@ -320,5 +328,5 @@ export const rootView = new RouteViewCore({
   title: "ROOT",
   component: "div",
   layers: true,
-  children: [homeLayout, mediaPlayingPage, registerPage, loginPage, testPage],
+  children: [homeLayout, mediaPlayingPage, seasonArchivePage, registerPage, loginPage, testPage],
 });

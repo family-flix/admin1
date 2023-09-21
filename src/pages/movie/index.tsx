@@ -299,7 +299,7 @@ export const MovieManagePage: ViewComponent = (props) => {
     setDriveResponse(nextResponse);
   });
   movieList.init();
-  driveList.initIfInitial();
+  driveList.initAny();
 
   return (
     <>

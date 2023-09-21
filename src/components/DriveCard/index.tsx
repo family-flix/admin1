@@ -147,9 +147,27 @@ export const DriveCard = (props: {
     icon: <Gift class="mr-2 w-4 h-4" />,
     async onClick() {
       receiveRewardsItem.disable();
-      await drive.receiveRewards();
+      const r = await drive.receiveRewards();
       receiveRewardsItem.enable();
+      if (r.error) {
+        app.tip({
+          text: ["领取失败"],
+        });
+        return;
+      }
       dropdown.hide();
+      app.tip({
+        text: ["开始领取"],
+      });
+      createJob({
+        job_id: r.data.job_id,
+        onFinish() {
+          app.tip({
+            text: ["领取完成"],
+          });
+          refreshBtn.click();
+        },
+      });
     },
   });
   const exportItem = new MenuItemCore({
@@ -301,7 +319,7 @@ export const DriveCard = (props: {
       }
       createJob({
         job_id: r.data.job_id,
-        onCompleted() {
+        onFinish() {
           drive.finishAnalysis();
           analysisBtn.setLoading(false);
         },
@@ -388,7 +406,7 @@ export const DriveCard = (props: {
         </div>
       </div>
       <Dialog title={name()} store={foldersModal}>
-        <div class="max-w-full overflow-x-auto h-[320px]">
+        <div class="w-[520px] overflow-x-auto h-[320px]">
           <Show
             when={filesState().initialized}
             fallback={
@@ -469,22 +487,28 @@ export const DriveCard = (props: {
         </div>
       </Dialog>
       <Dialog title="添加文件夹" store={createFolderModal}>
-        <div>
+        <div class="w-[520px]">
           <Input store={newFolderNameInput} />
         </div>
       </Dialog>
       <Dialog title="修改 refresh_token" store={refreshTokenModal}>
-        <Input store={refreshTokenInput} />
+        <div class="w-[520px]">
+          <Input store={refreshTokenInput} />
+        </div>
       </Dialog>
       {/* <Dialog title="修改备注" store={refreshTokenModal}>
         <Input store={refreshTokenInput} />
       </Dialog> */}
       <Dialog title="删除云盘" store={confirmDeleteDriveDialog}>
-        <div>删除后索引到的影视剧也会删除</div>
-        <div class="mt-2">确认删除该云盘吗？</div>
+        <div class="w-[520px]">
+          <div>删除后索引到的影视剧也会删除</div>
+          <div class="mt-2">确认删除该云盘吗？</div>
+        </div>
       </Dialog>
       <Dialog title="设置索引根目录" store={rootFolderConfirmDialog}>
-        确认将 {filesState().curFolder?.name} 作为索引根目录吗？
+        <div class="w-[520px]">
+          <p>确认将 {filesState().curFolder?.name} 作为索引根目录吗？</p>
+        </div>
       </Dialog>
     </div>
   );

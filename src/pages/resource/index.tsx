@@ -102,7 +102,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   sharedResource.onStateChange((values) => {
     setState(values);
   });
-  driveList.initIfInitial();
+  driveList.initAny();
 
   const [state, setState] = createSignal(sharedResource.state);
 

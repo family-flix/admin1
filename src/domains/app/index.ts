@@ -182,6 +182,10 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   getComputedStyle(el: HTMLElement): CSSStyleDeclaration {
     throw new Error("请实现 getComputedStyle 方法");
   }
+  /** 发送推送 */
+  notify(msg: { title: string; body: string }) {
+    console.log("请实现 notify 方法");
+  }
   disablePointer() {
     throw new Error("请实现 disablePointer 方法");
   }

@@ -8,7 +8,7 @@ import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
 import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
-import { ReportTypeTexts, ReportTypes } from "@/constants";
+import { DriveTypes, ReportTypeTexts, ReportTypes } from "@/constants";
 import { bytes_to_size, query_stringify } from "@/utils";
 
 /**
@@ -58,6 +58,7 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 }
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
+/** 获取季列表 */
 export async function fetchSeasonList(
   params: FetchParams &
     Partial<{
@@ -110,6 +111,177 @@ export async function fetchSeasonList(
   });
 }
 export type TVSeasonItem = RequestedResource<typeof fetchSeasonList>["list"][number];
+
+function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
+  const { id, season_text, poster_path, episode_count, cur_episode_count, name, episodes } = season;
+  const drive_group: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      type: number;
+    }
+  > = {};
+  const total_sources: EpisodeSource[] = [];
+  const processed_episodes = episodes.map((episode) => {
+    const { id, name, episode_number, sources } = episode;
+    const source_group_by_drive_id: Record<string, EpisodeSource[]> = {};
+    for (let i = 0; i < sources.length; i += 1) {
+      const source = sources[i];
+      const { drive } = source;
+      source_group_by_drive_id[drive.id] = source_group_by_drive_id[drive.id] || [];
+      drive_group[drive.id] = drive;
+      const payload = {
+        file_id: source.file_id,
+        file_name: source.file_name,
+        parent_paths: source.parent_paths,
+        size: source.size,
+      };
+      source_group_by_drive_id[drive.id].push(payload);
+    }
+    total_sources.push(
+      ...sources.map((source) => {
+        const payload = {
+          file_id: source.file_id,
+          file_name: source.file_name,
+          parent_paths: source.parent_paths,
+          size: source.size,
+        };
+        return payload;
+      })
+    );
+    return {
+      id,
+      name,
+      episode_number,
+      drives: Object.keys(source_group_by_drive_id).map((drive_id) => {
+        return {
+          id: drive_id,
+          name: drive_group[drive_id].name,
+          sources: source_group_by_drive_id[drive_id],
+        };
+      }),
+    };
+  });
+  const all_sources = total_sources;
+  const source_size_count = all_sources.reduce((total, cur) => {
+    return total + cur.size;
+  }, 0);
+  const is_completed = cur_episode_count === episode_count;
+  const drives = Object.values(drive_group);
+  return {
+    id,
+    poster_path,
+    name,
+    season_text,
+    episode_count,
+    cur_episode_count,
+    episodes: processed_episodes,
+    size_count: source_size_count,
+    size_count_text: bytes_to_size(source_size_count),
+    drives: Object.values(drive_group),
+    /** 需要转存到资源盘 */
+    need_to_resource: (() => {
+      if (!is_completed) {
+        return false;
+      }
+      if (drives.length !== 1) {
+        return false;
+      }
+      const drive = drives[0];
+      if (drive.type !== DriveTypes.AliyunBackupDrive) {
+        return false;
+      }
+      return true;
+    })(),
+    can_archive: (() => {
+      if (!is_completed) {
+        return false;
+      }
+      if (drives.length === 0) {
+        return false;
+      }
+      // 所有视频文件都在同一资源盘，才可以进行转存
+      if (drives.length !== 1) {
+        return false;
+      }
+      const drive = drives[0];
+      if (drive.type !== DriveTypes.AliyunResourceDrive) {
+        return false;
+      }
+      return true;
+    })(),
+  };
+}
+type EpisodeSource = {
+  file_id: string;
+  file_name: string;
+  parent_paths: string;
+  size: number;
+};
+type SeasonPrepareArchiveItemResp = {
+  id: string;
+  tv_id: string;
+  name: string;
+  poster_path: string;
+  first_air_date: string;
+  season_text: string;
+  episode_count: number;
+  cur_episode_count: number;
+  episodes: {
+    id: string;
+    name: string;
+    season_text: number;
+    episode_text: number;
+    episode_number: number;
+    sources: {
+      file_id: string;
+      file_name: string;
+      parent_paths: string;
+      size: number;
+      drive: {
+        id: string;
+        name: string;
+        type: number;
+      };
+    }[];
+  }[];
+};
+
+export type SeasonPrepareArchiveItem = RequestedResource<typeof fetchSeasonPrepareArchiveList>["list"][number];
+
+/** 获取可以归档的季列表 */
+export async function fetchSeasonPrepareArchiveList(
+  params: FetchParams &
+    Partial<{
+      name: string;
+      invalid: number;
+      duplicated: number;
+    }>
+) {
+  const { page, pageSize, ...rest } = params;
+  const resp = await request.get<ListResponse<SeasonPrepareArchiveItemResp>>("/api/admin/season/archive/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok({
+    ...resp.data,
+    list: resp.data.list.map(processSeasonPrepareArchive),
+  });
+}
+
+export async function fetchPartialSeasonPrepareArchive(values: { id: string }) {
+  const { id } = values;
+  const r = await request.get<SeasonPrepareArchiveItemResp>(`/api/admin/season/archive/${id}/partial`);
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  return Result.Ok(processSeasonPrepareArchive(r.data));
+}
 
 /*
  * 获取电视剧部分详情

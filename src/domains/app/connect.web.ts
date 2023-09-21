@@ -17,6 +17,24 @@ export function connect(app: Application) {
     document.execCommand("copy");
     document.body.removeChild(textArea);
   };
+  app.notify = async (msg: { title: string; body: string }) => {
+    const { title, body } = msg;
+    // 请求通知权限
+    const permission = await Notification.requestPermission();
+    console.log("[DOMAIN]app/connect - app.notify", permission);
+    if (permission !== "granted") {
+      alert(body);
+      return;
+    }
+    // 创建通知
+    const notification = new Notification(title, {
+      body,
+      // icon: "notification-icon.png", // 可选的图标
+    });
+    // 处理通知点击事件
+    // notification.onclick = function () {
+    // };
+  };
   window.addEventListener("DOMContentLoaded", () => {
     // 1
     const { innerWidth, innerHeight } = window;

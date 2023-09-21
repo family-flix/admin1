@@ -4,6 +4,7 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, ChevronRight } from "lucide-solid";
 
+import { sync_folder } from "@/services";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
@@ -17,25 +18,16 @@ import {
   renameChildFilesName,
 } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
+import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
 import { createJob } from "@/store";
-import { RequestCore } from "@/domains/request";
-import { sync_folder } from "@/services";
 import { buildRegexp } from "@/utils";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const syncFolderRequest = new RequestCore(sync_folder, {
-    // onLoading(loading) {
-    //   folderSyncItem.disable();
-    // },
-  });
   const filesRenameRequest = new RequestCore(renameChildFilesName, {
-    // onLoading(loading) {
-    //   childNamesModifyDialog.okBtn.setLoading(loading);
-    // },
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -78,12 +70,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
   //   },
   // });
   const scrollView = new ScrollViewCore();
-  const formatBtn = new ButtonCore({
-    onClick() {
-      formatDialog.show();
-    },
-  });
-  const formatDialog = new DialogCore();
   const fileProfileDialog = new DialogCore({
     footer: false,
   });
@@ -109,7 +95,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         },
         onSuccess(opt) {
           app.tip({
-            text: ["删除成功"],
+            text: ["开始删除"],
           });
           opt.deleteFile();
           folderDeletingConfirmDialog.hide();
@@ -119,6 +105,11 @@ export const DriveProfilePage: ViewComponent = (props) => {
           }
           createJob({
             job_id: opt.job_id,
+            onFinish() {
+              app.tip({
+                text: ["删除成功"],
+              });
+            },
           });
         },
       });
@@ -367,72 +358,10 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
-  const linkSharedFileItem = new MenuItemCore({
-    label: "关联分享资源",
-  });
-  const folderSyncItem = new MenuItemCore({
-    label: "同步资源",
-    async onClick() {
-      if (!driveFileManage.virtualSelectedFolder) {
-        app.tip({
-          text: ["请选择要同步的文件夹"],
-        });
-        return;
-      }
-      const [file] = driveFileManage.virtualSelectedFolder;
-      if (file.type === FileType.File) {
-        app.tip({
-          text: ["请选择文件夹进行同步"],
-        });
-        return;
-      }
-      folderSyncItem.disable();
-      const r = await syncFolderRequest.run({
-        file_id: file.file_id,
-        drive_id: view.query.id,
-      });
-      folderSyncItem.enable();
-      if (r.error) {
-        app.tip({
-          text: ["同步失败", r.error.message],
-        });
-        return;
-      }
-      fileMenu.hide();
-      app.tip({
-        text: ["开始同步"],
-      });
-      createJob({
-        job_id: r.data.job_id,
-      });
-    },
-  });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
-    items: [
-      profileItem,
-      analysisItem,
-      nameModifyItem,
-      childNamesModifyItem,
-      new MenuItemCore({
-        label: "播放",
-        onClick() {
-          if (!driveFileManage.virtualSelectedFolder) {
-            app.tip({
-              text: ["请选择要播放的文件"],
-            });
-            return;
-          }
-          const [file] = driveFileManage.virtualSelectedFolder;
-          console.log(file);
-          // if (file.type === FolderType)
-          // router.push(`/play/${file.file_id}`);
-        },
-      }),
-      folderSyncItem,
-      folderDeletingItem,
-    ],
+    items: [profileItem, analysisItem, nameModifyItem, childNamesModifyItem, folderDeletingItem],
     onHidden() {
       driveFileManage.clearVirtualSelected();
     },
@@ -450,10 +379,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
   });
 
   drive.onStateChange((nextState) => {
-    // console.log("[PAGE]drive/profile - drive.onStateChange", nextState);
     setState(nextState);
   });
-  // driveFileManage.onSelectFolder((_, position) => {});
   driveFileManage.onFolderColumnChange((nextColumns) => {
     setColumns(nextColumns);
   });
@@ -475,7 +402,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
               class="cursor-pointer"
               onClick={() => {
                 app.back();
-                // homeLayout.showPrevView({ destroy: true });
               }}
             >
               <ArrowLeft class="w-6 h-6" />
@@ -552,7 +478,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                     return;
                                   }
                                   driveFileManage.select(folder, [columnIndex(), fileIndex]);
-                                  // curFileWithPosition.select([folder, [columnIndex(), fileIndex]]);
                                 }}
                               >
                                 <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis" title={name}>
@@ -575,12 +500,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
           <div class="flex-shrink-0 px-2 pb-12 border-r-2 overflow-x-hidden min-w-[240px] max-h-full overflow-y-auto"></div>
         </div>
       </ScrollView>
-      <Dialog store={formatDialog}>
-        <div class="w-[520px]">
-          <p>该操作将删除云盘所有文件</p>
-          <p>已索引到的影视剧将无法观看，请谨慎操作</p>
-        </div>
-      </Dialog>
       <DropdownMenu store={fileMenu}></DropdownMenu>
       <Dialog store={folderDeletingConfirmDialog}>
         <div class="w-[520px]">

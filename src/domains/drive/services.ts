@@ -377,7 +377,7 @@ export async function checkInDrive(body: { drive_id: string }) {
  */
 export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get(`/api/admin/drive/receive_rewards/${drive_id}`);
+  return request.get<{ job_id: string }>(`/api/admin/drive/receive_rewards/${drive_id}`);
 }
 
 /**
@@ -444,6 +444,7 @@ export async function fetchTokenOfDrive(drive_id: string) {
   return Result.Ok(r.data);
 }
 
+/** 用正则重命名多个文件 */
 export function renameChildFilesName(values: { drive_id: string; file_id: string; regexp: string; replace: string }) {
   const { drive_id, file_id, regexp, replace } = values;
   return request.post<{ job_id: string }>(`/api/admin/drive/${drive_id}/file/${file_id}/rename_children`, {
