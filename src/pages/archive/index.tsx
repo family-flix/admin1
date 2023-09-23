@@ -1,11 +1,13 @@
 /**
  * @file 电视剧归档
  */
-import { ArrowRight, RotateCcw, Send, Smile, Trash } from "lucide-solid";
+import { ArrowLeft, ArrowRight, HardDrive, Loader, RotateCcw, Send, Smile, SwitchCamera, Trash } from "lucide-solid";
 import { For, Show, createSignal } from "solid-js";
 
 import {
   SeasonPrepareArchiveItem,
+  deleteSourceFile,
+  deleteSourceFiles,
   fetchPartialSeasonPrepareArchive,
   fetchSeasonPrepareArchiveList,
   moveSeasonToResourceDrive,
@@ -15,7 +17,7 @@ import { Button, CheckboxGroup, Dialog, ListView, ScrollView, Skeleton } from "@
 import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { createJob, driveList } from "@/store";
+import { createJob, driveList, driveProfilePage, homeIndexPage, homeTVListPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { DriveCore, DriveItem } from "@/domains/drive";
 import { DriveSelectCore } from "@/components/DriveSelect";
@@ -85,12 +87,92 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
     },
   });
+  const sourcesDeletingRequest = new RequestCore(deleteSourceFiles, {
+    onSuccess() {
+      const theDrive = curDriveRef.value;
+      if (!theDrive) {
+        app.tip({
+          text: ["删除成功，请刷新页面"],
+        });
+        return;
+      }
+      const theSeason = seasonRef.value;
+      if (!theSeason) {
+        app.tip({
+          text: ["删除成功"],
+        });
+        return;
+      }
+      refresh({ id: theSeason.id });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除视频源失败", error.message],
+      });
+    },
+  });
+  const sourceDeletingRequest = new RequestCore(deleteSourceFile, {
+    onLoading(loading) {
+      // fileDeletingConfirmDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      const theEpisode = episodeRef.value;
+      const theSource = sourceRef.value;
+      if (!theEpisode || !theSource) {
+        app.tip({
+          text: ["删除成功，请刷新页面"],
+        });
+        return;
+      }
+      seasonList.modifyResponse((response) => {
+        return {
+          ...response,
+          dataSource: response.dataSource.map((season) => {
+            return {
+              ...season,
+              episodes: season.episodes.map((episode) => {
+                if (episode.id !== theEpisode.id) {
+                  return episode;
+                }
+                return {
+                  ...episode,
+                  drives: episode.drives.map((drive) => {
+                    return {
+                      ...drive,
+                      sources: drive.sources.filter((source) => {
+                        if (source.id !== theSource.id) {
+                          return true;
+                        }
+                        return false;
+                      }),
+                    };
+                  }),
+                };
+              }),
+            };
+          }),
+        };
+      });
+      app.tip({
+        text: ["删除成功"],
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除视频源失败", error.message],
+      });
+    },
+  });
   const seasonRef = new RefCore<SeasonPrepareArchiveItem>();
   const toDriveRef = new RefCore<DriveCore>();
+  const curDriveRef = new RefCore<{ id: string }>();
+  const episodeRef = new RefCore<{ id: string }>();
+  const sourceRef = new RefCore<{ id: String; file_id: string }>();
   const driveCheckboxGroup = new CheckboxGroupCore({
     options: [] as { value: string; label: string }[],
     onChange(options) {
       seasonList.search({
+        next_marker: "",
         drive_ids: options.join("|"),
       });
     },
@@ -136,6 +218,24 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         return;
       }
       transferRequest.run({ season_id: record.id, target_drive_id: toDriveRef.value.id });
+    },
+  });
+  const gotoDriveProfileBtn = new ButtonCore({
+    onClick() {
+      if (!toDriveRef.value) {
+        app.tip({
+          text: ["请先选择云盘"],
+        });
+        return;
+      }
+      const drive = toDriveRef.value;
+      driveProfilePage.query = {
+        id: drive.id,
+        name: drive.name,
+      };
+      const url = driveProfilePage.buildUrlWithPrefix();
+      window.open(url, "black");
+      // app.showView(driveProfilePage);
     },
   });
   const toDriveSelectBtn = new ButtonCore({
@@ -184,13 +284,30 @@ export const SeasonArchivePage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView class="h-screen p-8" store={scrollView}>
+      <ScrollView class="h-screen p-8 bg-white" store={scrollView}>
         <div class="relative">
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-1">
+            <div
+              class="p-1 cursor-pointer"
+              onClick={() => {
+                app.showView(homeTVListPage);
+              }}
+            >
+              <ArrowLeft class="w-6 h-6" />
+            </div>
             <h1 class="text-2xl">电视剧列表({seasonListState().total})</h1>
           </div>
           <div class="mt-8">
             <CheckboxGroup store={driveCheckboxGroup} />
+            <Show when={!driveListState().noMore}>
+              <div
+                onClick={() => {
+                  driveList.loadMore();
+                }}
+              >
+                全部云盘
+              </div>
+            </Show>
             <div class="flex items-center space-x-2"></div>
             <div class="mt-4">
               <ListView
@@ -261,31 +378,32 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                                   </div>
                                 </Show>
                               </div>
-                              <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
+                              <div class="flex items-center space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
                                 <Button
                                   store={refreshPartialBtn.bind(season)}
                                   icon={<RotateCcw class="w-4 h-4" />}
                                   variant="subtle"
                                 ></Button>
-                                {/* <Show when={drives.length !== 1}>
-                                  <>
-                                    <For each={drives}>
-                                      {(drive) => {
-                                        return (
-                                          <Button
-                                            store={filesDeletingBtn.bind({
-                                              drive,
-                                              season,
-                                            })}
-                                            variant="subtle"
-                                          >
-                                            删除 {drive.name} 内文件
-                                          </Button>
-                                        );
-                                      }}
-                                    </For>
-                                  </>
-                                </Show> */}
+                                <Show when={drives.length !== 1}>
+                                  <For each={drives}>
+                                    {(drive) => {
+                                      return (
+                                        <div
+                                          class="cursor-pointer"
+                                          onClick={() => {
+                                            seasonRef.select(season);
+                                            curDriveRef.select(drive);
+                                            sourcesDeletingRequest.run({
+                                              drive_id: drive.id,
+                                            });
+                                          }}
+                                        >
+                                          <div class="p-2">删除 {drive.name} 内文件</div>
+                                        </div>
+                                      );
+                                    }}
+                                  </For>
+                                </Show>
                                 <Show when={can_archive}>
                                   <Button store={transferBtn.bind(season)} variant="subtle">
                                     归档
@@ -312,23 +430,27 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                                                 <div class="mt-2">
                                                   <div class="flex items-center">
                                                     <div>{drive_name}</div>
-                                                    <div
-                                                      class="p-1 cursor-pointer"
-                                                      onClick={() => {
-                                                        console.log(drive_id, episode_id);
-                                                      }}
-                                                    >
-                                                      <Trash class="w-4 h-4" />
-                                                    </div>
                                                   </div>
                                                   <div>
                                                     <For each={sources}>
                                                       {(source) => {
                                                         const { file_id, file_name, parent_paths } = source;
                                                         return (
-                                                          <div>
-                                                            <div class="text-slate-500">
+                                                          <div class="flex items-center text-slate-500">
+                                                            <div class="break-all">
                                                               {parent_paths}/{file_name}
+                                                              <span
+                                                                class="p-1 cursor-pointer"
+                                                                onClick={() => {
+                                                                  episodeRef.select(episode);
+                                                                  sourceRef.select(source);
+                                                                  sourceDeletingRequest.run({
+                                                                    id: source.id,
+                                                                  });
+                                                                }}
+                                                              >
+                                                                <Trash class="inline-block w-4 h-4" />
+                                                              </span>
                                                             </div>
                                                           </div>
                                                         );
@@ -374,12 +496,21 @@ export const SeasonArchivePage: ViewComponent = (props) => {
               }}
             >
               <div
-                class="absolute w-full bottom-0 bg-green-500"
+                classList={{
+                  "absolute w-full bottom-0 bg-green-500": true,
+                  "bg-yellow-500": (toDriveState()?.used_percent || 0) >= 70,
+                  "bg-red-500": (toDriveState()?.used_percent || 0) >= 90,
+                }}
                 style={{ height: `${toDriveState()?.used_percent || 0}%` }}
               ></div>
+              <div class="absolute left-0 bottom-4 w-full text-center">{toDriveState()?.used_percent || 0}%</div>
             </div>
             <div>
               {toDriveState()?.used_size}/{toDriveState()?.total_size}
+            </div>
+            <div>
+              <Button store={toDriveSelectBtn} icon={<SwitchCamera class="w-4 h-4" />} variant="subtle"></Button>
+              <Button store={gotoDriveProfileBtn} icon={<HardDrive class="w-4 h-4" />} variant="subtle"></Button>
             </div>
           </div>
         </Show>
@@ -396,9 +527,10 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             }}
           >
             <div class="p-2">
-              <ArrowRight class="w-6 h-6" />
+              <Show when={seasonListState().loading} fallback={<ArrowRight class="w-12 h-12" />}>
+                <Loader class="w-12 h-12 animate animate-spin" />
+              </Show>
             </div>
-            <div>下一个</div>
           </div>
         </div>
       </Show>

@@ -10,8 +10,8 @@ import { DriveProfilePage } from "@/pages/drive/profile";
 import { SharedFilesTransferPage } from "@/pages/resource";
 import { MovieManagePage } from "@/pages/movie";
 import { MovieProfilePage } from "@/pages/movie/profile";
-import { TVManagePage } from "@/pages/tv";
-import { TVProfilePage } from "@/pages/tv/profile";
+import { TVManagePage } from "@/pages/season";
+import { TVProfilePage } from "@/pages/season/profile";
 import { MediaPlayingPage } from "@/pages/play/index";
 import { UnknownMediaLayout } from "@/pages/unknown_tv/layout";
 import { UnknownTVPage } from "@/pages/unknown_tv/tv";
@@ -32,6 +32,7 @@ import { HomeSubtitleListPage } from "@/pages/subtitle";
 import { SharedFilesHistoryPage } from "@/pages/resource/list";
 import { SharedFilesTransferListPage } from "@/pages/resource/transfer";
 import { SeasonArchivePage } from "@/pages/archive";
+import { InvalidTVManagePage } from "@/pages/tv/invalid";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -125,6 +126,13 @@ export const homeUnknownTVPage = new RouteViewCore({
   // onReady() {
 
   // }
+});
+export const homeInvalidTVListPage = new RouteViewCore({
+  key: "/home/tv/invalid",
+  title: "有问题的电视剧列表",
+  component: async () => {
+    return InvalidTVManagePage;
+  },
 });
 export const homeUnknownSeasonPage = new RouteViewCore({
   key: "/home/unknown_tv/season",
@@ -264,6 +272,7 @@ export const homeLayout = new RouteViewCore({
     homeTVProfilePage,
     homeMovieListPage,
     homeMovieProfilePage,
+    homeInvalidTVListPage,
     homeTaskListPage,
     homeTaskProfilePage,
     homePermissionListPage,

@@ -20,7 +20,7 @@ import {
   fetchPartialSeason,
   fetchSeasonList,
   moveSeasonToResourceDrive,
-  refreshTVProfile,
+  changeSeasonProfile,
   refreshTVProfiles,
   transferSeasonToAnotherDrive,
   TVSeasonItem,
@@ -53,7 +53,15 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, seasonArchivePage } from "@/store";
+import {
+  createJob,
+  driveList,
+  consumeAction,
+  pendingActions,
+  homeTVProfilePage,
+  seasonArchivePage,
+  homeInvalidTVListPage,
+} from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
@@ -97,7 +105,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetchPartialSeason);
-  const refreshProfileRequest = new RequestCore(refreshTVProfile, {
+  const refreshProfileRequest = new RequestCore(changeSeasonProfile, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -293,7 +301,7 @@ export const TVManagePage: ViewComponent = (props) => {
         text: ["开始更新"],
       });
       refreshProfileBtn.setLoading(true);
-      refreshProfileRequest.run({ tv_id: record.tv_id });
+      refreshProfileRequest.run({ season_id: record.id });
     },
   });
   const profileBtn = new ButtonInListCore<TVSeasonItem>({
@@ -328,6 +336,11 @@ export const TVManagePage: ViewComponent = (props) => {
     onClick() {
       app.tip({ text: ["开始更新"] });
       refreshSeasonProfilesRequest.run();
+    },
+  });
+  const gotoInvalidTVListPageBtn = new ButtonCore({
+    onClick() {
+      app.showView(homeInvalidTVListPage);
     },
   });
   const gotoSeasonArchivePageBtn = new ButtonCore({
@@ -638,6 +651,7 @@ export const TVManagePage: ViewComponent = (props) => {
             <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
               更新近3月内电视剧详情
             </Button>
+            <Button store={gotoInvalidTVListPageBtn}>问题电视剧列表</Button>
             <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button>
           </div>
         </div>

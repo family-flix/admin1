@@ -9,7 +9,6 @@ import { Video } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { PlayerCore } from "@/domains/player";
 import { ViewComponent } from "@/types";
-import { rootView } from "@/store";
 
 export const MediaPlayingPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -23,6 +22,11 @@ export const MediaPlayingPage: ViewComponent = (props) => {
         height: v.height,
       });
       player.loadSource(v);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["获取播放信息失败", error.message],
+      });
     },
   });
 

@@ -49,6 +49,9 @@ export const DriveCard = (props: {
       app.tip({
         text: ["资源盘创建成功"],
       });
+      if (onRefresh) {
+        onRefresh();
+      }
     },
     onFailed(error) {
       app.tip({

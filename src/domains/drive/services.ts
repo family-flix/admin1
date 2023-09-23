@@ -95,7 +95,7 @@ export async function fetchDrives(params: FetchParams) {
         used_size: bytes_to_size(used_size),
         /** 云盘空间使用百分比 */
         used_percent: (() => {
-          const percent = (used_size / total_size) * 100;
+          const percent = parseFloat(((used_size / total_size) * 100).toFixed(2));
           if (percent > 100) {
             return 100;
           }
@@ -159,7 +159,7 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
     used_size: bytes_to_size(used_size),
     /** 云盘空间使用百分比 */
     used_percent: (() => {
-      const percent = (used_size / total_size) * 100;
+      const percent = parseFloat(((used_size / total_size) * 100).toFixed(2));
       if (percent > 100) {
         return 100;
       }

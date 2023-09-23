@@ -321,7 +321,7 @@ export const HomeLayout: ViewComponent = (props) => {
 
   return (
     <>
-      <div class="flex w-full h-full">
+      <div class="flex w-full h-full bg-white">
         <div class="w-[248px] py-8 pt-4 pl-2 pr-2 border border-r-slate-300">
           <div class="flex flex-col justify-between h-full w-full">
             <div class="flex-1 space-y-1 p-2 w-full h-full rounded-xl self-start">

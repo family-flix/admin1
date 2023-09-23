@@ -59,6 +59,50 @@ export async function fetch_tv_list(params: FetchParams & { name: string }) {
 export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 
 /** 获取季列表 */
+export async function fetchInvalidTVList(params: FetchParams & Partial<{}>) {
+  const { page, pageSize, ...rest } = params;
+  const resp = await request.get<
+    ListResponse<{
+      id: string;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      first_air_date: string;
+      episodes: {
+        id: string;
+        name: string;
+        episode_text: string;
+        sources: { id: string; file_name: string; parent_paths: string; drive: { id: string; name: string } }[];
+      }[];
+    }>
+  >("/api/admin/tv/invalid/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok({
+    ...resp.data,
+    list: resp.data.list.map((tv) => {
+      const { ...rest } = tv;
+      return {
+        ...rest,
+        // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
+      };
+    }),
+  });
+}
+export type InvalidTVItem = RequestedResource<typeof fetchInvalidTVList>["list"][number];
+
+export function deleteTV(values: { id: string }) {
+  const { id } = values;
+  return request.get(`/api/admin/tv/${id}/delete`);
+}
+
+/** 获取季列表 */
 export async function fetchSeasonList(
   params: FetchParams &
     Partial<{
@@ -132,6 +176,7 @@ function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
       source_group_by_drive_id[drive.id] = source_group_by_drive_id[drive.id] || [];
       drive_group[drive.id] = drive;
       const payload = {
+        id: source.id,
         file_id: source.file_id,
         file_name: source.file_name,
         parent_paths: source.parent_paths,
@@ -142,6 +187,7 @@ function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
     total_sources.push(
       ...sources.map((source) => {
         const payload = {
+          id: source.id,
           file_id: source.file_id,
           file_name: source.file_name,
           parent_paths: source.parent_paths,
@@ -214,6 +260,7 @@ function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
   };
 }
 type EpisodeSource = {
+  id: string;
   file_id: string;
   file_name: string;
   parent_paths: string;
@@ -235,6 +282,7 @@ type SeasonPrepareArchiveItemResp = {
     episode_text: number;
     episode_number: number;
     sources: {
+      id: string;
       file_id: string;
       file_name: string;
       parent_paths: string;
@@ -371,10 +419,10 @@ export function delete_tv(body: {
   return request.get<void>(`/api/admin/tv/delete/${tv_id}`);
 }
 
-/** 刷新电视剧详情 */
-export function refreshTVProfile(body: { tv_id: string; tmdb_id?: number }) {
-  const { tv_id, tmdb_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/tv/refresh_profile/${tv_id}`, {
+/** 改变/刷新电视剧详情 */
+export function changeSeasonProfile(body: { season_id: string; tmdb_id?: number }) {
+  const { season_id, tmdb_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/refresh_profile`, {
     tmdb_id,
   });
 }
@@ -1159,10 +1207,10 @@ export async function fetchTVProfile(body: { tv_id: string; season_id?: string }
 }
 export type TVProfile = RequestedResource<typeof fetchTVProfile>;
 export type SeasonInTVProfile = RequestedResource<typeof fetchTVProfile>["curSeason"];
-export async function delete_episode_in_tv(body: { id: string; tv_id: string }) {
-  const { id, tv_id } = body;
-  const r = await request.get(`/api/admin/tv/episode/${id}`, { tv_id });
-  return r;
+
+export async function deleteEpisode(body: { id: string }) {
+  const { id } = body;
+  return request.get(`/api/admin/episode/${id}/delete`);
 }
 
 /**
@@ -1178,7 +1226,7 @@ export function updateSeasonProfileManually(body: { season_id: string; title?: s
  * @param body
  * @returns
  */
-export function fetch_episodes_of_season(body: { tv_id: string; season_id: string } & FetchParams) {
+export function fetchEpisodesOfSeason(body: { tv_id: string; season_id: string } & FetchParams) {
   const { tv_id, season_id, ...rest } = body;
   return request.get<
     ListResponse<{
@@ -1203,7 +1251,7 @@ export function fetch_episodes_of_season(body: { tv_id: string; season_id: strin
     }>
   >(`/api/admin/tv/${tv_id}/season/${season_id}/episodes`, rest);
 }
-export type EpisodeItemInSeason = RequestedResource<typeof fetch_episodes_of_season>["list"][number];
+export type EpisodeItemInSeason = RequestedResource<typeof fetchEpisodesOfSeason>["list"][number];
 
 export async function fetchSourcePreviewInfo(body: { id: string }) {
   const { id } = body;
@@ -1778,4 +1826,9 @@ export function deleteSyncTask(params: { id: string }) {
 export function deleteSourceFile(params: { id: string }) {
   const { id } = params;
   return request.get(`/api/admin/source/${id}/delete`);
+}
+/** 删除指定云盘下所有解析结果文件 */
+export function deleteSourceFiles(params: { drive_id: string }) {
+  const { drive_id } = params;
+  return request.get(`/api/admin/source/delete`, { drive_id });
 }

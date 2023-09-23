@@ -237,7 +237,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
       return Result.Err(r.error);
     }
     const { name, user_name, avatar, used_size, total_size, used_percent } = r.data;
-    console.log("[]percent", used_percent);
+    // console.log("[]percent", used_percent);
     // this.tip({ text: ["刷新成功"] });
     return Result.Ok({
       avatar,
