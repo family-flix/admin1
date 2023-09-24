@@ -9,7 +9,7 @@ import { RequestCore } from "@/domains/request";
 import { ScrollViewCore } from "@/domains/ui";
 import { FileType } from "@/constants";
 
-import { fetchDriveFiles, deleteFileOfDrive, renameFileOfDrive } from "./services";
+import { fetchDriveFiles, renameFile, deleteFile } from "./services";
 import { AliyunFilePath, AliyunDriveFile } from "./types";
 
 type FileColumn = {
@@ -221,7 +221,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
         return false;
       });
     }
-    const folderDeletingRequest = new RequestCore(deleteFileOfDrive, {
+    const folderDeletingRequest = new RequestCore(deleteFile, {
       onLoading,
       onFailed,
       onSuccess: (data) => {
@@ -258,7 +258,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     const { file, position, onLoading, onFailed, onSuccess } = options;
     const [columnIndex, fileIndex] = position;
     const folderColumns = this.folderColumns;
-    const folderDeletingRequest = new RequestCore(renameFileOfDrive, {
+    const folderDeletingRequest = new RequestCore(renameFile, {
       onLoading,
       onFailed,
       onSuccess: () => {

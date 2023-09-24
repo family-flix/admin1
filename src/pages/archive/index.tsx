@@ -1,7 +1,18 @@
 /**
  * @file 电视剧归档
  */
-import { ArrowLeft, ArrowRight, HardDrive, Loader, RotateCcw, Send, Smile, SwitchCamera, Trash } from "lucide-solid";
+import {
+  ArrowLeft,
+  ArrowRight,
+  HardDrive,
+  Loader,
+  RotateCcw,
+  Search,
+  Send,
+  Smile,
+  SwitchCamera,
+  Trash,
+} from "lucide-solid";
 import { For, Show, createSignal } from "solid-js";
 
 import {
@@ -13,8 +24,8 @@ import {
   moveSeasonToResourceDrive,
   transferSeasonToAnotherDrive,
 } from "@/services";
-import { Button, CheckboxGroup, Dialog, ListView, ScrollView, Skeleton } from "@/components/ui";
-import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, ScrollViewCore } from "@/domains/ui";
+import { Button, CheckboxGroup, Dialog, Input, ListView, ScrollView, Skeleton } from "@/components/ui";
+import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { createJob, driveList, driveProfilePage, homeIndexPage, homeTVListPage } from "@/store";
@@ -28,6 +39,10 @@ export const SeasonArchivePage: ViewComponent = (props) => {
   const { app, view } = props;
   const seasonList = new ListCore(new RequestCore(fetchSeasonPrepareArchiveList), {
     pageSize: 1,
+    onLoadingChange(loading) {
+      nameSearchInput.setLoading(loading);
+      searchBtn.setLoading(loading);
+    },
   });
   const refreshPartialSeasonRequest = new RequestCore(fetchPartialSeasonPrepareArchive);
   const moveToResourceDriveRequest = new RequestCore(moveSeasonToResourceDrive, {
@@ -257,6 +272,25 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       toDriveSelectDialog.hide();
     },
   });
+  const nameSearchInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
+  const searchBtn = new ButtonCore({
+    onClick() {
+      if (!nameSearchInput.value) {
+        app.tip({
+          text: ["请输入关键字"],
+        });
+        return;
+      }
+      seasonList.search({
+        name: nameSearchInput.value,
+      });
+    },
+  });
   const toDriveSelect = new DriveSelectCore({});
   // const drive = new DriveCore({ id});
   const scrollView = new ScrollViewCore({});
@@ -298,16 +332,25 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             <h1 class="text-2xl">电视剧列表({seasonListState().total})</h1>
           </div>
           <div class="mt-8">
-            <CheckboxGroup store={driveCheckboxGroup} />
-            <Show when={!driveListState().noMore}>
-              <div
-                onClick={() => {
-                  driveList.loadMore();
-                }}
-              >
-                全部云盘
-              </div>
-            </Show>
+            <div class="flex items-center space-x-2 mt-4">
+              <Input class="" store={nameSearchInput} />
+              <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+                搜索
+              </Button>
+            </div>
+            <div class="flex items-center mt-4">
+              <CheckboxGroup store={driveCheckboxGroup} />
+              <Show when={!driveListState().noMore}>
+                <div
+                  class="inline-block ml-4"
+                  onClick={() => {
+                    driveList.loadMore();
+                  }}
+                >
+                  全部云盘
+                </div>
+              </Show>
+            </div>
             <div class="flex items-center space-x-2"></div>
             <div class="mt-4">
               <ListView

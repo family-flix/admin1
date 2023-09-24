@@ -11,7 +11,7 @@ import {
   delete_unknown_episode_list,
   fetch_unknown_episode_list,
 } from "@/services";
-import { renameFileOfDrive } from "@/domains/drive";
+import { renameFile } from "@/domains/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
@@ -68,7 +68,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       });
     },
   });
-  const renameFileRequest = new RequestCore(renameFileOfDrive, {
+  const renameFileRequest = new RequestCore(renameFile, {
     onLoading(loading) {
       renameFileDialog.okBtn.setLoading(loading);
     },

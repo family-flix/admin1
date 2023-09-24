@@ -77,7 +77,14 @@ export function ListView(
             <Show when={response().loading}>
               <Loader class="w-6 h-6 animate-spin" />
             </Show>
-            <div class="text-center text-xl">没有数据了</div>
+            <div
+              class="text-center text-xl"
+              onClick={() => {
+                store.loadMoreForce();
+              }}
+            >
+              没有数据了
+            </div>
           </div>
         </div>
       </Show>

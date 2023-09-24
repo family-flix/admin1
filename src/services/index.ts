@@ -1502,6 +1502,10 @@ export function fetchSettings() {
   }>("/api/admin/settings");
 }
 
+export function pushMessageToMembers(values: { content: string }) {
+  return request.post("/api/admin/notify", values);
+}
+
 /**
  * 更新用户配置
  */

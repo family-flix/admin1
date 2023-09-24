@@ -53,7 +53,7 @@ export const TVProfilePage: ViewComponent = (props) => {
           ...response,
           dataSource: v.curSeasonEpisodes,
           initial: false,
-          noMore: response.dataSource.length > 20 ? false : true,
+          noMore: false,
           search: {
             ...response.search,
             season_id: response.search.season_id || v.seasons[0].id,

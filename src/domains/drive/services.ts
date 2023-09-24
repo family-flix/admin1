@@ -389,11 +389,19 @@ export function deleteFileOfDrive(body: { drive_id: string; file_id: string }) {
 }
 
 /**
+ * 删除指定云盘的文件
+ */
+export function deleteFile(body: { drive_id: string; file_id: string }) {
+  const { drive_id, file_id } = body;
+  return request.get<{ job_id: string }>(`/api/admin/file/${file_id}/delete?drive_id=${drive_id}`);
+}
+
+/**
  * 重命名指定云盘的文件
  */
-export function renameFileOfDrive(body: { drive_id: string; file_id: string; name: string }) {
+export function renameFile(body: { drive_id: string; file_id: string; name: string }) {
   const { drive_id, file_id, name } = body;
-  return request.post<void>(`/api/admin/drive/${drive_id}/file/${file_id}/rename`, {
+  return request.post<void>(`/api/admin/file/${file_id}/rename?drive_id=${drive_id}`, {
     name,
   });
 }

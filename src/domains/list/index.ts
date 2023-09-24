@@ -390,6 +390,34 @@ export class ListCore<
     return Result.Ok({ ...this.response });
   }
   nextWithCursor() {}
+  /** 强制请求下一页，如果下一页没有数据，page 不改变 */
+  async loadMoreForce() {
+    const { page, ...restParams } = this.params;
+    const res = await this.fetch({
+      ...restParams,
+      page: page + 1,
+    });
+    if (res.error) {
+      this.tip({ icon: "error", text: [res.error.message] });
+      this.response.error = res.error;
+      this.emit(Events.Error, res.error);
+      this.emit(Events.StateChange, { ...this.response });
+      return Result.Err(res.error);
+    }
+    if (res.data.dataSource.length === 0) {
+      this.params.page -= 1;
+    }
+    const prevItems = this.response.dataSource;
+    this.response = {
+      ...this.response,
+      ...res.data,
+    };
+    this.response.dataSource = prevItems.concat(res.data.dataSource);
+    this.emit(Events.StateChange, { ...this.response });
+    this.emit(Events.DataSourceAdded, [...res.data.dataSource]);
+    this.emit(Events.DataSourceChange, [...this.response.dataSource]);
+    return Result.Ok({ ...this.response });
+  }
   /**
    * 无限加载时使用的下一页
    */

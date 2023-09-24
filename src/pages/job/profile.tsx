@@ -39,7 +39,8 @@ export const TaskProfilePage: ViewComponent = (props) => {
   const logList = new ListCore(
     new RequestCore(fetch_output_lines_of_job, {
       delay: null,
-    })
+    }),
+    { pageSize: 100 }
   );
   const request = new RequestCore(fetch_job_profile, {
     onLoading(loading) {

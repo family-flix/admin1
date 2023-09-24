@@ -18,6 +18,7 @@ import {
   CircuitBoard,
   Lock,
   Subtitles,
+  MessageCircle,
 } from "lucide-solid";
 
 import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
@@ -49,7 +50,7 @@ import {
   syncTaskListPage,
 } from "@/store";
 import { cn, sleep } from "@/utils";
-import { fetchSettings, notify_test, updateSettings } from "@/services";
+import { fetchSettings, notify_test, pushMessageToMembers, updateSettings } from "@/services";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, view } = props;
@@ -67,6 +68,17 @@ export const HomeLayout: ViewComponent = (props) => {
       app.tip({
         text: ["获取设置失败", error.message],
       });
+    },
+  });
+  const pushRequest = new RequestCore(pushMessageToMembers, {
+    onLoading(loading) {
+      pushDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["推送成功"],
+      });
+      pushDialog.hide();
     },
   });
   const expiredDeletingRequest = new RequestCore(fetchSettings, {
@@ -89,6 +101,26 @@ export const HomeLayout: ViewComponent = (props) => {
   });
   const fileSearchDialog = new FileSearcherCore({
     footer: false,
+  });
+  const pushInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      pushDialog.okBtn.click();
+    },
+  });
+  const pushDialog = new DialogCore({
+    title: "群发消息",
+    onOk() {
+      if (!pushInput.value) {
+        app.tip({
+          text: ["请输入推送内容"],
+        });
+        return;
+      }
+      pushRequest.run({
+        content: pushInput.value,
+      });
+    },
   });
   const logoutBtn = new ButtonCore({
     async onClick() {
@@ -284,6 +316,13 @@ export const HomeLayout: ViewComponent = (props) => {
       },
     },
     {
+      text: "群发消息",
+      icon: <MessageCircle class="w-6 h-6" />,
+      onClick() {
+        pushDialog.show();
+      },
+    },
+    {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
       view: homeMemberListPage,
@@ -398,6 +437,14 @@ export const HomeLayout: ViewComponent = (props) => {
           <div class="mt-4">
             <div>其他</div>
             <Button store={expiredDeletingBtn}>清除失效视频源</Button>
+          </div>
+        </div>
+      </Dialog>
+      <Dialog store={pushDialog}>
+        <div class="w-[520px]">
+          <div>
+            <div>消息内容</div>
+            <Textarea store={pushInput} />
           </div>
         </div>
       </Dialog>
