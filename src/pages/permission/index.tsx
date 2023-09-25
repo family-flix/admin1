@@ -93,7 +93,9 @@ export const HomePermissionPage: ViewComponent = (props) => {
         </ListView>
       </div>
       <Dialog title="新增权限" store={addPermissionDialog}>
-        <Input store={permissionInput} />
+        <div class="w-[520px]">
+          <Input store={permissionInput} />
+        </div>
       </Dialog>
     </>
   );

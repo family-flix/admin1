@@ -106,6 +106,9 @@ export function query_stringify(query: Record<string, string | number | undefine
 }
 
 export function bytes_to_size(bytes: number) {
+  if (!bytes) {
+    return "0KB";
+  }
   if (bytes === 0) {
     return "0KB";
   }

@@ -4,7 +4,6 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, ChevronRight } from "lucide-solid";
 
-import { sync_folder } from "@/services";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
@@ -16,6 +15,7 @@ import {
   AliyunDriveFile,
   fetchDriveFiles,
   renameChildFilesName,
+  fetchFileProfile,
 } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
@@ -48,6 +48,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const filesRequest = new RequestCore(fetchDriveFiles);
+  // const fileProfileRequest = new RequestCore(fetchFileProfile);
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.query.id,
   });
@@ -71,6 +72,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
   // });
   const scrollView = new ScrollViewCore();
   const fileProfileDialog = new DialogCore({
+    title: "文件详情",
     footer: false,
   });
   const folderDeletingConfirmDialog = new DialogCore({
@@ -174,7 +176,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
       const [file] = driveFileManage.virtualSelectedFolder;
       curFile.select(file);
       fileMenu.hide();
-      fileProfileDialog.setTitle(file.name);
       fileProfileDialog.show();
     },
   });
@@ -473,7 +474,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                 onClick={() => {
                                   if (folder.type === FileType.File) {
                                     curFile.select(folder);
-                                    fileProfileDialog.setTitle(folder.name);
+                                    curFileWithPosition.select([folder, [columnIndex(), fileIndex]]);
                                     fileProfileDialog.show();
                                     return;
                                   }
@@ -549,7 +550,14 @@ export const DriveProfilePage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={fileProfileDialog}>
         <div class="w-[520px]">
-          <DriveFileCard store={curFile} />
+          <DriveFileCard
+            store={curFile}
+            drive={drive}
+            onDeleting={(file) => {
+              folderDeletingConfirmDialog.setTitle(`删除文件`);
+              folderDeletingConfirmDialog.show();
+            }}
+          />
         </div>
       </Dialog>
     </>

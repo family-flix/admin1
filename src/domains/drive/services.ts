@@ -460,3 +460,24 @@ export function renameChildFilesName(values: { drive_id: string; file_id: string
     replace,
   });
 }
+
+export function fetchFileProfile(values: { file_id: string; drive_id: string }) {
+  const { drive_id, file_id } = values;
+  return request.post<{
+    content_hash?: string;
+    thumbnail?: string;
+    parsed_tv: null | {
+      id: string;
+      profile: null | {
+        name: string;
+        original_name: string;
+        overview: string;
+        poster_path: string;
+      };
+    };
+    parsed_episode: null | {
+      id: string;
+      episode_text: string;
+    };
+  }>(`/api/admin/file/${file_id}/profile?drive_id=${drive_id}`, {});
+}

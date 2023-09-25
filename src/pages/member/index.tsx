@@ -213,6 +213,7 @@ export const MemberManagePage: ViewComponent = (props) => {
 
   const [response, setResponse] = createSignal(memberList.response);
   const [permissionResponse, setPermissionResponse] = createSignal(permissionList.response);
+  const [selectedPermissions, setSelectedPermissions] = createSignal(permissionMultipleSelect.values);
 
   permissionList.onStateChange((nextState) => {
     setPermissionResponse(nextState);
@@ -220,6 +221,9 @@ export const MemberManagePage: ViewComponent = (props) => {
   memberList.onStateChange((nextState) => {
     // console.log("list ", nextState);
     setResponse(nextState);
+  });
+  permissionMultipleSelect.onStateChange((nextState) => {
+    setSelectedPermissions(nextState);
   });
   scrollView.onReachBottom(() => {
     memberList.loadMore();
@@ -391,34 +395,42 @@ export const MemberManagePage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <Dialog title="新增成员" store={addMemberDialog}>
-        <Input store={remarkInput} />
+        <div class="w-[520px]">
+          <Input store={remarkInput} />
+        </div>
       </Dialog>
       <Dialog title="删除成员" store={confirmDeleteMemberDialog}>
-        <div>确认删除该成员吗？</div>
+        <div class="w-[520px]">
+          <div>确认删除该成员吗？</div>
+        </div>
       </Dialog>
       <Dialog store={permissionDialog}>
-        <ListView store={permissionList} class="space-y-8">
-          <For each={permissionResponse().dataSource}>
-            {(permission) => {
-              const { code, desc } = permission;
-              return (
-                <div
-                  class="flex items-center space-x-2 px-8 py-4"
-                  onClick={() => {
-                    permissionMultipleSelect.toggle(permission);
-                  }}
-                >
-                  <div class="w-5 h-5">
-                    <Show when={permissionMultipleSelect.values.includes(permission)}>
-                      <Check class="w-4 h-4" />
-                    </Show>
+        <div class="w-[520px]">
+          <ListView store={permissionList} class="space-y-8">
+            <For each={permissionResponse().dataSource}>
+              {(permission) => {
+                const { code, desc } = permission;
+                return (
+                  <div
+                    class="flex items-center space-x-2 px-8 py-4"
+                    onClick={() => {
+                      permissionMultipleSelect.toggle(permission);
+                    }}
+                  >
+                    <div
+                      classList={{
+                        "p-2 rounded-sm": true,
+                        "bg-slate-500": selectedPermissions().includes(permission),
+                      }}
+                    >
+                      {desc}
+                    </div>
                   </div>
-                  <div class="">{desc}</div>
-                </div>
-              );
-            }}
-          </For>
-        </ListView>
+                );
+              }}
+            </For>
+          </ListView>
+        </div>
       </Dialog>
     </>
   );

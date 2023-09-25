@@ -25,10 +25,13 @@ type TheTypesOfEvents<T extends (...args: any[]) => Promise<Result<any>>> = {
   [Events.Success]: T;
   [Events.Failed]: BizError;
   [Events.Completed]: void;
-  [Events.StateChange]: RequestState;
+  [Events.StateChange]: RequestState<T>;
   [Events.ResponseChange]: UnpackedResult<Unpacked<ReturnType<T>>> | null;
 };
-type RequestState = {};
+type RequestState<T extends (...args: any[]) => Promise<Result<any>>> = {
+  loading: boolean;
+  response: UnpackedResult<Unpacked<ReturnType<T>>> | null;
+};
 type RequestProps<T> = {
   delay?: null | number;
   onSuccess: (v: T) => void;
@@ -57,7 +60,7 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
   /** 请求的响应 */
   response: UnpackedResult<Unpacked<ReturnType<T>>> | null = null;
 
-  get state(): RequestState {
+  get state(): RequestState<T> {
     return {
       loading: this.loading,
       response: this.response,
