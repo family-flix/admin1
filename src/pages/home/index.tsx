@@ -1,28 +1,35 @@
 /**
- * @file 管理后台首页
+ * @file 管理后台首页(云盘列表)
  */
 import { createSignal, For } from "solid-js";
-import { RotateCcw, HardDrive, ArrowLeft } from "lucide-solid";
+import { RotateCcw, HardDrive, Search } from "lucide-solid";
 
-import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea } from "@/components/ui";
+import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
-import { ButtonCore, DialogCore, ScrollViewCore, InputCore } from "@/domains/ui";
+import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { addAliyunDrive } from "@/domains/drive";
+import { fetchDriveInstanceList } from "@/domains/drive/services";
+import { ListCore } from "@/domains/list";
 import { code_get_drive_token } from "@/constants";
 import { ViewComponent } from "@/types";
-import { driveList, driveProfilePage, homeLayout, rootView } from "@/store";
+import { driveProfilePage } from "@/store";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const addDriveRequest = new RequestCore(addAliyunDrive, {
+  const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
+    search: {
+      hidden: 0,
+    },
+  });
+  const driveCreateRequest = new RequestCore(addAliyunDrive, {
     onLoading(loading) {
-      addingDriveDialog.okBtn.setLoading(loading);
+      driveCreateDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({ text: ["添加云盘成功"] });
-      addingDriveDialog.hide();
+      driveCreateDialog.hide();
       driveTokenInput.clear();
       driveList.refresh();
     },
@@ -30,28 +37,59 @@ export const HomePage: ViewComponent = (props) => {
       app.tip({ text: ["添加云盘失败", error.message] });
     },
   });
-  const addingDriveDialog = new DialogCore({
+  const driveCreateDialog = new DialogCore({
     title: "新增阿里云盘",
     onOk() {
       if (!driveTokenInput.value) {
         app.tip({ text: ["请输入云盘信息"] });
         return;
       }
-      addDriveRequest.run({ payload: driveTokenInput.value });
+      driveCreateRequest.run({ payload: driveTokenInput.value });
     },
   });
-  const addingDriveBtn = new ButtonCore({
+  const driveCreateBtn = new ButtonCore({
     onClick() {
-      addingDriveDialog.show();
+      driveCreateDialog.show();
     },
   });
   const driveTokenInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入",
   });
+  const allDriveCheckbox = new CheckboxCore({
+    onChange(checked) {
+      driveList.search({
+        hidden: checked ? null : 1,
+      });
+    },
+  });
   const refreshBtn = new ButtonCore({
     onClick() {
       driveList.refresh();
+    },
+  });
+  const searchBtn = new ButtonCore({
+    onClick() {
+      if (!nameSearchInput.value) {
+        app.tip({
+          text: ["请输入搜索关键字"],
+        });
+        return;
+      }
+      driveList.search({
+        name: nameSearchInput.value,
+      });
+    },
+  });
+  const nameSearchInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
+  const resetBtn = new ButtonCore({
+    onClick() {
+      driveList.reset();
     },
   });
   const scrollView = new ScrollViewCore({
@@ -68,30 +106,36 @@ export const HomePage: ViewComponent = (props) => {
   driveList.onStateChange((nextState) => {
     setDriveResponse(nextState);
   });
-
   driveList.initAny();
 
   return (
     <>
       <ScrollView store={scrollView} class="h-screen p-8 whitespace-nowrap">
         <div class="flex items-center space-x-4">
-          {/* <div
-            class="cursor-pointer"
-            onClick={() => {
-              homeLayout.showPrevView();
-            }}
-          >
-            <ArrowLeft class="w-6 h-6" />
-          </div> */}
           <h1 class="text-2xl">云盘列表</h1>
         </div>
         <div class="mt-8">
-          <div class="space-x-2">
+          <div class="flex items-center space-x-2">
             <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
-            <Button store={addingDriveBtn} icon={<HardDrive class="w-4 h-4" />}>
+            <Button class="" store={resetBtn}>
+              重置
+            </Button>
+            <Button store={driveCreateBtn} icon={<HardDrive class="w-4 h-4" />}>
               新增云盘
+            </Button>
+          </div>
+          <div class="mt-4 space-x-2">
+            <div class="flex items-center space-x-2">
+              <Checkbox store={allDriveCheckbox}></Checkbox>
+              <span>全部内容</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 mt-4">
+            <Input class="" store={nameSearchInput} />
+            <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+              搜索
             </Button>
           </div>
           <ListView
@@ -151,7 +195,7 @@ export const HomePage: ViewComponent = (props) => {
           </ListView>
         </div>
       </ScrollView>
-      <Dialog store={addingDriveDialog}>
+      <Dialog store={driveCreateDialog}>
         <div class="w-[520px] p-4">
           <p>1、在网页端登录阿里云盘</p>
           <p

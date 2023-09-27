@@ -6,7 +6,7 @@ import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide
 
 import {
   bind_profile_for_unknown_movie,
-  fetch_movie_list,
+  fetchMovieList,
   moveMovieToResourceDrive,
   MovieItem,
   refreshMovieProfiles,
@@ -90,7 +90,7 @@ export const MovieManagePage: ViewComponent = (props) => {
       moveToResourceDriveConfirmDialog.hide();
     },
   });
-  const movieList = new ListCore(new RequestCore(fetch_movie_list), {
+  const movieList = new ListCore(new RequestCore(fetchMovieList), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);

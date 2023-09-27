@@ -7,15 +7,11 @@ import { ArrowLeft, Play, Trash } from "lucide-solid";
 import {
   fetchTVProfile,
   TVProfile,
-  changeSeasonProfile,
   fetchEpisodesOfSeason,
   EpisodeItemInSeason,
   deleteSeason,
   SeasonInTVProfile,
-  parse_video_file_name,
-  upload_subtitle_for_episode,
   deleteSourceFile,
-  deleteEpisode,
   updateSeasonProfileManually,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
@@ -32,8 +28,7 @@ import {
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { SubtitleLanguageOptions } from "@/constants";
-import { createJob, appendAction, mediaPlayingPage } from "@/store";
+import { mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { bytes_to_size, cn } from "@/utils";
 

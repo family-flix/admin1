@@ -138,6 +138,15 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.ResponseChange, this.response);
   }
+  modifyResponse(fn: (resp: UnpackedResult<Unpacked<ReturnType<T>>>) => UnpackedResult<Unpacked<ReturnType<T>>>) {
+    if (this.response === null) {
+      return;
+    }
+    const nextResponse = fn(this.response);
+    this.response = nextResponse;
+    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.ResponseChange, this.response);
+  }
 
   onLoadingChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.LoadingChange]>) {
     return this.on(Events.LoadingChange, handler);

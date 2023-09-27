@@ -106,6 +106,7 @@ export function createJob(body: {
   const { job_id, onTip, onFinish } = body;
   const job = new JobCore({ id: job_id });
   job.onFinish(() => {
+    refreshJobs();
     if (onFinish) {
       onFinish();
     }

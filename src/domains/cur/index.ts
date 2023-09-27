@@ -15,9 +15,13 @@ type TheTypesOfEvents<T> = {
 type RefProps<T> = {
   onChange?: (v: T) => void;
 };
-type SelectionState = {};
+type RefState = {};
 export class RefCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   value: T | null = null;
+
+  get state(): T | null {
+    return this.value;
+  }
 
   constructor(options: Partial<{ _name: string }> & RefProps<T> = {}) {
     super(options);

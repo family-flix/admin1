@@ -396,6 +396,20 @@ export const DriveCard = (props: {
               <div class="mt-2">
                 {usedSize()}/{totalSize()}
               </div>
+              <Show when={state().vip}>
+                <div class="mt-4 space-y-2">
+                  <For each={state().vip}>
+                    {(vip) => {
+                      return (
+                        <div class="flex text-sm text-slate-800">
+                          <div>{vip.name}</div>
+                          <div class="ml-2">{vip.expired_at_text}</div>
+                        </div>
+                      );
+                    }}
+                  </For>
+                </div>
+              </Show>
               <div class="flex items-center mt-4 space-x-2">
                 <Button store={analysisBtn} variant="subtle" icon={<FolderSearch class="w-4 h-4" />}>
                   索引

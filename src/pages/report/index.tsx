@@ -5,7 +5,7 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
-import { MovieItem, ReportItem, fetchReportList, fetch_movie_list, replyReport } from "@/services";
+import { MovieItem, ReportItem, fetchReportList, fetchMovieList, replyReport } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
@@ -179,7 +179,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
     },
   });
 
-  const movieList = new ListCore(new RequestCore(fetch_movie_list), {
+  const movieList = new ListCore(new RequestCore(fetchMovieList), {
     onLoadingChange(loading) {
       movieSearchBtn.setLoading(loading);
     },

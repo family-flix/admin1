@@ -1,6 +1,8 @@
 /**
  * @file 云盘相关 service
  */
+import dayjs from "dayjs";
+
 import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 import { FileType } from "@/constants";
@@ -68,6 +70,11 @@ export async function fetchDrives(params: FetchParams) {
       total_size: number;
       /** 索引根目录 */
       root_folder_id?: string;
+      vip?: {
+        name: string;
+        expired_at: number;
+        started_at: number;
+      }[];
     }>
   >("/api/admin/drive/list", {
     page,
@@ -84,7 +91,17 @@ export async function fetchDrives(params: FetchParams) {
     page_size,
     no_more,
     list: list.map((item) => {
-      const { id, name, avatar, total_size, used_size, root_folder_id } = item;
+      const { id, name, avatar, total_size, used_size, root_folder_id, vip = [] } = item;
+      const valid_vip = vip
+        .filter((v) => {
+          return dayjs(v.expired_at).isAfter(dayjs());
+        })
+        .map((v) => {
+          return {
+            ...v,
+            expired_at_text: dayjs(v.expired_at * 1000).format("YYYY/MM/DD HH:mm:ss"),
+          };
+        });
       return {
         id,
         name,
@@ -103,13 +120,14 @@ export async function fetchDrives(params: FetchParams) {
         })(),
         /** 是否可以使用（已选择索引根目录） */
         initialized: !!root_folder_id,
+        vip: valid_vip,
       };
     }),
   });
 }
 export type DriveItem = RequestedResource<typeof fetchDrives>["list"][0];
 
-export async function fetch_drive_instance_list(params: FetchParams) {
+export async function fetchDriveInstanceList(params: FetchParams) {
   const r = await fetchDrives(params);
   if (r.error) {
     return Result.Err(r.error);

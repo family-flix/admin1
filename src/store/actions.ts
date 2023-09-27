@@ -1,7 +1,6 @@
 /**
  * 在页面间切换时，希望上一个页面做的事情
  */
-
 export const pendingActions: Partial<{
   deleteTV: {
     tv_id: string;

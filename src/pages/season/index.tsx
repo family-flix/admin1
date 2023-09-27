@@ -20,10 +20,10 @@ import {
   fetchPartialSeason,
   fetchSeasonList,
   moveSeasonToResourceDrive,
-  changeSeasonProfile,
-  refreshTVProfiles,
+  refreshSeasonProfiles,
   transferSeasonToAnotherDrive,
   TVSeasonItem,
+  refreshSeasonProfile,
 } from "@/services";
 import {
   Skeleton,
@@ -105,7 +105,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetchPartialSeason);
-  const refreshProfileRequest = new RequestCore(changeSeasonProfile, {
+  const refreshProfileRequest = new RequestCore(refreshSeasonProfile, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -313,7 +313,7 @@ export const TVManagePage: ViewComponent = (props) => {
       app.showView(homeTVProfilePage);
     },
   });
-  const refreshSeasonProfilesRequest = new RequestCore(refreshTVProfiles, {
+  const refreshSeasonProfilesRequest = new RequestCore(refreshSeasonProfiles, {
     beforeRequest() {
       refreshSeasonListBtn.setLoading(true);
     },
@@ -690,7 +690,9 @@ export const TVManagePage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <Dialog store={moveToResourceDriveConfirmDialog}>
-        <div>将电视剧移动到资源盘后才能公开分享</div>
+        <div class="w-[520px]">
+          <div>将电视剧移动到资源盘后才能公开分享</div>
+        </div>
       </Dialog>
       <Popover
         store={tipPopover}

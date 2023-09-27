@@ -107,7 +107,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ _name: string }> & DriveProps) {
     super(options);
 
-    const { _name, id, name } = options;
+    const { _name, id, name, vip } = options;
     this.id = id;
     this.name = name;
     if (_name) {

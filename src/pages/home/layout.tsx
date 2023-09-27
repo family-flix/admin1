@@ -19,6 +19,7 @@ import {
   Lock,
   Subtitles,
   MessageCircle,
+  AlarmClock,
 } from "lucide-solid";
 
 import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
@@ -273,6 +274,11 @@ export const HomeLayout: ViewComponent = (props) => {
       icon: <Film class="w-6 h-6" />,
       view: homeMovieListPage,
     },
+    // {
+    //   text: "集合管理",
+    //   icon: <Film class="w-6 h-6" />,
+    //   view: homeMovieListPage,
+    // },
     {
       text: "字幕管理",
       icon: <Subtitles class="w-6 h-6" />,
@@ -280,7 +286,7 @@ export const HomeLayout: ViewComponent = (props) => {
     },
     {
       text: "同步任务",
-      icon: <Subtitles class="w-6 h-6" />,
+      icon: <AlarmClock class="w-6 h-6" />,
       view: syncTaskListPage,
     },
 
@@ -363,7 +369,7 @@ export const HomeLayout: ViewComponent = (props) => {
       <div class="flex w-full h-full bg-white">
         <div class="w-[248px] py-8 pt-4 pl-2 pr-2 border border-r-slate-300">
           <div class="flex flex-col justify-between h-full w-full">
-            <div class="flex-1 space-y-1 p-2 w-full h-full rounded-xl self-start">
+            <div class="flex-1 space-y-1 p-2 w-full h-full overflow-y-auto rounded-xl self-start">
               <For each={menus()}>
                 {(menu) => {
                   const { icon, text, view, badge, onClick } = menu;
@@ -384,7 +390,7 @@ export const HomeLayout: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            <div class="flex justify-center space-x-2 h-[68rpx]">
+            <div class="flex justify-center space-x-2 h-[68rpx] py-2">
               <Button class="" store={logoutBtn} variant="subtle" icon={<LogOut class="w-4 h-4" />}>
                 退出登录
               </Button>

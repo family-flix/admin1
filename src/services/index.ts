@@ -419,14 +419,24 @@ export function delete_tv(body: {
   return request.get<void>(`/api/admin/tv/delete/${tv_id}`);
 }
 
-/** 改变/刷新电视剧详情 */
-export function changeSeasonProfile(body: { season_id: string; tmdb_id?: number }) {
-  const { season_id, tmdb_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/refresh_profile`, {
-    tmdb_id,
+/** 刷新电视剧详情 */
+export function refreshSeasonProfile(body: { season_id: string }) {
+  const { season_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/refresh_profile`, {});
+}
+/** 改变电视剧详情 */
+export function changeSeasonProfile(body: { season_id: string; unique_id?: number }) {
+  const { season_id, unique_id } = body;
+  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/set_profile`, {
+    unique_id,
   });
 }
-
+/** 手动修改电视剧详情 */
+export function updateSeasonProfileManually(body: { season_id: string; title?: string; episode_count?: number }) {
+  const { season_id, title, episode_count } = body;
+  return request.post<void>(`/api/admin/season/${season_id}/update`, { name: title, episode_count });
+}
+/** 删除指定电视剧季 */
 export function deleteSeason(body: { season_id: string }) {
   const { season_id } = body;
   return request.get<void>(`/api/admin/season/${season_id}/delete`);
@@ -435,7 +445,7 @@ export function deleteSeason(body: { season_id: string }) {
 /**
  * 获取电影列表
  */
-export async function fetch_movie_list(params: FetchParams & { name: string; duplicated: number }) {
+export async function fetchMovieList(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
   const resp = await request.get<
     ListResponse<{
@@ -468,11 +478,26 @@ export async function fetch_movie_list(params: FetchParams & { name: string; dup
     }),
   });
 }
-export type MovieItem = RequestedResource<typeof fetch_movie_list>["list"][number];
+export type MovieItem = RequestedResource<typeof fetchMovieList>["list"][number];
 
-export function update_movie_profile(body: { movie_id: string }, profile: {}) {
+/** 刷新电影详情 */
+export function refreshMovieProfile(body: { movie_id: string }) {
   const { movie_id } = body;
-  return request.post(`/api/admin/movie/${movie_id}/refresh_profile`, profile);
+  return request.post(`/api/admin/movie/${movie_id}/refresh_profile`, {});
+}
+/** 改变电影详情 */
+export function changeMovieProfile(body: { movie_id: string; unique_id: number }) {
+  const { movie_id, unique_id } = body;
+  return request.post(`/api/admin/movie/${movie_id}/set_profile`, {
+    unique_id,
+  });
+}
+/** 手动更新电影详情 */
+export function updateMovieProfile(body: { movie_id: string; name: string }) {
+  const { movie_id, name } = body;
+  return request.post(`/api/admin/movie/${movie_id}/update`, {
+    name,
+  });
 }
 
 export function delete_movie(body: { movie_id: string }) {
@@ -483,13 +508,31 @@ export function delete_movie(body: { movie_id: string }) {
 /**
  * 获取无法识别的 tv
  */
-export async function fetch_unknown_tv_list(params: FetchParams) {
+export async function fetchUnknownTVList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
   const r = await request.get<
     ListResponse<{
       id: string;
       name: string;
-      original_name: string;
+      file_id?: string;
+      file_name?: string;
+      parsed_seasons: {
+        id: string;
+        file_name: string;
+        season_text: string;
+        season_id: string;
+      }[];
+      parsed_episodes: {
+        id: string;
+        file_name: string;
+        parent_paths: string;
+        episode_text: string;
+        episode_id: string;
+      }[];
+      drive: {
+        id: string;
+        name: string;
+      };
     }>
   >(`/api/admin/unknown_tv/list`, {
     ...rest,
@@ -502,25 +545,36 @@ export async function fetch_unknown_tv_list(params: FetchParams) {
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, original_name } = tv;
+      const { id, name, file_id, file_name, parsed_seasons, parsed_episodes, drive } = tv;
       return {
         id,
-        name: name || original_name,
+        name,
+        file_id,
+        file_name,
+        parsed_seasons,
+        parsed_episodes,
+        drive,
       };
     }),
   });
 }
-export type UnknownTVItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
+export type UnknownTVItem = RequestedResource<typeof fetchUnknownTVList>["list"][0];
 
 /** 删除所有未识别电视剧 */
-export function delete_unknown_tv_list() {
+export function deleteUnknownTVList() {
   return request.get("/api/admin/unknown_tv/delete");
+}
+
+/** 删除指定未识别电视剧 */
+export function deleteUnknownTV(values: { parsed_tv_id: string }) {
+  const { parsed_tv_id } = values;
+  return request.get(`/api/admin/unknown_tv/${parsed_tv_id}/delete`);
 }
 
 /**
  * 获取无法识别的季
  */
-export async function fetch_unknown_season_list(params: FetchParams) {
+export async function fetchUnknownSeasonList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
   const r = await request.get<
     ListResponse<{
@@ -548,7 +602,7 @@ export async function fetch_unknown_season_list(params: FetchParams) {
     }),
   });
 }
-export type UnknownSeasonItem = RequestedResource<typeof fetch_unknown_tv_list>["list"][0];
+export type UnknownSeasonItem = RequestedResource<typeof fetchUnknownSeasonList>["list"][0];
 
 /** 删除所有未识别电视剧季 */
 export function delete_unknown_season_list() {
@@ -738,8 +792,21 @@ export async function bind_profile_for_unknown_movie(id: string, body: MatchedTV
 /**
  * 给指定 tv 绑定一个 tmdb 的搜索结果
  */
-export async function bind_profile_for_unknown_tv(id: string, body: MatchedTVOfTMDB) {
-  return request.post(`/api/admin/unknown_tv/update/${id}`, body);
+export async function bind_profile_for_unknown_tv(
+  id: string,
+  profile: { source?: number; unique_id: string | number }
+) {
+  const { unique_id } = profile;
+  return request.post(`/api/admin/unknown_tv/${id}/set_profile`, {
+    unique_id,
+  });
+}
+
+/**
+ * 修改未识别电视剧名称并索引
+ */
+export async function modifyUnknownTVName(id: string, body: { name: string }) {
+  return request.post(`/api/admin/unknown_tv/${id}/update`, body);
 }
 
 /**
@@ -985,29 +1052,6 @@ export async function check_has_same_name_tv(body: {
 }
 
 /**
- * 解析文件名
- */
-export function parse_video_file_name(body: { name: string; keys?: string[] }) {
-  const { name, keys } = body;
-  return request.post<{
-    name: string;
-    original_name: string;
-    season: string;
-    episode: string;
-    episode_name: string;
-    resolution: string;
-    year: string;
-    source: string;
-    encode: string;
-    voice_encode: string;
-    episode_count: string;
-    subtitle_lang: string;
-  }>("/api/admin/parse", { name, keys });
-}
-export type ParsedVideoInfo = RequestedResource<typeof parse_video_file_name>;
-export type VideoKeys = keyof ParsedVideoInfo;
-
-/**
  * 获取可以建立同步任务的文件夹转存记录
  */
 export function fetch_folder_can_add_sync_task(body: { page: number; page_size: number; name?: string[] }) {
@@ -1040,8 +1084,8 @@ export function runSyncTask(body: { id: string }) {
 /**
  * 更新所有电视剧详情
  */
-export function refreshTVProfiles() {
-  return request.get<{ job_id: string }>("/api/admin/tv/refresh_profile");
+export function refreshSeasonProfiles() {
+  return request.get<{ job_id: string }>("/api/admin/season/refresh_profile");
 }
 
 /**
@@ -1211,14 +1255,6 @@ export type SeasonInTVProfile = RequestedResource<typeof fetchTVProfile>["curSea
 export async function deleteEpisode(body: { id: string }) {
   const { id } = body;
   return request.get(`/api/admin/episode/${id}/delete`);
-}
-
-/**
- * 手动修改电视剧详情
- */
-export function updateSeasonProfileManually(body: { season_id: string; title?: string; episode_count?: number }) {
-  const { season_id, title, episode_count } = body;
-  return request.post(`/api/admin/season/${season_id}/update`, { name: title, episode_count });
 }
 
 /**
@@ -1404,14 +1440,14 @@ export async function fetch_shared_files_transfer_list(body: FetchParams) {
       const { created, ...rest } = f;
       return {
         ...rest,
-        // created: relative_time_from_now(created),
+        created: dayjs(created).format("YYYY-MM-DD HH:mm"),
       };
     }),
   });
 }
 export type SharedFileTransferItem = RequestedResource<typeof fetch_shared_files_transfer_list>["list"][0];
 
-export async function fetch_movie_profile(body: { movie_id: string }) {
+export async function fetchMovieProfile(body: { movie_id: string }) {
   const { movie_id } = body;
   const r = await request.get<{
     id: string;
@@ -1447,7 +1483,7 @@ export async function fetch_movie_profile(body: { movie_id: string }) {
     source_size_text: bytes_to_size(source_size_count),
   });
 }
-export type MovieProfile = RequestedResource<typeof fetch_movie_profile>;
+export type MovieProfile = RequestedResource<typeof fetchMovieProfile>;
 
 export function upload_file(body: FormData) {
   return request.post("/api/admin/upload", body);

@@ -22,6 +22,9 @@ export const SharedFilesTransferListPage: ViewComponent = (props) => {
   });
   const nameSearchInput = new InputCore({
     defaultValue: "",
+    onEnter() {
+      searchBtn.click();
+    },
   });
   const searchBtn = new ButtonCore({
     onClick() {
@@ -58,11 +61,16 @@ export const SharedFilesTransferListPage: ViewComponent = (props) => {
           <div class="mt-8 space-y-4">
             <For each={response().dataSource}>
               {(sharedFile) => {
-                const { id, url, name } = sharedFile;
+                const { id, url, name, created } = sharedFile;
                 return (
                   <div class="p-4">
-                    <p>{name}</p>
-                    <div>{url}</div>
+                    <div class="text-lg">{name}</div>
+                    <div class="text-slate-800">
+                      <a href={url} target="_blank">
+                        {url}
+                      </a>
+                    </div>
+                    <div class="text-sm text-slate-500">{created}</div>
                   </div>
                 );
               }}

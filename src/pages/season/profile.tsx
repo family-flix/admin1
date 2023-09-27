@@ -13,24 +13,15 @@ import {
   deleteSeason,
   SeasonInTVProfile,
   deleteSourceFile,
-  deleteEpisode,
   updateSeasonProfileManually,
+  refreshSeasonProfile,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import {
-  MenuItemCore,
-  ContextMenuCore,
-  ScrollViewCore,
-  DialogCore,
-  ButtonCore,
-  InputCore,
-  SelectCore,
-} from "@/domains/ui";
+import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { SubtitleLanguageOptions } from "@/constants";
 import { createJob, appendAction, mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { bytes_to_size, cn } from "@/utils";
@@ -39,9 +30,6 @@ export const TVProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const profileRequest = new RequestCore(fetchTVProfile, {
-    onFailed(error) {
-      app.tip({ text: ["获取电视剧详情失败", error.message] });
-    },
     onSuccess(v) {
       setProfile(v);
       if (v.seasons.length === 0) {
@@ -61,8 +49,11 @@ export const TVProfilePage: ViewComponent = (props) => {
         };
       });
     },
+    onFailed(error) {
+      app.tip({ text: ["获取电视剧详情失败", error.message] });
+    },
   });
-  const sourceDeleteRequest = new RequestCore(deleteSourceFile, {
+  const sourceDeletingRequest = new RequestCore(deleteSourceFile, {
     onLoading(loading) {
       fileDeletingConfirmDialog.okBtn.setLoading(loading);
     },
@@ -105,15 +96,15 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const profileUpdateRequest = new RequestCore(updateSeasonProfileManually, {
+  const profileManualUpdateRequest = new RequestCore(updateSeasonProfileManually, {
     onLoading(loading) {
-      profileUpdateDialog.okBtn.setLoading(loading);
+      profileManualUpdateDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({
         text: ["更新成功"],
       });
-      profileUpdateDialog.hide();
+      profileManualUpdateDialog.hide();
       profileRequest.reload();
     },
     onFailed(error) {
@@ -128,7 +119,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       season_id: view.query.season_id,
     },
   });
-  const seasonDeleteRequest = new RequestCore(deleteSeason, {
+  const seasonDeletingRequest = new RequestCore(deleteSeason, {
     onLoading(loading) {
       seasonDeletingConfirmDialog.okBtn.setLoading(loading);
     },
@@ -146,7 +137,6 @@ export const TVProfilePage: ViewComponent = (props) => {
         id: view.query.season_id,
       });
       seasonDeletingConfirmDialog.hide();
-      // profileRequest.reload();
       app.back();
     },
   });
@@ -155,33 +145,35 @@ export const TVProfilePage: ViewComponent = (props) => {
       createJob({
         job_id: v.job_id,
         onFinish() {
-          app.tip({ text: ["更新详情成功"] });
+          app.tip({ text: ["更新详情成功", "如果当前信息没有改变", "可能是合并到已存在的电视剧中了"] });
           profileRequest.reload();
-          tmdbSearchDialog.okBtn.setLoading(false);
-          tmdbSearchDialog.hide();
+          seasonProfileChangeSelectDialog.hide();
+          seasonProfileChangeSelectDialog.okBtn.setLoading(false);
         },
       });
     },
     onFailed(error) {
       app.tip({ text: ["更新详情失败", error.message] });
+      seasonProfileChangeSelectDialog.okBtn.setLoading(false);
     },
   });
-  const refreshProfileRequest = new RequestCore(changeSeasonProfile, {
+  const seasonProfileRefreshRequest = new RequestCore(refreshSeasonProfile, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
         onFinish() {
-          app.tip({ text: ["刷新成功"] });
+          app.tip({ text: ["刷新详情成功"] });
           profileRequest.reload();
-          refreshProfileBtn.setLoading(false);
         },
       });
     },
     onFailed(error) {
-      refreshProfileBtn.setLoading(false);
       app.tip({
-        text: ["刷新失败", error.message],
+        text: ["刷新详情失败", error.message],
       });
+    },
+    onCompleted() {
+      profileRefreshBtn.setLoading(false);
     },
   });
   const tmpSeasonRef = new RefCore<SeasonInTVProfile>();
@@ -189,7 +181,7 @@ export const TVProfilePage: ViewComponent = (props) => {
   const episodeRef = new RefCore<EpisodeItemInSeason>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
-  const tmdbSearchDialog = new TMDBSearcherDialogCore({
+  const seasonProfileChangeSelectDialog = new TMDBSearcherDialogCore({
     onOk(searched_tv) {
       const id = view.query.season_id as string;
       if (!id) {
@@ -197,28 +189,28 @@ export const TVProfilePage: ViewComponent = (props) => {
         return;
       }
       app.tip({ text: ["开始更新详情"] });
-      tmdbSearchDialog.okBtn.setLoading(true);
+      seasonProfileChangeSelectDialog.okBtn.setLoading(true);
       seasonProfileChangeRequest.run({
         season_id: id,
-        tmdb_id: searched_tv.id,
+        unique_id: searched_tv.id,
       });
     },
   });
   const profileChangeBtn = new ButtonCore({
     onClick() {
       if (profileRequest.response) {
-        tmdbSearchDialog.input(profileRequest.response.name);
+        seasonProfileChangeSelectDialog.input(profileRequest.response.name);
       }
-      tmdbSearchDialog.show();
+      seasonProfileChangeSelectDialog.show();
     },
   });
-  const refreshProfileBtn = new ButtonCore({
+  const profileRefreshBtn = new ButtonCore({
     onClick() {
       app.tip({
         text: ["开始刷新"],
       });
-      refreshProfileBtn.setLoading(true);
-      refreshProfileRequest.run({ season_id: view.query.season_id });
+      profileRefreshBtn.setLoading(true);
+      seasonProfileRefreshRequest.run({ season_id: view.query.season_id });
     },
   });
   const seasonDeletingBtn = new ButtonCore({
@@ -238,7 +230,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      seasonDeleteRequest.run({
+      seasonDeletingRequest.run({
         season_id: seasonRef.value.id,
       });
     },
@@ -260,7 +252,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      sourceDeleteRequest.run({
+      sourceDeletingRequest.run({
         id: theSource.id,
       });
     },
@@ -278,10 +270,10 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const profileUpdateBtn = new ButtonCore({
     onClick() {
-      profileUpdateDialog.show();
+      profileManualUpdateDialog.show();
     },
   });
-  const profileUpdateDialog = new DialogCore({
+  const profileManualUpdateDialog = new DialogCore({
     title: "手动修改详情",
     onOk() {
       const title = profileTitleInput.value;
@@ -292,7 +284,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      profileUpdateRequest.run({
+      profileManualUpdateRequest.run({
         season_id: view.query.season_id,
         title,
         episode_count: episodeCount ? Number(episodeCount) : undefined,
@@ -401,7 +393,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                 <div class="flex items-center space-x-4 whitespace-nowrap">
                   <Button store={profileUpdateBtn}>修改详情</Button>
                   <Button store={profileChangeBtn}>变更详情</Button>
-                  <Button store={refreshProfileBtn}>刷新详情</Button>
+                  <Button store={profileRefreshBtn}>刷新详情</Button>
                   <Button store={seasonDeletingBtn}>删除季</Button>
                 </div>
                 <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
@@ -515,8 +507,8 @@ export const TVProfilePage: ViewComponent = (props) => {
           </Show>
         </div>
       </ScrollView>
-      <TMDBSearcherDialog store={tmdbSearchDialog} />
-      <Dialog store={profileUpdateDialog}>
+      <TMDBSearcherDialog store={seasonProfileChangeSelectDialog} />
+      <Dialog store={profileManualUpdateDialog}>
         <div class="w-[520px]">
           <div class="space-y-4">
             <div class="space-y-1">

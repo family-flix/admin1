@@ -9,25 +9,6 @@ import { Result } from "@/types";
 dayjs.extend(relative_time);
 dayjs.locale("zh-cn");
 
-export const VIDEO_KEY_NAME_MAP = {
-  name: "中文名称",
-  original_name: "译名or外文原名",
-  season: "季",
-  episode: "集",
-  episode_name: "集名称",
-  resolution: "分辨率",
-  year: "发布年",
-  source: "来源",
-  encode: "视频编码方式",
-  voice_encode: "音频编码方式",
-  episode_count: "总集数",
-  type: "后缀",
-  subtitle_lang: "字幕语言",
-};
-export type VideoKeys = keyof typeof VIDEO_KEY_NAME_MAP;
-export const VIDEO_ALL_KEYS = Object.keys(VIDEO_KEY_NAME_MAP) as VideoKeys[];
-export type ParsedVideoInfo = Record<VideoKeys, string>;
-
 export function cn(...inputs: any[]) {
   return twMerge(inputs);
 }

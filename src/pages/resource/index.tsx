@@ -2,7 +2,7 @@
  * @file 分享文件转存
  */
 import { For, Show, createSignal } from "solid-js";
-import { ChevronRight, Folder, FolderInput, MoreHorizontal, Search, Send } from "lucide-solid";
+import { ChevronRight, Folder, FolderInput, MoreHorizontal, Send } from "lucide-solid";
 
 import { Button, DropdownMenu, Input } from "@/components/ui";
 import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";

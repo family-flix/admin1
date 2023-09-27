@@ -1,7 +1,7 @@
 /**
  * @file 未识别的剧集
  */
-import { For, createSignal } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 import { Edit, RotateCcw, Trash } from "lucide-solid";
 
 import {
@@ -221,9 +221,6 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         <div class="my-4 flex items-center space-x-2">
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
-          </Button>
-          <Button icon={<Trash class="w-4 h-4" />} variant="subtle" store={deleteListBtn}>
-            删除所有
           </Button>
         </div>
         <ListView
