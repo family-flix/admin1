@@ -1901,18 +1901,7 @@ export function createCollection(values: {
     title,
     desc,
     sort,
-    medias: medias.map((media) => {
-      if (media.tv_id) {
-        return {
-          id: media.id,
-          type: 1,
-        };
-      }
-      return {
-        id: media.id,
-        type: 2,
-      };
-    }),
+    medias,
   });
 }
 export function fetchCollectionProfile(values: { id: string }) {

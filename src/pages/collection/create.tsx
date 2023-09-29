@@ -78,12 +78,13 @@ export const CollectionCreatePage: ViewComponent = (props) => {
                 >
                   <div class="grid gap-2 grid-cols-6">
                     <For each={state().medias}>
-                      {(movie) => {
-                        const { id, name, poster_path } = movie;
+                      {(media) => {
+                        const { id, type, name, poster_path } = media;
                         return (
                           <div class="relative">
-                            <div class="">
+                            <div class="relative">
                               <LazyImage class="w-[78px] rounded-sm" src={poster_path} />
+                              <div class="absolute left-0 top-0">{type === 1 ? '电视剧' : '电影'}</div>
                             </div>
                             <div class="mt-2">
                               <div>{name}</div>
@@ -91,7 +92,7 @@ export const CollectionCreatePage: ViewComponent = (props) => {
                             <div
                               class="absolute z-10 right-0 top-0 p-1 rounded-full bg-white cursor-pointer"
                               onClick={() => {
-                                collectionForm.removeMedia(movie);
+                                collectionForm.removeMedia(media);
                               }}
                             >
                               <X class="w-2 h-2" />

@@ -1,3 +1,5 @@
+import { Handler } from "mitt";
+
 import { createCollection, editCollection, fetchCollectionProfile } from "@/services";
 import { MovieSelectCore } from "@/components/MovieSelect";
 import { TVSeasonSelectCore } from "@/components/TVSeasonSelect";
@@ -5,7 +7,6 @@ import { InputCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { BaseDomain } from "@/domains/base";
-import { Handler } from "mitt";
 
 enum Events {
   StateChange,
@@ -101,14 +102,12 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.StateChange, { ...this.state });
     },
   });
-
   selectedSeasonsRef = new RefCore({
     defaultValue: [] as CollectionMedia[],
   });
   selectedMoviesRef = new RefCore({
     defaultValue: [] as CollectionMedia[],
   });
-
   seasonSelect = new TVSeasonSelectCore({
     onOk: () => {
       const selectedSeason = this.seasonSelect.value;
@@ -127,13 +126,14 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
         curSeasons.concat([
           {
             id,
-            type: 2,
+            type: 1,
             name,
             poster_path,
           },
         ])
       );
       this.seasonSelect.dialog.hide();
+      this.emit(Events.StateChange, { ...this.state });
     },
   });
   get seasonSelectDialog() {
@@ -164,6 +164,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
         ])
       );
       this.movieSelect.dialog.hide();
+      this.emit(Events.StateChange, { ...this.state });
     },
   });
   get movieSelectDialog() {
