@@ -1,17 +1,17 @@
 /**
- * @file 电视剧选择
+ * @file 电影选择
  */
 import { Handler } from "mitt";
-import { For, Show, createSignal } from "solid-js";
-import { Calendar, Send, Smile } from "lucide-solid";
+import { For, createSignal } from "solid-js";
+import { Calendar } from "lucide-solid";
 
-import { TVSeasonItem, fetchSeasonList } from "@/services";
+import { MovieItem, fetchMovieList } from "@/services";
 import { BaseDomain } from "@/domains/base";
+import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { ButtonCore, DialogCore, DialogProps, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 
 enum Events {
   StateChange,
@@ -22,15 +22,15 @@ enum Events {
 }
 type TheTypesOfEvents = {
   //   [Events.Change]: TVSeasonItem;
-  [Events.Select]: TVSeasonItem;
+  [Events.Select]: MovieItem;
   [Events.Clear]: void;
 };
-type TVSeasonSelectProps = {
-  onSelect?: (v: TVSeasonItem) => void;
+type MovieSelectProps = {
+  onSelect?: (v: MovieItem) => void;
 } & DialogProps;
 
-export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
-  curSeason = new RefCore<TVSeasonItem>();
+export class MovieSelectCore extends BaseDomain<TheTypesOfEvents> {
+  curMovie = new RefCore<MovieItem>();
   /** 名称搜索输入框 */
   nameInput = new InputCore({
     defaultValue: "",
@@ -51,20 +51,20 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   /** 弹窗取消按钮 */
   cancelBtn: ButtonCore;
   /** 季列表 */
-  list = new ListCore(new RequestCore(fetchSeasonList), {
+  list = new ListCore(new RequestCore(fetchMovieList), {
     onLoadingChange: (loading) => {
       this.searchBtn.setLoading(loading);
     },
   });
   response = this.list.response;
-  value = this.curSeason.value;
+  value = this.curMovie.value;
 
-  constructor(props: Partial<{ _name: string }> & TVSeasonSelectProps) {
+  constructor(props: Partial<{ _name: string }> & MovieSelectProps) {
     super(props);
 
     const { onSelect, onOk, onCancel } = props;
     this.dialog = new DialogCore({
-      title: "选择电视剧",
+      title: "选择电影",
       onOk,
       onCancel,
     });
@@ -74,7 +74,7 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
     this.list.onStateChange((nextState) => {
       this.response = nextState;
     });
-    this.curSeason.onStateChange((nextState) => {
+    this.curMovie.onStateChange((nextState) => {
       this.value = nextState;
       if (nextState === null) {
         this.emit(Events.Clear);
@@ -92,19 +92,19 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
     this.dialog.hide();
   }
   clear() {
-    this.curSeason.clear();
+    this.curMovie.clear();
   }
-  select(season: TVSeasonItem) {
+  select(season: MovieItem) {
     //     console.log("[COMPONENT]TVSeasonSelect - select", season);
-    this.curSeason.select(season);
+    this.curMovie.select(season);
     this.emit(Events.Select, season);
   }
 
   onResponseChange(handler: Parameters<typeof this.list.onStateChange>[0]) {
     return this.list.onStateChange(handler);
   }
-  onCurSeasonChange(handler: Parameters<typeof this.curSeason.onStateChange>[0]) {
-    return this.curSeason.onStateChange(handler);
+  onCurSeasonChange(handler: Parameters<typeof this.curMovie.onStateChange>[0]) {
+    return this.curMovie.onStateChange(handler);
   }
   onSelect(handler: Handler<TheTypesOfEvents[Events.Select]>) {
     return this.on(Events.Select, handler);
@@ -114,11 +114,11 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   }
 }
 
-export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
+export const MovieSelect = (props: { store: MovieSelectCore }) => {
   const { store } = props;
 
-  const [tvListResponse, setTVListResponse] = createSignal(store.response);
-  const [curSeason, setCurSeason] = createSignal(store.value);
+  const [movieListState, setMovieListState] = createSignal(store.response);
+  const [curMovie, setCurMovie] = createSignal(store.value);
 
   const scrollView = new ScrollViewCore({
     onReachBottom() {
@@ -127,11 +127,11 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
   });
 
   store.onResponseChange((nextState) => {
-    setTVListResponse(nextState);
+    setMovieListState(nextState);
   });
   store.onCurSeasonChange((nextState) => {
     //     console.log("[COMPONENT]TVSeasonSelect - store.onCurSeasonChange", nextState);
-    setCurSeason(nextState);
+    setCurMovie(nextState);
   });
 
   store.list.init();
@@ -167,25 +167,15 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
           }
         >
           <div class="space-y-4">
-            <For each={tvListResponse().dataSource}>
+            <For each={movieListState().dataSource}>
               {(season) => {
-                const {
-                  id,
-                  tv_id,
-                  name,
-                  overview,
-                  cur_episode_count,
-                  episode_count,
-                  first_air_date,
-                  poster_path,
-                  season_text,
-                } = season;
+                const { id, name, overview, poster_path, air_date } = season;
                 return (
                   <div
                     classList={{
                       "rounded-md border bg-white shadow-sm": true,
-                      "border-green-500": curSeason()?.id === id,
-                      "border-slate-300 ": curSeason()?.id !== id,
+                      "border-green-500": curMovie()?.id === id,
+                      "border-slate-300 ": curMovie()?.id !== id,
                     }}
                     onClick={() => {
                       store.select(season);
@@ -198,7 +188,6 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                       <div class="flex-1 w-0 p-4">
                         <div class="flex items-center">
                           <h2 class="text-2xl text-slate-800">{name}</h2>
-                          <p class="ml-4 text-slate-500">{season_text}</p>
                         </div>
                         <div class="mt-2 overflow-hidden text-ellipsis">
                           <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">{overview}</p>
@@ -206,24 +195,8 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                         <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
                           <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
                             <Calendar class="w-4 h-4 text-slate-800" />
-                            <div class="break-keep whitespace-nowrap">{first_air_date}</div>
+                            <div class="break-keep whitespace-nowrap">{air_date}</div>
                           </div>
-                          <Show
-                            when={cur_episode_count !== episode_count}
-                            fallback={
-                              <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
-                                <Smile class="w-4 h-4" />
-                                <div>全{episode_count}集</div>
-                              </div>
-                            }
-                          >
-                            <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
-                              <Send class="w-4 h-4" />
-                              <div>
-                                {cur_episode_count}/{episode_count}
-                              </div>
-                            </div>
-                          </Show>
                         </div>
                       </div>
                     </div>

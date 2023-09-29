@@ -128,6 +128,9 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   setValue(value: T) {
     this.value = value;
+    if (this.type === "number") {
+      this.value = Number(value) as T;
+    }
     this.emit(Events.Change, value);
     this.emit(Events.StateChange, { ...this.state });
   }

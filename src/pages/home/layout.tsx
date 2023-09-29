@@ -20,6 +20,7 @@ import {
   Subtitles,
   MessageCircle,
   AlarmClock,
+  Folder,
 } from "lucide-solid";
 
 import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
@@ -42,6 +43,7 @@ import {
   homeUnknownMediaLayout,
 } from "@/store/views";
 import {
+  collectionListPage,
   homeLayout,
   homePermissionListPage,
   homeReportListPage,
@@ -274,11 +276,11 @@ export const HomeLayout: ViewComponent = (props) => {
       icon: <Film class="w-6 h-6" />,
       view: homeMovieListPage,
     },
-    // {
-    //   text: "集合管理",
-    //   icon: <Film class="w-6 h-6" />,
-    //   view: homeMovieListPage,
-    // },
+    {
+      text: "集合管理",
+      icon: <Folder class="w-6 h-6" />,
+      view: collectionListPage,
+    },
     {
       text: "字幕管理",
       icon: <Subtitles class="w-6 h-6" />,

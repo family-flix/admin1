@@ -13,6 +13,7 @@ type TheTypesOfEvents<T> = {
   [Events.StateChange]: T;
 };
 type RefProps<T> = {
+  defaultValue?: T;
   onChange?: (v: T) => void;
 };
 type RefState = {};
@@ -26,7 +27,10 @@ export class RefCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   constructor(options: Partial<{ _name: string }> & RefProps<T> = {}) {
     super(options);
 
-    const { onChange } = options;
+    const { defaultValue, onChange } = options;
+    if (defaultValue) {
+      this.value = defaultValue;
+    }
     if (onChange) {
       this.onStateChange(onChange);
     }

@@ -1872,3 +1872,81 @@ export function deleteSourceFiles(params: { drive_id: string }) {
   const { drive_id } = params;
   return request.get(`/api/admin/source/delete`, { drive_id });
 }
+
+export function fetchCollectionList(params: FetchParams) {
+  return request.post<
+    ListResponse<{
+      id: string;
+      title: string;
+      desc?: string;
+      medias: {
+        id: string;
+        type: number;
+        name: string;
+        poster_path: string;
+      }[];
+    }>
+  >("/api/admin/collection/list", params);
+}
+export type CollectionItem = RequestedResource<typeof fetchCollectionList>["list"][number];
+
+export function createCollection(values: {
+  title: string;
+  sort: number;
+  desc?: string;
+  medias: { id: string; tv_id?: string }[];
+}) {
+  const { title, sort, desc, medias } = values;
+  return request.post("/api/admin/collection/create", {
+    title,
+    desc,
+    sort,
+    medias: medias.map((media) => {
+      if (media.tv_id) {
+        return {
+          id: media.id,
+          type: 1,
+        };
+      }
+      return {
+        id: media.id,
+        type: 2,
+      };
+    }),
+  });
+}
+export function fetchCollectionProfile(values: { id: string }) {
+  const { id } = values;
+  return request.post<{
+    id: string;
+    title: string;
+    desc?: string;
+    sort?: number;
+    medias: {
+      id: string;
+      type: number;
+      name: string;
+      poster_path: string;
+    }[];
+  }>(`/api/admin/collection/${id}`, {});
+}
+export function editCollection(values: {
+  id: string;
+  title: string;
+  desc?: string;
+  sort?: number;
+  medias: { id: string; tv_id?: string }[];
+}) {
+  const { id, title, desc, sort, medias } = values;
+  return request.post(`/api/admin/collection/${id}/edit`, {
+    title,
+    desc,
+    sort,
+    medias,
+  });
+}
+
+export function deleteCollection(values: { id: string }) {
+  const { id } = values;
+  return request.post(`/api/admin/collection/${id}/delete`, {});
+}
