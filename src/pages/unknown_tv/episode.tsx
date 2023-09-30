@@ -19,6 +19,7 @@ import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
+import { createJob } from "@/store";
 
 export const UnknownEpisodePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -31,6 +32,67 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
   const refreshBtn = new ButtonCore({
     onClick() {
       list.refresh();
+    },
+  });
+  const renameFileRequest = new RequestCore(renameFile, {
+    beforeRequest() {
+      renameFileDialog.okBtn.setLoading(true);
+    },
+    onSuccess(v) {
+      const theEpisode = curEpisode.value;
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          app.tip({
+            text: ["重命名完成"],
+          });
+          renameFileDialog.okBtn.setLoading(false);
+          if (!theEpisode) {
+            return;
+          }
+          list.modifyItem((item) => {
+            if (item.id === theEpisode.id) {
+              const { id, name, episode_number, season_number, file_id, file_name, parent_paths, drive } = item;
+              return {
+                id,
+                name,
+                episode_number,
+                season_number,
+                file_id,
+                file_name: renameFileInput.value,
+                parent_paths,
+                drive,
+              };
+            }
+            return item;
+          });
+          renameFileDialog.hide();
+        },
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["重命名失败", error.message],
+      });
+      renameFileDialog.okBtn.setLoading(false);
+    },
+  });
+  const deleteUnknownEpisode = new RequestCore(delete_unknown_episode, {
+    onLoading(loading) {
+      deleteConfirmDialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({ text: ["删除剧集失败", error.message] });
+    },
+    onSuccess() {
+      app.tip({ text: ["删除成功"] });
+      deleteConfirmDialog.hide();
+      list.deleteItem((item) => {
+        if (item.id === curEpisode.value?.id) {
+          return true;
+        }
+        return false;
+      });
     },
   });
   const curEpisode = new RefCore<UnknownEpisodeItem>();
@@ -65,60 +127,6 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         name: renameFileInput.value,
         drive_id: drive.id,
         file_id,
-      });
-    },
-  });
-  const renameFileRequest = new RequestCore(renameFile, {
-    onLoading(loading) {
-      renameFileDialog.okBtn.setLoading(loading);
-    },
-    onSuccess() {
-      const theEpisode = curEpisode.value;
-      if (!theEpisode) {
-        return;
-      }
-      list.modifyItem((item) => {
-        if (item.id === theEpisode.id) {
-          const { id, name, episode_number, season_number, file_id, file_name, parent_paths, drive } = item;
-          return {
-            id,
-            name: renameFileInput.value,
-            episode_number,
-            season_number,
-            file_id,
-            file_name,
-            parent_paths,
-            drive,
-          };
-        }
-        return item;
-      });
-      app.tip({
-        text: ["重命名成功"],
-      });
-      renameFileDialog.hide();
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["重命名失败", error.message],
-      });
-    },
-  });
-  const deleteUnknownEpisode = new RequestCore(delete_unknown_episode, {
-    onLoading(loading) {
-      deleteConfirmDialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({ text: ["删除剧集失败", error.message] });
-    },
-    onSuccess() {
-      app.tip({ text: ["删除成功"] });
-      deleteConfirmDialog.hide();
-      list.deleteItem((item) => {
-        if (item.id === curEpisode.value?.id) {
-          return true;
-        }
-        return false;
       });
     },
   });
@@ -273,14 +281,6 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                         </div>
                       </div>
                       <div class="flex items-center mt-4 space-x-2">
-                        {/* <Button
-                        class="box-content"
-                        variant="subtle"
-                        store={bindEpisodeBtn.bind(file)}
-                        icon={<Brush class="w-4 h-4" />}
-                      >
-                        修改
-                      </Button> */}
                         <Button
                           class="box-content"
                           variant="subtle"

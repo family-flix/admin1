@@ -155,7 +155,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         },
         onSuccess() {
           app.tip({
-            text: ["重命名成功"],
+            text: ["重命名成功，该操作会重新索引该文件"],
           });
           nameModifyDialog.hide();
           nameModifyInput.clear();

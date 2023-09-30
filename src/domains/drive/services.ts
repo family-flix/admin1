@@ -94,7 +94,7 @@ export async function fetchDrives(params: FetchParams) {
       const { id, name, avatar, total_size, used_size, root_folder_id, vip = [] } = item;
       const valid_vip = vip
         .filter((v) => {
-          return dayjs(v.expired_at).isAfter(dayjs());
+          return dayjs(v.expired_at * 1000).isAfter(dayjs());
         })
         .map((v) => {
           return {
@@ -419,7 +419,7 @@ export function deleteFile(body: { drive_id: string; file_id: string }) {
  */
 export function renameFile(body: { drive_id: string; file_id: string; name: string }) {
   const { drive_id, file_id, name } = body;
-  return request.post<void>(`/api/admin/file/${file_id}/rename?drive_id=${drive_id}`, {
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/rename?drive_id=${drive_id}`, {
     name,
   });
 }
