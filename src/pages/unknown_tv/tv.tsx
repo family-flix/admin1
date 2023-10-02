@@ -2,7 +2,7 @@
  * @file 未识别的电视剧
  */
 import { For, Show, createSignal } from "solid-js";
-import { Brush, RotateCcw, Trash } from "lucide-solid";
+import { Brush, RotateCcw, Search, Trash } from "lucide-solid";
 
 import {
   UnknownTVItem,
@@ -28,9 +28,28 @@ export const UnknownTVPage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
+  const resetBtn = new ButtonCore({
+    onClick() {
+      list.reset();
+    },
+  });
   const refreshBtn = new ButtonCore({
     onClick() {
       list.refresh();
+    },
+  });
+  const nameSearchInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
+  const searchBtn = new ButtonCore({
+    onClick() {
+      if (!nameSearchInput.value) {
+        return;
+      }
+      list.search({ name: nameSearchInput.value });
     },
   });
   const tvListDeletingRequest = new RequestCore(deleteUnknownTVList, {
@@ -204,9 +223,16 @@ export const UnknownTVPage: ViewComponent = (props) => {
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
           </Button>
+          <Button store={resetBtn}>重置</Button>
+        </div>
+        <div class="flex items-center space-x-2 mt-4">
+          <Input class="" store={nameSearchInput} />
+          <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+            搜索
+          </Button>
         </div>
         <ListView
-          class=""
+          class="mt-4"
           store={list}
           // skeleton={
           //   <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
@@ -240,21 +266,6 @@ export const UnknownTVPage: ViewComponent = (props) => {
                       <Show when={file_name}>
                         <div class="mt-2 text-sm text-slate-800 break-all">
                           [{drive.name}]{file_name}
-                        </div>
-                      </Show>
-                      <Show when={parsed_seasons}>
-                        <div class="mt-8 p-2 text-sm">
-                          <For each={parsed_seasons}>
-                            {(parsed_season) => {
-                              const { season_text, file_name } = parsed_season;
-                              return (
-                                <div>
-                                  <div>{season_text}</div>
-                                  <div>{file_name}</div>
-                                </div>
-                              );
-                            }}
-                          </For>
                         </div>
                       </Show>
                       <Show when={parsed_episodes}>

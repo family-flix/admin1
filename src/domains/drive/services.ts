@@ -401,14 +401,6 @@ export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
 /**
  * 删除指定云盘的文件
  */
-export function deleteFileOfDrive(body: { drive_id: string; file_id: string }) {
-  const { drive_id, file_id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/drive/${drive_id}/file/${file_id}/delete`);
-}
-
-/**
- * 删除指定云盘的文件
- */
 export function deleteFile(body: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = body;
   return request.get<{ job_id: string }>(`/api/admin/file/${file_id}/delete?drive_id=${drive_id}`);
@@ -479,9 +471,15 @@ export function renameChildFilesName(values: { drive_id: string; file_id: string
   });
 }
 
+export function archiveFile(values: { drive_id: string; file_id: string }) {
+  const { drive_id, file_id } = values;
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/archive?drive_id=${drive_id}`, {});
+}
+
 export function fetchFileProfile(values: { file_id: string; drive_id: string }) {
   const { drive_id, file_id } = values;
   return request.post<{
+    id: string;
     content_hash?: string;
     thumbnail?: string;
     parsed_tv: null | {

@@ -7,7 +7,7 @@ export function connect(app: Application) {
     return window.getComputedStyle(el);
   };
   app.setTitle = (title: string) => {
-    document.title = title;
+    document.title = `${title} - FamilyFlix 管理后台`;
   };
   app.copy = (text: string) => {
     const textArea = document.createElement("textarea");

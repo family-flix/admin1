@@ -2,28 +2,83 @@
  * @file 文件详情
  */
 import { Show, createSignal, onMount } from "solid-js";
+import { Binary, Trash } from "lucide-solid";
 
+import { setParsedTVSeasonProfile } from "@/services";
+import { Button, LazyImage } from "@/components/ui";
+import { TMDBSearcher, TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { RefCore } from "@/domains/cur";
 import { AliyunDriveFile, DriveCore, fetchFileProfile } from "@/domains/drive";
-import { Button, LazyImage } from "@/components/ui";
-import { bytes_to_size } from "@/utils";
 import { ButtonCore } from "@/domains/ui";
-import { Binary, Play, Trash } from "lucide-solid";
 import { RequestCore } from "@/domains/request";
+import { bytes_to_size } from "@/utils";
+import { TMDBSearcherCore } from "@/domains/tmdb";
+import { createJob } from "@/store";
 
 export const DriveFileCard = (props: {
   store: RefCore<AliyunDriveFile>;
   drive: DriveCore;
   onDeleting?: (file: AliyunDriveFile) => void;
+  onTip?: (msg: { text: string[] }) => void;
 }) => {
-  const { store, drive, onDeleting } = props;
+  const { store, drive, onDeleting, onTip } = props;
 
   const fileProfileRequest = new RequestCore(fetchFileProfile);
+  const setParsedTVProfileRequest = new RequestCore(setParsedTVSeasonProfile, {
+    beforeRequest() {
+      seasonProfileChangeSelectDialog.okBtn.setLoading(true);
+    },
+    onSuccess(v) {
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          if (onTip) {
+            onTip({
+              text: ["设置完成"],
+            });
+          }
+          seasonProfileChangeSelectDialog.okBtn.setLoading(false);
+          seasonProfileChangeSelectDialog.hide();
+        },
+      });
+    },
+    onFailed(error) {
+      if (onTip) {
+        onTip({
+          text: ["设置失败", error.message],
+        });
+      }
+      seasonProfileChangeSelectDialog.okBtn.setLoading(false);
+    },
+  });
   const deletingBtn = new ButtonCore({
     onClick() {
       if (onDeleting) {
         onDeleting(store.value!);
       }
+    },
+  });
+  const setProfileBtn = new ButtonCore({
+    onClick() {
+      seasonProfileChangeSelectDialog.show();
+    },
+  });
+  const seasonProfileChangeSelectDialog = new TMDBSearcherDialogCore({
+    onOk(profile) {
+      const file = fileProfileRequest.response;
+      if (!file) {
+        if (onTip) {
+          onTip({
+            text: ["请先获取文件详情"],
+          });
+        }
+        return;
+      }
+      seasonProfileChangeSelectDialog.okBtn.setLoading(true);
+      setParsedTVProfileRequest.run({
+        file_id: file.id,
+        unique_id: profile.id,
+      });
     },
   });
 
@@ -114,13 +169,14 @@ export const DriveFileCard = (props: {
         <Button store={deletingBtn} variant="subtle" icon={<Trash class="w-4 h-4" />}>
           删除
         </Button>
-        <Button store={deletingBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
+        <Button store={setProfileBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
           关联电视剧
         </Button>
-        <Button store={deletingBtn} variant="subtle" icon={<Play class="w-4 h-4" />}>
+        {/* <Button store={deletingBtn} variant="subtle" icon={<Play class="w-4 h-4" />}>
           播放
-        </Button>
+        </Button> */}
       </div>
+      <TMDBSearcherDialog store={seasonProfileChangeSelectDialog} />
     </div>
   );
 };

@@ -16,6 +16,7 @@ import {
   fetchDriveFiles,
   renameChildFilesName,
   fetchFileProfile,
+  archiveFile,
 } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
@@ -48,6 +49,23 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const filesRequest = new RequestCore(fetchDriveFiles);
+  const fileArchiveRequest = new RequestCore(archiveFile, {
+    onSuccess(v) {
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          app.tip({
+            text: ["完成归档"],
+          });
+        },
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["归档失败", error.message],
+      });
+    },
+  });
   // const fileProfileRequest = new RequestCore(fetchFileProfile);
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.query.id,
@@ -359,6 +377,26 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
+  const archiveItem = new MenuItemCore({
+    label: "归档",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要归档的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      app.tip({
+        text: ["开始归档"],
+      });
+      fileArchiveRequest.run({
+        drive_id: view.query.id,
+        file_id: file.file_id,
+      });
+      fileMenu.hide();
+    },
+  });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
@@ -390,6 +428,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
   });
 
   onMount(() => {
+    app.setTitle(view.query.name);
     driveFileManage.appendColumn({ file_id: "root", name: "文件" });
     drive.refresh();
   });

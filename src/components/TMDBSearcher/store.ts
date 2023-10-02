@@ -30,7 +30,7 @@ type TMDBSearcherDialogProps = {
   /** 是否展示取消按钮 */
   cancelBtn: boolean;
   onCancel: () => void;
-  onOk: (searched_tv: TheTVInTMDB) => void;
+  onOk: (profile: TheTVInTMDB) => void;
 };
 
 export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {

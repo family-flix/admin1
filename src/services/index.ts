@@ -1939,3 +1939,11 @@ export function deleteCollection(values: { id: string }) {
   const { id } = values;
   return request.post(`/api/admin/collection/${id}/delete`, {});
 }
+
+export function setParsedTVSeasonProfile(values: { file_id: string; source?: number; unique_id: number | string }) {
+  const { file_id, source, unique_id } = values;
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_season_profile`, {
+    source,
+    unique_id,
+  });
+}
