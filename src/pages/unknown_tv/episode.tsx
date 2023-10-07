@@ -173,7 +173,9 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         return;
       }
       const { id } = curEpisode.value;
-      bindMovieRequest.run(id, searched_tv);
+      bindMovieRequest.run(id, {
+        unique_id: searched_tv.id,
+      });
     },
   });
   const deleteRequest = new RequestCore(delete_unknown_episode_list, {
