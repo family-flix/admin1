@@ -6,7 +6,7 @@ import { Edit, RotateCcw, Trash } from "lucide-solid";
 
 import {
   UnknownEpisodeItem,
-  bind_profile_for_unknown_movie,
+  setProfileForUnknownMovie,
   delete_unknown_episode,
   delete_unknown_episode_list,
   fetch_unknown_episode_list,
@@ -147,7 +147,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       deleteConfirmDialog.show();
     },
   });
-  const bindMovieRequest = new RequestCore(bind_profile_for_unknown_movie, {
+  const bindMovieRequest = new RequestCore(setProfileForUnknownMovie, {
     onLoading(loading) {
       bindEpisodeDialog.okBtn.setLoading(loading);
     },

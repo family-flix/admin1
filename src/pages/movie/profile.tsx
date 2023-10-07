@@ -19,7 +19,7 @@ import { RefCore } from "@/domains/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { appendAction, mediaPlayingPage } from "@/store";
+import { appendAction, createJob, mediaPlayingPage } from "@/store";
 
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -33,16 +33,22 @@ export const MovieProfilePage: ViewComponent = (props) => {
     },
   });
   const movieProfileChangeRequest = new RequestCore(changeMovieProfile, {
-    onLoading(loading) {
-      movieProfileChangeDialog.okBtn.setLoading(loading);
+    beforeRequest() {
+      movieProfileChangeDialog.okBtn.setLoading(true);
     },
     onSuccess(v) {
-      app.tip({ text: ["更改详情成功"] });
-      movieProfileChangeDialog.hide();
-      profileRequest.reload();
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          app.tip({ text: ["更改详情成功"] });
+          movieProfileChangeDialog.hide();
+          profileRequest.reload();
+        },
+      });
     },
     onFailed(error) {
       app.tip({ text: ["更改详情失败", error.message] });
+      movieProfileChangeDialog.okBtn.setLoading(true);
     },
   });
   const filenameParseRequest = new RequestCore(parseVideoFilename, {

@@ -488,7 +488,7 @@ export function refreshMovieProfile(body: { movie_id: string }) {
 /** 改变电影详情 */
 export function changeMovieProfile(body: { movie_id: string; unique_id: number }) {
   const { movie_id, unique_id } = body;
-  return request.post(`/api/admin/movie/${movie_id}/set_profile`, {
+  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/set_profile`, {
     unique_id,
   });
 }
@@ -785,8 +785,8 @@ export type MatchedTVOfTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"
 /**
  * 给指定未知 tv 绑定一个 tmdb 的搜索结果
  */
-export async function bind_profile_for_unknown_movie(id: string, body: MatchedTVOfTMDB) {
-  return request.post(`/api/admin/unknown_movie/update/${id}`, body);
+export async function setProfileForUnknownMovie(id: string, body: { unique_id: number | string }) {
+  return request.post(`/api/admin/unknown_movie/${id}/set_profile`, body);
 }
 
 /**
@@ -876,13 +876,6 @@ export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }
   }
   return Result.Ok(null);
 }
-
-/**
- * 给指定电影绑定一个 tmdb 的搜索结果
- */
-// export async function bind_movie_profile_for_movie(id: string, body: { name: string }) {
-//   return request.post(`/api/admin/unknown_movie/update/${id}`, body);
-// }
 
 /**
  * 获取成员列表
@@ -1868,9 +1861,9 @@ export function deleteSourceFile(params: { id: string }) {
   return request.get(`/api/admin/source/${id}/delete`);
 }
 /** 删除指定云盘下所有解析结果文件 */
-export function deleteSourceFiles(params: { drive_id: string }) {
-  const { drive_id } = params;
-  return request.get(`/api/admin/source/delete`, { drive_id });
+export function deleteSourceFiles(params: { drive_id: string; season_id: string }) {
+  const { drive_id, season_id } = params;
+  return request.get(`/api/admin/source/delete`, { drive_id, season_id });
 }
 
 export function fetchCollectionList(params: FetchParams) {

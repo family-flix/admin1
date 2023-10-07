@@ -5,7 +5,7 @@ import { createSignal, For } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
 import {
-  bind_profile_for_unknown_movie,
+  setProfileForUnknownMovie,
   CollectionItem,
   deleteCollection,
   fetchCollectionList,

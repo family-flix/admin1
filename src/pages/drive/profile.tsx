@@ -173,7 +173,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         },
         onSuccess() {
           app.tip({
-            text: ["重命名成功，该操作会重新索引该文件"],
+            text: ["重命名成功"],
           });
           nameModifyDialog.hide();
           nameModifyInput.clear();
@@ -400,7 +400,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
-    items: [profileItem, analysisItem, nameModifyItem, childNamesModifyItem, folderDeletingItem],
+    items: [profileItem, analysisItem, nameModifyItem, childNamesModifyItem, archiveItem, folderDeletingItem],
     onHidden() {
       driveFileManage.clearVirtualSelected();
     },
@@ -550,6 +550,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       <Dialog store={nameModifyDialog}>
         <div class="w-[520px]">
           <Input store={nameModifyInput} />
+          <div class="mt-2">该操作会删除该文件夹解析出的电视剧、电影，请谨慎操作。</div>
         </div>
       </Dialog>
       <Dialog store={childNamesModifyDialog}>

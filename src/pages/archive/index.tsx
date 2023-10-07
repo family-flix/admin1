@@ -1,6 +1,7 @@
 /**
  * @file 电视剧归档
  */
+import { For, Show, createSignal } from "solid-js";
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,7 +14,6 @@ import {
   SwitchCamera,
   Trash,
 } from "lucide-solid";
-import { For, Show, createSignal } from "solid-js";
 
 import {
   SeasonPrepareArchiveItem,
@@ -384,6 +384,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                   <For each={seasonListState().dataSource}>
                     {(season) => {
                       const {
+                        id,
                         name,
                         cur_episode_count,
                         season_text,
@@ -438,6 +439,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                                             curDriveRef.select(drive);
                                             sourcesDeletingRequest.run({
                                               drive_id: drive.id,
+                                              season_id: id,
                                             });
                                           }}
                                         >

@@ -295,6 +295,16 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
+  const playPageBtn = new ButtonInListCore<TVSeasonItem>({
+    onClick(record) {
+      const { tv_id, id } = record;
+      const url = `http://media.funzm.com/mobile/tv_play?id=${tv_id}&season_id=${id}&rate=1.5&hide_menu=1`;
+      app.copy(url);
+      app.tip({
+        text: ["已复制到剪贴板"],
+      });
+    },
+  });
   const refreshProfileBtn = new ButtonInListCore<TVSeasonItem>({
     onClick(record) {
       app.tip({
@@ -602,6 +612,9 @@ export const TVManagePage: ViewComponent = (props) => {
                                   variant="subtle"
                                   icon={<RotateCw class="w-4 h-4" />}
                                 ></Button>
+                                <Button store={playPageBtn.bind(season)} variant="subtle">
+                                  复制播放链接
+                                </Button>
                                 <Button
                                   store={refreshProfileBtn.bind(season)}
                                   variant="subtle"

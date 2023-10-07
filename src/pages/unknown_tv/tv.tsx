@@ -79,8 +79,17 @@ export const UnknownTVPage: ViewComponent = (props) => {
       app.tip({
         text: ["删除成功"],
       });
-      list.refresh();
       tvDeletingConfirmDialog.hide();
+      const theParsedTV = parsedTVRef.value;
+      if (!theParsedTV) {
+        return;
+      }
+      list.deleteItem((item) => {
+        if (item.id === theParsedTV.id) {
+          return true;
+        }
+        return false;
+      });
     },
     onFailed(error) {
       app.tip({

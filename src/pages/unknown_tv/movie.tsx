@@ -6,7 +6,7 @@ import { Brush, RotateCcw, Trash } from "lucide-solid";
 
 import {
   UnknownMovieItem,
-  bind_profile_for_unknown_movie,
+  setProfileForUnknownMovie,
   delete_unknown_movie,
   delete_unknown_movie_list,
   fetch_unknown_movie_list,
@@ -27,49 +27,58 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
+  const deleteUnknownMovie = new RequestCore(delete_unknown_movie, {
+    onLoading(loading) {
+      deleteConfirmDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({ text: ["删除成功"] });
+      deleteConfirmDialog.hide();
+      const theMovie = movieRef.value;
+      if (!theMovie) {
+        return;
+      }
+      list.deleteItem((item) => {
+        if (item.id === theMovie.id) {
+          return true;
+        }
+        return false;
+      });
+    },
+    onFailed(error) {
+      app.tip({ text: ["删除电影失败", error.message] });
+    },
+  });
+  const movieRef = new RefCore<UnknownMovieItem>();
   const refreshBtn = new ButtonCore({
     onClick() {
       list.refresh();
     },
   });
-  const cur = new RefCore<UnknownMovieItem>();
   const selectMatchedProfileBtn = new ButtonInListCore<UnknownMovieItem>({
     onClick(record) {
-      cur.select(record);
+      movieRef.select(record);
       dialog.show();
-    },
-  });
-  const deleteUnknownMovie = new RequestCore(delete_unknown_movie, {
-    onLoading(loading) {
-      deleteConfirmDialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({ text: ["删除电影失败", error.message] });
-    },
-    onSuccess() {
-      app.tip({ text: ["删除成功"] });
-      deleteConfirmDialog.hide();
-      list.refresh();
     },
   });
   const deleteConfirmDialog = new DialogCore({
     title: "删除",
     onOk() {
-      if (!cur.value) {
+      if (!movieRef.value) {
         app.tip({ text: ["请先选择要删除的电影"] });
         return;
       }
-      deleteUnknownMovie.run({ id: cur.value.id });
+      deleteUnknownMovie.run({ id: movieRef.value.id });
     },
   });
   const deleteBtn = new ButtonInListCore<UnknownMovieItem>({
     onClick(record) {
-      cur.select(record);
+      movieRef.select(record);
       deleteConfirmDialog.setTitle(`确认删除 ${record.name} 吗？`);
       deleteConfirmDialog.show();
     },
   });
-  const bindProfileForMovie = new RequestCore(bind_profile_for_unknown_movie, {
+  const bindProfileForMovie = new RequestCore(setProfileForUnknownMovie, {
     onLoading(loading) {
       dialog.okBtn.setLoading(loading);
     },
@@ -80,7 +89,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
       list.deleteItem((movie) => {
-        if (movie.id === cur.value?.id) {
+        if (movie.id === movieRef.value?.id) {
           return true;
         }
         return false;
@@ -90,12 +99,14 @@ export const UnknownMoviePage: ViewComponent = (props) => {
   const dialog = new TMDBSearcherDialogCore({
     type: "movie",
     onOk(searched_tv) {
-      if (!cur.value) {
+      if (!movieRef.value) {
         app.tip({ text: ["请先选择未识别的电影"] });
         return;
       }
-      const { id } = cur.value;
-      bindProfileForMovie.run(id, searched_tv);
+      const { id } = movieRef.value;
+      bindProfileForMovie.run(id, {
+        unique_id: searched_tv.id,
+      });
     },
   });
   const deleteRequest = new RequestCore(delete_unknown_movie_list, {
@@ -112,8 +123,8 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       app.tip({
         text: ["删除成功"],
       });
-      list.refresh();
       deleteListConfirmDialog.hide();
+      list.refresh();
     },
   });
   const deleteListConfirmDialog = new DialogCore({

@@ -5,7 +5,7 @@ import { createSignal, For } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
 import {
-  bind_profile_for_unknown_movie,
+  setProfileForUnknownMovie,
   fetchMovieList,
   moveMovieToResourceDrive,
   MovieItem,
@@ -128,7 +128,7 @@ export const MovieManagePage: ViewComponent = (props) => {
       setCurDrive(v);
     },
   });
-  const bindSearchedMovieForMovie = new RequestCore(bind_profile_for_unknown_movie, {
+  const bindSearchedMovieForMovie = new RequestCore(setProfileForUnknownMovie, {
     onSuccess() {
       app.tip({ text: ["修改成功"] });
       dialog.hide();
@@ -146,7 +146,9 @@ export const MovieManagePage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择要修改的电视剧"] });
         return;
       }
-      bindSearchedMovieForMovie.run(movieRef.value.id, searchedTV);
+      bindSearchedMovieForMovie.run(movieRef.value.id, {
+        unique_id: searchedTV.id,
+      });
     },
   });
   const duplicatedCheckbox = new CheckboxCore({
@@ -467,7 +469,9 @@ export const MovieManagePage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <Dialog store={moveToResourceDriveConfirmDialog}>
-        <div>将电影移动到资源盘后才能公开分享</div>
+        <div class="w-[520px]">
+          <div>将电影移动到资源盘后才能公开分享</div>
+        </div>
       </Dialog>
       <TMDBSearcherDialog store={dialog} />
     </>

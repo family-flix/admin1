@@ -119,12 +119,12 @@ export const DriveFileCard = (props: {
 
   return (
     <div>
-      <div>
-        <div class="mt-4 text-lg break-all">{state()?.name}</div>
+      <div class="space-y-4">
+        <div class="text-lg break-all">{state()?.name}</div>
         <div class="">{state()?.file_id}</div>
         <div>{size()}</div>
-        <div class="mt-4">
-          <div class="flex items-center text-sm">
+        <div class="">
+          <div class="flex items-center mt-2 text-sm">
             {filepath().map((p, i) => {
               return (
                 <>
@@ -138,26 +138,45 @@ export const DriveFileCard = (props: {
           </div>
         </div>
         <Show when={profile()}>
-          <div class="mt-8 space-y-2">
+          <div class="space-y-2">
             <Show when={profile()?.parsed_tv}>
               <div>
-                <Show when={profile()?.parsed_tv?.profile} fallback={<div>该文件夹可能是电视剧</div>}>
-                  <div>关联了电视剧</div>
+                <Show
+                  when={profile()?.parsed_tv?.profile}
+                  fallback={
+                    <div class="flex">
+                      <div class="mr-4">
+                        <LazyImage class="w-[120px] object-fit" />
+                      </div>
+                      <div>{profile()?.parsed_tv?.name}</div>
+                      <div>{profile()?.parsed_tv?.file_name}</div>
+                      <div>没有匹配到详情信息</div>
+                    </div>
+                  }
+                >
                   <div class="flex">
                     <div class="mr-4">
                       <LazyImage class="w-[120px] object-fit" src={profile()?.parsed_tv?.profile?.poster_path} />
                     </div>
-                    <div>{profile()?.parsed_tv?.profile?.name}</div>
-                  </div>
-                </Show>
-              </div>
-            </Show>
-            <Show when={profile()?.parsed_episode}>
-              <div>
-                <Show when={profile()?.parsed_episode}>
-                  <div>电视剧剧集</div>
-                  <div class="flex">
-                    <div>{profile()?.parsed_episode?.episode_text}</div>
+                    <div>
+                      <div class="text-lg">{profile()?.parsed_tv?.profile?.name}</div>
+                      <div class="text-sm">
+                        <Show
+                          when={profile()?.parsed_tv?.profile?.season_name}
+                          fallback={<div>{profile()?.parsed_tv?.profile?.season_text}</div>}
+                        >
+                          <div>季</div>
+                          <div>{profile()?.parsed_tv?.profile?.season_name}</div>
+                        </Show>
+                        <Show
+                          when={profile()?.parsed_tv?.profile?.episode_name}
+                          fallback={<div>{profile()?.parsed_tv?.profile?.episode_text}</div>}
+                        >
+                          <div>剧集</div>
+                          <div>{profile()?.parsed_tv?.profile?.episode_name}</div>
+                        </Show>
+                      </div>
+                    </div>
                   </div>
                 </Show>
               </div>

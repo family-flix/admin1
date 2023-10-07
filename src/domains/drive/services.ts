@@ -196,8 +196,8 @@ export async function analysisDrive(body: {
   drive_id: string;
   target_folders?: { file_id: string; parent_paths?: string; name: string }[];
 }) {
-  const { drive_id: aliyun_drive_id, target_folders } = body;
-  return request.post<{ job_id: string }>(`/api/admin/drive/analysis/${aliyun_drive_id}`, {
+  const { drive_id, target_folders } = body;
+  return request.post<{ job_id: string }>(`/api/admin/drive/analysis/${drive_id}`, {
     target_folders,
   });
 }
@@ -473,7 +473,7 @@ export function renameChildFilesName(values: { drive_id: string; file_id: string
 
 export function archiveFile(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/archive?drive_id=${drive_id}`, {});
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/archive_as_episode?drive_id=${drive_id}`, {});
 }
 
 export function fetchFileProfile(values: { file_id: string; drive_id: string }) {
@@ -484,16 +484,18 @@ export function fetchFileProfile(values: { file_id: string; drive_id: string }) 
     thumbnail?: string;
     parsed_tv: null | {
       id: string;
+      name?: string;
+      file_name?: string;
       profile: null | {
         name: string;
         original_name: string;
         overview: string;
         poster_path: string;
+        episode_name?: string;
+        episode_text?: string;
+        season_name?: string;
+        season_text?: string;
       };
-    };
-    parsed_episode: null | {
-      id: string;
-      episode_text: string;
     };
   }>(`/api/admin/file/${file_id}/profile?drive_id=${drive_id}`, {});
 }
