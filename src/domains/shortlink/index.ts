@@ -6,7 +6,7 @@ export async function create_link(url: string) {
   const res = await request.post<{
     url: string;
   }>("/api/admin/short_link", {
-    url: encodeURIComponent(url),
+    url,
   });
   if (res.error) {
     return Result.Err(res.error.message);
