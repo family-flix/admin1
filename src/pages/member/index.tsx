@@ -23,6 +23,8 @@ import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { MultipleSelectionCore } from "@/domains/multiple";
 import { homePermissionListPage } from "@/store";
+import { TVSeasonSelect, TVSeasonSelectCore } from "@/components/TVSeasonSelect";
+import { create_link } from "@/domains/shortlink";
 
 export const MemberManagePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -74,7 +76,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       memberList.refresh();
     },
   });
-  const curMember = new RefCore<MemberItem>();
+  const memberRef = new RefCore<MemberItem>();
   const addMemberDialog = new DialogCore({
     title: "新增成员",
     onOk() {
@@ -132,6 +134,12 @@ export const MemberManagePage: ViewComponent = (props) => {
       app.tip({ text: ["敬请期待"] });
     },
   });
+  const linkBtn = new ButtonInListCore<MemberItem>({
+    onClick(member) {
+      memberRef.select(member);
+      seasonSelect.dialog.show();
+    },
+  });
   const generateTokenBtn = new ButtonInListCore<MemberItem>({
     onClick(member) {
       if (member === null) {
@@ -148,7 +156,7 @@ export const MemberManagePage: ViewComponent = (props) => {
   });
   const updateMemberBtn = new ButtonInListCore<MemberItem>({
     onClick(member) {
-      curMember.select(member);
+      memberRef.select(member);
       permissionList.init();
       permissionDialog.show();
     },
@@ -191,12 +199,42 @@ export const MemberManagePage: ViewComponent = (props) => {
       confirmDeleteMemberDialog.hide();
     },
   });
+  const seasonSelect = new TVSeasonSelectCore({
+    async onOk() {
+      const member = memberRef.value;
+      if (!member) {
+        return;
+      }
+      if (!seasonSelect.value) {
+        return;
+      }
+      const { tokens } = member;
+      const token = tokens[0];
+      if (!token) {
+        return;
+      }
+      const { name, tv_id, id } = seasonSelect.value;
+      const originalURL = `${window.location.origin}/mobile/tv_play?id=${tv_id}&season_id=${id}&rate=1.5&hide_menu=1&token=${token.id}`;
+      const shotURLRes = await create_link(originalURL);
+      if (shotURLRes.error) {
+        return;
+      }
+      const url = shotURLRes.data;
+      const message = `➤➤➤ ${name}
+${url}`;
+      app.copy(message);
+      app.tip({
+        text: ["已复制到剪贴板"],
+      });
+      seasonSelect.dialog.hide();
+    },
+  });
   const scrollView = new ScrollViewCore();
   const permissionList = new ListCore(new RequestCore(fetchPermissionList));
   const permissionDialog = new DialogCore({
     title: "权限配置",
     onOk() {
-      if (!curMember.value) {
+      if (!memberRef.value) {
         app.tip({
           text: ["请先选择成员"],
         });
@@ -204,7 +242,7 @@ export const MemberManagePage: ViewComponent = (props) => {
       }
       console.log(permissionMultipleSelect.values);
       memberPermissionUpdateRequest.run({
-        member_id: curMember.value.id,
+        member_id: memberRef.value.id,
         permissions: permissionMultipleSelect.values.map((p) => p.code),
       });
     },
@@ -321,6 +359,13 @@ export const MemberManagePage: ViewComponent = (props) => {
                             <Button
                               variant="subtle"
                               icon={<ShieldClose class="w-4 h-4" />}
+                              store={linkBtn.bind(member)}
+                            >
+                              复制影片链接
+                            </Button>
+                            <Button
+                              variant="subtle"
+                              icon={<ShieldClose class="w-4 h-4" />}
                               store={banMemberBtn.bind(member)}
                             >
                               禁用该成员
@@ -430,6 +475,11 @@ export const MemberManagePage: ViewComponent = (props) => {
               }}
             </For>
           </ListView>
+        </div>
+      </Dialog>
+      <Dialog store={seasonSelect.dialog}>
+        <div class="w-[520px]">
+          <TVSeasonSelect store={seasonSelect} />
         </div>
       </Dialog>
     </>
