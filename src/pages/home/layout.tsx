@@ -151,10 +151,18 @@ export const HomeLayout: ViewComponent = (props) => {
   const settingsDialog = new DialogCore({
     title: "配置",
     onOk() {
+      const notify1Token = notify1TokenInput.value?.trim();
+      const filenameParse = filenameParseRuleInput.value?.trim();
       const values = {
-        push_deer_token: notify1TokenInput.value.trim(),
-        extra_filename_rules: filenameParseRuleInput.value.trim(),
+        push_deer_token: notify1TokenInput.value?.trim(),
+        extra_filename_rules: filenameParseRuleInput.value?.trim(),
       };
+      if (notify1Token) {
+        values.push_deer_token = notify1Token;
+      }
+      if (filenameParse) {
+        values.extra_filename_rules = filenameParse;
+      }
       if (Object.keys(values).length === 0) {
         app.tip({
           text: ["配置不能均为空"],

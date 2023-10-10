@@ -164,6 +164,7 @@ export const TVProfilePage: ViewComponent = (props) => {
         onFinish() {
           app.tip({ text: ["刷新详情成功"] });
           profileRequest.reload();
+          profileRefreshBtn.setLoading(false);
         },
       });
     },
@@ -171,8 +172,6 @@ export const TVProfilePage: ViewComponent = (props) => {
       app.tip({
         text: ["刷新详情失败", error.message],
       });
-    },
-    onCompleted() {
       profileRefreshBtn.setLoading(false);
     },
   });

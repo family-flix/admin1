@@ -6,7 +6,7 @@ import { ButtonCore, InputCore } from "@/domains/ui";
 
 import { VideoKeys, parseVideoFilename } from "./services";
 
-export const VIDEO_KEY_NAME_MAP = {
+export const VIDEO_KEY_NAME_MAP: Record<VideoKeys, string> = {
   name: "中文名称",
   original_name: "译名or外文原名",
   season: "季",
@@ -59,6 +59,18 @@ export class FilenameParserCore extends BaseDomain<TheTypesOfEvents> {
       onLoading: (loading) => {
         this.loading = true;
         btn.setLoading(loading);
+      },
+      onSuccess: (v) => {
+        this.fields = Object.keys(v).map((k) => {
+          const kk = k as VideoKeys;
+          const label = VIDEO_KEY_NAME_MAP[kk];
+          const value = v[kk];
+          return {
+            label,
+            text: value,
+          };
+        });
+        this.emit(Events.StateChange, { ...this.state });
       },
     });
     const input = new InputCore({

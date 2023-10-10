@@ -483,7 +483,7 @@ export type MovieItem = RequestedResource<typeof fetchMovieList>["list"][number]
 /** 刷新电影详情 */
 export function refreshMovieProfile(body: { movie_id: string }) {
   const { movie_id } = body;
-  return request.post(`/api/admin/movie/${movie_id}/refresh_profile`, {});
+  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/refresh_profile`, {});
 }
 /** 改变电影详情 */
 export function changeMovieProfile(body: { movie_id: string; unique_id: number }) {

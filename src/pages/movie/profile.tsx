@@ -11,6 +11,7 @@ import {
   fetchMovieProfile,
   changeMovieProfile,
   upload_subtitle_for_movie,
+  refreshMovieProfile,
 } from "@/services";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
@@ -106,6 +107,24 @@ export const MovieProfilePage: ViewComponent = (props) => {
     onFailed(error) {
       app.tip({
         text: ["删除视频源失败", error.message],
+      });
+    },
+  });
+  const movieProfileRefreshRequest = new RequestCore(refreshMovieProfile, {
+    onSuccess(r) {
+      createJob({
+        job_id: r.job_id,
+        onFinish() {
+          profileRefreshBtn.setLoading(false);
+          app.tip({ text: ["刷新详情成功"] });
+          profileRequest.reload();
+        },
+      });
+    },
+    onFailed(error) {
+      profileRefreshBtn.setLoading(false);
+      app.tip({
+        text: ["刷新详情失败", error.message],
       });
     },
   });
@@ -205,6 +224,15 @@ export const MovieProfilePage: ViewComponent = (props) => {
         lang,
         file,
       });
+    },
+  });
+  const profileRefreshBtn = new ButtonCore({
+    onClick() {
+      app.tip({
+        text: ["开始刷新"],
+      });
+      profileRefreshBtn.setLoading(true);
+      movieProfileRefreshRequest.run({ movie_id: view.query.id });
     },
   });
   const movieDeletingBtn = new ButtonCore({
@@ -328,6 +356,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4">
                   <Button store={movieProfileChangeBtn}>修改详情</Button>
+                  <Button store={profileRefreshBtn}>刷新详情</Button>
                   <Button store={movieDeletingBtn} variant="subtle">
                     删除
                   </Button>

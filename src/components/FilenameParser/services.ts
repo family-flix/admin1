@@ -16,6 +16,7 @@ export function parseVideoFilename(body: { name: string; keys?: string[] }) {
     year: string;
     source: string;
     encode: string;
+    type: string;
     voice_encode: string;
     episode_count: string;
     subtitle_lang: string;
