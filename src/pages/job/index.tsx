@@ -5,11 +5,11 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
-import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
-import { ButtonCore, ButtonInListCore, ScrollViewCore } from "@/domains/ui";
+import { Button, Skeleton, ScrollView, ListView, Checkbox } from "@/components/ui";
+import { ButtonCore, ButtonInListCore, CheckboxCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { JobItem, clear_expired_job_list, fetch_job_list, pause_job, TaskStatus } from "@/domains/job";
+import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus } from "@/domains/job";
 import { homeLayout, homeTaskProfilePage, refreshJobs } from "@/store";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
@@ -17,7 +17,7 @@ import { cn } from "@/utils";
 export const TaskListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const jobList = new ListCore(new RequestCore(fetch_job_list), {});
+  const jobList = new ListCore(new RequestCore(fetchJobList), {});
   const pauseJob = new RequestCore(pause_job, {
     onLoading(loading) {
       pauseJobBtn.setLoading(loading);
@@ -66,6 +66,11 @@ export const TaskListPage: ViewComponent = (props) => {
       jobList.refresh();
     },
   });
+  const runningCheckbox = new CheckboxCore({
+    onChange(checked) {
+      jobList.search({});
+    },
+  });
   const jobDeletingBtn = new ButtonCore({
     onClick() {
       jobDeletingRequest.run();
@@ -107,6 +112,9 @@ export const TaskListPage: ViewComponent = (props) => {
         <Button class="space-x-1" icon={<Trash class="w-4 h-4" />} variant="subtle" store={jobDeletingBtn}>
           删除7天前任务记录
         </Button>
+      </div>
+      <div class="flex items-center space-x-2 mt-4">
+        <Checkbox store={runningCheckbox} />
       </div>
       <ListView
         class="mt-4"

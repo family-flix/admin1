@@ -9,7 +9,7 @@ import { TaskStatus, TaskTypes } from "./constants";
 /**
  * 获取当前用户所有异步任务
  */
-export async function fetch_job_list(params: FetchParams) {
+export async function fetchJobList(params: FetchParams) {
   const res = await request.get<
     ListResponse<{
       id: string;
@@ -50,7 +50,7 @@ export async function fetch_job_list(params: FetchParams) {
   };
   return Result.Ok(result);
 }
-export type JobItem = RequestedResource<typeof fetch_job_list>["list"][0];
+export type JobItem = RequestedResource<typeof fetchJobList>["list"][0];
 
 export function clear_expired_job_list() {
   return request.get("/api/admin/job/clear_expired");

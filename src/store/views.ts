@@ -36,6 +36,7 @@ import { SeasonArchivePage } from "@/pages/archive";
 import { InvalidTVManagePage } from "@/pages/tv/invalid";
 import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
+import { PrismaExecPage } from "@/pages/prisma";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -322,6 +323,13 @@ export const mediaPlayingPage = new RouteViewCore({
     return MediaPlayingPage;
   },
 });
+export const prismaPage = new RouteViewCore({
+  key: "/prisma",
+  title: "代码",
+  component: async () => {
+    return PrismaExecPage;
+  },
+});
 export const loginPage = new RouteViewCore({
   key: "/login",
   title: "登录",
@@ -354,5 +362,5 @@ export const rootView = new RouteViewCore({
   title: "ROOT",
   component: "div",
   layers: true,
-  children: [homeLayout, mediaPlayingPage, seasonArchivePage, registerPage, loginPage, testPage],
+  children: [homeLayout, mediaPlayingPage, seasonArchivePage, registerPage, loginPage, testPage, prismaPage],
 });

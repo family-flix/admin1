@@ -44,12 +44,13 @@ export const MovieProfilePage: ViewComponent = (props) => {
           app.tip({ text: ["更改详情成功"] });
           movieProfileChangeDialog.hide();
           profileRequest.reload();
+          movieProfileChangeDialog.okBtn.setLoading(false);
         },
       });
     },
     onFailed(error) {
       app.tip({ text: ["更改详情失败", error.message] });
-      movieProfileChangeDialog.okBtn.setLoading(true);
+      movieProfileChangeDialog.okBtn.setLoading(false);
     },
   });
   const filenameParseRequest = new RequestCore(parseVideoFilename, {

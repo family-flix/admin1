@@ -12,9 +12,9 @@ import {
   fetchUnknownTVList,
   modifyUnknownTVName,
 } from "@/services";
-import { Button, ListView, Dialog, LazyImage, ScrollView, Input } from "@/components/ui";
+import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, ButtonInListCore, CheckboxCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
@@ -272,20 +272,17 @@ export const UnknownTVPage: ViewComponent = (props) => {
                     </div>
                     <div class="flex-1 w-0 mt-2">
                       <div class="text-lg">{name}</div>
-                      <Show when={file_name}>
-                        <div class="mt-2 text-sm text-slate-800 break-all">
-                          [{drive.name}]{file_name}
-                        </div>
-                      </Show>
                       <Show when={parsed_episodes}>
                         <div class="mt-4 p-2 text-sm">
                           <For each={parsed_episodes}>
                             {(parsed_episode) => {
-                              const { episode_text, file_name } = parsed_episode;
+                              const { episode_text, parent_paths, file_name } = parsed_episode;
                               return (
                                 <div>
                                   <div>{episode_text}</div>
-                                  <div>{file_name}</div>
+                                  <div>
+                                    [{drive.name}]{parent_paths}/{file_name}
+                                  </div>
                                 </div>
                               );
                             }}
@@ -301,16 +298,6 @@ export const UnknownTVPage: ViewComponent = (props) => {
                         >
                           设置
                         </Button>
-                        <Show when={file_name}>
-                          <Button
-                            class="box-content"
-                            variant="subtle"
-                            store={unknownTVNameModifyBtn.bind(unknown_tv)}
-                            icon={<Brush class="w-4 h-4" />}
-                          >
-                            修改文件名称
-                          </Button>
-                        </Show>
                         <Button
                           class="box-content"
                           variant="subtle"
