@@ -1,7 +1,6 @@
-import { Handler } from "mitt";
 import dayjs, { Dayjs } from "dayjs";
 
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { Result } from "@/types";
 
 import { fetch_job_profile, fetch_job_status, pause_job } from "./services";

@@ -1,6 +1,4 @@
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { Direction, Orientation } from "@/domains/ui/direction";
 import { CollectionCore } from "@/domains/ui/collection";
 

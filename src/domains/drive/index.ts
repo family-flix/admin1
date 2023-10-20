@@ -2,9 +2,7 @@
  * @file 云盘实例
  * 包含所有云盘相关的操作、数据
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
 import { Result } from "@/types";
 import { FileType } from "@/constants";

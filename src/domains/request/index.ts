@@ -1,9 +1,7 @@
 /**
  * @file API 请求
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { BizError } from "@/domains/error";
 import { Result, UnpackedResult, Unpacked } from "@/types";
 import { sleep } from "@/utils";

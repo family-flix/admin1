@@ -1,7 +1,5 @@
-import { Handler } from "mitt";
-
 import { ButtonCore, DialogCore } from "@/domains/ui";
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { TheTVInTMDB } from "@/domains/tmdb/services";

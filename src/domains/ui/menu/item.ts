@@ -1,9 +1,7 @@
 /**
  * @file 菜单项
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 import { MenuCore } from ".";
 

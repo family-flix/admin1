@@ -1,9 +1,7 @@
 /**
  * @file 阿里云 分享资源
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { DriveCore } from "@/domains/drive";
 import { Result } from "@/types";
 import { sleep } from "@/utils";

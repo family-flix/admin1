@@ -3,10 +3,9 @@
  *
  */
 import qs from "qs";
-import { Handler } from "mitt";
 import parse from "url-parse";
 
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { JSONObject } from "@/types";
 
 enum Events {

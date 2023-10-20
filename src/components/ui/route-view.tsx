@@ -4,39 +4,44 @@
 import { Show, createSignal, JSX, onCleanup } from "solid-js";
 
 import { PageLoading } from "@/components/PageLoading";
+import { RouteViewCore } from "@/domains/route_view";
 import { ViewComponentProps } from "@/types";
 
-export function RouteView(props: { index: number } & ViewComponentProps & JSX.HTMLAttributes<HTMLDivElement>) {
-  const { app, view, index } = props;
+export function RouteView(props: { store: RouteViewCore; index: number } & JSX.HTMLAttributes<HTMLDivElement>) {
+  const { store, index } = props;
 
-  const [state, setState] = createSignal(view.state);
-  const [pageContent, setPageContent] = createSignal(<PageLoading class="w-full h-full" />);
+  // const [state, setState] = createSignal(view.state);
+  // const [pageContent, setPageContent] = createSignal(<PageLoading class="w-full h-full" />);
 
-  view.onStateChange((nextState) => {
-    setState(nextState);
-  });
-  (async () => {
-    if (typeof view.component === "function") {
-      if (view.loaded) {
-        return;
-      }
-      const PageView = await view.component();
-      setPageContent(<PageView app={app} view={view} />);
-      view.setLoaded();
-      return;
-    }
-    setPageContent(view.component as JSX.Element);
-  })();
+  // view.onStateChange((nextState) => {
+  //   setState(nextState);
+  // });
+  // (async () => {
+  //   if (typeof view.component === "function") {
+  //     if (view.loaded) {
+  //       return;
+  //     }
+  //     const PageView = await view.component();
+  //     setPageContent(<PageView app={app} view={view} />);
+  //     view.setLoaded();
+  //     return;
+  //   }
+  //   setPageContent(view.component as JSX.Element);
+  // })();
+  const [state, setState] = createSignal(store.state);
 
   const visible = () => state().visible;
   const mounted = () => state().mounted;
 
-  console.log("[COMPONENT]RouteView", view.title);
+  store.onStateChange((nextState) => {
+    setState(nextState);
+  });
+  // console.log("[COMPONENT]RouteView", view.title);
   // effect(() => {
   //   console.log("RouteView", store._name, visible(), mounted());
   // });
   onCleanup(() => {
-    console.log("RouteView", view.title, "cleanup");
+    // console.log("RouteView", view.title, "cleanup");
   });
 
   return (
@@ -59,7 +64,7 @@ export function RouteView(props: { index: number } & ViewComponentProps & JSX.HT
         //   store.presence.animationEnd();
         // }}
       >
-        {pageContent()}
+        {props.children}
       </div>
     </Show>
   );

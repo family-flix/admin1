@@ -1,5 +1,5 @@
-import { BaseDomain } from "@/domains/base";
-import { Handler } from "mitt";
+import { BaseDomain, Handler } from "@/domains/base";
+
 import { FormFieldCore } from "./field";
 import { InputInterface } from "./types";
 

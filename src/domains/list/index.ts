@@ -1,11 +1,9 @@
 /**
  * @file 分页领域
  */
-import { JSONValue, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
+import { JSONValue, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 
 import { DEFAULT_RESPONSE, DEFAULT_PARAMS, DEFAULT_CURRENT_PAGE, DEFAULT_PAGE_SIZE, DEFAULT_TOTAL } from "./constants";
 import { omit } from "./utils";

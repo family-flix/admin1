@@ -46,18 +46,37 @@ export async function addAliyunDrive(body: { type?: number; payload: string }) {
 /**
  * 更新阿里云盘信息
  * @param {string} id 云盘 id
- * @param {object} body 云盘信息（目前仅支持传入 name、refresh_token、root_folder_id
  */
-export function updateAliyunDrive(id: string, body: JSONObject) {
-  return request.post<{ id: string }>(`/api/admin/drive/update/${id}`, body);
+export function updateAliyunDriveRemark(id: string, body: { remark?: string }) {
+  return request.post<{ id: string }>(`/api/admin/drive/${id}/remark`, body);
+}
+
+/**
+ * 更新阿里云盘信息
+ * @param {string} id 云盘 id
+ */
+export function updateAliyunDriveVisible(id: string, body: { hide?: number }) {
+  return request.post<{ id: string }>(`/api/admin/drive/${id}/hide`, body);
+}
+
+/**
+ * 更新阿里云盘信息
+ * @param {string} id 云盘 id
+ * @param {object} body 云盘信息（目前仅支持传入 remark、root_folder_id、root_folder_name
+ */
+export function updateAliyunDrive(
+  id: string,
+  body: { remark?: string; hidden?: number; root_folder_id?: string; root_folder_name?: string }
+) {
+  return request.post<{ id: string }>(`/api/admin/drive/${id}/update`, body);
 }
 
 /**
  * 获取阿里云盘列表
  */
-export async function fetchDrives(params: FetchParams) {
+export async function fetchDriveList(params: FetchParams) {
   const { page, pageSize, ...restParams } = params;
-  const resp = await request.get<
+  const resp = await request.post<
     ListResponse<{
       id: string;
       /** 云盘自定义名称 */
@@ -79,6 +98,7 @@ export async function fetchDrives(params: FetchParams) {
   >("/api/admin/drive/list", {
     page,
     page_size: pageSize,
+    hidden: 0,
     ...restParams,
   });
   if (resp.error) {
@@ -125,10 +145,10 @@ export async function fetchDrives(params: FetchParams) {
     }),
   });
 }
-export type DriveItem = RequestedResource<typeof fetchDrives>["list"][0];
+export type DriveItem = RequestedResource<typeof fetchDriveList>["list"][0];
 
 export async function fetchDriveInstanceList(params: FetchParams) {
-  const r = await fetchDrives(params);
+  const r = await fetchDriveList(params);
   if (r.error) {
     return Result.Err(r.error);
   }

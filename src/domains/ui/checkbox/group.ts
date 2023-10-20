@@ -1,9 +1,7 @@
 /**
  * @file 多选
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 import { CheckboxCore } from ".";
 

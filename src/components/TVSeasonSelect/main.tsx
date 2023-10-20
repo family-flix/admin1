@@ -1,12 +1,11 @@
 /**
  * @file 电视剧选择
  */
-import { Handler } from "mitt";
 import { For, Show, createSignal } from "solid-js";
 import { Calendar, Send, Smile } from "lucide-solid";
 
 import { TVSeasonItem, fetchSeasonList } from "@/services";
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, DialogCore, DialogProps, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";

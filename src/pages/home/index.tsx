@@ -59,7 +59,7 @@ export const HomePage: ViewComponent = (props) => {
   const allDriveCheckbox = new CheckboxCore({
     onChange(checked) {
       driveList.search({
-        hidden: checked ? null : 1,
+        hidden: checked ? null : 0,
       });
     },
   });

@@ -2,9 +2,8 @@
  * @file 播放器
  */
 import debounce from "lodash/fp/debounce";
-import { Handler } from "mitt";
 
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { MediaSourceProfile } from "@/domains/tv/services";
 import { EpisodeResolutionTypes } from "@/domains/tv/constants";
 import { Application } from "@/domains/app";

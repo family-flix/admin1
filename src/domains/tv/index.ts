@@ -1,9 +1,7 @@
 /**
  * @file 电视剧
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { Result } from "@/types";
 
 import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";

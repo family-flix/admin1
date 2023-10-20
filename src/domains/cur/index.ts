@@ -2,9 +2,7 @@
  * @file 一个缓存/当前值
  * 类似 useRef
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 enum Events {
   StateChange,

@@ -1,12 +1,10 @@
-import { Handler } from "mitt";
-
 import { createCollection, editCollection, fetchCollectionProfile } from "@/services";
-import { MovieSelectCore } from "@/components/MovieSelect";
-import { TVSeasonSelectCore } from "@/components/TVSeasonSelect";
 import { InputCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
+import { MovieSelectCore } from "@/components/MovieSelect";
+import { TVSeasonSelectCore } from "@/components/TVSeasonSelect";
 
 enum Events {
   StateChange,

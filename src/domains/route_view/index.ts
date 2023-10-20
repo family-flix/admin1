@@ -3,10 +3,9 @@
  */
 import qs from "qs";
 import { pathToRegexp } from "path-to-regexp";
-import { Handler } from "mitt";
 import parse from "url-parse";
 
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
 import { NavigatorCore, RouteAction } from "@/domains/navigator";
 import { Result } from "@/types";
@@ -369,6 +368,7 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.presence.show();
   }
   showSubView(subView: RouteViewCore) {
+    console.log("[DOMAIN]route_view - showSubView", subView.title, this.curView?.title);
     if (subView === this) {
       return;
     }
@@ -376,7 +376,6 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     // alert(subView.title);
-    console.log("[DOMAIN]RouteViewCore - showSubView", subView.title);
     this.curView?.hide();
     this.prevView = this.curView;
     this.appendSubView(subView);

@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Loader,
   Puzzle,
+  Eye,
+  Pen,
 } from "lucide-solid";
 
 import {
@@ -31,7 +33,13 @@ import { List } from "@/components/List";
 import { InputCore, ButtonCore, DropdownMenuCore, DialogCore, ProgressCore, MenuItemCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
-import { DriveCore, addAliyunDrive } from "@/domains/drive";
+import {
+  DriveCore,
+  addAliyunDrive,
+  updateAliyunDrive,
+  updateAliyunDriveRemark,
+  updateAliyunDriveVisible,
+} from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
 import { FileType } from "@/constants";
 import { createJob } from "@/store";
@@ -56,6 +64,40 @@ export const DriveCard = (props: {
     onFailed(error) {
       app.tip({
         text: ["资源盘创建失败", error.message],
+      });
+    },
+  });
+  const toggleDriveVisibleRequest = new RequestCore(updateAliyunDrive, {
+    onSuccess() {
+      app.tip({
+        text: ["操作成功"],
+      });
+      if (onRefresh) {
+        onRefresh();
+      }
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["操作失败", error.message],
+      });
+    },
+  });
+  const remarkUpdateRequest = new RequestCore(updateAliyunDrive, {
+    onLoading(loading) {
+      remarkUpdateDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["编辑成功"],
+      });
+      remarkUpdateDialog.hide();
+      if (onRefresh) {
+        onRefresh();
+      }
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["编辑失败", error.message],
       });
     },
   });
@@ -90,6 +132,20 @@ export const DriveCard = (props: {
     },
     onUnmounted() {
       drive.clearFolderColumns();
+    },
+  });
+  const remarkUpdateDialog = new DialogCore({
+    title: "编辑备注",
+    onOk() {
+      if (!remarkInput.value) {
+        app.tip({
+          text: [remarkInput.placeholder],
+        });
+        return;
+      }
+      remarkUpdateRequest.run(drive.id, {
+        remark: remarkInput.value,
+      });
     },
   });
   const createFolderModal = new DialogCore({
@@ -275,6 +331,21 @@ export const DriveCard = (props: {
         },
       }),
       new MenuItemCore({
+        label: "编辑备注",
+        icon: <Pen class="mr-2 w-4 h-4" />,
+        onClick() {
+          dropdown.hide();
+          remarkUpdateDialog.show();
+        },
+      }),
+      new MenuItemCore({
+        label: "隐藏",
+        icon: <Eye class="mr-2 w-4 h-4" />,
+        onClick() {
+          toggleDriveVisibleRequest.run(drive.id, { hidden: 1 });
+        },
+      }),
+      new MenuItemCore({
         label: "设置 refresh_token",
         icon: <Edit3 class="mr-2 w-4 h-4" />,
         onClick() {
@@ -302,9 +373,14 @@ export const DriveCard = (props: {
   });
   const refreshTokenInput = new InputCore({
     defaultValue: "",
+    placeholder: "请输入refresh_token",
     onChange(v) {
       drive.setRefreshToken(v);
     },
+  });
+  const remarkInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入备注",
   });
   const analysisBtn = new ButtonCore({
     async onClick() {
@@ -513,9 +589,11 @@ export const DriveCard = (props: {
           <Input store={refreshTokenInput} />
         </div>
       </Dialog>
-      {/* <Dialog title="修改备注" store={refreshTokenModal}>
-        <Input store={refreshTokenInput} />
-      </Dialog> */}
+      <Dialog title="修改备注" store={remarkUpdateDialog}>
+        <div class="w-[520px]">
+          <Input store={remarkInput} />
+        </div>
+      </Dialog>
       <Dialog title="删除云盘" store={confirmDeleteDriveDialog}>
         <div class="w-[520px]">
           <div>删除后索引到的影视剧也会删除</div>

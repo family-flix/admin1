@@ -1,9 +1,8 @@
 /**
  * @file 应用，包含一些全局相关的事件、状态
  */
-import { Handler } from "mitt";
 
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { UserCore } from "@/domains/user";
 import { NavigatorCore } from "@/domains/navigator";
 import { RouteViewCore } from "@/domains/route_view";
@@ -142,8 +141,21 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   }
   prevViews: RouteViewCore[] = [];
   views: RouteViewCore[] = [];
-  showView(view: RouteViewCore) {
+  curView: RouteViewCore | null = null;
+  showView(view: RouteViewCore, options: Partial<{ back: boolean }> = {}) {
     console.log("[DOMAIN]Application - showView", view._name, view.parent);
+    if (options.back) {
+      if (!this.curView) {
+        // 异常行为
+        return;
+      }
+      if (!this.curView.parent) {
+        return;
+      }
+      this.curView.parent.uncoverPrevView();
+      return;
+    }
+    this.curView = view;
     this.prevViews = this.views;
     this.views = [];
     const _show = (view: RouteViewCore) => {

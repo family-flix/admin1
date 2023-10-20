@@ -1,9 +1,7 @@
 /**
  * @file 气泡
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
 import { PopperCore, Align, Side } from "@/domains/ui/popper";
 import { DismissableLayerCore } from "@/domains/ui/dismissable-layer";

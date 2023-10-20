@@ -414,6 +414,7 @@ export const HomeLayout: ViewComponent = (props) => {
           <div class="relative w-full h-full">
             <For each={subViews()}>
               {(subView, i) => {
+                const PageContent = subView.component as ViewComponent;
                 return (
                   <KeepAliveRouteView
                     class={cn(
@@ -421,11 +422,11 @@ export const HomeLayout: ViewComponent = (props) => {
                       "data-[state=open]:animate-in data-[state=open]:fade-in",
                       "data-[state=closed]:animate-out data-[state=closed]:fade-out"
                     )}
-                    app={app}
-                    router={app.router}
-                    view={subView}
+                    store={subView}
                     index={i()}
-                  />
+                  >
+                    <PageContent app={app} router={app.router} view={subView} />
+                  </KeepAliveRouteView>
                 );
               }}
             </For>

@@ -1,6 +1,4 @@
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { PopperCore } from "@/domains/ui/popper";
 import { CollectionCore } from "@/domains/ui/collection";
 import { DismissableLayerCore } from "@/domains/ui/dismissable-layer";

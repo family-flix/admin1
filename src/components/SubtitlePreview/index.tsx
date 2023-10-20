@@ -1,6 +1,4 @@
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { Show, createSignal } from "solid-js";
 import { Loader2 } from "lucide-solid";
 

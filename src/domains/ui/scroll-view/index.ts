@@ -2,9 +2,7 @@
  * @file 一个可下拉刷新的滚动容器
  * 必须给固定的高度？
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 type PullToRefreshStep = "pending" | "pulling" | "refreshing" | "releasing";
 enum Events {

@@ -1,9 +1,7 @@
 /**
  * @file Select 选项
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 enum Events {
   StateChange,

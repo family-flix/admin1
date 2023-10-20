@@ -1,7 +1,5 @@
-import { Handler } from "mitt";
-
 import { Result } from "@/types";
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 import { fetch_user_profile, login, register, validate } from "./services";
 
@@ -128,7 +126,7 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Logout);
   }
   async register() {
-    console.log('[DOMAIN]user/index - register', this.values);
+    console.log("[DOMAIN]user/index - register", this.values);
     const { email, password } = this.values;
     if (!email) {
       const msg = this.tip({ text: ["请输入邮箱"] });

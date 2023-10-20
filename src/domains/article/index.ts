@@ -2,9 +2,7 @@
  * @file 一篇文章的抽象节点
  * 为了消息提示
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 
 enum Events {
   PushText,

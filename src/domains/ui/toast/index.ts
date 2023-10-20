@@ -1,9 +1,7 @@
 /**
  * @file 弹窗核心类
  */
-import { Handler } from "mitt";
-
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
 
 enum Events {

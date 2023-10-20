@@ -129,3 +129,5 @@ export function applyMixins(derivedCtor: any, constructors: any[]) {
     });
   });
 }
+
+export type { Handler };

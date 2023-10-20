@@ -1,6 +1,5 @@
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { RefCore } from "@/domains/cur";
-import { Handler } from "mitt";
 
 enum Events {
   Click,

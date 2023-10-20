@@ -1,12 +1,11 @@
 /**
  * @file 电影选择
  */
-import { Handler } from "mitt";
 import { For, createSignal } from "solid-js";
 import { Calendar } from "lucide-solid";
 
 import { MovieItem, fetchMovieList } from "@/services";
-import { BaseDomain } from "@/domains/base";
+import { BaseDomain, Handler } from "@/domains/base";
 import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { ButtonCore, DialogCore, DialogProps, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";

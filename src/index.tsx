@@ -1,5 +1,5 @@
 /* @refresh reload */
-import { createSignal, For, onMount, Show } from "solid-js";
+import { createSignal, For, JSX, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
@@ -13,6 +13,7 @@ import { app, router, initializeJobs, pages } from "./store";
 import { sleep } from "./utils";
 
 import "./style.css";
+import { ViewComponent } from "./types";
 
 app.onClickLink(({ href }) => {
   const { pathname, query } = NavigatorCore.parse(href);
@@ -31,19 +32,18 @@ app.onClickLink(({ href }) => {
 });
 app.onPopState((options) => {
   const { pathname } = NavigatorCore.parse(options.pathname);
+  console.log("[ROOT]index - app.onPopState", options.type, pathname);
   const matched = pages.find((v) => {
-    // console.log(v.key, pathname);
-    // return [NavigatorCore.prefix, v.key].join("/") === pathname;
     return v.key === pathname;
   });
   if (matched) {
     matched.isShowForBack = true;
     matched.query = router.query;
-    app.showView(matched);
+    app.showView(matched, { back: true });
     return;
   }
   homeIndexPage.isShowForBack = true;
-  app.showView(homeIndexPage);
+  app.showView(homeIndexPage, { back: true });
 });
 connect(app);
 
@@ -122,14 +122,11 @@ function Application() {
       <Show when={subViews().length !== 0}>
         <For each={subViews()}>
           {(subView, i) => {
+            const PageContent = subView.component as ViewComponent;
             return (
-              <RouteView
-                class="absolute inset-0 opacity-100 dark:bg-black"
-                app={app}
-                view={subView}
-                router={router}
-                index={i()}
-              />
+              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" store={subView} index={i()}>
+                <PageContent app={app} view={subView} router={router} />
+              </RouteView>
             );
           }}
         </For>
