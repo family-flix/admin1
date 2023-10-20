@@ -72,9 +72,11 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   state: DriveState;
   /** 表单值 */
   values: Partial<{
-    // root_folder_id: string;
+    remark: string;
+    hidden: number;
+    root_folder_id: string;
+    root_folder_name: string;
     refresh_token: string;
-    folder_name: string;
   }> = {};
   /** 文件夹列表相关状态 */
   list: {
@@ -371,10 +373,10 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     // return Result.Ok(null);
   }
   inputNewFolderName(value: string) {
-    this.values.folder_name = value;
+    this.values.root_folder_name = value;
   }
   async addFolder() {
-    const { folder_name } = this.values;
+    const { root_folder_name: folder_name } = this.values;
     if (!folder_name) {
       const msg = this.tip({ text: ["请先输入文件夹名称"] });
       return Result.Err(msg);

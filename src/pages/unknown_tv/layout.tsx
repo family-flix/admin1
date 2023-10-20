@@ -92,9 +92,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                   return (
                     <KeepAliveRouteView
                       class={cn("relative w-full h-full")}
-                      view={subView}
-                      app={app}
-                      router={app.router}
+                      store={subView}
                       immediately={true}
                       index={i()}
                     />
