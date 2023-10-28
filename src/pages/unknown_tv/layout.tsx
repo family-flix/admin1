@@ -6,13 +6,7 @@ import { createSignal, For, Show } from "solid-js";
 import { ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { ScrollView, KeepAliveRouteView } from "@/components/ui";
 import { ViewComponent } from "@/types";
-import {
-  homeUnknownEpisodePage,
-  homeUnknownMediaLayout,
-  homeUnknownMoviePage,
-  homeUnknownSeasonPage,
-  homeUnknownTVPage,
-} from "@/store";
+import { homeUnknownEpisodePage, homeUnknownMoviePage, homeUnknownTVPage } from "@/store";
 import { cn } from "@/utils";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
@@ -89,13 +83,16 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
             >
               <For each={subViews()}>
                 {(subView, i) => {
+                  const PageContent = subView.component as ViewComponent;
                   return (
                     <KeepAliveRouteView
                       class={cn("relative w-full h-full")}
                       store={subView}
                       immediately={true}
                       index={i()}
-                    />
+                    >
+                      <PageContent app={app} router={app.router} view={view} />
+                    </KeepAliveRouteView>
                   );
                 }}
               </For>

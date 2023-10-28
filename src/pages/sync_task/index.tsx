@@ -18,7 +18,7 @@ import {
 } from "@/services";
 import { Skeleton, ScrollView, Input, Button, LazyImage, Dialog, Checkbox, BackToTop, ListView } from "@/components/ui";
 import { FileSearcherCore } from "@/components/FileSearcher";
-import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
+import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/SeasonSelect";
 import {
   ScrollViewCore,
   DialogCore,

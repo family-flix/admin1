@@ -7,7 +7,7 @@ import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
 import { MovieItem, ReportItem, fetchReportList, fetchMovieList, replyReport } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
-import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/TVSeasonSelect";
+import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/SeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";

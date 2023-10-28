@@ -4,7 +4,7 @@ import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { BaseDomain, Handler } from "@/domains/base";
 import { MovieSelectCore } from "@/components/MovieSelect";
-import { TVSeasonSelectCore } from "@/components/TVSeasonSelect";
+import { TVSeasonSelectCore } from "@/components/SeasonSelect";
 
 enum Events {
   StateChange,

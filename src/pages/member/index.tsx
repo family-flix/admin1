@@ -23,7 +23,7 @@ import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { MultipleSelectionCore } from "@/domains/multiple";
 import { homePermissionListPage } from "@/store";
-import { TVSeasonSelect, TVSeasonSelectCore } from "@/components/TVSeasonSelect";
+import { TVSeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { create_link } from "@/domains/shortlink";
 
 export const MemberManagePage: ViewComponent = (props) => {
