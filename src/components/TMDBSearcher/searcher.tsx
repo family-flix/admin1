@@ -28,7 +28,7 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
     //   console.log('scroll', pos);
     // },
     onReachBottom() {
-      store.list.loadMore();
+      store.tvList.loadMore();
     },
   });
   const [state, setState] = createSignal(store.state);
@@ -85,7 +85,7 @@ export const TMDBSearcher = (props: { store: TMDBSearcherCore } & JSX.HTMLAttrib
         </div>
       </div>
       <ListView
-        store={store.list}
+        store={store.tvList}
         skeleton={
           <div class="relative h-[240px] p-2 space-y-4">
             <div class="absolute inset-0 flex items-center justify-center">

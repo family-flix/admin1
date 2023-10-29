@@ -2,12 +2,20 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft, ChevronRight } from "lucide-solid";
+import { ArrowLeft, ChevronRight, FolderInput } from "lucide-solid";
 
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
-import { DialogCore, DropdownMenuCore, ButtonCore, InputCore, MenuItemCore, ScrollViewCore } from "@/domains/ui";
+import {
+  DialogCore,
+  DropdownMenuCore,
+  ButtonCore,
+  InputCore,
+  MenuItemCore,
+  ScrollViewCore,
+  MenuCore,
+} from "@/domains/ui";
 import {
   DriveCore,
   AliyunDriveFilesCore,
@@ -16,14 +24,17 @@ import {
   fetchDriveFiles,
   renameChildFilesName,
   fetchFileProfile,
-  archiveFile,
+  transferFileToAnotherDrive,
+  transferFileToResourceDrive,
 } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { FileType } from "@/constants";
-import { createJob } from "@/store";
+import { createJob, driveList } from "@/store";
 import { buildRegexp } from "@/utils";
+import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
+import { setFileEpisodeProfile } from "@/services";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -49,7 +60,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const filesRequest = new RequestCore(fetchDriveFiles);
-  const fileArchiveRequest = new RequestCore(archiveFile, {
+  const toAnotherDriveRequest = new RequestCore(transferFileToAnotherDrive, {
     onSuccess(v) {
       createJob({
         job_id: v.job_id,
@@ -63,6 +74,44 @@ export const DriveProfilePage: ViewComponent = (props) => {
     onFailed(error) {
       app.tip({
         text: ["归档失败", error.message],
+      });
+    },
+  });
+  const toResourceDriveRequest = new RequestCore(transferFileToResourceDrive, {
+    onSuccess(v) {
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          app.tip({
+            text: ["完成归档"],
+          });
+        },
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["归档失败", error.message],
+      });
+    },
+  });
+  const episodeProfileSetRequest = new RequestCore(setFileEpisodeProfile, {
+    onSuccess(v) {
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          episodeSelect.dialog.okBtn.setLoading(false);
+          episodeSelect.dialog.hide();
+          curFile.clear();
+          app.tip({
+            text: ["完成设置"],
+          });
+        },
+      });
+    },
+    onFailed(error) {
+      episodeSelect.dialog.okBtn.setLoading(false);
+      app.tip({
+        text: ["设置失败", error.message],
       });
     },
   });
@@ -322,6 +371,36 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const episodeSelect = new EpisodeSelectCore({
+    onOk() {
+      const tv = episodeSelect.curTV.value;
+      const season = episodeSelect.curSeason.value;
+      const episode = episodeSelect.curEpisode.value;
+      if (!tv || !season || !episode) {
+        app.tip({
+          text: ["请选择剧集"],
+        });
+        return;
+      }
+      if (!curFile.value) {
+        app.tip({
+          text: ["请先选择要设置的文件"],
+        });
+        return;
+      }
+      const file = curFile.value;
+      app.tip({
+        text: ["开始设置"],
+      });
+      episodeSelect.dialog.okBtn.setLoading(true);
+      episodeProfileSetRequest.run({
+        file_id: file.file_id,
+        unique_id: tv.id,
+        season_number: season.season_number,
+        episode_number: episode.episode_number,
+      });
+    },
+  });
   const childNamesModifyItem = new MenuItemCore({
     label: "修改子文件名称",
     async onClick() {
@@ -377,8 +456,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
-  const archiveItem = new MenuItemCore({
-    label: "归档",
+  const toResourceDriveItem = new MenuItemCore({
+    label: "归档到资源盘",
     async onClick() {
       if (!driveFileManage.virtualSelectedFolder) {
         app.tip({
@@ -390,17 +469,51 @@ export const DriveProfilePage: ViewComponent = (props) => {
       app.tip({
         text: ["开始归档"],
       });
-      fileArchiveRequest.run({
+      toResourceDriveRequest.run({
         drive_id: view.query.id,
         file_id: file.file_id,
       });
       fileMenu.hide();
     },
   });
+  const setEpisodeProfileItem = new MenuItemCore({
+    label: "设置剧集信息",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要设置的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      curFile.select(file);
+      episodeSelect.show();
+      fileMenu.hide();
+    },
+  });
+  const driveSubMenu = new MenuCore({
+    _name: "menus-of-drives",
+    side: "right",
+    align: "start",
+  });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
-    items: [profileItem, analysisItem, nameModifyItem, childNamesModifyItem, archiveItem, folderDeletingItem],
+    items: [
+      profileItem,
+      analysisItem,
+      nameModifyItem,
+      childNamesModifyItem,
+      new MenuItemCore({
+        _name: "transfer_to",
+        label: "移动到",
+        icon: <FolderInput class="w-4 h-4" />,
+        menu: driveSubMenu,
+      }),
+      toResourceDriveItem,
+      setEpisodeProfileItem,
+      folderDeletingItem,
+    ],
     onHidden() {
       driveFileManage.clearVirtualSelected();
     },
@@ -416,9 +529,55 @@ export const DriveProfilePage: ViewComponent = (props) => {
     group1: [],
     group2: [],
   });
+  const [selectedFile, setSelectedFile] = createSignal(curFile.value);
 
+  curFile.onStateChange((v) => {
+    setSelectedFile(v);
+  });
   drive.onStateChange((nextState) => {
     setState(nextState);
+  });
+  driveList.onStateChange((nextResponse) => {
+    driveSubMenu.setItems(
+      nextResponse.dataSource.map((drive) => {
+        const { name } = drive;
+        const item = new MenuItemCore({
+          label: name,
+          async onClick() {
+            item.disable();
+            const f = driveFileManage.virtualSelectedFolder;
+            if (!f) {
+              app.tip({
+                text: ["请选择文件"],
+              });
+              return;
+            }
+            app.tip({
+              text: ["开始归档"],
+            });
+            const [file] = f;
+            const r = await toAnotherDriveRequest.run({
+              file_id: file.file_id,
+              drive_id: view.query.id,
+              target_drive_id: drive.id,
+            });
+            if (r.data) {
+              createJob({
+                job_id: r.data.job_id,
+                onFinish() {
+                  app.tip({
+                    text: ["转存完成"],
+                  });
+                },
+              });
+            }
+            item.enable();
+            fileMenu.hide();
+          },
+        });
+        return item;
+      })
+    );
   });
   driveFileManage.onFolderColumnChange((nextColumns) => {
     setColumns(nextColumns);
@@ -431,6 +590,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     app.setTitle(view.query.name);
     driveFileManage.appendColumn({ file_id: "root", name: "文件" });
     drive.refresh();
+    driveList.initAny();
   });
 
   return (
@@ -598,6 +758,12 @@ export const DriveProfilePage: ViewComponent = (props) => {
               folderDeletingConfirmDialog.show();
             }}
           />
+        </div>
+      </Dialog>
+      <Dialog store={episodeSelect.dialog}>
+        <div class="w-[520px]">
+          <div class="p-2">{selectedFile()?.name}</div>
+          <EpisodeSelect store={episodeSelect} />
         </div>
       </Dialog>
     </>

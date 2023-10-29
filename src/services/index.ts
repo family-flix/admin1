@@ -1940,3 +1940,19 @@ export function setParsedTVSeasonProfile(values: { file_id: string; source?: num
     unique_id,
   });
 }
+
+export function setFileEpisodeProfile(values: {
+  file_id: string;
+  source?: number;
+  unique_id: number | string;
+  season_number: number;
+  episode_number: number;
+}) {
+  const { file_id, source, unique_id, season_number, episode_number } = values;
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_episode_profile`, {
+    source,
+    unique_id,
+    season_number,
+    episode_number,
+  });
+}

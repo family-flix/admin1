@@ -491,9 +491,19 @@ export function renameChildFilesName(values: { drive_id: string; file_id: string
   });
 }
 
-export function archiveFile(values: { drive_id: string; file_id: string }) {
+export function transferFileToAnotherDrive(values: { drive_id: string; file_id: string; target_drive_id: string }) {
+  const { drive_id, target_drive_id, file_id } = values;
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/transfer?drive_id=${drive_id}`, {
+    from_drive_id: drive_id,
+    target_drive_id,
+  });
+}
+
+export function transferFileToResourceDrive(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/archive_as_episode?drive_id=${drive_id}`, {});
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/to_resource_drive?drive_id=${drive_id}`, {
+    from_drive_id: drive_id,
+  });
 }
 
 export function fetchFileProfile(values: { file_id: string; drive_id: string }) {

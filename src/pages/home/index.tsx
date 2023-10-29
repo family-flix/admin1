@@ -14,6 +14,7 @@ import { ListCore } from "@/domains/list";
 import { code_get_drive_token } from "@/constants";
 import { ViewComponent } from "@/types";
 import { driveProfilePage } from "@/store";
+import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;

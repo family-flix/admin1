@@ -58,12 +58,12 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     });
     this.state = {
       value: null,
-      list: this.tmdb.list.response,
+      list: this.tmdb.tvList.response,
       showFooter: footer,
     };
     this.okBtn = this.dialog.okBtn;
     this.cancelBtn = this.dialog.cancelBtn;
-    this.tmdb.list.onStateChange((nextState) => {
+    this.tmdb.tvList.onStateChange((nextState) => {
       this.state.list = nextState;
       this.emit(Events.StateChange, { ...this.state });
     });
@@ -79,7 +79,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     this.dialog.hide();
   }
   refresh() {
-    this.tmdb.list.refresh();
+    this.tmdb.tvList.refresh();
   }
   input(name: string) {
     this.tmdb.input.setValue(name);

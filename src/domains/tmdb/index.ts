@@ -5,7 +5,7 @@ import { Response } from "@/domains/list/typing";
 import { FormCore } from "@/domains/ui/form";
 import { RequestCore } from "@/domains/request";
 
-import { TheTVInTMDB, search_media_in_tmdb } from "./services";
+import { TheTVInTMDB, searchMediaInTMDB } from "./services";
 
 enum Events {
   Select,
@@ -24,7 +24,7 @@ type TMDBSearcherProps = {
 };
 
 export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
-  list = new ListCore(new RequestCore(search_media_in_tmdb));
+  tvList = new ListCore(new RequestCore(searchMediaInTMDB));
   form: FormCore<{}>;
   input: InputCore<string>;
   searchBtn: ButtonCore;
@@ -40,11 +40,11 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
     // console.log("[DOMAIN]TMDB - constructor ", this.list.response);
     if (type) {
       this.type = type;
-      this.list.setParams({ type });
+      this.tvList.setParams({ type });
     }
     this.state = {
       cur: null,
-      response: this.list.response,
+      response: this.tvList.response,
     };
     this.form = new FormCore<{}>();
 
@@ -54,13 +54,13 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
           this.tip({ text: ["请输入查询关键字"] });
           return;
         }
-        this.list.search({ keyword: this.input.value });
+        this.tvList.search({ keyword: this.input.value });
       },
     });
     this.resetBtn = new ButtonCore({
       onClick: () => {
         this.input.clear();
-        this.list.clear();
+        this.tvList.clear();
       },
     });
     this.input = new InputCore({
@@ -70,11 +70,11 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
         this.searchBtn.click();
       },
     });
-    this.list.onStateChange((nextState) => {
+    this.tvList.onStateChange((nextState) => {
       this.state.response = nextState;
       this.emit(Events.StateChange, { ...this.state });
     });
-    this.list.onLoadingChange((loading) => {
+    this.tvList.onLoadingChange((loading) => {
       this.searchBtn.setLoading(loading);
     });
   }

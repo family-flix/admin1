@@ -35,6 +35,9 @@ type PresenceState = {
   open: boolean;
   unmounted: boolean;
 };
+type PresenceProps = {
+  open?: boolean;
+};
 export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   name = "PresenceCore";
   debug = false;
@@ -42,15 +45,26 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   // styles: CSSStyleDeclaration;
   animationName = "none";
   // private state = "unmounted";
+  open = false;
+  mounted = false;
+  unmounted = false;
 
-  state: PresenceState = {
-    open: false,
-    mounted: false,
-    unmounted: false,
-  };
+  get state(): PresenceState {
+    return {
+      open: this.open,
+      mounted: this.mounted,
+      unmounted: this.unmounted,
+    };
+  }
 
-  constructor(options: Partial<{ _name: string }> = {}) {
+  constructor(options: Partial<{ _name: string }> & PresenceProps = {}) {
     super(options);
+
+    const { open } = options;
+    if (open) {
+      this.open = true;
+      this.mounted = true;
+    }
   }
 
   calc() {
@@ -85,7 +99,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 是否可见 */
   get isPresent() {
-    return this.state.open;
+    return this.open;
     // return ["mounted", "unmountSuspended"].includes(this.state);
   }
   // setStyles(styles: CSSStyleDeclaration) {
@@ -94,19 +108,19 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   show() {
     // this.log("show");
     // this.calc(true);
-    this.state.open = true;
-    this.state.mounted = true;
+    this.open = true;
+    this.mounted = true;
     this.emit(Events.Show);
     this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
     // console.log(...this.log("hide"));
     // this.calc(false);
-    this.state.open = false;
+    this.open = false;
     this.emit(Events.Hidden);
     this.emit(Events.StateChange, { ...this.state });
     setTimeout(() => {
-      if (this.state.mounted === false) {
+      if (this.mounted === false) {
         return;
       }
       this.unmount();
@@ -124,20 +138,18 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   /** 将 DOM 从页面卸载 */
   unmount() {
     // console.log("[]PresenceCore - destroy", this.state.open, this.state.unmounted);
-    if (this.state.open) {
+    if (this.open) {
       // this.emit(Events.Show);
       return;
     }
-    this.state.mounted = false;
+    this.mounted = false;
     this.emit(Events.Unmounted);
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
-    this.state = {
-      mounted: false,
-      open: false,
-      unmounted: false,
-    };
+    this.open = false;
+    this.mounted = false;
+    this.unmounted = false;
   }
 
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {

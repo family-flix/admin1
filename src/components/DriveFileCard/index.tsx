@@ -2,7 +2,7 @@
  * @file 文件详情
  */
 import { Show, createSignal, onMount } from "solid-js";
-import { Binary, Trash } from "lucide-solid";
+import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-solid";
 
 import { setParsedTVSeasonProfile } from "@/services";
 import { Button, LazyImage } from "@/components/ui";
@@ -124,7 +124,7 @@ export const DriveFileCard = (props: {
         <div class="">{state()?.file_id}</div>
         <div>{size()}</div>
         <div class="">
-          <div class="flex items-center mt-2 text-sm">
+          <div class="flex items-center flex-wrap mt-2 text-sm">
             {filepath().map((p, i) => {
               return (
                 <>
@@ -162,18 +162,29 @@ export const DriveFileCard = (props: {
                       <div class="text-lg">{profile()?.parsed_tv?.profile?.name}</div>
                       <div class="text-sm">
                         <Show
-                          when={profile()?.parsed_tv?.profile?.season_name}
-                          fallback={<div>{profile()?.parsed_tv?.profile?.season_text}</div>}
+                          when={profile()?.parsed_tv?.profile}
+                          fallback={
+                            <div>
+                              <div class="flex items-center">
+                                <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
+                                <span>{profile()?.parsed_tv?.profile?.season_text}</span>
+                                <span class="mx-2">/</span>
+                                <span>{profile()?.parsed_tv?.profile?.episode_text}</span>
+                              </div>
+                            </div>
+                          }
                         >
-                          <div>季</div>
-                          <div>{profile()?.parsed_tv?.profile?.season_name}</div>
-                        </Show>
-                        <Show
-                          when={profile()?.parsed_tv?.profile?.episode_name}
-                          fallback={<div>{profile()?.parsed_tv?.profile?.episode_text}</div>}
-                        >
-                          <div>剧集</div>
-                          <div>{profile()?.parsed_tv?.profile?.episode_name}</div>
+                          <div class="flex items-center">
+                            <CheckCircle2 class="w-4 h-4 mr-1 text-green-800" />
+                            <span>
+                              {profile()?.parsed_tv?.profile?.season_name}({profile()?.parsed_tv?.profile?.season_text})
+                            </span>
+                            <span class="mx-2">/</span>
+                            <span>
+                              {profile()?.parsed_tv?.profile?.episode_name}(
+                              {profile()?.parsed_tv?.profile?.episode_text})
+                            </span>
+                          </div>
                         </Show>
                       </div>
                     </div>
