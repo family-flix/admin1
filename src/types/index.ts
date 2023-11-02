@@ -73,6 +73,11 @@ export type ListResponse<T> = {
   no_more: boolean;
   list: T[];
 };
+export type ListResponseWithCursor<T> = {
+  page_size: number;
+  next_marker?: string;
+  list: T[];
+};
 
 export type RequestedResource<T extends (...args: any[]) => any> = UnpackedResult<Unpacked<ReturnType<T>>>;
 export type ViewComponentProps = { app: Application; router: NavigatorCore; view: RouteViewCore };

@@ -5,6 +5,7 @@ import { RouteViewCore, onViewCreated } from "@/domains/route_view";
 
 import { HomePage } from "@/pages/home";
 import { TaskListPage } from "@/pages/job";
+import { PersonListPage } from "@/pages/person";
 import { TaskProfilePage } from "@/pages/job/profile";
 import { DriveProfilePage } from "@/pages/drive/profile";
 import { SharedFilesTransferPage } from "@/pages/resource";
@@ -62,6 +63,11 @@ export const homeTaskProfilePage = new RouteViewCore({
   title: "任务详情",
   // component: TaskProfilePage,
   component: TaskProfilePage,
+});
+export const homePersonListPage = new RouteViewCore({
+  key: "/home/person",
+  title: "演员列表",
+  component: PersonListPage,
 });
 export const homeTaskListPage = new RouteViewCore({
   key: "/home/task",
@@ -210,6 +216,7 @@ export const homeLayout = new RouteViewCore({
     homeInvalidTVListPage,
     homeTaskListPage,
     homeTaskProfilePage,
+    homePersonListPage,
     homePermissionListPage,
     homeMemberListPage,
     homeUnknownMediaLayout,

@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
-import { ListResponse, RequestedResource, Result } from "@/types";
+import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 
 import { TaskStatus, TaskTypes } from "./constants";
 
@@ -10,7 +10,7 @@ import { TaskStatus, TaskTypes } from "./constants";
  * 获取当前用户所有异步任务
  */
 export async function fetchJobList(params: FetchParams) {
-  const res = await request.get<
+  const res = await request.post<
     ListResponse<{
       id: string;
       unique_id: string;
@@ -149,4 +149,15 @@ export function pause_job(id: string) {
   return request.get<{ id: string }>(`/api/admin/job/pause/${id}`, {
     force: "1",
   });
+}
+
+export function fetchPersonList(params: FetchParams) {
+  return request.post<
+    ListResponseWithCursor<{
+      id: string;
+      name: string;
+      avatar: string;
+      unique_id: string;
+    }>
+  >("/api/admin/person/list", params);
 }

@@ -23,6 +23,7 @@ import {
   Folder,
 } from "lucide-solid";
 
+import { fetchSettings, notify_test, pushMessageToMembers, updateSettings } from "@/services";
 import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
@@ -44,16 +45,13 @@ import {
 } from "@/store/views";
 import {
   collectionListPage,
-  homeLayout,
-  homePermissionListPage,
+  homePersonListPage,
   homeReportListPage,
-  homeSubtitleAddingPage,
   homeSubtitleListPage,
   onJobsChange,
   syncTaskListPage,
 } from "@/store";
 import { cn, sleep } from "@/utils";
-import { fetchSettings, notify_test, pushMessageToMembers, updateSettings } from "@/services";
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, view } = props;
@@ -65,7 +63,6 @@ export const HomeLayout: ViewComponent = (props) => {
     onSuccess(v) {
       notify1TokenInput.setValue(v.push_deer_token);
       filenameParseRuleInput.setValue(v.extra_filename_rules);
-      settingsDialog.show();
     },
     onFailed(error) {
       app.tip({
@@ -248,6 +245,7 @@ export const HomeLayout: ViewComponent = (props) => {
   const settingsBtn = new ButtonCore({
     onClick() {
       settingsRequest.run();
+      settingsDialog.show();
     },
   });
   const expiredDeletingBtn = new ButtonCore({});
@@ -284,6 +282,12 @@ export const HomeLayout: ViewComponent = (props) => {
       icon: <Film class="w-6 h-6" />,
       view: homeMovieListPage,
     },
+    // {
+    //   text: "演员",
+    //   icon: <Bot class="w-6 h-6" />,
+    //   badge: false,
+    //   view: homePersonListPage,
+    // },
     {
       text: "集合管理",
       icon: <Folder class="w-6 h-6" />,

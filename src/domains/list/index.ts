@@ -295,6 +295,11 @@ export class ListCore<
     if (params.page === 1 && response.dataSource.length === 0) {
       response.empty = true;
     }
+    // @ts-ignore
+    if (response.next_marker) {
+      // @ts-ignore
+      this.params.next_marker = response.next_marker;
+    }
     // console.log(...this.log('3、afterProcessor', response));
     const responseIsEmpty = response.dataSource === undefined;
     if (responseIsEmpty) {
