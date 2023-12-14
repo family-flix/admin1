@@ -60,6 +60,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
       step: this.step,
       width: this.width,
       height: this.height,
+      fit: this.fit,
     };
   }
 

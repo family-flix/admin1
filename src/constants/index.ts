@@ -244,3 +244,32 @@ export enum DriveTypes {
   /** 阿里云盘/资源盘 */
   AliyunResourceDrive = 1,
 }
+
+export enum MediaErrorTypes {
+  Unknown = 0,
+  TVProfile = 1,
+  SeasonProfile = 2,
+  EpisodeProfile = 3,
+  MovieProfile = 4,
+  TV = 5,
+  Season = 6,
+  Episode = 7,
+  Movie = 8,
+}
+export const MediaErrorTypeTextMap: Record<MediaErrorTypes, string> = {
+  [MediaErrorTypes.Unknown]: "未知",
+  [MediaErrorTypes.TVProfile]: "电视剧详情",
+  [MediaErrorTypes.SeasonProfile]: "季详情",
+  [MediaErrorTypes.EpisodeProfile]: "剧集详情",
+  [MediaErrorTypes.MovieProfile]: "电影详情",
+  [MediaErrorTypes.TV]: "电视剧",
+  [MediaErrorTypes.Season]: "季",
+  [MediaErrorTypes.Episode]: "剧集",
+  [MediaErrorTypes.Movie]: "电影",
+};
+export const MediaErrorTypeOptions = Object.keys(MediaErrorTypeTextMap).map((k) => {
+  return {
+    value: Number(k),
+    label: MediaErrorTypeTextMap[k as unknown as MediaErrorTypes],
+  };
+});

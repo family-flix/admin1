@@ -24,4 +24,5 @@ export const DEFAULT_RESPONSE: Response<any> = {
 export const DEFAULT_PARAMS = {
   page: DEFAULT_CURRENT_PAGE,
   pageSize: DEFAULT_PAGE_SIZE,
+  next_marker: null,
 };

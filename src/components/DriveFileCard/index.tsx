@@ -1,7 +1,7 @@
 /**
  * @file 文件详情
  */
-import { Show, createSignal, onMount } from "solid-js";
+import { JSXElement, Show, createSignal, onMount } from "solid-js";
 import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-solid";
 
 import { setParsedTVSeasonProfile } from "@/services";
@@ -18,10 +18,10 @@ import { createJob } from "@/store";
 export const DriveFileCard = (props: {
   store: RefCore<AliyunDriveFile>;
   drive: DriveCore;
-  onDeleting?: (file: AliyunDriveFile) => void;
+  footer: JSXElement;
   onTip?: (msg: { text: string[] }) => void;
 }) => {
-  const { store, drive, onDeleting, onTip } = props;
+  const { store, drive, footer, onTip } = props;
 
   const fileProfileRequest = new RequestCore(fetchFileProfile);
   const setParsedTVProfileRequest = new RequestCore(setParsedTVSeasonProfile, {
@@ -49,13 +49,6 @@ export const DriveFileCard = (props: {
         });
       }
       seasonProfileChangeSelectDialog.okBtn.setLoading(false);
-    },
-  });
-  const deletingBtn = new ButtonCore({
-    onClick() {
-      if (onDeleting) {
-        onDeleting(store.value!);
-      }
     },
   });
   const setProfileBtn = new ButtonCore({
@@ -192,20 +185,47 @@ export const DriveFileCard = (props: {
                 </Show>
               </div>
             </Show>
+            <Show when={profile()?.parsed_movie}>
+              <div>
+                <Show
+                  when={profile()?.parsed_movie?.profile}
+                  fallback={
+                    <div class="flex">
+                      <div class="mr-4">
+                        <LazyImage class="w-[120px] object-fit" />
+                      </div>
+                      <div>{profile()?.parsed_tv?.name}</div>
+                      <div>{profile()?.parsed_tv?.file_name}</div>
+                      <div>没有匹配到详情信息</div>
+                    </div>
+                  }
+                >
+                  <div class="flex">
+                    <div class="mr-4">
+                      <LazyImage class="w-[120px] object-fit" src={profile()?.parsed_movie?.profile?.poster_path} />
+                    </div>
+                    <Show
+                      when={profile()?.parsed_movie?.profile}
+                      fallback={
+                        <div class="flex items-center">
+                          <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
+                          <div class="text-lg">{profile()?.parsed_movie?.file_name}</div>
+                        </div>
+                      }
+                    >
+                      <div class="flex items-center">
+                        <CheckCircle2 class="w-4 h-4 mr-1 text-green-800" />
+                        <div class="text-lg">{profile()?.parsed_movie?.profile?.name}</div>
+                      </div>
+                    </Show>
+                  </div>
+                </Show>
+              </div>
+            </Show>
           </div>
         </Show>
       </div>
-      <div class="mt-4 flex items-center space-x-2">
-        <Button store={deletingBtn} variant="subtle" icon={<Trash class="w-4 h-4" />}>
-          删除
-        </Button>
-        <Button store={setProfileBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
-          关联电视剧
-        </Button>
-        {/* <Button store={deletingBtn} variant="subtle" icon={<Play class="w-4 h-4" />}>
-          播放
-        </Button> */}
-      </div>
+      {footer}
       <TMDBSearcherDialog store={seasonProfileChangeSelectDialog} />
     </div>
   );

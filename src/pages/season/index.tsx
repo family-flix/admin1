@@ -440,14 +440,6 @@ export const TVManagePage: ViewComponent = (props) => {
               <Button class="" store={resetBtn}>
                 重置
               </Button>
-              <div class="flex items-center space-x-2">
-                <Checkbox store={onlyInvalidCheckbox}></Checkbox>
-                <span>待处理</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <Checkbox store={duplicatedCheckbox}></Checkbox>
-                <span>重复内容</span>
-              </div>
               <PurePopover
                 align="center"
                 class="w-96"

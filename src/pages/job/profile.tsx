@@ -48,6 +48,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
     },
     onSuccess(v) {
       setProfile(v);
+      logList.setDataSource(v.content);
     },
     onFailed(error) {
       app.tip({
@@ -61,9 +62,9 @@ export const TaskProfilePage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      logList.loadMore();
-    },
+    // onReachBottom() {
+    //   logList.loadMore();
+    // },
   });
 
   const [profile, setProfile] = createSignal(request.response);
@@ -78,13 +79,6 @@ export const TaskProfilePage: ViewComponent = (props) => {
       return;
     }
     request.run(id);
-    logList.setParams((prev) => {
-      return {
-        ...prev,
-        job_id: id,
-      };
-    });
-    logList.init();
   });
 
   return (
@@ -139,9 +133,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
           </div>
         </div>
         <div class="mt-8">
-          <ListView store={logList}>
-            <Article nodes={logResponse().dataSource} />
-          </ListView>
+          <Article nodes={logResponse().dataSource} />
         </div>
       </Show>
     </ScrollView>

@@ -33,12 +33,14 @@ import { HomeSubtitleUploadPage } from "@/pages/subtitle/add";
 import { HomeSubtitleListPage } from "@/pages/subtitle";
 import { SharedFilesHistoryPage } from "@/pages/resource/list";
 import { SharedFilesTransferListPage } from "@/pages/resource/transfer";
-import { SeasonArchivePage } from "@/pages/archive";
+import { SeasonArchivePage } from "@/pages/archive/season";
 import { InvalidTVManagePage } from "@/pages/tv/invalid";
 import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
+import { InvalidMediaManagePage } from "@/pages/media_error";
 import { PrismaExecPage } from "@/pages/prisma";
 import { lazy } from "solid-js";
+import { MovieArchivePage } from "@/pages/archive/movie";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -203,6 +205,11 @@ export const collectionEditPage = new RouteViewCore({
   title: "编辑集合",
   component: CollectionEditPage,
 });
+export const invalidMediasPage = new RouteViewCore({
+  key: "/invalid_media",
+  title: "待处理问题",
+  component: InvalidMediaManagePage,
+});
 export const homeLayout = new RouteViewCore({
   key: "/home",
   title: "首页",
@@ -231,6 +238,7 @@ export const homeLayout = new RouteViewCore({
     homeSubtitleAddingPage,
     homeSubtitleListPage,
     homeFilenameParsingPage,
+    invalidMediasPage,
     driveProfilePage,
   ],
 });
@@ -238,6 +246,11 @@ export const seasonArchivePage = new RouteViewCore({
   key: "/season_archive",
   title: "电视剧归档",
   component: SeasonArchivePage,
+});
+export const movieArchivePage = new RouteViewCore({
+  key: "/movie_archive",
+  title: "电影归档",
+  component: MovieArchivePage,
 });
 export const mediaPlayingPage = new RouteViewCore({
   key: "/preview",
@@ -273,5 +286,14 @@ export const rootView = new RouteViewCore({
   title: "ROOT",
   component: "div",
   layers: true,
-  children: [homeLayout, mediaPlayingPage, seasonArchivePage, registerPage, loginPage, testPage, prismaPage],
+  children: [
+    homeLayout,
+    mediaPlayingPage,
+    seasonArchivePage,
+    movieArchivePage,
+    registerPage,
+    loginPage,
+    testPage,
+    prismaPage,
+  ],
 });

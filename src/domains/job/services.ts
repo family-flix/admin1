@@ -64,7 +64,7 @@ export async function fetch_job_profile(id: string) {
     desc: string;
     type: TaskTypes;
     status: TaskStatus;
-    // lines: { content: string }[];
+    lines: string[];
     // more_line: boolean;
     created: string;
     content: string;
@@ -72,7 +72,7 @@ export async function fetch_job_profile(id: string) {
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { desc, status, type, content, created } = r.data;
+  const { desc, status, type, lines, created } = r.data;
   const data = {
     id,
     desc,
@@ -90,8 +90,18 @@ export async function fetch_job_profile(id: string) {
       }
       return "未知";
     })(),
-    // content: lines.map((l) => JSON.parse(l.content)),
-    // hasMoreContent: more_line,
+    content: lines
+      .map((l) => {
+        try {
+          const r = JSON.parse(l);
+          return r;
+        } catch (err) {
+          console.log(l);
+        }
+        return null;
+      })
+      .filter(Boolean),
+    hasMoreContent: false,
     created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
   };
   return Result.Ok(data);

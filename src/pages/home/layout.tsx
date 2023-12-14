@@ -48,6 +48,7 @@ import {
   homePersonListPage,
   homeReportListPage,
   homeSubtitleListPage,
+  invalidMediasPage,
   onJobsChange,
   syncTaskListPage,
 } from "@/store";
@@ -61,8 +62,9 @@ export const HomeLayout: ViewComponent = (props) => {
       settingsBtn.setLoading(loading);
     },
     onSuccess(v) {
-      notify1TokenInput.setValue(v.push_deer_token);
-      filenameParseRuleInput.setValue(v.extra_filename_rules);
+      const { push_deer_token = "", extra_filename_rules = "" } = v;
+      notify1TokenInput.setValue(push_deer_token);
+      filenameParseRuleInput.setValue(extra_filename_rules);
     },
     onFailed(error) {
       app.tip({
@@ -149,8 +151,10 @@ export const HomeLayout: ViewComponent = (props) => {
     title: "配置",
     onOk() {
       const notify1Token = notify1TokenInput.value?.trim();
+      const ignoreFilesRule = ignoreFilesRuleInput.value?.trim();
       const filenameParse = filenameParseRuleInput.value?.trim();
       const values = {
+        ignore_files_when_sync: ignoreFilesRule,
         push_deer_token: notify1TokenInput.value?.trim(),
         extra_filename_rules: filenameParseRuleInput.value?.trim(),
       };
@@ -198,6 +202,10 @@ export const HomeLayout: ViewComponent = (props) => {
   const filenameParseRuleInput = new InputCore({
     defaultValue: "",
     placeholder: "额外解析规则",
+  });
+  const ignoreFilesRuleInput = new InputCore({
+    defaultValue: "",
+    placeholder: "转存时可忽略指定文件/文件夹",
   });
   const notify1TokenInput = new InputCore({
     defaultValue: "",
@@ -282,12 +290,12 @@ export const HomeLayout: ViewComponent = (props) => {
       icon: <Film class="w-6 h-6" />,
       view: homeMovieListPage,
     },
-    // {
-    //   text: "演员",
-    //   icon: <Bot class="w-6 h-6" />,
-    //   badge: false,
-    //   view: homePersonListPage,
-    // },
+    {
+      text: "待处理影视剧问题",
+      icon: <Bot class="w-6 h-6" />,
+      badge: false,
+      view: invalidMediasPage,
+    },
     {
       text: "集合管理",
       icon: <Folder class="w-6 h-6" />,
@@ -454,6 +462,10 @@ export const HomeLayout: ViewComponent = (props) => {
           <div class="mt-4">
             <div>文件名解析规则</div>
             <Textarea store={filenameParseRuleInput} />
+          </div>
+          <div class="mt-4">
+            <div>转存忽略规则</div>
+            <Textarea store={ignoreFilesRuleInput} />
           </div>
           <div class="mt-4">
             <div>其他</div>

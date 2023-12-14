@@ -6,9 +6,18 @@ import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
-import { JSONObject, ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
+import {
+  JSONObject,
+  ListResponse,
+  ListResponseWithCursor,
+  MutableRecord,
+  RequestedResource,
+  Result,
+  Unpacked,
+  UnpackedResult,
+} from "@/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
-import { DriveTypes, ReportTypeTexts, ReportTypes } from "@/constants";
+import { DriveTypes, MediaErrorTypes, ReportTypeTexts, ReportTypes } from "@/constants";
 import { bytes_to_size, query_stringify } from "@/utils";
 
 /**
@@ -166,10 +175,10 @@ function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
       type: number;
     }
   > = {};
-  const total_sources: EpisodeSource[] = [];
+  const total_sources: MediaSource[] = [];
   const processed_episodes = episodes.map((episode) => {
     const { id, name, episode_number, sources } = episode;
-    const source_group_by_drive_id: Record<string, EpisodeSource[]> = {};
+    const source_group_by_drive_id: Record<string, MediaSource[]> = {};
     for (let i = 0; i < sources.length; i += 1) {
       const source = sources[i];
       const { drive } = source;
@@ -259,7 +268,104 @@ function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
     })(),
   };
 }
-type EpisodeSource = {
+export type SeasonPrepareArchiveItem = RequestedResource<typeof fetchSeasonPrepareArchiveList>["list"][number];
+
+function processMoviePrepareArchive(movie: MoviePrepareArchiveItemResp) {
+  const { id, name, poster_path, medias } = movie;
+  const drive_group: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      type: number;
+    }
+  > = {};
+  const total_sources: MediaSource[] = [];
+  const processed_episodes = medias.map((episode) => {
+    const { id, name, sources } = episode;
+    const source_group_by_drive_id: Record<string, MediaSource[]> = {};
+    for (let i = 0; i < sources.length; i += 1) {
+      const source = sources[i];
+      const { drive } = source;
+      source_group_by_drive_id[drive.id] = source_group_by_drive_id[drive.id] || [];
+      drive_group[drive.id] = drive;
+      const payload = {
+        id: source.id,
+        file_id: source.file_id,
+        file_name: source.file_name,
+        parent_paths: source.parent_paths,
+        size: source.size,
+      };
+      source_group_by_drive_id[drive.id].push(payload);
+    }
+    total_sources.push(
+      ...sources.map((source) => {
+        const payload = {
+          id: source.id,
+          file_id: source.file_id,
+          file_name: source.file_name,
+          parent_paths: source.parent_paths,
+          size: source.size,
+        };
+        return payload;
+      })
+    );
+    return {
+      id,
+      name,
+      drives: Object.keys(source_group_by_drive_id).map((drive_id) => {
+        return {
+          id: drive_id,
+          name: drive_group[drive_id].name,
+          sources: source_group_by_drive_id[drive_id],
+        };
+      }),
+    };
+  });
+  const all_sources = total_sources;
+  const source_size_count = all_sources.reduce((total, cur) => {
+    return total + cur.size;
+  }, 0);
+  const drives = Object.values(drive_group);
+  return {
+    id,
+    name,
+    poster_path,
+    medias: processed_episodes,
+    size_count: source_size_count,
+    size_count_text: bytes_to_size(source_size_count),
+    drives: Object.values(drive_group),
+    /** 需要转存到资源盘 */
+    need_to_resource: (() => {
+      if (drives.length !== 1) {
+        return false;
+      }
+      const drive = drives[0];
+      if (drive.type !== DriveTypes.AliyunBackupDrive) {
+        return false;
+      }
+      return true;
+    })(),
+    can_archive: (() => {
+      if (drives.length === 0) {
+        return false;
+      }
+      // 所有视频文件都在同一资源盘，才可以进行转存
+      if (drives.length !== 1) {
+        return false;
+      }
+      const drive = drives[0];
+      if (drive.type !== DriveTypes.AliyunResourceDrive) {
+        return false;
+      }
+      return true;
+    })(),
+  };
+}
+
+export type MoviePrepareArchiveItem = RequestedResource<typeof fetchMoviePrepareArchiveList>["list"][number];
+
+type MediaSource = {
   id: string;
   file_id: string;
   file_name: string;
@@ -295,8 +401,29 @@ type SeasonPrepareArchiveItemResp = {
     }[];
   }[];
 };
-
-export type SeasonPrepareArchiveItem = RequestedResource<typeof fetchSeasonPrepareArchiveList>["list"][number];
+type MoviePrepareArchiveItemResp = {
+  id: string;
+  tv_id: string;
+  name: string;
+  poster_path: string;
+  air_date: string;
+  medias: {
+    id: string;
+    name: string;
+    sources: {
+      id: string;
+      file_id: string;
+      file_name: string;
+      parent_paths: string;
+      size: number;
+      drive: {
+        id: string;
+        name: string;
+        type: number;
+      };
+    }[];
+  }[];
+};
 
 /** 获取可以归档的季列表 */
 export async function fetchSeasonPrepareArchiveList(
@@ -331,10 +458,43 @@ export async function fetchPartialSeasonPrepareArchive(values: { id: string }) {
   return Result.Ok(processSeasonPrepareArchive(r.data));
 }
 
+/** 获取可以归档的电影列表 */
+export async function fetchMoviePrepareArchiveList(
+  params: FetchParams &
+    Partial<{
+      name: string;
+      invalid: number;
+      duplicated: number;
+    }>
+) {
+  const { page, pageSize, ...rest } = params;
+  const resp = await request.get<ListResponse<MoviePrepareArchiveItemResp>>("/api/admin/movie/archive/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+  if (resp.error) {
+    return resp;
+  }
+  return Result.Ok({
+    ...resp.data,
+    list: resp.data.list.map(processMoviePrepareArchive),
+  });
+}
+
+export async function fetchPartialMoviePrepareArchive(values: { id: string }) {
+  const { id } = values;
+  const r = await request.get<MoviePrepareArchiveItemResp>(`/api/admin/movie/archive/${id}/partial`);
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  return Result.Ok(processMoviePrepareArchive(r.data));
+}
+
 /*
  * 获取电视剧部分详情
  */
-export async function fetch_partial_tv(params: { tv_id: string }) {
+export async function fetchPartialTV(params: { tv_id: string }) {
   const { tv_id } = params;
   const resp = await request.get<
     ListResponse<{
@@ -458,6 +618,12 @@ export async function fetchMovieList(params: FetchParams & { name: string; dupli
       popularity: string;
       vote_average: number;
       runtime: number;
+      persons: {
+        id: string;
+        name: string;
+        profile_path: string;
+        order: number;
+      }[];
     }>
   >("/api/admin/movie/list", {
     ...rest,
@@ -470,9 +636,10 @@ export async function fetchMovieList(params: FetchParams & { name: string; dupli
   return Result.Ok({
     ...resp.data,
     list: resp.data.list.map((movie) => {
-      const { ...rest } = movie;
+      const { persons, ...rest } = movie;
       return {
         ...rest,
+        persons: persons.slice(0, 5),
         // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
       };
     }),
@@ -1519,28 +1686,41 @@ export function notify_test(values: { text: string; token: string }) {
   return request.post(`/api/admin/notify/test`, { text, token });
 }
 
+type UserSettings = {
+  /**
+   * PushDeer token
+   */
+  push_deer_token: string;
+  /**
+   * filename parse rules
+   */
+  extra_filename_rules: string;
+  ignore_files_when_sync: string;
+  max_size_when_sync: number;
+};
+
 /**
  * 获取用户配置
- * 1. PushDeer token
- * 2. filename parse rules
  */
 export function fetchSettings() {
-  return request.get<{
-    push_deer_token: string;
-    extra_filename_rules: string;
-  }>("/api/admin/settings");
-}
-
-export function pushMessageToMembers(values: { content: string }) {
-  return request.post("/api/admin/notify", values);
+  return request.get<UserSettings>("/api/admin/settings");
 }
 
 /**
  * 更新用户配置
  */
-export function updateSettings(values: Partial<{ push_deer_token: string; extra_filename_rules: string }>) {
-  const { push_deer_token, extra_filename_rules } = values;
-  return request.post(`/api/admin/settings/update`, { push_deer_token, extra_filename_rules });
+export function updateSettings(values: Partial<UserSettings>) {
+  const { push_deer_token, extra_filename_rules, ignore_files_when_sync, max_size_when_sync } = values;
+  return request.post(`/api/admin/settings/update`, {
+    push_deer_token,
+    extra_filename_rules,
+    ignore_files_when_sync,
+    max_size_when_sync,
+  });
+}
+
+export function pushMessageToMembers(values: { content: string }) {
+  return request.post("/api/admin/notify", values);
 }
 
 /**
@@ -1701,6 +1881,7 @@ export function fetchSubtitleList(params: FetchParams) {
       id: string;
       name: string;
       poster_path: string;
+      season_text: string;
       episodes: {
         id: string;
         episode_text: string;
@@ -1715,6 +1896,38 @@ export function fetchSubtitleList(params: FetchParams) {
   >("/api/admin/subtitle/list", params);
 }
 export type SubtitleItem = RequestedResource<typeof fetchSubtitleList>["list"][number];
+
+// export const foo = new FakeRequest<
+//   FetchParams,
+//   void,
+//   ListResponse<{
+//     id: string;
+//     name: string;
+//     poster_path: string;
+//     season_text: string;
+//     episodes: {
+//       id: string;
+//       episode_text: string;
+//       subtitles: {
+//         id: string;
+//         file_id: string;
+//         name: string;
+//         language: string;
+//       }[];
+//     }[];
+//   }>
+// >({
+//   client,
+//   payload: {
+//     hostname: "",
+//     url: "",
+//     methods: "GET",
+//     // params: {},
+//     // body: {},
+//   },
+// });
+// foo.send({ page: 2 });
+// foo.cancel();
 
 export function deleteSubtitle(values: { subtitle_id: string }) {
   const { subtitle_id } = values;
@@ -1955,4 +2168,273 @@ export function setFileEpisodeProfile(values: {
     season_number,
     episode_number,
   });
+}
+
+export function setFileMovieProfile(values: { file_id: string; source?: number; unique_id: number | string }) {
+  const { file_id, source, unique_id } = values;
+  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_movie_profile`, {
+    source,
+    unique_id,
+  });
+}
+
+type TVProfileError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  tv_count: number;
+  tvs: {
+    id: string;
+    name: string | null;
+    poster_path: string | null;
+    season_count: number;
+    episode_count: number;
+  }[];
+};
+type EpisodeProfileError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  season_number: number | null;
+  episode_number: number | null;
+  episode_count: number;
+  episodes: {
+    id: string;
+    tv_id: string;
+    name: string | null;
+    poster_path: string | null;
+    season_id: string;
+    season_text: string;
+    episode_text: string;
+    source_count: number;
+  }[];
+};
+type SeasonProfileError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  season_number: number | null;
+  season_count: number;
+  seasons: {
+    id: string;
+    tv_id: string;
+    name: string | null;
+    poster_path: string | null;
+    episode_count: number;
+  }[];
+};
+type MovieProfileError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  movies: {
+    id: string;
+    name: string | null;
+    poster_path: string | null;
+    source_count: number;
+  }[];
+};
+
+type TVError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  texts: string[];
+};
+type SeasonError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  tv_id: string;
+  season_text: string;
+  texts: string[];
+};
+type EpisodeError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  tv_id: string;
+  season_id: string;
+  season_text: string;
+  episode_text: string;
+  texts: string[];
+};
+type MovieError = {
+  id: string;
+  name: string | null;
+  poster_path: string | null;
+  texts: string[];
+};
+
+export async function fetchInvalidMediaList(params: FetchParams) {
+  const r = await request.post<
+    ListResponseWithCursor<{
+      id: string;
+      type: MediaErrorTypes;
+      unique_id: string;
+      profile: string;
+    }>
+  >("/api/admin/media_error/list", params);
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const { next_marker, list } = r.data;
+  type MediaErrorPayload = MutableRecord<{
+    [MediaErrorTypes.TVProfile]: TVProfileError[];
+    [MediaErrorTypes.SeasonProfile]: SeasonProfileError[];
+    [MediaErrorTypes.EpisodeProfile]: EpisodeProfileError[];
+    [MediaErrorTypes.MovieProfile]: MovieProfileError[];
+    [MediaErrorTypes.TV]: TVError;
+    [MediaErrorTypes.Season]: SeasonError;
+    [MediaErrorTypes.Episode]: EpisodeError;
+    [MediaErrorTypes.Movie]: MovieError;
+  }>;
+  return Result.Ok({
+    next_marker,
+    list: list.map((media) => {
+      const { id, type, unique_id, profile } = media;
+      const json = JSON.parse(profile);
+      const { type: t, data: payload } = (() => {
+        if (type === MediaErrorTypes.TVProfile) {
+          const data = json as TVProfileError[];
+          return {
+            type: MediaErrorTypes.TVProfile,
+            data,
+          } as MediaErrorPayload;
+        }
+        if (type === MediaErrorTypes.SeasonProfile) {
+          const data = json as SeasonProfileError[];
+          return {
+            type: MediaErrorTypes.Season,
+            data,
+          };
+        }
+        if (type === MediaErrorTypes.EpisodeProfile) {
+          const data = json as EpisodeProfileError[];
+          return {
+            type: MediaErrorTypes.EpisodeProfile,
+            data,
+          } as MediaErrorPayload;
+        }
+        if (type === MediaErrorTypes.MovieProfile) {
+          const data = json as MovieProfileError[];
+          return {
+            type: MediaErrorTypes.MovieProfile,
+            data,
+          } as MediaErrorPayload;
+        }
+        if (type === MediaErrorTypes.TV) {
+          const { id, name, poster_path, texts } = json as {
+            id: string;
+            name: string;
+            poster_path: string;
+            texts: string[];
+          };
+          return {
+            type: MediaErrorTypes.TV,
+            data: {
+              id,
+              name,
+              poster_path,
+              texts,
+            },
+          } as MediaErrorPayload;
+        }
+        if (type === MediaErrorTypes.Season) {
+          const { id, name, poster_path, season_text, tv_id, texts } = json as {
+            id: string;
+            name: string;
+            poster_path: string;
+            season_text: string;
+            tv_id: string;
+            texts: string[];
+          };
+          return {
+            type: MediaErrorTypes.Season,
+            data: {
+              id,
+              name,
+              poster_path,
+              season_text,
+              tv_id,
+              texts,
+            },
+          } as MediaErrorPayload;
+        }
+        if (type === MediaErrorTypes.Episode) {
+          const { id, name, poster_path, season_text, episode_text, season_id, tv_id, texts } = json as {
+            id: string;
+            name: string;
+            poster_path: string;
+            season_text: string;
+            episode_text: string;
+            tv_id: string;
+            season_id: string;
+            texts: string[];
+          };
+          return {
+            type: MediaErrorTypes.Episode,
+            data: {
+              id,
+              name,
+              poster_path,
+              season_text,
+              episode_text,
+              season_id,
+              tv_id,
+              texts,
+            },
+          } as MediaErrorPayload;
+        }
+        if (type === MediaErrorTypes.Movie) {
+          const { id, name, poster_path, texts } = json as {
+            id: string;
+            name: string;
+            poster_path: string;
+            texts: string[];
+          };
+          return {
+            type: MediaErrorTypes.Movie,
+            data: {
+              id,
+              name,
+              poster_path,
+              texts,
+            },
+          } as MediaErrorPayload;
+        }
+        return {
+          type: MediaErrorTypes.Unknown,
+          data: null,
+        };
+      })();
+      return {
+        id,
+        type,
+        unique_id,
+        data: payload,
+      } as { id: string; unique_id: string } & MediaErrorPayload;
+    }),
+  });
+}
+export type MediaErrorItem = RequestedResource<typeof fetchInvalidMediaList>["list"][number];
+
+/** 删除剧集详情 */
+export function deleteTVProfileInMediaError(values: { id: string; profile_id: string }) {
+  return request.post<null | {}>("/api/admin/media_error/tv_profile/delete", values);
+}
+
+/** 删除季详情 */
+export function deleteSeasonProfileInMediaError(values: { id: string; profile_id: string }) {
+  return request.post<null | {}>("/api/admin/media_error/season_profile/delete", values);
+}
+
+/** 删除剧集详情 */
+export function deleteEpisodeProfileInMediaError(values: { id: string; profile_id: string }) {
+  return request.post<null | {}>("/api/admin/media_error/episode_profile/delete", values);
+}
+
+/** 删除电影详情 */
+export function deleteMovieProfileInMediaError(values: { id: string; profile_id: string }) {
+  return request.post<null | {}>("/api/admin/media_error/movie_profile/delete", values);
 }

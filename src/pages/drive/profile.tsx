@@ -2,7 +2,7 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft, ChevronRight, FolderInput } from "lucide-solid";
+import { ArrowLeft, Binary, ChevronRight, FolderInput, Trash } from "lucide-solid";
 
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
@@ -34,7 +34,8 @@ import { FileType } from "@/constants";
 import { createJob, driveList } from "@/store";
 import { buildRegexp } from "@/utils";
 import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
-import { setFileEpisodeProfile } from "@/services";
+import { setFileEpisodeProfile, setFileMovieProfile } from "@/services";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -110,6 +111,27 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
     onFailed(error) {
       episodeSelect.dialog.okBtn.setLoading(false);
+      app.tip({
+        text: ["设置失败", error.message],
+      });
+    },
+  });
+  const movieProfileSetRequest = new RequestCore(setFileMovieProfile, {
+    onSuccess(v) {
+      createJob({
+        job_id: v.job_id,
+        onFinish() {
+          movieSelect.dialog.okBtn.setLoading(false);
+          movieSelect.dialog.hide();
+          curFile.clear();
+          app.tip({
+            text: ["完成设置"],
+          });
+        },
+      });
+    },
+    onFailed(error) {
+      movieSelect.dialog.okBtn.setLoading(false);
       app.tip({
         text: ["设置失败", error.message],
       });
@@ -401,6 +423,26 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const movieSelect = new TMDBSearcherDialogCore({
+    type: "movie",
+    onOk(movieProfile) {
+      if (!curFile.value) {
+        app.tip({
+          text: ["请先选择要设置的文件"],
+        });
+        return;
+      }
+      const file = curFile.value;
+      app.tip({
+        text: ["开始设置"],
+      });
+      movieSelect.dialog.okBtn.setLoading(true);
+      movieProfileSetRequest.run({
+        file_id: file.file_id,
+        unique_id: movieProfile.id,
+      });
+    },
+  });
   const childNamesModifyItem = new MenuItemCore({
     label: "修改子文件名称",
     async onClick() {
@@ -438,6 +480,21 @@ export const DriveProfilePage: ViewComponent = (props) => {
         }),
         group2: [],
       });
+    },
+  });
+  const folderDeletingBtn = new ButtonCore({
+    onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要删除的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      curFileWithPosition.select(driveFileManage.virtualSelectedFolder);
+      folderDeletingConfirmDialog.setTitle(`删除文件`);
+      folderDeletingConfirmDialog.show();
+      fileMenu.hide();
     },
   });
   const folderDeletingItem = new MenuItemCore({
@@ -491,6 +548,21 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
+  const setMovieProfileItem = new MenuItemCore({
+    label: "设置电影信息",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要设置的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      curFile.select(file);
+      movieSelect.show();
+      fileMenu.hide();
+    },
+  });
   const driveSubMenu = new MenuCore({
     _name: "menus-of-drives",
     side: "right",
@@ -512,6 +584,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       }),
       toResourceDriveItem,
       setEpisodeProfileItem,
+      setMovieProfileItem,
       folderDeletingItem,
     ],
     onHidden() {
@@ -753,10 +826,19 @@ export const DriveProfilePage: ViewComponent = (props) => {
           <DriveFileCard
             store={curFile}
             drive={drive}
-            onDeleting={(file) => {
-              folderDeletingConfirmDialog.setTitle(`删除文件`);
-              folderDeletingConfirmDialog.show();
-            }}
+            footer={
+              <div class="mt-4 flex items-center space-x-2">
+                <Button store={folderDeletingBtn} variant="subtle" icon={<Trash class="w-4 h-4" />}>
+                  删除
+                </Button>
+                {/* <Button store={setProfileBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
+                  关联电视剧
+                </Button> */}
+                {/* <Button store={deletingBtn} variant="subtle" icon={<Play class="w-4 h-4" />}>
+                  播放
+                </Button> */}
+              </div>
+            }
           />
         </div>
       </Dialog>
@@ -766,6 +848,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
           <EpisodeSelect store={episodeSelect} />
         </div>
       </Dialog>
+      <TMDBSearcherDialog store={movieSelect} />
     </>
   );
 };

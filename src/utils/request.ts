@@ -5,7 +5,24 @@ import axios, { AxiosError, CancelToken, CancelTokenSource } from "axios";
 import qs from "qs";
 
 import { JSONObject, Result } from "@/types";
-import { app } from "@/store/app";
+import { Application } from "@/domains/app";
+// import { app } from "@/store/app";
+
+let cachedApp: Application | null = null;
+export function setApp(app: Application) {
+  cachedApp = app;
+}
+export function getApp() {
+  if (cachedApp === null) {
+    throw new Error("请先调用 setApp");
+  }
+  return cachedApp;
+}
+// let host = "https://media-t.funzm.com";
+let host = window.location.origin;
+function getHost() {
+  return host;
+}
 
 const client = axios.create({
   timeout: 6000,
@@ -25,8 +42,11 @@ type RequestClient = {
 export const request = {
   get: async (endpoint, query, config = {}) => {
     try {
-      const url = `${endpoint}${query ? "?" + qs.stringify(query) : ""}`;
+      const h = getHost();
+      const url = `${h}${endpoint}${query ? "?" + qs.stringify(query) : ""}`;
+      const app = getApp();
       const resp = await client.get<{ code: number | string; msg: string; data: unknown | null }>(url, {
+        // cancelToken: source.token,
         headers: {
           ...(config.headers || {}),
           Authorization: app.user.token,
@@ -45,6 +65,7 @@ export const request = {
     }
   },
   post: async (url, body, config = {}) => {
+    const app = getApp();
     try {
       const resp = await client.post<{ code: number | string; msg: string; data: unknown | null }>(url, body, {
         headers: {

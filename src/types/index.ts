@@ -60,6 +60,13 @@ export type Unpacked<T> = T extends (infer U)[]
   ? U
   : T;
 
+export type MutableRecord<U> = {
+  [SubType in keyof U]: {
+    type: SubType;
+    data: U[SubType];
+  };
+}[keyof U];
+
 export type BaseApiResp<T> = {
   code: number;
   msg: string;

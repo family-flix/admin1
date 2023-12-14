@@ -527,5 +527,16 @@ export function fetchFileProfile(values: { file_id: string; drive_id: string }) 
         season_text?: string;
       };
     };
+    parsed_movie: null | {
+      id: string;
+      name?: string;
+      file_name?: string;
+      profile: null | {
+        name: string;
+        original_name: string;
+        overview: string;
+        poster_path: string;
+      };
+    };
   }>(`/api/admin/file/${file_id}/profile?drive_id=${drive_id}`, {});
 }

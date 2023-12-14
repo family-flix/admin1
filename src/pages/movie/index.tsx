@@ -12,7 +12,7 @@ import {
   refreshMovieProfiles,
   transferMovieToAnotherDrive,
 } from "@/services";
-import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox, Dialog } from "@/components/ui";
+import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Dialog } from "@/components/ui";
 import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
 import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import {
@@ -63,31 +63,27 @@ export const MovieManagePage: ViewComponent = (props) => {
     },
   });
   const movieToResourceDriveRequest = new RequestCore(moveMovieToResourceDrive, {
-    onLoading(loading) {
-      moveToResourceDriveConfirmDialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["移动失败", error.message],
-      });
-    },
     onSuccess(r) {
-      app.tip({
-        text: ["开始移动，请等待一段时间"],
-      });
       createJob({
         job_id: r.job_id,
         onFinish() {
+          moveToResourceDriveConfirmDialog.okBtn.setLoading(false);
           if (!movieRef.value) {
             return;
           }
           const { name } = movieRef.value;
           app.tip({
-            text: [`完成电影 '${name}' 移动到资源盘`],
+            text: [`完成电影「${name}」移动到资源盘`],
           });
         },
       });
       moveToResourceDriveConfirmDialog.hide();
+    },
+    onFailed(error) {
+      moveToResourceDriveConfirmDialog.okBtn.setLoading(false);
+      app.tip({
+        text: ["移动失败", error.message],
+      });
     },
   });
   const movieList = new ListCore(new RequestCore(fetchMovieList), {
@@ -226,6 +222,9 @@ export const MovieManagePage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择电影"] });
         return;
       }
+      app.tip({
+        text: ["开始移动，请等待一段时间"],
+      });
       movieToResourceDriveRequest.run({
         movie_id: curMovie.id,
       });
@@ -315,10 +314,6 @@ export const MovieManagePage: ViewComponent = (props) => {
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshMovieListBtn}>
               更新近3月内电影详情
             </Button>
-            <div class="flex items-center space-x-2">
-              <Checkbox store={duplicatedCheckbox}></Checkbox>
-              <span>重复内容</span>
-            </div>
           </div>
           <div class="flex items-center space-x-2 mt-4">
             <Input class="" store={nameSearchInput} />
@@ -363,7 +358,8 @@ export const MovieManagePage: ViewComponent = (props) => {
               <div class="space-y-4">
                 <For each={state().dataSource}>
                   {(movie) => {
-                    const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime } = movie;
+                    const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime, persons } =
+                      movie;
                     homeMovieProfilePage.query = {
                       id,
                     };
@@ -400,6 +396,18 @@ export const MovieManagePage: ViewComponent = (props) => {
                                 <Clock class="w-4 h-4" />
                                 <div>{runtime}</div>
                               </div>
+                            </div>
+                            <div class="flex flex-wrap gap-4 mt-4">
+                              <For each={persons}>
+                                {(person) => {
+                                  return (
+                                    <div class="flex flex-col items-center w-[80px]">
+                                      <LazyImage class="w-8 h-8 rounded-full" src={person.profile_path} />
+                                      <div class="mt-2 text-center">{person.name}</div>
+                                    </div>
+                                  );
+                                }}
+                              </For>
                             </div>
                             <div class="space-x-2 mt-6">
                               <Button

@@ -110,7 +110,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   const files = () => state().files;
 
   return (
-    <div class="h-screen p-8">
+    <div class="h-screen p-8 overflow-y-auto">
       <h1 class="text-2xl">转存资源</h1>
       <div class="mt-8">
         <div class="flex items-center space-x-2">
@@ -187,6 +187,14 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
                   );
                 }}
               </For>
+            </div>
+            <div
+              class="text-center"
+              onClick={() => {
+                sharedResource.loadMore();
+              }}
+            >
+              加载更多
             </div>
           </div>
         </Show>

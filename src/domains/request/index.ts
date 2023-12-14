@@ -131,6 +131,9 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     }
     this.run(...this.args);
   }
+  cancel() {
+    // ...
+  }
   clear() {
     this.response = null;
     this.emit(Events.StateChange, { ...this.state });

@@ -1,10 +1,10 @@
 /**
  * @file 字幕列表
  */
-import { For, JSX, Show, createSignal } from "solid-js";
-import { Eye, Film, Loader, Mails, RotateCw, Tv } from "lucide-solid";
+import { For, JSX, createSignal } from "solid-js";
+import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
-import { SubtitleItem, deleteSubtitle, fetchSubtitleList, replyReport } from "@/services";
+import { SubtitleItem, deleteSubtitle, fetchSubtitleList } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, LazyImage, Dialog } from "@/components/ui";
 import { ButtonCore, DialogCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
@@ -150,13 +150,14 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={dataSource()}>
               {(season, i) => {
-                const { id, name, poster_path, episodes } = season;
+                const { id, name, season_text, poster_path, episodes } = season;
                 return (
                   <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
                     <div class="flex flex-1">
                       <LazyImage class="w-[120px] object-cover" src={poster_path} />
                       <div class="flex-1 ml-4 w-full">
                         <div class="text-xl">{name}</div>
+                        <div class="text-xl">{season_text}</div>
                         <div class="grid grid-cols-3 gap-2 mt-4 w-full">
                           <For each={episodes}>
                             {(episode) => {

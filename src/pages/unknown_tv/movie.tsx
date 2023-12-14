@@ -2,7 +2,7 @@
  * @file 未识别的电影
  */
 import { For, createSignal } from "solid-js";
-import { Brush, RotateCcw, Trash } from "lucide-solid";
+import { Brush, RotateCcw, Search, Trash } from "lucide-solid";
 
 import {
   UnknownMovieItem,
@@ -11,9 +11,9 @@ import {
   delete_unknown_movie_list,
   fetch_unknown_movie_list,
 } from "@/services";
-import { Button, Dialog, ListView, LazyImage, ScrollView } from "@/components/ui";
+import { Button, Dialog, ListView, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import { ButtonCore, ButtonInListCore, DialogCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
@@ -49,10 +49,60 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       app.tip({ text: ["删除电影失败", error.message] });
     },
   });
+  const bindProfileForMovie = new RequestCore(setProfileForUnknownMovie, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({ text: ["修改失败", error.message] });
+    },
+    onSuccess() {
+      app.tip({ text: ["修改成功"] });
+      dialog.hide();
+      list.deleteItem((movie) => {
+        if (movie.id === movieRef.value?.id) {
+          return true;
+        }
+        return false;
+      });
+    },
+  });
+  const deleteRequest = new RequestCore(delete_unknown_movie_list, {
+    onLoading(loading) {
+      deleteListConfirmDialog.okBtn.setLoading(loading);
+      deleteListBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除失败", error.message],
+      });
+    },
+    onSuccess() {
+      app.tip({
+        text: ["删除成功"],
+      });
+      deleteListConfirmDialog.hide();
+      list.refresh();
+    },
+  });
   const movieRef = new RefCore<UnknownMovieItem>();
   const refreshBtn = new ButtonCore({
     onClick() {
       list.refresh();
+    },
+  });
+  const nameSearchInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
+  const searchBtn = new ButtonCore({
+    onClick() {
+      if (!nameSearchInput.value) {
+        return;
+      }
+      list.search({ name: nameSearchInput.value });
     },
   });
   const selectMatchedProfileBtn = new ButtonInListCore<UnknownMovieItem>({
@@ -78,24 +128,6 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       deleteConfirmDialog.show();
     },
   });
-  const bindProfileForMovie = new RequestCore(setProfileForUnknownMovie, {
-    onLoading(loading) {
-      dialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({ text: ["修改失败", error.message] });
-    },
-    onSuccess() {
-      app.tip({ text: ["修改成功"] });
-      dialog.hide();
-      list.deleteItem((movie) => {
-        if (movie.id === movieRef.value?.id) {
-          return true;
-        }
-        return false;
-      });
-    },
-  });
   const dialog = new TMDBSearcherDialogCore({
     type: "movie",
     onOk(searched_tv) {
@@ -107,24 +139,6 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       bindProfileForMovie.run(id, {
         unique_id: searched_tv.id,
       });
-    },
-  });
-  const deleteRequest = new RequestCore(delete_unknown_movie_list, {
-    onLoading(loading) {
-      deleteListConfirmDialog.okBtn.setLoading(loading);
-      deleteListBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["删除失败", error.message],
-      });
-    },
-    onSuccess() {
-      app.tip({
-        text: ["删除成功"],
-      });
-      deleteListConfirmDialog.hide();
-      list.refresh();
     },
   });
   const deleteListConfirmDialog = new DialogCore({
@@ -162,6 +176,12 @@ export const UnknownMoviePage: ViewComponent = (props) => {
         <div class="my-4 space-x-2">
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
+          </Button>
+        </div>
+        <div class="flex items-center space-x-2 mt-4">
+          <Input class="" store={nameSearchInput} />
+          <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+            搜索
           </Button>
         </div>
         <ListView

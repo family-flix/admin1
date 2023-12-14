@@ -5,6 +5,7 @@
 import { ListCore } from "@/domains/list";
 import { Application } from "@/domains/app";
 import { NavigatorCore } from "@/domains/navigator";
+import { setApp } from "@/utils/request";
 import { has_admin } from "@/services";
 import { Result } from "@/types";
 
@@ -39,6 +40,7 @@ export const app = new Application({
     return Result.Ok(null);
   },
 });
+setApp(app);
 user.onTip((msg) => {
   app.tip(msg);
 });

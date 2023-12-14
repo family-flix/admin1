@@ -295,6 +295,7 @@ export class ListCore<
     if (params.page === 1 && response.dataSource.length === 0) {
       response.empty = true;
     }
+    // console.log(response.next_marker);
     // @ts-ignore
     if (response.next_marker) {
       // @ts-ignore
