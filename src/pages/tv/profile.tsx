@@ -5,7 +5,7 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
 import {
-  fetchTVProfile,
+  fetchSeasonProfile,
   TVProfile,
   fetchEpisodesOfSeason,
   EpisodeItemInSeason,
@@ -35,7 +35,7 @@ import { bytes_to_size, cn } from "@/utils";
 export const TVProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const profileRequest = new RequestCore(fetchTVProfile, {
+  const profileRequest = new RequestCore(fetchSeasonProfile, {
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },
@@ -48,7 +48,7 @@ export const TVProfilePage: ViewComponent = (props) => {
       curEpisodeList.modifyResponse((response) => {
         return {
           ...response,
-          dataSource: v.curSeasonEpisodes,
+          dataSource: v.episodes,
           initial: false,
           noMore: false,
           search: {

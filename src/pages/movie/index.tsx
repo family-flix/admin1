@@ -358,8 +358,7 @@ export const MovieManagePage: ViewComponent = (props) => {
               <div class="space-y-4">
                 <For each={state().dataSource}>
                   {(movie) => {
-                    const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime, persons } =
-                      movie;
+                    const { id, name, overview, poster_path, air_date, vote_average, runtime, persons } = movie;
                     homeMovieProfilePage.query = {
                       id,
                     };
@@ -383,10 +382,6 @@ export const MovieManagePage: ViewComponent = (props) => {
                               <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
                                 <Calendar class="w-4 h-4 text-slate-800" />
                                 <div class="break-keep whitespace-nowrap">{air_date}</div>
-                              </div>
-                              <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
-                                <Award class="w-4 h-4" />
-                                <div>{popularity}</div>
                               </div>
                               <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
                                 <Star class="w-4 h-4" />

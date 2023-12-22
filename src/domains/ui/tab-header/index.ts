@@ -8,24 +8,24 @@ enum Events {
   Change,
 }
 type TheTypesOfEvents<T> = {
-  [Events.StateChange]: TabsTopState<T>;
+  [Events.StateChange]: TabHeaderState<T>;
   [Events.Scroll]: { left: number };
   [Events.LinePositionChange]: { left: number };
   [Events.Mounted]: void;
   [Events.Change]: { index: number };
 };
-type TabsTopState<T> = {
+type TabHeaderState<T> = {
   tabs: T[];
   current: number;
   curId: string | null;
 };
-type TabsTopProps<T extends { id: string; text: string }> = {
+type TabHeaderProps<T extends { id: string; text: string }> = {
   key: string;
   options: T[];
   targetLeftWhenSelected?: number;
 };
 
-export class TabsTopCore<T extends { id: string; text: string }> extends BaseDomain<TheTypesOfEvents<T>> {
+export class TabHeaderCore<T extends { id: string; text: string }> extends BaseDomain<TheTypesOfEvents<T>> {
   key = "id";
   tabs: T[] = [];
   extra: Record<
@@ -59,7 +59,7 @@ export class TabsTopCore<T extends { id: string; text: string }> extends BaseDom
   get selectedTab() {
     return this.tabs[this.current];
   }
-  get state(): TabsTopState<T> {
+  get state(): TabHeaderState<T> {
     return {
       tabs: this.tabs,
       curId: this.selectedTabId,
@@ -70,7 +70,7 @@ export class TabsTopCore<T extends { id: string; text: string }> extends BaseDom
   /**
    * @param {{targetLeftWhenSelected: number}} props
    */
-  constructor(props: Partial<{ _name: string }> & TabsTopProps<T>) {
+  constructor(props: Partial<{ _name: string }> & TabHeaderProps<T>) {
     super(props);
 
     const { key = "id", options, targetLeftWhenSelected = 0 } = props;
@@ -157,7 +157,7 @@ export class TabsTopCore<T extends { id: string; text: string }> extends BaseDom
       ...info,
     };
   }
-  calcScrollLeft(curTab: TabsTopCore<T>["selectedTab"]) {
+  calcScrollLeft(curTab: TabHeaderCore<T>["selectedTab"]) {
     // const { width, left } = this.container;
     console.log("[]calcScrollLeft", this.container, curTab);
     // const theTabMiddle = curTab.left + curTab.width / 2;

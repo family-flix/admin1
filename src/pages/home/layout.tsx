@@ -62,9 +62,10 @@ export const HomeLayout: ViewComponent = (props) => {
       settingsBtn.setLoading(loading);
     },
     onSuccess(v) {
-      const { push_deer_token = "", extra_filename_rules = "" } = v;
+      const { push_deer_token = "", extra_filename_rules = "", ignore_files_when_sync } = v;
       notify1TokenInput.setValue(push_deer_token);
       filenameParseRuleInput.setValue(extra_filename_rules);
+      ignoreFilesRuleInput.setValue(ignore_files_when_sync);
     },
     onFailed(error) {
       app.tip({

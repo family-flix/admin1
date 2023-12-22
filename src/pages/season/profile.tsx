@@ -5,7 +5,7 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
 import {
-  fetchTVProfile,
+  fetchSeasonProfile,
   TVProfile,
   changeSeasonProfile,
   fetchEpisodesOfSeason,
@@ -26,28 +26,28 @@ import { createJob, appendAction, mediaPlayingPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { bytes_to_size, cn } from "@/utils";
 
-export const TVProfilePage: ViewComponent = (props) => {
+export const SeasonProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const profileRequest = new RequestCore(fetchTVProfile, {
+  const profileRequest = new RequestCore(fetchSeasonProfile, {
     onSuccess(v) {
       setProfile(v);
-      if (v.seasons.length === 0) {
-        return;
-      }
-      seasonRef.select(v.curSeason);
-      curEpisodeList.modifyResponse((response) => {
-        return {
-          ...response,
-          dataSource: v.curSeasonEpisodes,
-          initial: false,
-          noMore: false,
-          search: {
-            ...response.search,
-            season_id: response.search.season_id || v.seasons[0].id,
-          },
-        };
-      });
+      // if (v.seasons.length === 0) {
+      //   return;
+      // }
+      // seasonRef.select(v.curSeason);
+      // curEpisodeList.modifyResponse((response) => {
+      //   return {
+      //     ...response,
+      //     dataSource: v.curSeasonEpisodes,
+      //     initial: false,
+      //     noMore: false,
+      //     search: {
+      //       ...response.search,
+      //       season_id: response.search.season_id || v.seasons[0].id,
+      //     },
+      //   };
+      // });
     },
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
@@ -214,10 +214,10 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const seasonDeletingBtn = new ButtonCore({
     onClick() {
-      if (profileRequest.response) {
-        seasonRef.select(profileRequest.response.curSeason);
-      }
-      seasonDeletingConfirmDialog.show();
+      // if (profileRequest.response) {
+      //   seasonRef.select(profileRequest.response.curSeason);
+      // }
+      // seasonDeletingConfirmDialog.show();
     },
   });
   const seasonDeletingConfirmDialog = new DialogCore({
@@ -304,29 +304,27 @@ export const TVProfilePage: ViewComponent = (props) => {
   seasonRef.onStateChange((nextState) => {
     setCurSeason(nextState);
   });
-  curEpisodeList.onStateChange((nextResponse) => {
-    const sourceSizeCount = nextResponse.dataSource.reduce((count, cur) => {
-      const curCount = cur.sources.reduce((total, cur) => {
-        return total + cur.size;
-      }, 0);
-      return count + curCount;
-    }, 0);
-    setSizeCount(bytes_to_size(sourceSizeCount));
-    setCurEpisodeResponse(nextResponse);
-  });
-  curEpisodeList.onComplete(() => {
-    seasonRef.select({
-      id: curEpisodeList.params.season_id as string,
-      name: tmpSeasonRef.value?.name ?? "",
-      season_text: tmpSeasonRef.value?.season_text ?? "",
-    });
-  });
+  // curEpisodeList.onStateChange((nextResponse) => {
+  //   const sourceSizeCount = nextResponse.dataSource.reduce((count, cur) => {
+  //     const curCount = cur.sources.reduce((total, cur) => {
+  //       return total + cur.size;
+  //     }, 0);
+  //     return count + curCount;
+  //   }, 0);
+  //   setSizeCount(bytes_to_size(sourceSizeCount));
+  //   setCurEpisodeResponse(nextResponse);
+  // });
+  // curEpisodeList.onComplete(() => {
+  //   seasonRef.select({
+  //     id: curEpisodeList.params.season_id as string,
+  //     name: tmpSeasonRef.value?.name ?? "",
+  //     season_text: tmpSeasonRef.value?.season_text ?? "",
+  //   });
+  // });
 
   onMount(() => {
-    const { id } = view.query;
-    // console.log("[PAGE]tv/profile - onMount", id);
     const season_id = view.query.season_id;
-    profileRequest.run({ tv_id: id, season_id });
+    profileRequest.run({ season_id });
   });
 
   return (
@@ -424,29 +422,8 @@ export const TVProfilePage: ViewComponent = (props) => {
                     }}
                   </For>
                 </div>
-                <ListView
-                  store={curEpisodeList}
-                  class="space-y-4"
-                  // skeleton={
-                  //   <div class="space-y-4">
-                  //     <div>
-                  //       <Skeleton class="w-full h-[28px]" />
-                  //       <div class="pl-4 space-y-1">
-                  //         <Skeleton class="w-full h-[24px]" />
-                  //         <Skeleton class="w-18 h-[24px]" />
-                  //       </div>
-                  //     </div>
-                  //     <div>
-                  //       <Skeleton class="w-32 h-[28px]" />
-                  //       <div class="pl-4 space-y-1">
-                  //         <Skeleton class="w-24 h-[24px]" />
-                  //         <Skeleton class="w-full h-[24px]" />
-                  //       </div>
-                  //     </div>
-                  //   </div>
-                  // }
-                >
-                  <For each={curEpisodeResponse().dataSource}>
+                <div class="space-y-4">
+                  <For each={profile()?.episodes}>
                     {(episode) => {
                       const { id, name, episode_number, runtime, sources } = episode;
                       return (
@@ -483,7 +460,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                                         class="p-1 cursor-pointer"
                                         title="删除源"
                                         onClick={() => {
-                                          episodeRef.select(episode);
+                                          // episodeRef.select(episode);
                                           fileRef.select(source);
                                           fileDeletingConfirmDialog.show();
                                         }}
@@ -500,11 +477,12 @@ export const TVProfilePage: ViewComponent = (props) => {
                       );
                     }}
                   </For>
-                </ListView>
+                </div>
               </div>
             </div>
           </Show>
         </div>
+        <div class="h-[120px]"></div>
       </ScrollView>
       <TMDBSearcherDialog store={seasonProfileChangeSelectDialog} />
       <Dialog store={profileManualUpdateDialog}>

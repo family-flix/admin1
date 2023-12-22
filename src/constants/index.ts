@@ -267,6 +267,10 @@ export const MediaErrorTypeTextMap: Record<MediaErrorTypes, string> = {
   [MediaErrorTypes.Episode]: "剧集",
   [MediaErrorTypes.Movie]: "电影",
 };
+export enum MediaTypes {
+  Season = 1,
+  Movie = 2,
+}
 export const MediaErrorTypeOptions = Object.keys(MediaErrorTypeTextMap).map((k) => {
   return {
     value: Number(k),

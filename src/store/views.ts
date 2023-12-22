@@ -12,13 +12,13 @@ import { SharedFilesTransferPage } from "@/pages/resource";
 import { MovieManagePage } from "@/pages/movie";
 import { MovieProfilePage } from "@/pages/movie/profile";
 import { TVManagePage } from "@/pages/season";
-import { TVProfilePage } from "@/pages/season/profile";
+import { SeasonProfilePage } from "@/pages/season/profile";
 import { MediaPlayingPage } from "@/pages/play/index";
-import { UnknownMediaLayout } from "@/pages/unknown_tv/layout";
-import { UnknownTVPage } from "@/pages/unknown_tv/tv";
-import { UnknownSeasonPage } from "@/pages/unknown_tv/season";
-import { UnknownEpisodePage } from "@/pages/unknown_tv/episode";
-import { UnknownMoviePage } from "@/pages/unknown_tv/movie";
+import { UnknownMediaLayout } from "@/pages/unknown_media/layout";
+import { UnknownSeasonMediaPage } from "@/pages/unknown_media/media";
+import { UnknownSeasonPage } from "@/pages/unknown_media/season";
+import { UnknownEpisodePage } from "@/pages/unknown_media/episode";
+import { UnknownMoviePage } from "@/pages/unknown_media/movie";
 import { SyncTaskListPage } from "@/pages/sync_task";
 import { CollectionCreatePage } from "@/pages/collection/create";
 import { MemberManagePage } from "@/pages/member";
@@ -81,7 +81,7 @@ export const homeTVProfilePage = new RouteViewCore({
   key: "/home/tv_profile",
   title: "电视剧详情",
   // component: TVProfilePage,
-  component: TVProfilePage,
+  component: SeasonProfilePage,
 });
 export const homeTVListPage = new RouteViewCore({
   key: "/home/tv",
@@ -104,7 +104,7 @@ export const homeMovieListPage = new RouteViewCore({
 export const homeUnknownTVPage = new RouteViewCore({
   key: "/home/unknown_tv/tv",
   title: "未识别的电视剧",
-  component: UnknownTVPage,
+  component: UnknownSeasonMediaPage,
 });
 export const homeInvalidTVListPage = new RouteViewCore({
   key: "/home/tv/invalid",

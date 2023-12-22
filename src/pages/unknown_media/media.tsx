@@ -5,11 +5,11 @@ import { For, Show, createSignal } from "solid-js";
 import { Brush, RotateCcw, Search, Trash } from "lucide-solid";
 
 import {
-  UnknownTVItem,
+  UnknownSeasonMediaItem,
   bind_profile_for_unknown_tv,
   deleteUnknownTV,
   deleteUnknownTVList,
-  fetchUnknownTVList,
+  fetchUnknownSeasonMediaList,
   modifyUnknownTVName,
 } from "@/services";
 import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
@@ -20,10 +20,10 @@ import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 
-export const UnknownTVPage: ViewComponent = (props) => {
+export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const list = new ListCore(new RequestCore(fetchUnknownTVList), {
+  const list = new ListCore(new RequestCore(fetchUnknownSeasonMediaList), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
     },
@@ -158,20 +158,20 @@ export const UnknownTVPage: ViewComponent = (props) => {
       });
     },
   });
-  const tvDeletingBtn = new ButtonInListCore<UnknownTVItem>({
+  const tvDeletingBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
     onClick(record) {
       parsedTVRef.select(record);
       tvDeletingConfirmDialog.show();
     },
   });
-  const parsedTVRef = new RefCore<UnknownTVItem>();
-  const unknownTVProfileSetBtn = new ButtonInListCore<UnknownTVItem>({
+  const parsedTVRef = new RefCore<UnknownSeasonMediaItem>();
+  const unknownTVProfileSetBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
     onClick(record) {
       parsedTVRef.select(record);
       tvProfileSetDialog.show();
     },
   });
-  const unknownTVNameModifyBtn = new ButtonInListCore<UnknownTVItem>({
+  const unknownTVNameModifyBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
     onClick(record) {
       parsedTVRef.select(record);
       unknownTVNameModifyDialog.show();
@@ -257,7 +257,7 @@ export const UnknownTVPage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={response().dataSource}>
               {(unknown_tv) => {
-                const { id, name, file_name, drive, parsed_seasons, parsed_episodes } = unknown_tv;
+                const { id, name, season_text, sources } = unknown_tv;
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
@@ -271,16 +271,19 @@ export const UnknownTVPage: ViewComponent = (props) => {
                       </div>
                     </div>
                     <div class="flex-1 w-0 mt-2">
-                      <div class="text-lg">{name}</div>
-                      <Show when={parsed_episodes}>
-                        <div class="mt-4 p-2 text-sm">
-                          <For each={parsed_episodes}>
+                      <div class="text-lg">
+                        {name} {season_text}
+                      </div>
+                      <Show when={sources}>
+                        <div class="mt-4 p-2">
+                          <For each={sources}>
                             {(parsed_episode) => {
-                              const { episode_text, parent_paths, file_name } = parsed_episode;
+                              const { name, original_name, season_text, episode_text, parent_paths, file_name, drive } =
+                                parsed_episode;
                               return (
-                                <div>
+                                <div title={name}>
                                   <div>{episode_text}</div>
-                                  <div>
+                                  <div class="text-sm text-gray-500">
                                     [{drive.name}]{parent_paths}/{file_name}
                                   </div>
                                 </div>

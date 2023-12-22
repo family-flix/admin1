@@ -1,9 +1,9 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 
-import { TabsTopCore } from "@/domains/ui/tabs-top";
+import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { cn } from "@/utils";
 
-export const Tab = (props: { store: TabsTopCore<any> }) => {
+export const Tab = (props: { store: TabHeaderCore<any> }) => {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);

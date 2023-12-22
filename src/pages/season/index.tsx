@@ -514,13 +514,11 @@ export const TVManagePage: ViewComponent = (props) => {
                         name,
                         overview,
                         poster_path,
-                        first_air_date,
-                        popularity,
-                        sync_task,
+                        air_date,
+                        vote_average,
                         cur_episode_count,
                         season_text,
                         episode_count,
-                        need_bind,
                       } = season;
                       homeTVProfilePage.query = {
                         id: tv_id,
@@ -548,11 +546,11 @@ export const TVManagePage: ViewComponent = (props) => {
                               <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
                                 <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
                                   <Calendar class="w-4 h-4 text-slate-800" />
-                                  <div class="break-keep whitespace-nowrap">{first_air_date}</div>
+                                  <div class="break-keep whitespace-nowrap">{air_date}</div>
                                 </div>
                                 <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
                                   <Award class="w-4 h-4" />
-                                  <div>{popularity}</div>
+                                  <div>{vote_average}</div>
                                 </div>
                                 <Show
                                   when={cur_episode_count !== episode_count}
