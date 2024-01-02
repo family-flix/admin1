@@ -4,21 +4,62 @@
 import { For, Show, createSignal } from "solid-js";
 import { ChevronRight, Folder, FolderInput, MoreHorizontal, Send } from "lucide-solid";
 
+import { createSyncTaskWithUrl } from "@/services/resource_sync_task";
 import { Button, DropdownMenu, Input } from "@/components/ui";
 import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
 import { SharedResourceCore } from "@/domains/shared_resource";
+import { RequestCore } from "@/domains/request";
 import { FolderCard } from "@/components/FolderCard";
-import { ViewComponent } from "@/types";
 import { createJob, driveList, sharedFilesHistoryPage, sharedFilesTransferListPage } from "@/store";
+import { ViewComponent } from "@/types";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const sharedResource = new SharedResourceCore();
+  const syncTaskCreateRequest = new RequestCore(createSyncTaskWithUrl, {
+    beforeRequest() {
+      syncTaskMenu.disable();
+    },
+    onSuccess() {
+      app.tip({ text: ["新增同步任务成功"] });
+      dropdownMenu.hide();
+    },
+    onFailed(error) {
+      app.tip({ text: ["新增同步任务失败", error.message] });
+      if (error.code === 20001) {
+      }
+    },
+    onCompleted() {
+      syncTaskMenu.enable();
+    },
+  });
   const driveSubMenu = new MenuCore({
     _name: "menus-of-drives",
     side: "right",
     align: "start",
+  });
+  const syncTaskMenu = new MenuItemCore({
+    label: "建立同步任务",
+    onClick() {
+      if (!sharedResource.url) {
+        app.tip({
+          text: ["请先查询分享资源"],
+        });
+        return;
+      }
+      const payload: Parameters<typeof createSyncTaskWithUrl>[0] = { url: sharedResource.url };
+      // if (folderRef.value) {
+      //   payload.drive_file_id = folderRef.value.file_id;
+      //   payload.drive_file_name = folderRef.value.file_name;
+      // }
+      const resource_folder = sharedResource.selectedFolder;
+      if (resource_folder) {
+        payload.resource_file_id = resource_folder.file_id;
+        payload.resource_file_name = resource_folder.name;
+      }
+      syncTaskCreateRequest.run(payload);
+    },
   });
   const dropdownMenu = new DropdownMenuCore({
     _name: "shared-resource-dropdown",
@@ -29,6 +70,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
         icon: <FolderInput class="w-4 h-4" />,
         menu: driveSubMenu,
       }),
+      syncTaskMenu,
     ],
   });
   const sharedFileUrlInput = new InputCore({
@@ -66,6 +108,15 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   const transferHistoryBtn = new ButtonCore({
     onClick() {
       app.showView(sharedFilesTransferListPage);
+    },
+  });
+  const searchInput = new InputCore({
+    defaultValue: "",
+    onEnter(v) {
+      if (!v) {
+        return;
+      }
+      sharedResource.search(v);
     },
   });
 
@@ -129,37 +180,35 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
           </Button>
         </div>
         <Show when={files().length}>
-          <div class="mt-4 p-4 bg-white rounded-sm">
-            <div class="">
-              <Show when={paths().length}>
-                <div class="flex items-center space-x-2">
-                  <Folder class="w-4 h-4" />
-                  <For each={paths()}>
-                    {(path, index) => {
-                      const { file_id, name } = path;
-                      return (
-                        <div class="flex items-center">
-                          <div
-                            class="cursor-pointer hover:text-blue-500"
-                            onClick={() => {
-                              sharedResource.fetch({ file_id, name });
-                            }}
-                          >
-                            {name}
-                          </div>
-                          {index() === paths().length - 1 ? null : (
-                            <div class="mx-1">
-                              <ChevronRight class="w-4 h-4" />
-                            </div>
-                          )}
+          <div class="relative mt-4 p-4 bg-white rounded-sm">
+            <Show when={paths().length}>
+              <div class="flex items-center flex-wrap space-x-2">
+                <Folder class="w-4 h-4" />
+                <For each={paths()}>
+                  {(path, index) => {
+                    const { file_id, name } = path;
+                    return (
+                      <div class="flex items-center">
+                        <div
+                          class="cursor-pointer hover:text-blue-500"
+                          onClick={() => {
+                            sharedResource.fetch({ file_id, name });
+                          }}
+                        >
+                          {name}
                         </div>
-                      );
-                    }}
-                  </For>
-                </div>
-              </Show>
-            </div>
-            <div class="mt-2 grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
+                        {index() === paths().length - 1 ? null : (
+                          <div class="mx-1">
+                            <ChevronRight class="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }}
+                </For>
+              </div>
+            </Show>
+            <div class="mt-8 grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
               <For each={files()}>
                 {(file) => {
                   const { name, type } = file;
@@ -188,13 +237,18 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            <div
-              class="text-center"
-              onClick={() => {
-                sharedResource.loadMore();
-              }}
-            >
-              加载更多
+            <Show when={state().next_marker}>
+              <div
+                class="text-center"
+                onClick={() => {
+                  sharedResource.loadMore();
+                }}
+              >
+                加载更多
+              </div>
+            </Show>
+            <div class="fixed right-12 bottom-12 p-4 bg-white rounded-md">
+              <Input store={searchInput} />
             </div>
           </div>
         </Show>

@@ -4,16 +4,13 @@
 import { JSXElement, Show, createSignal, onMount } from "solid-js";
 import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-solid";
 
-import { setParsedTVSeasonProfile } from "@/services";
-import { Button, LazyImage } from "@/components/ui";
-import { TMDBSearcher, TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
+import { fetchFileProfile } from "@/services/drive";
+import { LazyImage } from "@/components/ui";
 import { RefCore } from "@/domains/cur";
-import { AliyunDriveFile, DriveCore, fetchFileProfile } from "@/domains/drive";
-import { ButtonCore } from "@/domains/ui";
+import { AliyunDriveFile, DriveCore } from "@/domains/drive";
 import { RequestCore } from "@/domains/request";
 import { bytes_to_size } from "@/utils";
-import { TMDBSearcherCore } from "@/domains/tmdb";
-import { createJob } from "@/store";
+import { MediaTypes } from "@/constants";
 
 export const DriveFileCard = (props: {
   store: RefCore<AliyunDriveFile>;
@@ -21,59 +18,9 @@ export const DriveFileCard = (props: {
   footer: JSXElement;
   onTip?: (msg: { text: string[] }) => void;
 }) => {
-  const { store, drive, footer, onTip } = props;
+  const { store, drive, footer } = props;
 
   const fileProfileRequest = new RequestCore(fetchFileProfile);
-  const setParsedTVProfileRequest = new RequestCore(setParsedTVSeasonProfile, {
-    beforeRequest() {
-      seasonProfileChangeSelectDialog.okBtn.setLoading(true);
-    },
-    onSuccess(v) {
-      createJob({
-        job_id: v.job_id,
-        onFinish() {
-          if (onTip) {
-            onTip({
-              text: ["设置完成"],
-            });
-          }
-          seasonProfileChangeSelectDialog.okBtn.setLoading(false);
-          seasonProfileChangeSelectDialog.hide();
-        },
-      });
-    },
-    onFailed(error) {
-      if (onTip) {
-        onTip({
-          text: ["设置失败", error.message],
-        });
-      }
-      seasonProfileChangeSelectDialog.okBtn.setLoading(false);
-    },
-  });
-  const setProfileBtn = new ButtonCore({
-    onClick() {
-      seasonProfileChangeSelectDialog.show();
-    },
-  });
-  const seasonProfileChangeSelectDialog = new TMDBSearcherDialogCore({
-    onOk(profile) {
-      const file = fileProfileRequest.response;
-      if (!file) {
-        if (onTip) {
-          onTip({
-            text: ["请先获取文件详情"],
-          });
-        }
-        return;
-      }
-      seasonProfileChangeSelectDialog.okBtn.setLoading(true);
-      setParsedTVProfileRequest.run({
-        file_id: file.id,
-        unique_id: profile.id,
-      });
-    },
-  });
 
   const [state, setState] = createSignal(store.value);
   const [profile, setProfile] = createSignal(fileProfileRequest.response);
@@ -132,51 +79,44 @@ export const DriveFileCard = (props: {
         </div>
         <Show when={profile()}>
           <div class="space-y-2">
-            <Show when={profile()?.parsed_tv}>
+            <Show when={profile()?.media}>
               <div>
                 <Show
-                  when={profile()?.parsed_tv?.profile}
+                  when={profile()?.media}
                   fallback={
                     <div class="flex">
                       <div class="mr-4">
                         <LazyImage class="w-[120px] object-fit" />
                       </div>
-                      <div>{profile()?.parsed_tv?.name}</div>
-                      <div>{profile()?.parsed_tv?.file_name}</div>
+                      <div>{profile()?.unknown_media?.name}</div>
+                      <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
+                      <div>{profile()?.file_name}</div>
                       <div>没有匹配到详情信息</div>
                     </div>
                   }
                 >
                   <div class="flex">
                     <div class="mr-4">
-                      <LazyImage class="w-[120px] object-fit" src={profile()?.parsed_tv?.profile?.poster_path} />
+                      <LazyImage class="w-[120px] object-fit" src={profile()?.media?.poster_path} />
                     </div>
                     <div>
-                      <div class="text-lg">{profile()?.parsed_tv?.profile?.name}</div>
+                      <div class="text-lg">{profile()?.media?.name}</div>
+                      <div>{profile()?.media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
                       <div class="text-sm">
                         <Show
-                          when={profile()?.parsed_tv?.profile}
+                          when={profile()?.media?.episode_name}
                           fallback={
                             <div>
                               <div class="flex items-center">
                                 <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
-                                <span>{profile()?.parsed_tv?.profile?.season_text}</span>
-                                <span class="mx-2">/</span>
-                                <span>{profile()?.parsed_tv?.profile?.episode_text}</span>
+                                <span>{profile()?.media?.episode_text}</span>
                               </div>
                             </div>
                           }
                         >
                           <div class="flex items-center">
                             <CheckCircle2 class="w-4 h-4 mr-1 text-green-800" />
-                            <span>
-                              {profile()?.parsed_tv?.profile?.season_name}({profile()?.parsed_tv?.profile?.season_text})
-                            </span>
-                            <span class="mx-2">/</span>
-                            <span>
-                              {profile()?.parsed_tv?.profile?.episode_name}(
-                              {profile()?.parsed_tv?.profile?.episode_text})
-                            </span>
+                            <span>{profile()?.media?.episode_name}</span>
                           </div>
                         </Show>
                       </div>
@@ -185,48 +125,10 @@ export const DriveFileCard = (props: {
                 </Show>
               </div>
             </Show>
-            <Show when={profile()?.parsed_movie}>
-              <div>
-                <Show
-                  when={profile()?.parsed_movie?.profile}
-                  fallback={
-                    <div class="flex">
-                      <div class="mr-4">
-                        <LazyImage class="w-[120px] object-fit" />
-                      </div>
-                      <div>{profile()?.parsed_tv?.name}</div>
-                      <div>{profile()?.parsed_tv?.file_name}</div>
-                      <div>没有匹配到详情信息</div>
-                    </div>
-                  }
-                >
-                  <div class="flex">
-                    <div class="mr-4">
-                      <LazyImage class="w-[120px] object-fit" src={profile()?.parsed_movie?.profile?.poster_path} />
-                    </div>
-                    <Show
-                      when={profile()?.parsed_movie?.profile}
-                      fallback={
-                        <div class="flex items-center">
-                          <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
-                          <div class="text-lg">{profile()?.parsed_movie?.file_name}</div>
-                        </div>
-                      }
-                    >
-                      <div class="flex items-center">
-                        <CheckCircle2 class="w-4 h-4 mr-1 text-green-800" />
-                        <div class="text-lg">{profile()?.parsed_movie?.profile?.name}</div>
-                      </div>
-                    </Show>
-                  </div>
-                </Show>
-              </div>
-            </Show>
           </div>
         </Show>
       </div>
       {footer}
-      <TMDBSearcherDialog store={seasonProfileChangeSelectDialog} />
     </div>
   );
 };

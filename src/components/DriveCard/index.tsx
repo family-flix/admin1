@@ -33,15 +33,9 @@ import { List } from "@/components/List";
 import { InputCore, ButtonCore, DropdownMenuCore, DialogCore, ProgressCore, MenuItemCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
-import {
-  DriveCore,
-  addAliyunDrive,
-  updateAliyunDrive,
-  updateAliyunDriveRemark,
-  updateAliyunDriveVisible,
-} from "@/domains/drive";
+import { DriveCore, addAliyunDrive, updateAliyunDrive } from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
-import { FileType } from "@/constants";
+import { DriveTypes, FileType } from "@/constants";
 import { createJob } from "@/store";
 
 export const DriveCard = (props: {
@@ -102,25 +96,6 @@ export const DriveCard = (props: {
     },
   });
   const driveFileManage = new AliyunDriveFilesCore({ id: drive.id });
-  const rootFolderConfirmDialog = new DialogCore({
-    async onOk() {
-      if (driveFileManage.selectedFolder === null) {
-        app.tip({ text: ["请先选择文件夹"] });
-        return;
-      }
-      rootFolderConfirmDialog.okBtn.setLoading(true);
-      const r = await drive.setRootFolder(driveFileManage.selectedFolder.file_id);
-      rootFolderConfirmDialog.okBtn.setLoading(false);
-      driveFileManage.clear();
-      if (r.error) {
-        app.tip({ text: ["设置索引目录失败", r.error.message] });
-        return;
-      }
-      app.tip({ text: ["设置索引目录成功"] });
-      rootFolderConfirmDialog.hide();
-      foldersModal.hide();
-    },
-  });
   const foldersModal = new DialogCore({
     title: "设置索引根目录",
     async onOk() {
@@ -128,7 +103,16 @@ export const DriveCard = (props: {
         app.tip({ text: ["请先选择文件夹"] });
         return;
       }
-      rootFolderConfirmDialog.show();
+      foldersModal.okBtn.setLoading(true);
+      const r = await drive.setRootFolder(driveFileManage.selectedFolder.file_id);
+      foldersModal.okBtn.setLoading(false);
+      driveFileManage.clear();
+      if (r.error) {
+        app.tip({ text: ["设置索引目录失败", r.error.message] });
+        return;
+      }
+      app.tip({ text: ["设置索引目录成功"] });
+      foldersModal.hide();
     },
     onUnmounted() {
       drive.clearFolderColumns();
@@ -295,7 +279,7 @@ export const DriveCard = (props: {
     icon: <Puzzle class="mr-2 w-4 h-4" />,
     onClick() {
       createResourceDriveRequest.run({
-        type: 1,
+        type: DriveTypes.AliyunResourceDrive,
         payload: JSON.stringify({
           drive_id: drive.id,
         }),
@@ -598,11 +582,6 @@ export const DriveCard = (props: {
         <div class="w-[520px]">
           <div>删除后索引到的影视剧也会删除</div>
           <div class="mt-2">确认删除该云盘吗？</div>
-        </div>
-      </Dialog>
-      <Dialog title="设置索引根目录" store={rootFolderConfirmDialog}>
-        <div class="w-[520px]">
-          <p>确认将 {filesState().curFolder?.name} 作为索引根目录吗？</p>
         </div>
       </Dialog>
     </div>

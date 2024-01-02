@@ -80,10 +80,10 @@ export class JobCore extends BaseDomain<TheTypesOfEvents> {
   waitFinish() {
     this.start = dayjs();
     this.timer = setInterval(async () => {
-      if (dayjs().diff(this.start, "minute") >= 30) {
-        this.forceFinish();
-        return;
-      }
+      // if (dayjs().diff(this.start, "minute") >= 30) {
+      //   this.forceFinish();
+      //   return;
+      // }
       const r = await fetch_job_status(this.id);
       if (r.error) {
         this.loading = false;

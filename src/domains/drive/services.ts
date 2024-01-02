@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
-import { FileType } from "@/constants";
+import { DriveTypes, FileType, MediaTypes } from "@/constants";
 import { request } from "@/utils/request";
 import { bytes_to_size } from "@/utils";
 
@@ -30,14 +30,13 @@ async function parseJSONStr<T extends JSONObject>(json: string) {
  * @param {object} body 提交体
  * @param {string} body.payload 从阿里云盘页面通过脚本生成的云盘信息 json 字符串
  */
-export async function addAliyunDrive(body: { type?: number; payload: string }) {
+export async function addAliyunDrive(body: { type?: DriveTypes; payload: string }) {
   const { type = 0, payload } = body;
   const r = await parseJSONStr(payload);
   if (r.error) {
     return Result.Err(r.error);
   }
   return request.post<{ id: string }>("/api/admin/drive/add", {
-    // 阿里云备份盘
     type,
     payload: r.data,
   });
@@ -217,29 +216,51 @@ export async function analysisDrive(body: {
   target_folders?: { file_id: string; parent_paths?: string; name: string }[];
 }) {
   const { drive_id, target_folders } = body;
-  return request.post<{ job_id: string }>(`/api/admin/drive/analysis/${drive_id}`, {
+  return request.post<{ job_id: string }>("/api/v2/admin/analysis", {
+    drive_id,
     target_folders,
   });
 }
 
 /**
- * 增量索引指定云盘
+ * 全量索引指定云盘
  * @param {object} body
  * @param {string} body.drive_id 要索引的云盘 id
+ * @param {string} [body.target_folder] 要索引的云盘内指定文件夹 id
  */
-export async function analysisDriveQuickly(body: { drive_id: string }) {
-  const { drive_id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/drive/analysis_quickly/${drive_id}`);
+export async function analysisSpecialFilesInDrive(body: {
+  drive_id: string;
+  files: { file_id: string; type: FileType; name: string }[];
+}) {
+  const { drive_id, files } = body;
+  return request.post<{ job_id: string }>("/api/v2/admin/analysis/files", {
+    drive_id,
+    files,
+  });
 }
 
 /**
- * 搜索指定云盘内所有解析到的影视剧
+ * 索引指定云盘新增的文件/文件夹
  * @param {object} body
  * @param {string} body.drive_id 要索引的云盘 id
  */
-export async function matchMediaFilesMedia(body: { drive_id: string }) {
-  const { drive_id: aliyun_drive_id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/drive/${aliyun_drive_id}/media_match`);
+export async function analysisNewFilesInDrive(body: { drive_id: string }) {
+  const { drive_id } = body;
+  return request.post<{ job_id: string }>("/api/v2/admin/analysis/new_files", {
+    drive_id,
+  });
+}
+
+/**
+ * 搜索指定云盘内所有解析到、但没有匹配到详情的影视剧
+ * @param {object} body
+ * @param {string} body.drive_id 要索引的云盘 id
+ */
+export async function matchParsedMediasInDrive(body: { drive_id: string }) {
+  const { drive_id } = body;
+  return request.post<{ job_id: string }>("/api/v2/admin/parsed_media/match_profile", {
+    drive_id,
+  });
 }
 
 /**
@@ -429,63 +450,20 @@ export function deleteFile(body: { drive_id: string; file_id: string }) {
 /**
  * 重命名指定云盘的文件
  */
-export function renameFile(body: { drive_id: string; file_id: string; name: string }) {
-  const { drive_id, file_id, name } = body;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/rename?drive_id=${drive_id}`, {
+export function renameFile(body: { parsed_media_source_id: string; name: string }) {
+  const { parsed_media_source_id, name } = body;
+  return request.post<{ job_id: string }>(`/api/v2/admin/parsed_media_source/rename`, {
+    parsed_media_source_id,
     name,
   });
-}
-
-export function createWithFolders(
-  drive_id: string,
-  body: {
-    content_hash: string;
-    content_hash_name: "sha1";
-    name: string;
-    parent_file_id: string;
-    part_info_list: { part_number: number }[];
-    proof_code: string;
-    size: number;
-    type: "file";
-  }
-) {
-  return request.post<{
-    parent_file_id: string;
-    part_info_list: {
-      part_number: number;
-      upload_url: string;
-      internal_upload_url: string;
-      content_type: string;
-    }[];
-    upload_id: string;
-    rapid_upload: boolean;
-    type: string;
-    file_id: string;
-    revision_id: string;
-    domain_id: string;
-    drive_id: string;
-    file_name: string;
-    encrypt_mode: string;
-    location: string;
-  }>(`/api/admin/drive/${drive_id}/preupload`, body);
-}
-
-export async function fetchTokenOfDrive(drive_id: string) {
-  const r = await request.get<{
-    access_token: string;
-    refresh_token: string;
-  }>(`/api/admin/drive/${drive_id}/token`);
-  console.log("[SERVICE]fetchTokenOfDrive - ", r);
-  if (r.error) {
-    return Result.Err(r.error);
-  }
-  return Result.Ok(r.data);
 }
 
 /** 用正则重命名多个文件 */
 export function renameChildFilesName(values: { drive_id: string; file_id: string; regexp: string; replace: string }) {
   const { drive_id, file_id, regexp, replace } = values;
-  return request.post<{ job_id: string }>(`/api/admin/drive/${drive_id}/file/${file_id}/rename_children`, {
+  return request.post<{ job_id: string }>(`/api/v2/aliyundrive/rename_files`, {
+    drive_id,
+    file_id,
     regexp,
     replace,
   });
@@ -506,37 +484,40 @@ export function transferFileToResourceDrive(values: { drive_id: string; file_id:
   });
 }
 
+/**
+ * 获取文件详情
+ * 主要是看该文件关联的影视剧信息
+ */
 export function fetchFileProfile(values: { file_id: string; drive_id: string }) {
   const { drive_id, file_id } = values;
   return request.post<{
     id: string;
-    content_hash?: string;
-    thumbnail?: string;
-    parsed_tv: null | {
+    type: FileType;
+    file_name: string;
+    content_hash: string | null;
+    size: number | null;
+    thumbnail_path: string | null;
+    mine_type: string;
+    media: null | {
       id: string;
-      name?: string;
-      file_name?: string;
-      profile: null | {
-        name: string;
-        original_name: string;
-        overview: string;
-        poster_path: string;
-        episode_name?: string;
-        episode_text?: string;
-        season_name?: string;
-        season_text?: string;
-      };
+      step: number;
+      type: MediaTypes;
+      name: string;
+      poster_path: string;
+      episode_text: string | null;
+      episode_name: string | null;
     };
-    parsed_movie: null | {
+    unknown_media: null | {
       id: string;
-      name?: string;
-      file_name?: string;
-      profile: null | {
-        name: string;
-        original_name: string;
-        overview: string;
-        poster_path: string;
-      };
+      step: number;
+      type: MediaTypes;
+      name: string;
+      original_name: string | null;
+      season_text: string | null;
+      episode_text: string | null;
     };
-  }>(`/api/admin/file/${file_id}/profile?drive_id=${drive_id}`, {});
+  }>("/api/v2/aliyundrive/file_profile", {
+    drive_id,
+    file_id,
+  });
 }

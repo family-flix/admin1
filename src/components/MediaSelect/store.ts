@@ -1,9 +1,12 @@
-import { TheMediaInTMDB } from "@/services/media_profile";
+/**
+ * @file
+ */
 import { ButtonCore, DialogCore } from "@/domains/ui";
 import { BaseDomain, Handler } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
-import { TMDBSearcherCore } from "@/domains/tmdb";
+import { MediaSearchCore } from "@/domains/media_search";
 import { MediaTypes } from "@/constants";
+import { MediaProfileItem } from "@/services/common";
 
 enum Events {
   Ok,
@@ -11,16 +14,16 @@ enum Events {
   StateChange,
 }
 type TheTypesOfEvents = {
-  [Events.Ok]: TMDBSearcherDialogState;
+  [Events.Ok]: MediaSelectState;
   [Events.Cancel]: void;
-  [Events.StateChange]: TMDBSearcherDialogState;
+  [Events.StateChange]: MediaSelectState;
 };
-type TMDBSearcherDialogState = {
-  value: null | TheMediaInTMDB;
-  list: Response<TheMediaInTMDB>;
+type MediaSelectState = {
+  value: null | MediaProfileItem;
+  list: Response<MediaProfileItem>;
   showFooter: boolean;
 };
-type TMDBSearcherDialogProps = {
+type MediaSelectProps = {
   type?: MediaTypes;
   /** 是否底部按钮 */
   footer: boolean;
@@ -28,47 +31,59 @@ type TMDBSearcherDialogProps = {
   okBtn: boolean;
   /** 是否展示取消按钮 */
   cancelBtn: boolean;
+  onOk: (profile: MediaProfileItem) => void;
   onCancel: () => void;
-  onOk: (profile: TheMediaInTMDB) => void;
 };
 
-export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
-  tmdb: TMDBSearcherCore;
+export class MediaSelectCore extends BaseDomain<TheTypesOfEvents> {
+  searcher: MediaSearchCore;
   dialog: DialogCore;
   okBtn: ButtonCore;
   cancelBtn: ButtonCore;
 
-  state: TMDBSearcherDialogState;
+  state: MediaSelectState;
 
-  constructor(options: Partial<{ _name: string } & TMDBSearcherDialogProps> = {}) {
+  constructor(options: Partial<{ _name: string } & MediaSelectProps> = {}) {
     super(options);
 
     const { type, footer = true, onOk, onCancel } = options;
+    const title = (() => {
+      if (!type) {
+        return "搜索影视剧";
+      }
+      if (type === MediaTypes.Movie) {
+        return "搜索电影";
+      }
+      if (type === MediaTypes.Season) {
+        return "搜索电视剧";
+      }
+      return "搜索";
+    })();
     this.dialog = new DialogCore({
-      title: type === MediaTypes.Movie ? "搜索电影" : "搜索电视剧",
+      title,
       footer,
       onOk: () => {
-        if (onOk && this.tmdb.state.cur) {
-          onOk(this.tmdb.state.cur);
+        if (onOk && this.searcher.state.cur) {
+          onOk(this.searcher.state.cur);
         }
       },
       onCancel,
     });
-    this.tmdb = new TMDBSearcherCore({
+    this.searcher = new MediaSearchCore({
       type,
     });
     this.state = {
       value: null,
-      list: this.tmdb.$list.response,
+      list: this.searcher.$list.response,
       showFooter: footer,
     };
     this.okBtn = this.dialog.okBtn;
     this.cancelBtn = this.dialog.cancelBtn;
-    this.tmdb.$list.onStateChange((nextState) => {
+    this.searcher.$list.onStateChange((nextState) => {
       this.state.list = nextState;
       this.emit(Events.StateChange, { ...this.state });
     });
-    this.tmdb.onTip((msg) => {
+    this.searcher.onTip((msg) => {
       this.tip(msg);
     });
   }
@@ -80,10 +95,10 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     this.dialog.hide();
   }
   refresh() {
-    this.tmdb.$list.refresh();
+    this.searcher.$list.refresh();
   }
   input(name: string) {
-    this.tmdb.$input.setValue(name);
+    this.searcher.input.setValue(name);
   }
 
   onOk(handler: Handler<TheTypesOfEvents[Events.Ok]>) {

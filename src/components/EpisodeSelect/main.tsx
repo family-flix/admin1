@@ -1,8 +1,8 @@
 /**
  * @file 剧集选择
  */
-import { For, Show, createSignal } from "solid-js";
-import { Calendar, Send, Smile } from "lucide-solid";
+import { For, createSignal } from "solid-js";
+import { Calendar } from "lucide-solid";
 
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, DialogCore, DialogProps, InputCore, PresenceCore, ScrollViewCore } from "@/domains/ui";
@@ -253,7 +253,7 @@ export const EpisodeSelect = (props: { store: EpisodeSelectCore }) => {
             <div class="space-y-4">
               <For each={tvListResponse().dataSource}>
                 {(tv) => {
-                  const { id, name, overview, first_air_date, poster_path } = tv;
+                  const { id, name, overview, air_date: first_air_date, poster_path } = tv;
                   return (
                     <div
                       classList={{

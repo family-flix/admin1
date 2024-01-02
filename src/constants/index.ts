@@ -72,7 +72,7 @@ export enum DriveFileType {
 /**
  * @doc https://www.iso.org/standard/63545.html
  */
-export enum MediaSource {
+export enum MediaOriginCountries {
   US = "US", // 美国 (United States)
   CN = "CN", // 中国 (China)
   TW = "TW", // 中国台湾 (Taiwan)
@@ -88,6 +88,7 @@ export enum MediaSource {
   IN = "IN", // 印度 (India)
   RU = "RU", // 俄罗斯 (Russia)
   KR = "KR", // 韩国 (South Korea)
+  BE = "BE", // 比利时
   ES = "ES", // 西班牙 (Spain)
   MX = "MX", // 墨西哥 (Mexico)
   ID = "ID", // 印度尼西亚 (Indonesia)
@@ -107,46 +108,83 @@ export enum MediaSource {
   BD = "BD", // 孟加拉国 (Bangladesh)
 }
 
-export const MediaSourceTexts: Record<MediaSource, string> = {
-  [MediaSource.CN]: "国产剧",
-  [MediaSource.TW]: "台剧",
-  [MediaSource.HK]: "港剧",
-  [MediaSource.JP]: "日剧",
-  [MediaSource.KR]: "韩剧",
-  [MediaSource.US]: "美剧",
-  [MediaSource.GB]: "英剧",
-  [MediaSource.FR]: "法国",
-  [MediaSource.IT]: "意大利",
-  [MediaSource.BR]: "巴西",
-  [MediaSource.DE]: "德国",
-  [MediaSource.CA]: "加拿大",
-  [MediaSource.AU]: "澳大利亚",
-  [MediaSource.IN]: "印度",
-  [MediaSource.RU]: "俄罗斯",
-  [MediaSource.ES]: "西班牙",
-  [MediaSource.MX]: "墨西哥",
-  [MediaSource.ID]: "印度尼西亚",
-  [MediaSource.TR]: "土耳其",
-  [MediaSource.SA]: "沙特阿拉伯",
-  [MediaSource.ZA]: "南非",
-  [MediaSource.AR]: "阿根廷",
-  [MediaSource.TH]: "泰国",
-  [MediaSource.EG]: "埃及",
-  [MediaSource.NL]: "荷兰",
-  [MediaSource.CH]: "瑞士",
-  [MediaSource.SE]: "瑞典",
-  [MediaSource.PL]: "波兰",
-  [MediaSource.PK]: "巴基斯坦",
-  [MediaSource.NG]: "尼日利亚",
-  [MediaSource.MY]: "马来西亚",
-  [MediaSource.BD]: "孟加拉国",
+export const SeasonMediaOriginCountryTextMap: Record<MediaOriginCountries, string> = {
+  [MediaOriginCountries.CN]: "国产剧",
+  [MediaOriginCountries.TW]: "台剧",
+  [MediaOriginCountries.HK]: "港剧",
+  [MediaOriginCountries.JP]: "日剧",
+  [MediaOriginCountries.KR]: "韩剧",
+  [MediaOriginCountries.US]: "美剧",
+  [MediaOriginCountries.GB]: "英剧",
+  [MediaOriginCountries.FR]: "法国",
+  [MediaOriginCountries.IT]: "意大利",
+  [MediaOriginCountries.BR]: "巴西",
+  [MediaOriginCountries.DE]: "德国",
+  [MediaOriginCountries.CA]: "加拿大",
+  [MediaOriginCountries.AU]: "澳大利亚",
+  [MediaOriginCountries.IN]: "印度",
+  [MediaOriginCountries.RU]: "俄罗斯",
+  [MediaOriginCountries.ES]: "西班牙",
+  [MediaOriginCountries.MX]: "墨西哥",
+  [MediaOriginCountries.ID]: "印度尼西亚",
+  [MediaOriginCountries.TR]: "土耳其",
+  [MediaOriginCountries.SA]: "沙特阿拉伯",
+  [MediaOriginCountries.ZA]: "南非",
+  [MediaOriginCountries.AR]: "阿根廷",
+  [MediaOriginCountries.TH]: "泰国",
+  [MediaOriginCountries.EG]: "埃及",
+  [MediaOriginCountries.NL]: "荷兰",
+  [MediaOriginCountries.CH]: "瑞士",
+  [MediaOriginCountries.SE]: "瑞典",
+  [MediaOriginCountries.PL]: "波兰",
+  [MediaOriginCountries.PK]: "巴基斯坦",
+  [MediaOriginCountries.NG]: "尼日利亚",
+  [MediaOriginCountries.MY]: "马来西亚",
+  [MediaOriginCountries.BD]: "孟加拉国",
+  [MediaOriginCountries.BE]: "比利时",
 };
-export const MediaSourceOptions = Object.keys(MediaSourceTexts)
+
+export const MovieMediaOriginCountryTextMap: Record<MediaOriginCountries, string> = {
+  [MediaOriginCountries.CN]: "中国大陆",
+  [MediaOriginCountries.TW]: "中国台湾",
+  [MediaOriginCountries.HK]: "中国香港",
+  [MediaOriginCountries.JP]: "日本",
+  [MediaOriginCountries.KR]: "韩国",
+  [MediaOriginCountries.US]: "美国",
+  [MediaOriginCountries.GB]: "英国",
+  [MediaOriginCountries.FR]: "法国",
+  [MediaOriginCountries.IT]: "意大利",
+  [MediaOriginCountries.BR]: "巴西",
+  [MediaOriginCountries.DE]: "德国",
+  [MediaOriginCountries.CA]: "加拿大",
+  [MediaOriginCountries.AU]: "澳大利亚",
+  [MediaOriginCountries.IN]: "印度",
+  [MediaOriginCountries.RU]: "俄罗斯",
+  [MediaOriginCountries.BE]: "比利时",
+  [MediaOriginCountries.ES]: "西班牙",
+  [MediaOriginCountries.MX]: "墨西哥",
+  [MediaOriginCountries.ID]: "印度尼西亚",
+  [MediaOriginCountries.TR]: "土耳其",
+  [MediaOriginCountries.SA]: "沙特阿拉伯",
+  [MediaOriginCountries.ZA]: "南非",
+  [MediaOriginCountries.AR]: "阿根廷",
+  [MediaOriginCountries.TH]: "泰国",
+  [MediaOriginCountries.EG]: "埃及",
+  [MediaOriginCountries.NL]: "荷兰",
+  [MediaOriginCountries.CH]: "瑞士",
+  [MediaOriginCountries.SE]: "瑞典",
+  [MediaOriginCountries.PL]: "波兰",
+  [MediaOriginCountries.PK]: "巴基斯坦",
+  [MediaOriginCountries.NG]: "尼日利亚",
+  [MediaOriginCountries.MY]: "马来西亚",
+  [MediaOriginCountries.BD]: "孟加拉国",
+};
+export const MediaSourceOptions = Object.keys(SeasonMediaOriginCountryTextMap)
   .slice(0, 7)
   .map((value) => {
     return {
       value,
-      label: MediaSourceTexts[value as MediaSource],
+      label: SeasonMediaOriginCountryTextMap[value as MediaOriginCountries],
     };
   });
 export const TVGenres = [
@@ -273,3 +311,8 @@ export const MediaErrorTypeOptions = Object.keys(MediaErrorTypeTextMap).map((k) 
     label: MediaErrorTypeTextMap[k as unknown as MediaErrorTypes],
   };
 });
+
+export enum MediaTypes {
+  Season = 1,
+  Movie = 2,
+}

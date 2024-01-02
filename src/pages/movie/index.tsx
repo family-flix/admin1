@@ -1,29 +1,13 @@
 /**
  * @file 电影列表
  */
-import { createSignal, For } from "solid-js";
-import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
+import { createSignal, For, Show } from "solid-js";
+import { Award, BookOpen, Calendar, Clock, Info, LocateIcon, MapPin, RotateCw, Search, Star } from "lucide-solid";
 
-import {
-  setProfileForUnknownMovie,
-  fetchMovieList,
-  moveMovieToResourceDrive,
-  MovieItem,
-  refreshMovieProfiles,
-  transferMovieToAnotherDrive,
-} from "@/services";
+import { MovieMediaItem, fetchMovieMediaList } from "@/services/media";
+import { moveMovieToResourceDrive, refreshMovieProfiles, transferMovieToAnotherDrive } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Dialog } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
-import {
-  InputCore,
-  ButtonCore,
-  ButtonInListCore,
-  ScrollViewCore,
-  CheckboxCore,
-  DialogCore,
-  CheckboxGroupCore,
-} from "@/domains/ui";
+import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, DialogCore, CheckboxGroupCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
@@ -86,7 +70,7 @@ export const MovieManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const movieList = new ListCore(new RequestCore(fetchMovieList), {
+  const movieList = new ListCore(new RequestCore(fetchMovieMediaList), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -118,40 +102,10 @@ export const MovieManagePage: ViewComponent = (props) => {
       refreshMovieProfilesRequest.run();
     },
   });
-  const movieRef = new RefCore<MovieItem>();
+  const movieRef = new RefCore<MovieMediaItem>();
   const driveRef = new RefCore<DriveCore>({
     onChange(v) {
       setCurDrive(v);
-    },
-  });
-  const bindSearchedMovieForMovie = new RequestCore(setProfileForUnknownMovie, {
-    onSuccess() {
-      app.tip({ text: ["修改成功"] });
-      dialog.hide();
-      movieList.refresh();
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["修改失败", error.message],
-      });
-    },
-  });
-  const dialog = new TMDBSearcherDialogCore({
-    onOk(searchedTV) {
-      if (!movieRef.value?.id) {
-        app.tip({ text: ["请先选择要修改的电视剧"] });
-        return;
-      }
-      bindSearchedMovieForMovie.run(movieRef.value.id, {
-        unique_id: searchedTV.id,
-      });
-    },
-  });
-  const duplicatedCheckbox = new CheckboxCore({
-    onChange(checked) {
-      movieList.search({
-        duplicated: Number(checked),
-      });
     },
   });
   const nameSearchInput = new InputCore({
@@ -169,11 +123,10 @@ export const MovieManagePage: ViewComponent = (props) => {
   const resetBtn = new ButtonCore({
     onClick() {
       movieList.reset();
-      duplicatedCheckbox.uncheck();
       nameSearchInput.clear();
     },
   });
-  const profileBtn = new ButtonInListCore<MovieItem>({
+  const profileBtn = new ButtonInListCore<MovieMediaItem>({
     onClick(record) {
       homeMovieProfilePage.query = {
         id: record.id,
@@ -205,7 +158,7 @@ export const MovieManagePage: ViewComponent = (props) => {
       transferConfirmDialog.hide();
     },
   });
-  const transferBtn = new ButtonInListCore<MovieItem>({
+  const transferBtn = new ButtonInListCore<MovieMediaItem>({
     onClick(record) {
       if (record === null) {
         return;
@@ -234,7 +187,7 @@ export const MovieManagePage: ViewComponent = (props) => {
       transferConfirmDialog.hide();
     },
   });
-  const moveToResourceDriveBtn = new ButtonInListCore<MovieItem>({
+  const moveToResourceDriveBtn = new ButtonInListCore<MovieMediaItem>({
     onClick(record) {
       if (record === null) {
         return;
@@ -311,6 +264,9 @@ export const MovieManagePage: ViewComponent = (props) => {
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
+            <Button class="" store={resetBtn}>
+              重置
+            </Button>
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshMovieListBtn}>
               更新近3月内电影详情
             </Button>
@@ -319,9 +275,6 @@ export const MovieManagePage: ViewComponent = (props) => {
             <Input class="" store={nameSearchInput} />
             <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
               搜索
-            </Button>
-            <Button class="" store={resetBtn}>
-              重置
             </Button>
           </div>
           <div class="mt-4">
@@ -358,7 +311,7 @@ export const MovieManagePage: ViewComponent = (props) => {
               <div class="space-y-4">
                 <For each={state().dataSource}>
                   {(movie) => {
-                    const { id, name, overview, poster_path, air_date, popularity, vote_average, runtime, persons } =
+                    const { id, name, overview, poster_path, air_date, vote_average, origin_country, tips, persons } =
                       movie;
                     homeMovieProfilePage.query = {
                       id,
@@ -384,18 +337,33 @@ export const MovieManagePage: ViewComponent = (props) => {
                                 <Calendar class="w-4 h-4 text-slate-800" />
                                 <div class="break-keep whitespace-nowrap">{air_date}</div>
                               </div>
-                              <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
-                                <Award class="w-4 h-4" />
-                                <div>{popularity}</div>
-                              </div>
+                              <Show when={origin_country}>
+                                <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                  <MapPin class="w-4 h-4 text-blue-600" />
+                                  <div class="break-keep whitespace-nowrap">{origin_country}</div>
+                                </div>
+                              </Show>
                               <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
                                 <Star class="w-4 h-4" />
                                 <div>{vote_average}</div>
                               </div>
-                              <div class="flex items-center space-x-1 px-2 border border-gray-600 rounded-xl text-gray-600">
-                                <Clock class="w-4 h-4" />
-                                <div>{runtime}</div>
-                              </div>
+                              <Show when={tips.length}>
+                                <div
+                                  class="flex items-center space-x-1 px-2 border border-red-500 rounded-xl text-red-500"
+                                  onMouseEnter={(event) => {
+                                    const { x, y, width, height, left, top, right, bottom } =
+                                      event.currentTarget.getBoundingClientRect();
+                                    // setTips(season.tips);
+                                    // tipPopover.show({ x, y, width, height: height + 8, left, top, right, bottom });
+                                  }}
+                                  onMouseLeave={() => {
+                                    // tipPopover.hide();
+                                  }}
+                                >
+                                  <Info class="w-4 h-4" />
+                                  <div>{tips.length}个问题</div>
+                                </div>
+                              </Show>
                             </div>
                             <div class="flex flex-wrap gap-4 mt-4">
                               <For each={persons}>
@@ -481,7 +449,6 @@ export const MovieManagePage: ViewComponent = (props) => {
           <div>将电影移动到资源盘后才能公开分享</div>
         </div>
       </Dialog>
-      <TMDBSearcherDialog store={dialog} />
     </>
   );
 };

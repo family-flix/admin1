@@ -2,7 +2,6 @@
  * @file 演职人员列表
  */
 import { For, JSX, Show, createSignal } from "solid-js";
-import { Dynamic } from "solid-js/web";
 import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
 import { Button, Skeleton, ScrollView, ListView, Checkbox, LazyImage } from "@/components/ui";
@@ -87,12 +86,6 @@ export const PersonListPage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  const statusIcons: Record<TaskStatus, () => JSX.Element> = {
-    [TaskStatus.Finished]: () => <CheckCircle class="w-4 h-4" />,
-    [TaskStatus.Paused]: () => <Ban class="w-4 h-4" />,
-    [TaskStatus.Running]: () => <Timer class="w-4 h-4" />,
-  };
-
   scrollView.onReachBottom(() => {
     personList.loadMore();
   });
@@ -104,13 +97,10 @@ export const PersonListPage: ViewComponent = (props) => {
 
   return (
     <ScrollView store={scrollView} class="h-screen p-8">
-      <h1 class="text-2xl">任务列表</h1>
+      <h1 class="text-2xl">演职人员</h1>
       <div class="mt-8 flex space-x-2">
         <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
           刷新
-        </Button>
-        <Button class="space-x-1" icon={<Trash class="w-4 h-4" />} variant="subtle" store={jobDeletingBtn}>
-          删除7天前任务记录
         </Button>
       </div>
       <div class="flex items-center space-x-2 mt-4">

@@ -1,10 +1,11 @@
-import { createCollection, editCollection, fetchCollectionProfile } from "@/services";
+import { createCollection, editCollection, fetchCollectionProfile } from "@/services/collection";
 import { InputCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { BaseDomain, Handler } from "@/domains/base";
 import { MovieSelectCore } from "@/components/MovieSelect";
 import { TVSeasonSelectCore } from "@/components/SeasonSelect";
+import { MediaTypes } from "@/constants";
 
 enum Events {
   StateChange,
@@ -73,37 +74,20 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       this.fields.title.setValue(title);
       this.fields.desc.setValue(desc);
       this.fields.sort.setValue(sort);
-      const seasons = medias
-        .filter((media) => media.type === 1)
-        .filter((media) => {
-          const { id, type, name, poster_path } = media;
-          return {
-            id,
-            type,
-            name,
-            poster_path,
-          };
-        });
-      const movies = medias
-        .filter((media) => media.type === 2)
-        .filter((media) => {
-          const { id, type, name, poster_path } = media;
-          return {
-            id,
-            type,
-            name,
-            poster_path,
-          };
-        });
+      const seasons = medias.map((media) => {
+        const { id, type, name, poster_path } = media;
+        return {
+          id,
+          type,
+          name,
+          poster_path,
+        };
+      });
       this.selectedSeasonsRef.select(seasons);
-      this.selectedMoviesRef.select(movies);
       this.emit(Events.StateChange, { ...this.state });
     },
   });
   selectedSeasonsRef = new RefCore({
-    defaultValue: [] as CollectionMedia[],
-  });
-  selectedMoviesRef = new RefCore({
     defaultValue: [] as CollectionMedia[],
   });
   seasonSelect = new TVSeasonSelectCore({
@@ -146,16 +130,16 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
         });
         return;
       }
-      const curMovies = this.selectedMoviesRef.value || [];
-      if (curMovies.find((movie) => movie.id === selectedMovie.id)) {
+      const curSeasons = this.selectedSeasonsRef.value || [];
+      if (curSeasons.find((movie) => movie.id === selectedMovie.id)) {
         return;
       }
       const { id, name, poster_path } = selectedMovie;
-      this.selectedMoviesRef.select(
-        curMovies.concat([
+      this.selectedSeasonsRef.select(
+        curSeasons.concat([
           {
             id,
-            type: 2,
+            type: MediaTypes.Movie,
             name,
             poster_path,
           },
@@ -174,7 +158,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       title: this.fields.title.value,
       desc: this.fields.desc.value,
       sort: this.fields.sort.value,
-      medias: [...(this.selectedSeasonsRef.value || []), ...(this.selectedMoviesRef.value || [])],
+      medias: [...(this.selectedSeasonsRef.value || [])],
     };
   }
 
@@ -203,13 +187,6 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
     if (this.selectedSeasonsRef.value) {
       this.selectedSeasonsRef.select(
         this.selectedSeasonsRef.value.filter((item) => {
-          return item.id !== media.id;
-        })
-      );
-    }
-    if (this.selectedMoviesRef.value) {
-      this.selectedMoviesRef.select(
-        this.selectedMoviesRef.value.filter((item) => {
           return item.id !== media.id;
         })
       );
@@ -260,7 +237,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     this.updateRequest.run({
-      id,
+      collection_id: id,
       title,
       desc,
       sort,

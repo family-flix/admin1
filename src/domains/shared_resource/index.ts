@@ -12,6 +12,7 @@ import {
   fetch_shared_files,
   AliyunFolderItem,
   save_shared_files,
+  search_shared_files,
 } from "./services";
 
 enum Events {
@@ -56,6 +57,7 @@ type SharedResourceState = {
     type?: "file" | "folder";
   }[];
   files: AliyunFolderItem[];
+  next_marker: string;
 };
 type SharedResourceProps = {
   url: string;
@@ -93,6 +95,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       loading: this.loading,
       paths: this.paths,
       files: this.files,
+      next_marker: this.next_marker,
     };
   }
 
@@ -195,6 +198,24 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.files = this.files.concat(r.data.items);
     this.next_marker = r.data.next_marker;
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  async search(keyword: string) {
+    if (!this.url) {
+      const msg = this.tip({ text: ["请先指定分享链接"] });
+      return Result.Err(msg);
+    }
+    const r = await search_shared_files({
+      url: this.url,
+      code: this.code,
+      keyword,
+    });
+    if (r.error) {
+      this.emit(Events.Tip, r.error.message);
+      return;
+    }
+    this.files = r.data.items;
+    this.next_marker = "";
     this.emit(Events.StateChange, { ...this.state });
   }
   bindSelectedFolderInDrive() {

@@ -3,6 +3,7 @@
  */
 import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
+import { BizError } from "@/domains/error";
 import { JSONValue, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 
 import { DEFAULT_RESPONSE, DEFAULT_PARAMS, DEFAULT_CURRENT_PAGE, DEFAULT_PAGE_SIZE, DEFAULT_TOTAL } from "./constants";
@@ -23,7 +24,7 @@ const RESPONSE_PROCESSOR = <T>(
   total: number;
   empty: boolean;
   noMore: boolean;
-  error: Error | null;
+  error: BizError | null;
 } => {
   if (originalResponse === null) {
     return {
@@ -33,7 +34,7 @@ const RESPONSE_PROCESSOR = <T>(
       total: DEFAULT_TOTAL,
       noMore: false,
       empty: false,
-      error: new Error(`process response fail, because response is null`),
+      error: new BizError(`process response fail, because response is null`),
     };
   }
   try {
@@ -86,7 +87,7 @@ const RESPONSE_PROCESSOR = <T>(
       total: DEFAULT_TOTAL,
       noMore: false,
       empty: false,
-      error: new Error(`process response fail, because ${(error as Error).message}`),
+      error: new BizError(`process response fail, because ${(error as Error).message}`),
     };
   }
 };
@@ -107,7 +108,7 @@ type TheTypesOfEvents<T> = {
   [Events.DataSourceAdded]: unknown[];
   [Events.DataSourceChange]: T[];
   [Events.StateChange]: ListState<T>;
-  [Events.Error]: Error;
+  [Events.Error]: BizError;
   [Events.Completed]: void;
 };
 interface ListState<T> extends Response<T> {}
@@ -154,9 +155,9 @@ export class ListCore<
     const {
       debug,
       rowKey = "id",
+      extraDefaultResponse,
       beforeRequest,
       processor,
-      extraDefaultResponse,
       onLoadingChange,
       onStateChange,
     } = options;
@@ -312,12 +313,14 @@ export class ListCore<
    * 使用初始参数请求一次，初始化时请调用该方法
    */
   async init(params = {}) {
-    const res = await this.fetch({
+    const p = {
       ...this.initialParams,
       ...params,
-    });
+    };
+    console.log("[DOMAIN]list/index - init", p);
+    const res = await this.fetch(p);
     if (res.error) {
-      this.tip({ icon: "error", text: [res.error.message] });
+      // this.tip({ icon: "error", text: [res.error.message] });
       this.response.error = res.error;
       this.emit(Events.Error, res.error);
       this.emit(Events.StateChange, { ...this.response });
@@ -490,6 +493,7 @@ export class ListCore<
     return Result.Ok({ ...this.response });
   }
   async search(params: Search) {
+    // async search(params: Parameters<S>[0]) {
     const res = await this.fetch({
       ...this.initialParams,
       ...params,
@@ -547,6 +551,7 @@ export class ListCore<
     const res = await this.fetch({
       ...restParams,
       page: 1,
+      next_marker: "",
     });
     this.response.refreshing = false;
     if (res.error) {

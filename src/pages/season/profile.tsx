@@ -4,50 +4,32 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
+import { SeasonMediaProfile, fetchSeasonMediaProfile, setMediaProfile } from "@/services/media";
 import {
-  fetchTVProfile,
-  TVProfile,
-  changeSeasonProfile,
   fetchEpisodesOfSeason,
   EpisodeItemInSeason,
   deleteSeason,
   SeasonInTVProfile,
   deleteSourceFile,
-  updateSeasonProfileManually,
   refreshSeasonProfile,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
-import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
+import { TMDBSearcherDialog, TMDBSearcherView } from "@/components/TMDBSearcher";
 import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { createJob, appendAction, mediaPlayingPage } from "@/store";
+import { createJob, appendAction, mediaPlayingPage, homeTVProfilePage } from "@/store";
 import { ViewComponent } from "@/types";
 import { bytes_to_size, cn } from "@/utils";
+import { TMDBSearcherCore } from "@/domains/tmdb";
 
-export const TVProfilePage: ViewComponent = (props) => {
+export const SeasonProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const profileRequest = new RequestCore(fetchTVProfile, {
+  const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
     onSuccess(v) {
       setProfile(v);
-      if (v.seasons.length === 0) {
-        return;
-      }
-      seasonRef.select(v.curSeason);
-      curEpisodeList.modifyResponse((response) => {
-        return {
-          ...response,
-          dataSource: v.curSeasonEpisodes,
-          initial: false,
-          noMore: false,
-          search: {
-            ...response.search,
-            season_id: response.search.season_id || v.seasons[0].id,
-          },
-        };
-      });
     },
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
@@ -96,23 +78,23 @@ export const TVProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const profileManualUpdateRequest = new RequestCore(updateSeasonProfileManually, {
-    onLoading(loading) {
-      profileManualUpdateDialog.okBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({
-        text: ["更新成功"],
-      });
-      profileManualUpdateDialog.hide();
-      profileRequest.reload();
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["更新失败", error.message],
-      });
-    },
-  });
+  // const profileManualUpdateRequest = new RequestCore(updateSeasonProfileManually, {
+  //   onLoading(loading) {
+  //     profileManualUpdateDialog.okBtn.setLoading(loading);
+  //   },
+  //   onSuccess() {
+  //     app.tip({
+  //       text: ["更新成功"],
+  //     });
+  //     profileManualUpdateDialog.hide();
+  //     profileRequest.reload();
+  //   },
+  //   onFailed(error) {
+  //     app.tip({
+  //       text: ["更新失败", error.message],
+  //     });
+  //   },
+  // });
   const curEpisodeList = new ListCore(new RequestCore(fetchEpisodesOfSeason), {
     search: {
       tv_id: view.query.id,
@@ -140,21 +122,13 @@ export const TVProfilePage: ViewComponent = (props) => {
       app.back();
     },
   });
-  const seasonProfileChangeRequest = new RequestCore(changeSeasonProfile, {
-    onSuccess(v) {
-      createJob({
-        job_id: v.job_id,
-        onFinish() {
-          app.tip({ text: ["更新详情成功", "如果当前信息没有改变", "可能是合并到已存在的电视剧中了"] });
-          profileRequest.reload();
-          seasonProfileChangeSelectDialog.hide();
-          seasonProfileChangeSelectDialog.okBtn.setLoading(false);
-        },
-      });
+  const seasonProfileChangeRequest = new RequestCore(setMediaProfile, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
     },
-    onFailed(error) {
-      app.tip({ text: ["更新详情失败", error.message] });
-      seasonProfileChangeSelectDialog.okBtn.setLoading(false);
+    onSuccess() {
+      app.tip({ text: ["更新详情成功"] });
+      profileRequest.reload();
     },
   });
   const seasonProfileRefreshRequest = new RequestCore(refreshSeasonProfile, {
@@ -180,27 +154,36 @@ export const TVProfilePage: ViewComponent = (props) => {
   const episodeRef = new RefCore<EpisodeItemInSeason>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
-  const seasonProfileChangeSelectDialog = new TMDBSearcherDialogCore({
-    onOk(searched_tv) {
-      const id = view.query.season_id as string;
+  const searcher = new TMDBSearcherCore();
+  const dialog = new DialogCore({
+    onOk() {
+      const id = view.query.id as string;
       if (!id) {
         app.tip({ text: ["更新详情失败", "缺少电视剧 id"] });
         return;
       }
-      app.tip({ text: ["开始更新详情"] });
-      seasonProfileChangeSelectDialog.okBtn.setLoading(true);
+      const media = searcher.cur;
+      if (!media) {
+        app.tip({ text: ["请先选择详情"] });
+        return;
+      }
+      dialog.okBtn.setLoading(true);
       seasonProfileChangeRequest.run({
-        season_id: id,
-        unique_id: searched_tv.id,
+        media_id: id,
+        media_profile: {
+          id: String(media.id),
+          type: media.type,
+          name: media.name,
+        },
       });
     },
   });
   const profileChangeBtn = new ButtonCore({
     onClick() {
       if (profileRequest.response) {
-        seasonProfileChangeSelectDialog.input(profileRequest.response.name);
+        searcher.$input.setValue(profileRequest.response.name);
       }
-      seasonProfileChangeSelectDialog.show();
+      dialog.show();
     },
   });
   const profileRefreshBtn = new ButtonCore({
@@ -214,10 +197,10 @@ export const TVProfilePage: ViewComponent = (props) => {
   });
   const seasonDeletingBtn = new ButtonCore({
     onClick() {
-      if (profileRequest.response) {
-        seasonRef.select(profileRequest.response.curSeason);
-      }
-      seasonDeletingConfirmDialog.show();
+      // if (profileRequest.response) {
+      //   seasonRef.select(profileRequest.response.curSeason);
+      // }
+      // seasonDeletingConfirmDialog.show();
     },
   });
   const seasonDeletingConfirmDialog = new DialogCore({
@@ -259,44 +242,44 @@ export const TVProfilePage: ViewComponent = (props) => {
   const seasonContextMenu = new ContextMenuCore({
     items: [deleteSeasonMenuItem],
   });
-  const profileTitleInput = new InputCore({
-    defaultValue: "",
-    placeholder: "请输入电视剧标题",
-  });
-  const profileEpisodeCountInput = new InputCore({
-    defaultValue: "",
-    placeholder: "请输入季剧集总数",
-  });
-  const profileUpdateBtn = new ButtonCore({
-    onClick() {
-      profileManualUpdateDialog.show();
-    },
-  });
-  const profileManualUpdateDialog = new DialogCore({
-    title: "手动修改详情",
-    onOk() {
-      const title = profileTitleInput.value;
-      const episodeCount = profileEpisodeCountInput.value;
-      if (!title && !episodeCount) {
-        app.tip({
-          text: ["请至少输入一个变更项"],
-        });
-        return;
-      }
-      profileManualUpdateRequest.run({
-        season_id: view.query.season_id,
-        title,
-        episode_count: episodeCount ? Number(episodeCount) : undefined,
-      });
-    },
-  });
+  // const profileTitleInput = new InputCore({
+  //   defaultValue: "",
+  //   placeholder: "请输入电视剧标题",
+  // });
+  // const profileEpisodeCountInput = new InputCore({
+  //   defaultValue: "",
+  //   placeholder: "请输入季剧集总数",
+  // });
+  // const profileUpdateBtn = new ButtonCore({
+  //   onClick() {
+  //     profileManualUpdateDialog.show();
+  //   },
+  // });
+  // const profileManualUpdateDialog = new DialogCore({
+  //   title: "手动修改详情",
+  //   onOk() {
+  //     const title = profileTitleInput.value;
+  //     const episodeCount = profileEpisodeCountInput.value;
+  //     if (!title && !episodeCount) {
+  //       app.tip({
+  //         text: ["请至少输入一个变更项"],
+  //       });
+  //       return;
+  //     }
+  //     profileManualUpdateRequest.run({
+  //       season_id: view.query.season_id,
+  //       title,
+  //       episode_count: episodeCount ? Number(episodeCount) : undefined,
+  //     });
+  //   },
+  // });
   const scrollView = new ScrollViewCore({
     onReachBottom() {
       curEpisodeList.loadMore();
     },
   });
 
-  const [profile, setProfile] = createSignal<TVProfile | null>(null);
+  const [profile, setProfile] = createSignal<SeasonMediaProfile | null>(null);
   const [curEpisodeResponse, setCurEpisodeResponse] = createSignal(curEpisodeList.response);
   const [curSeason, setCurSeason] = createSignal(seasonRef.value);
   const [sizeCount, setSizeCount] = createSignal<string | null>(null);
@@ -304,29 +287,26 @@ export const TVProfilePage: ViewComponent = (props) => {
   seasonRef.onStateChange((nextState) => {
     setCurSeason(nextState);
   });
-  curEpisodeList.onStateChange((nextResponse) => {
-    const sourceSizeCount = nextResponse.dataSource.reduce((count, cur) => {
-      const curCount = cur.sources.reduce((total, cur) => {
-        return total + cur.size;
-      }, 0);
-      return count + curCount;
-    }, 0);
-    setSizeCount(bytes_to_size(sourceSizeCount));
-    setCurEpisodeResponse(nextResponse);
-  });
-  curEpisodeList.onComplete(() => {
-    seasonRef.select({
-      id: curEpisodeList.params.season_id as string,
-      name: tmpSeasonRef.value?.name ?? "",
-      season_text: tmpSeasonRef.value?.season_text ?? "",
-    });
-  });
+  // curEpisodeList.onStateChange((nextResponse) => {
+  //   const sourceSizeCount = nextResponse.dataSource.reduce((count, cur) => {
+  //     const curCount = cur.sources.reduce((total, cur) => {
+  //       return total + cur.size;
+  //     }, 0);
+  //     return count + curCount;
+  //   }, 0);
+  //   setSizeCount(bytes_to_size(sourceSizeCount));
+  //   setCurEpisodeResponse(nextResponse);
+  // });
+  // curEpisodeList.onComplete(() => {
+  //   seasonRef.select({
+  //     id: curEpisodeList.params.season_id as string,
+  //     name: tmpSeasonRef.value?.name ?? "",
+  //     season_text: tmpSeasonRef.value?.season_text ?? "",
+  //   });
+  // });
 
   onMount(() => {
-    const { id } = view.query;
-    // console.log("[PAGE]tv/profile - onMount", id);
-    const season_id = view.query.season_id;
-    profileRequest.run({ tv_id: id, season_id });
+    profileRequest.run({ season_id: view.query.id });
   });
 
   return (
@@ -379,9 +359,9 @@ export const TVProfilePage: ViewComponent = (props) => {
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
                         <div class="mt-2">{profile()?.overview}</div>
-                        <div class="mt-4">
+                        {/* <div class="mt-4">
                           <a href={`https://www.themoviedb.org/tv/${profile()?.tmdb_id}`}>TMDB</a>
-                        </div>
+                        </div> */}
                         <div>{sizeCount()}</div>
                       </div>
                     </div>
@@ -390,67 +370,17 @@ export const TVProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4 whitespace-nowrap">
-                  <Button store={profileUpdateBtn}>修改详情</Button>
+                  {/* <Button store={profileUpdateBtn}>修改详情</Button> */}
                   <Button store={profileChangeBtn}>变更详情</Button>
                   <Button store={profileRefreshBtn}>刷新详情</Button>
                   <Button store={seasonDeletingBtn}>删除季</Button>
                 </div>
-                <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
-                  <For each={profile()?.seasons}>
-                    {(season) => {
-                      const { id, name } = season;
-                      return (
-                        <div
-                          class={cn("cursor-pointer hover:underline", curSeason()?.id === id ? "underline" : "")}
-                          // onContextMenu={(event) => {
-                          //   event.preventDefault();
-                          //   const { x, y } = event;
-                          //   selectedSeason.select(season);
-                          //   tmpSeasonRef.select(season);
-                          //   seasonContextMenu.show({
-                          //     x,
-                          //     y,
-                          //   });
-                          // }}
-                          onClick={() => {
-                            curEpisodeList.search({
-                              season_id: id,
-                            });
-                          }}
-                        >
-                          <div class="text-xl whitespace-nowrap">{name}</div>
-                        </div>
-                      );
-                    }}
-                  </For>
-                </div>
-                <ListView
-                  store={curEpisodeList}
-                  class="space-y-4"
-                  // skeleton={
-                  //   <div class="space-y-4">
-                  //     <div>
-                  //       <Skeleton class="w-full h-[28px]" />
-                  //       <div class="pl-4 space-y-1">
-                  //         <Skeleton class="w-full h-[24px]" />
-                  //         <Skeleton class="w-18 h-[24px]" />
-                  //       </div>
-                  //     </div>
-                  //     <div>
-                  //       <Skeleton class="w-32 h-[28px]" />
-                  //       <div class="pl-4 space-y-1">
-                  //         <Skeleton class="w-24 h-[24px]" />
-                  //         <Skeleton class="w-full h-[24px]" />
-                  //       </div>
-                  //     </div>
-                  //   </div>
-                  // }
-                >
-                  <For each={curEpisodeResponse().dataSource}>
+                <div class="space-y-4 mt-8">
+                  <For each={profile()?.episodes}>
                     {(episode) => {
                       const { id, name, episode_number, runtime, sources } = episode;
                       return (
-                        <div>
+                        <div title={id}>
                           <div class="text-lg">
                             {episode_number}、{name}
                             <Show when={runtime}>
@@ -483,7 +413,7 @@ export const TVProfilePage: ViewComponent = (props) => {
                                         class="p-1 cursor-pointer"
                                         title="删除源"
                                         onClick={() => {
-                                          episodeRef.select(episode);
+                                          // episodeRef.select(episode);
                                           fileRef.select(source);
                                           fileDeletingConfirmDialog.show();
                                         }}
@@ -500,14 +430,41 @@ export const TVProfilePage: ViewComponent = (props) => {
                       );
                     }}
                   </For>
-                </ListView>
+                </div>
+                <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
+                  <For each={profile()?.series}>
+                    {(season) => {
+                      const { id, name, poster_path, air_date } = season;
+                      homeTVProfilePage.query = {
+                        id,
+                      };
+                      const url = homeTVProfilePage.buildUrlWithPrefix();
+                      return (
+                        <div>
+                          <a href={url} target="_blank">
+                            <div>
+                              <LazyImage class="w-[120px]" src={poster_path} />
+                            </div>
+                          </a>
+                          <div class="text-xl whitespace-nowrap">{name}</div>
+                          <div class="">{air_date}</div>
+                        </div>
+                      );
+                    }}
+                  </For>
+                </div>
               </div>
             </div>
           </Show>
         </div>
+        <div class="h-[120px]"></div>
       </ScrollView>
-      <TMDBSearcherDialog store={seasonProfileChangeSelectDialog} />
-      <Dialog store={profileManualUpdateDialog}>
+      <Dialog title="设置电视详情" store={dialog}>
+        <div class="w-[520px]">
+          <TMDBSearcherView store={searcher} />
+        </div>
+      </Dialog>
+      {/* <Dialog store={profileManualUpdateDialog}>
         <div class="w-[520px]">
           <div class="space-y-4">
             <div class="space-y-1">
@@ -520,7 +477,7 @@ export const TVProfilePage: ViewComponent = (props) => {
             </div>
           </div>
         </div>
-      </Dialog>
+      </Dialog> */}
       <Dialog store={seasonDeletingConfirmDialog}>
         <div class="w-[520px]">
           <div class="text-lg">确认删除「{curSeason()?.name}」吗？</div>

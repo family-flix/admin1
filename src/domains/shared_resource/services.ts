@@ -62,6 +62,26 @@ export async function fetch_shared_files(body: { url: string; code?: string; fil
 export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["items"][0];
 
 /**
+ * 搜索分享资源文件夹
+ */
+export async function search_shared_files(body: { url: string; code?: string; keyword: string }) {
+  const { url, code, keyword } = body;
+  const r = await request.post<{
+    items: {
+      file_id: string;
+      name: string;
+      next_marker: string;
+      parent_file_id: string;
+      size: number;
+      type: "folder" | "file";
+      thumbnail: string;
+    }[];
+    next_marker: string;
+  }>("/api/admin/shared_file/search", { url, code, keyword });
+  return r;
+}
+
+/**
  * 转存指定的分享文件到指定云盘
  * @param body
  * @returns
@@ -80,7 +100,7 @@ export async function save_shared_files(body: {
   /** 转存到指定云盘的哪个文件夹，默认是根目录 */
   target_folder_id?: string;
 }) {
-  return request.post<{ job_id: string }>("/api/admin/shared_file/save", body);
+  return request.post<{ job_id: string }>("/api/v2/admin/resource/transfer", body);
 }
 
 export function fetch_shared_file_save_list(body: FetchParams) {

@@ -17,7 +17,7 @@ import {
   UnpackedResult,
 } from "@/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
-import { DriveTypes, MediaErrorTypes, ReportTypeTexts, ReportTypes } from "@/constants";
+import { DriveTypes, MediaErrorTypes, MediaTypes, ReportTypeTexts, ReportTypes } from "@/constants";
 import { bytes_to_size, query_stringify } from "@/utils";
 
 /**
@@ -129,22 +129,15 @@ export async function fetchSeasonList(
       original_name: string;
       overview: string;
       poster_path: string;
-      first_air_date: string;
-      popularity: string;
+      air_date: string;
+      vote_average: string;
       season_text: string;
       episode_count: number;
       season_count: number;
       cur_episode_count: number;
-      cur_season_count: number;
-      episode_sources: number;
-      size_count: number;
-      size_count_text: string;
-      incomplete: boolean;
-      need_bind: boolean;
-      sync_task: { id: string } | null;
       tips: string[];
     }>
-  >("/api/admin/season/list", {
+  >("/api/v2/admin/season/list", {
     ...rest,
     page,
     page_size: pageSize,
@@ -531,24 +524,24 @@ export async function fetchPartialSeason(params: { season_id: string }) {
   const { season_id } = params;
   const resp = await request.get<{
     id: string;
-    tv_id: string;
+    // tv_id: string;
     name: string;
     original_name: string;
     overview: string;
     poster_path: string;
     season_text: string;
-    first_air_date: string;
-    popularity: string;
+    air_date: string;
+    vote_average: string;
     episode_count: number;
-    season_count: number;
+    // season_count: number;
     cur_episode_count: number;
-    cur_season_count: number;
-    episode_sources: number;
-    size_count: number;
-    size_count_text: string;
-    incomplete: boolean;
-    need_bind: boolean;
-    sync_task: { id: string } | null;
+    // cur_season_count: number;
+    // episode_sources: number;
+    // size_count: number;
+    // size_count_text: string;
+    // incomplete: boolean;
+    // need_bind: boolean;
+    // sync_task: { id: string } | null;
     tips: string[];
   }>(`/api/admin/season/${season_id}/partial`);
   if (resp.error) {
@@ -615,7 +608,6 @@ export async function fetchMovieList(params: FetchParams & { name: string; dupli
       overview: string;
       poster_path: string;
       air_date: string;
-      popularity: string;
       vote_average: number;
       runtime: number;
       persons: {
@@ -625,7 +617,7 @@ export async function fetchMovieList(params: FetchParams & { name: string; dupli
         order: number;
       }[];
     }>
-  >("/api/admin/movie/list", {
+  >("/api/v2/admin/movie/list", {
     ...rest,
     page,
     page_size: pageSize,
@@ -636,7 +628,7 @@ export async function fetchMovieList(params: FetchParams & { name: string; dupli
   return Result.Ok({
     ...resp.data,
     list: resp.data.list.map((movie) => {
-      const { persons, ...rest } = movie;
+      const { persons = [], ...rest } = movie;
       return {
         ...rest,
         persons: persons.slice(0, 5),
@@ -675,34 +667,31 @@ export function delete_movie(body: { movie_id: string }) {
 /**
  * 获取无法识别的 tv
  */
-export async function fetchUnknownTVList(params: FetchParams) {
+export async function fetchUnknownSeasonMediaList(params: FetchParams & { type: MediaTypes }) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.get<
+  const r = await request.post<
     ListResponse<{
       id: string;
       name: string;
-      file_id?: string;
-      file_name?: string;
-      parsed_seasons: {
-        id: string;
-        file_name: string;
-        season_text: string;
-        season_id: string;
-      }[];
-      parsed_episodes: {
-        id: string;
-        file_name: string;
-        parent_paths: string;
-        episode_text: string;
-        episode_id: string;
-      }[];
-      drive: {
+      season_text: string;
+      sources: {
         id: string;
         name: string;
-      };
+        original_name: string;
+        season_text: string;
+        episode_text: string;
+        file_name: string;
+        parent_paths: string;
+        profile: null | {};
+        drive: {
+          id: string;
+          name: string;
+        };
+      }[];
     }>
-  >(`/api/admin/unknown_tv/list`, {
+  >(`/api/v2/admin/parsed_media/list`, {
     ...rest,
+    type: MediaTypes.Season,
     page,
     page_size: pageSize,
   });
@@ -712,20 +701,65 @@ export async function fetchUnknownTVList(params: FetchParams) {
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, file_id, file_name, parsed_seasons, parsed_episodes, drive } = tv;
+      const { id, name, season_text, sources } = tv;
       return {
         id,
         name,
-        file_id,
-        file_name,
-        parsed_seasons,
-        parsed_episodes,
-        drive,
+        season_text,
+        sources,
       };
     }),
   });
 }
-export type UnknownTVItem = RequestedResource<typeof fetchUnknownTVList>["list"][0];
+
+/**
+ * 获取无法识别的 tv
+ */
+export async function fetchUnknownMovieMediaList(params: FetchParams & { type: MediaTypes }) {
+  const { page, pageSize, ...rest } = params;
+  const r = await request.post<
+    ListResponse<{
+      id: string;
+      name: string;
+      season_text: string;
+      sources: {
+        id: string;
+        name: string;
+        original_name: string;
+        season_text: string;
+        episode_text: string;
+        file_name: string;
+        parent_paths: string;
+        profile: null | {};
+        drive: {
+          id: string;
+          name: string;
+        };
+      }[];
+    }>
+  >(`/api/v2/admin/parsed_media/list`, {
+    ...rest,
+    type: MediaTypes.Movie,
+    page,
+    page_size: pageSize,
+  });
+  if (r.error) {
+    return r;
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((tv) => {
+      const { id, name, season_text, sources } = tv;
+      return {
+        id,
+        name,
+        season_text,
+        sources,
+      };
+    }),
+  });
+}
+export type UnknownSeasonMediaItem = RequestedResource<typeof fetchUnknownSeasonMediaList>["list"][0];
 
 /** 删除所有未识别电视剧 */
 export function deleteUnknownTVList() {
@@ -1320,8 +1354,8 @@ export function delete_aliyun_file(body: { file_id: string }) {
   return request.get(`/api/admin/aliyun/delete/${file_id}`);
 }
 
-export async function fetchTVProfile(body: { tv_id: string; season_id?: string }) {
-  const { tv_id, season_id } = body;
+export async function fetchSeasonProfile(body: { season_id: string }) {
+  const { season_id } = body;
   const r = await request.get<{
     id: string;
     name: string;
@@ -1329,27 +1363,21 @@ export async function fetchTVProfile(body: { tv_id: string; season_id?: string }
     poster_path: null;
     backdrop_path: null;
     original_language: string;
-    first_air_date: string;
+    air_date: string;
     tmdb_id: number;
-    incomplete: boolean;
+    // incomplete: boolean;
     seasons: {
       id: string;
       name: string;
       overview: string;
       season_number: number;
-      season_text: string;
     }[];
-    cur_season: {
-      id: string;
-      name: string;
-      season_text: string;
-    };
-    cur_season_episodes: {
+    episodes: {
       id: string;
       name: string;
       overview: string;
       episode_number: string;
-      first_air_date: string;
+      air_date: string;
       runtime: number;
       sources: {
         id: string;
@@ -1357,6 +1385,7 @@ export async function fetchTVProfile(body: { tv_id: string; season_id?: string }
         file_name: string;
         parent_paths: string;
         size: number;
+        created: string;
         drive: {
           id: string;
           name: string;
@@ -1364,53 +1393,25 @@ export async function fetchTVProfile(body: { tv_id: string; season_id?: string }
         };
       }[];
     }[];
-    // sources: {
-    //   id: string;
-    //   file_id: string;
-    //   parent_paths: string;
-    //   file_name: string;
-    // }[];
-    // parsed_tvs: {
-    //   id: string;
-    //   file_id: string | null;
-    //   file_name: string | null;
-    //   name: string | null;
-    //   original_name: string | null;
-    //   correct_name: string | null;
-    // }[];
-  }>(`/api/admin/tv/${tv_id}`, { season_id });
+  }>(`/api/admin/season/${season_id}`);
   if (r.error) {
     return Result.Err(r.error);
   }
-  const {
-    id,
-    name,
-    overview,
-    poster_path,
-    backdrop_path,
-    first_air_date,
-    tmdb_id,
-    incomplete,
-    seasons,
-    cur_season,
-    cur_season_episodes,
-  } = r.data;
+  const { id, name, overview, poster_path, backdrop_path, air_date, tmdb_id, seasons, episodes } = r.data;
   return Result.Ok({
     id,
     name,
     overview,
     poster_path,
     backdrop_path,
-    first_air_date,
+    air_date,
     tmdb_id,
-    incomplete,
     seasons,
-    curSeason: cur_season,
-    curSeasonEpisodes: cur_season_episodes,
+    episodes,
   });
 }
-export type TVProfile = RequestedResource<typeof fetchTVProfile>;
-export type SeasonInTVProfile = RequestedResource<typeof fetchTVProfile>["curSeason"];
+export type TVProfile = RequestedResource<typeof fetchSeasonProfile>;
+export type SeasonInTVProfile = RequestedResource<typeof fetchSeasonProfile>["seasons"][number];
 
 export async function deleteEpisode(body: { id: string }) {
   const { id } = body;

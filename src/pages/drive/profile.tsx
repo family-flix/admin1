@@ -2,8 +2,9 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft, Binary, ChevronRight, FolderInput, Trash } from "lucide-solid";
+import { ArrowLeft, ChevronRight, FolderInput, Trash } from "lucide-solid";
 
+import { renameFilesInDrive, fetchDriveFiles } from "@/services/drive";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
@@ -21,16 +22,13 @@ import {
   AliyunDriveFilesCore,
   DriveItem,
   AliyunDriveFile,
-  fetchDriveFiles,
-  renameChildFilesName,
-  fetchFileProfile,
   transferFileToAnotherDrive,
   transferFileToResourceDrive,
 } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { FileType } from "@/constants";
+import { FileType, MediaTypes } from "@/constants";
 import { createJob, driveList } from "@/store";
 import { buildRegexp } from "@/utils";
 import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
@@ -40,7 +38,7 @@ import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSea
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const filesRenameRequest = new RequestCore(renameChildFilesName, {
+  const filesRenameRequest = new RequestCore(renameFilesInDrive, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -140,6 +138,11 @@ export const DriveProfilePage: ViewComponent = (props) => {
   // const fileProfileRequest = new RequestCore(fetchFileProfile);
   const driveFileManage = new AliyunDriveFilesCore({
     id: view.query.id,
+    onError(err) {
+      app.tip({
+        text: [err.message],
+      });
+    },
   });
   const drive = new DriveCore({ ...(view.query as unknown as DriveItem) });
   drive.list.pageSize = 50;
@@ -179,28 +182,17 @@ export const DriveProfilePage: ViewComponent = (props) => {
         onLoading(loading) {
           folderDeletingConfirmDialog.okBtn.setLoading(loading);
         },
-        onFailed(error) {
-          app.tip({
-            text: ["删除文件失败", error.message],
-          });
-        },
         onSuccess(opt) {
           app.tip({
-            text: ["开始删除"],
+            text: ["删除成功"],
           });
           opt.deleteFile();
           folderDeletingConfirmDialog.hide();
           curFileWithPosition.clear();
-          if (!opt.job_id) {
-            return;
-          }
-          createJob({
-            job_id: opt.job_id,
-            onFinish() {
-              app.tip({
-                text: ["删除成功"],
-              });
-            },
+        },
+        onFailed(error) {
+          app.tip({
+            text: ["删除文件失败", error.message],
           });
         },
       });
@@ -244,7 +236,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         },
         onSuccess() {
           app.tip({
-            text: ["重命名成功"],
+            text: ["重命名成功，请重新索引该文件"],
           });
           nameModifyDialog.hide();
           nameModifyInput.clear();
@@ -279,7 +271,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       }
       const [file] = driveFileManage.virtualSelectedFolder;
       analysisItem.disable();
-      const r = await drive.startAnalysis({
+      const r = await drive.analysisSpecialFolders({
         target_folders: [file],
       });
       driveFileManage.clearVirtualSelected();
@@ -298,6 +290,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
         job_id: r.data.job_id,
         onFinish() {
           drive.finishAnalysis();
+          app.tip({
+            text: ["索引完成"],
+          });
         },
       });
     },
@@ -424,7 +419,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   const movieSelect = new TMDBSearcherDialogCore({
-    type: "movie",
+    type: MediaTypes.Movie,
     onOk(movieProfile) {
       if (!curFile.value) {
         app.tip({
@@ -506,7 +501,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
         });
         return;
       }
-      const [file] = driveFileManage.virtualSelectedFolder;
+      // const [file] = driveFileManage.virtualSelectedFolder;
       curFileWithPosition.select(driveFileManage.virtualSelectedFolder);
       folderDeletingConfirmDialog.setTitle(`删除文件`);
       folderDeletingConfirmDialog.show();
@@ -662,7 +657,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
   onMount(() => {
     app.setTitle(view.query.name);
     driveFileManage.appendColumn({ file_id: "root", name: "文件" });
-    drive.refresh();
+    // drive.refresh();
     driveList.initAny();
   });
 

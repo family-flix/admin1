@@ -9,7 +9,6 @@ import * as TreePrimitive from "@/packages/ui/tree";
 import * as PopperPrimitive from "@/packages/ui/popper";
 import { ViewComponent } from "@/types";
 import { RequestCore } from "@/domains/request";
-import { createWithFolders, fetchTokenOfDrive } from "@/domains/drive";
 import { upload_file } from "@/services";
 import { Select } from "@/components/ui/select";
 import { SelectItemCore } from "@/domains/ui/select/item";
