@@ -44,19 +44,19 @@ export const TVProfilePage: ViewComponent = (props) => {
       if (v.seasons.length === 0) {
         return;
       }
-      curSeasonStore.select(v.curSeason);
-      curEpisodeList.modifyResponse((response) => {
-        return {
-          ...response,
-          dataSource: v.episodes,
-          initial: false,
-          noMore: false,
-          search: {
-            ...response.search,
-            season_id: response.search.season_id || v.seasons[0].id,
-          },
-        };
-      });
+      // curSeasonStore.select(v.curSeason);
+      // curEpisodeList.modifyResponse((response) => {
+      //   return {
+      //     ...response,
+      //     dataSource: v.episodes,
+      //     initial: false,
+      //     noMore: false,
+      //     search: {
+      //       ...response.search,
+      //       season_id: response.search.season_id || v.seasons[0].id,
+      //     },
+      //   };
+      // });
     },
   });
   const sourceDeleteRequest = new RequestCore(deleteSourceFile, {
@@ -243,18 +243,19 @@ export const TVProfilePage: ViewComponent = (props) => {
     setCurEpisodeResponse(nextResponse);
   });
   curEpisodeList.onComplete(() => {
-    curSeasonStore.select({
-      id: curEpisodeList.params.season_id as string,
-      name: tmpSeasonStore.value?.name ?? "",
-      season_text: tmpSeasonStore.value?.season_text ?? "",
-    });
+    // curSeasonStore.select({
+    //   id: curEpisodeList.params.season_id as string,
+    //   name: tmpSeasonStore.value?.name ?? "",
+    //   season_number: tmpSeasonStore.value?.season_text ?? "",
+    //   overview: "",
+    // });
   });
 
   onMount(() => {
     const { id } = view.query;
     console.log("[PAGE]tv/profile - onMount", id);
     const season_id = view.query.season_id;
-    profileRequest.run({ tv_id: id, season_id });
+    profileRequest.run({ season_id });
   });
 
   return (

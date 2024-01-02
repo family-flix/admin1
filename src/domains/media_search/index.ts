@@ -1,4 +1,7 @@
-import { TheMediaInTMDB, searchMediaInTMDB } from "@/services/media_profile";
+/**
+ * @file 搜索本地数据库已归档的影视剧详情
+ */
+import { searchMediaProfile, MediaProfileItem } from "@/services/media_profile";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, InputCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
@@ -9,67 +12,65 @@ import { MediaTypes } from "@/constants";
 
 enum Events {
   Select,
+  UnSelect,
   StateChange,
 }
 type TheTypesOfEvents = {
-  [Events.Select]: TheMediaInTMDB;
-  [Events.StateChange]: TMDBSearcherState;
+  [Events.Select]: MediaProfileItem;
+  [Events.UnSelect]: null;
+  [Events.StateChange]: MediaSearchState;
 };
-interface TMDBSearcherState {
-  response: Response<TheMediaInTMDB>;
-  cur: TheMediaInTMDB | null;
+interface MediaSearchState {
+  response: Response<MediaProfileItem>;
+  cur: MediaProfileItem | null;
 }
-type TMDBSearcherProps = {
+type MediaSearchProps = {
   type?: MediaTypes;
-  episode?: boolean;
+  onSelect?: (value: MediaProfileItem | null) => void;
 };
 
-export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
-  type?: MediaTypes;
-
-  $list = new ListCore(new RequestCore(searchMediaInTMDB));
-  $form: FormCore<{}>;
-  $input: InputCore<string>;
+export class MediaSearchCore extends BaseDomain<TheTypesOfEvents> {
+  $list = new ListCore(new RequestCore(searchMediaProfile));
+  form: FormCore<{}>;
+  input: InputCore<string>;
   searchBtn: ButtonCore;
   resetBtn: ButtonCore;
 
-  cur: null | TheMediaInTMDB = null;
-  needEpisode = false;
-  get state(): TMDBSearcherState {
+  type?: MediaTypes;
+  cur: null | MediaProfileItem = null;
+
+  get state(): MediaSearchState {
     return {
-      response: this.$list.response,
       cur: this.cur,
+      response: this.$list.response,
     };
   }
 
-  constructor(options: Partial<{ _name: string } & TMDBSearcherProps> = {}) {
+  constructor(options: Partial<{ _name: string } & MediaSearchProps> = {}) {
     super(options);
 
-    const { type, episode = false } = options;
-    // console.log("[DOMAIN]TMDB - constructor ", this.list.response);
+    const { type, onSelect } = options;
     if (type) {
       this.type = type;
+      this.$list.setParams({ type });
     }
-    this.needEpisode = episode;
-    this.$list.setParams({ type: type || MediaTypes.Season });
-    this.$form = new FormCore<{}>();
-
+    this.form = new FormCore<{}>();
     this.searchBtn = new ButtonCore({
       onClick: () => {
-        if (!this.$input.value) {
+        if (!this.input.value) {
           this.tip({ text: ["请输入查询关键字"] });
           return;
         }
-        this.$list.search({ keyword: this.$input.value });
+        this.$list.search({ keyword: this.input.value });
       },
     });
     this.resetBtn = new ButtonCore({
       onClick: () => {
-        this.$input.clear();
+        this.input.clear();
         this.$list.clear();
       },
     });
-    this.$input = new InputCore({
+    this.input = new InputCore({
       defaultValue: "",
       placeholder: type === MediaTypes.Movie ? "请输入电影名称" : "请输入电视剧名称",
       onEnter: () => {
@@ -77,34 +78,44 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
       },
     });
     this.$list.onStateChange((nextState) => {
+      // console.log("----1", this.$list.response.dataSource);
       this.emit(Events.StateChange, { ...this.state });
     });
     this.$list.onLoadingChange((loading) => {
       this.searchBtn.setLoading(loading);
     });
+    if (onSelect) {
+      this.onSelect((v) => {
+        onSelect(v);
+      });
+      this.onUnSelect(() => {
+        onSelect(null);
+      });
+    }
   }
 
   search(body: Parameters<typeof this.$list.search>[0]) {
     this.$list.search(body);
   }
-  select(v: TheMediaInTMDB) {
-    this.cur = v;
-    this.emit(Events.StateChange, { ...this.state });
-  }
-  unSelect() {
-    this.cur = null;
-    this.emit(Events.StateChange, { ...this.state });
-  }
-  toggle(v: TheMediaInTMDB) {
+
+  toggle(v: MediaProfileItem) {
     if (this.cur === v) {
       this.cur = null;
+      this.emit(Events.UnSelect, null);
       this.emit(Events.StateChange, { ...this.state });
       return;
     }
     this.cur = v;
+    this.emit(Events.Select, v);
     this.emit(Events.StateChange, { ...this.state });
   }
 
+  onSelect(handler: Handler<TheTypesOfEvents[Events.Select]>) {
+    this.on(Events.Select, handler);
+  }
+  onUnSelect(handler: Handler<TheTypesOfEvents[Events.UnSelect]>) {
+    this.on(Events.UnSelect, handler);
+  }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     this.on(Events.StateChange, handler);
   }

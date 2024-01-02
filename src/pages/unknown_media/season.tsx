@@ -1,27 +1,77 @@
 /**
- * @file 未识别的季
+ * @file 未识别的电视剧
  */
-import { For, createSignal } from "solid-js";
-import { Brush, RotateCw, Trash } from "lucide-solid";
+import { For, Show, createSignal } from "solid-js";
+import { Brush, RotateCcw, Search, Trash } from "lucide-solid";
 
-import { Button, Dialog, Input, ListView, LazyImage, ScrollView } from "@/components/ui";
-import { ButtonCore, ButtonInListCore, InputCore, DialogCore, ScrollViewCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
+import { UnknownSeasonMediaItem, deleteUnknownTV, fetchUnknownSeasonMediaList } from "@/services";
+import { Button, ListView, Dialog, LazyImage, ScrollView, Input } from "@/components/ui";
+import { TMDBSearcherView } from "@/components/TMDBSearcher";
+import { ButtonCore, ButtonInListCore, CheckboxCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import {
-  UnknownSeasonItem,
-  delete_unknown_season_list,
-  fetchUnknownSeasonList,
-  update_unknown_season_number,
-} from "@/services";
+import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
+import { setParsedSeasonMediaProfile } from "@/services/parsed_media";
+import { TMDBSearcherCore } from "@/domains/tmdb";
 
-export const UnknownSeasonPage: ViewComponent = (props) => {
+export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const { app, view } = props;
-  const list = new ListCore(new RequestCore(fetchUnknownSeasonList), {
+
+  const list = new ListCore(new RequestCore(fetchUnknownSeasonMediaList), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
+    },
+  });
+  const tvDeletingRequest = new RequestCore(deleteUnknownTV, {
+    onLoading(loading) {
+      tvDeletingConfirmDialog.okBtn.setLoading(loading);
+      tvDeletingBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["删除成功"],
+      });
+      tvDeletingConfirmDialog.hide();
+      const theParsedTV = seasonRef.value;
+      if (!theParsedTV) {
+        return;
+      }
+      list.deleteItem((item) => {
+        if (item.id === theParsedTV.id) {
+          return true;
+        }
+        return false;
+      });
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["删除失败", error.message],
+      });
+    },
+  });
+  const setProfileRequest = new RequestCore(setParsedSeasonMediaProfile, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({ text: ["修改失败", error.message] });
+    },
+    onSuccess() {
+      app.tip({ text: ["修改成功"] });
+      dialog.hide();
+      list.deleteItem((item) => {
+        if (item.id === seasonRef.value?.id) {
+          return true;
+        }
+        return false;
+      });
+    },
+  });
+  const resetBtn = new ButtonCore({
+    onClick() {
+      nameSearchInput.clear();
+      list.reset();
     },
   });
   const refreshBtn = new ButtonCore({
@@ -29,87 +79,71 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
       list.refresh();
     },
   });
-  const cur = new RefCore<UnknownSeasonItem>();
-  const bindSeasonRequest = new RequestCore(update_unknown_season_number, {
-    onLoading(loading) {
-      bindSeasonDialog.okBtn.setLoading(loading);
-      bindSeasonBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({ text: ["修改季失败", error.message] });
-    },
-    onSuccess() {
-      app.tip({ text: ["修改季成功"] });
-      bindSeasonDialog.hide();
-      list.deleteItem((item) => {
-        if (item.id === cur.value?.id) {
-          return true;
-        }
-        return false;
-      });
-    },
-  });
-  const seasonInput = new InputCore({
+  const nameSearchInput = new InputCore({
     defaultValue: "",
-    placeholder: "请输入季，如 S01、S02",
-  });
-  const bindSeasonDialog = new DialogCore({
-    title: "修改季",
-    onOk() {
-      if (!seasonInput.value) {
-        app.tip({
-          text: ["请输入季"],
-        });
-        return;
-      }
-      if (!cur.value) {
-        app.tip({
-          text: ["请先选择要修改的季"],
-        });
-        return;
-      }
-      bindSeasonRequest.run({ id: cur.value.id, season_number: seasonInput.value });
+    onEnter() {
+      searchBtn.click();
     },
   });
-  const bindSeasonBtn = new ButtonInListCore<UnknownSeasonItem>({
-    onClick(record) {
-      cur.select(record);
-      bindSeasonDialog.show();
-    },
-  });
-  const seasonDeletingRequest = new RequestCore(delete_unknown_season_list, {
-    onLoading(loading) {
-      seasonDeletingConfirmDialog.okBtn.setLoading(loading);
-      seasonDeletingBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["删除失败", error.message],
-      });
-    },
-    onSuccess() {
-      app.tip({
-        text: ["删除成功"],
-      });
-      list.deleteItem((item) => {
-        if (item.id === cur.value?.id) {
-          return true;
-        }
-        return false;
-      });
-      seasonDeletingConfirmDialog.hide();
-    },
-  });
-  const seasonDeletingConfirmDialog = new DialogCore({
-    title: "确认删除所有未识别季吗？",
-    onOk() {
-      seasonDeletingRequest.run();
-    },
-  });
-  const seasonDeletingBtn = new ButtonCore({
+  const searchBtn = new ButtonCore({
     onClick() {
-      seasonDeletingConfirmDialog.show();
+      if (!nameSearchInput.value) {
+        return;
+      }
+      list.search({ name: nameSearchInput.value });
     },
+  });
+  const tvDeletingConfirmDialog = new DialogCore({
+    title: "删除未识别电视剧",
+    onOk() {
+      if (!seasonRef.value) {
+        app.tip({
+          text: ["请选择要删除的记录"],
+        });
+        return;
+      }
+      tvDeletingRequest.run({
+        parsed_tv_id: seasonRef.value.id,
+      });
+    },
+  });
+  const tvDeletingBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
+    onClick(record) {
+      seasonRef.select(record);
+      tvDeletingConfirmDialog.show();
+    },
+  });
+  const seasonRef = new RefCore<UnknownSeasonMediaItem>();
+  const unknownTVProfileSetBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
+    onClick(record) {
+      seasonRef.select(record);
+      dialog.show();
+    },
+  });
+  const dialog = new DialogCore({
+    onOk() {
+      if (!seasonRef.value) {
+        app.tip({ text: ["请先选择未识别的电视剧"] });
+        return;
+      }
+      const { id } = seasonRef.value;
+      const media = mediaSearch.cur;
+      if (!media) {
+        app.tip({ text: ["请先选择设置的详情"] });
+        return;
+      }
+      setProfileRequest.run({
+        parsed_media_id: id,
+        media_profile: {
+          id: String(media.id),
+          type: media.type,
+          name: media.name,
+        },
+      });
+    },
+  });
+  const mediaSearch = new TMDBSearcherCore({
+    // type: MediaTypes.Season,
   });
   const scrollView = new ScrollViewCore({
     onReachBottom() {
@@ -118,27 +152,35 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
   });
 
   const [response, setResponse] = createSignal(list.response);
+  const [cur, setCur] = createSignal(seasonRef.value);
 
   list.onStateChange((nextState) => {
     setResponse(nextState);
   });
-
+  seasonRef.onStateChange((nextState) => {
+    setCur(nextState);
+  });
   view.onShow(() => {
     list.init();
   });
 
-  const dataSource = () => response().dataSource;
-
   return (
     <>
       <ScrollView class="px-8 pb-12" store={scrollView}>
-        <div class="my-4 space-x-2">
-          <Button icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
+        <div class="my-4 flex items-center space-x-2">
+          <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
+          </Button>
+          <Button store={resetBtn}>重置</Button>
+        </div>
+        <div class="flex items-center space-x-2 mt-4">
+          <Input class="" store={nameSearchInput} />
+          <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+            搜索
           </Button>
         </div>
         <ListView
-          class=""
+          class="mt-4"
           store={list}
           // skeleton={
           //   <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
@@ -152,10 +194,9 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
           // }
         >
           <div class="space-y-4">
-            <For each={dataSource()}>
-              {(file) => {
-                const { id, name, season_number } = file;
-                const n = `${name} - ${season_number}`;
+            <For each={response().dataSource}>
+              {(parsedMedia) => {
+                const { id, name, season_text, sources } = parsedMedia;
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
@@ -168,19 +209,35 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
                         />
                       </div>
                     </div>
-                    <div class="flex-1 mt-2">
-                      <div class="text-lg">{n}</div>
-                      {/* <div class="mt-2 text-sm text-slate-800 break-all">
-                      [{drive.name}]{parent_paths}/{file_name}
-                    </div> */}
+                    <div class="flex-1 w-0 mt-2">
+                      <div class="text-lg">
+                        {name} {season_text}
+                      </div>
+                      <Show when={sources}>
+                        <div class="mt-4 p-2">
+                          <For each={sources}>
+                            {(parsedSource) => {
+                              const { name, episode_text, parent_paths, file_name, drive } = parsedSource;
+                              return (
+                                <div title={name}>
+                                  <div>{episode_text}</div>
+                                  <div class="text-sm text-gray-500">
+                                    [{drive.name}]{parent_paths}/{file_name}
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          </For>
+                        </div>
+                      </Show>
                       <div class="flex items-center mt-4 space-x-2">
                         <Button
                           class="box-content"
                           variant="subtle"
-                          store={bindSeasonBtn.bind(file)}
+                          store={unknownTVProfileSetBtn.bind(parsedMedia)}
                           icon={<Brush class="w-4 h-4" />}
                         >
-                          修改
+                          设置详情
                         </Button>
                       </div>
                     </div>
@@ -191,15 +248,18 @@ export const UnknownSeasonPage: ViewComponent = (props) => {
           </div>
         </ListView>
       </ScrollView>
-      <Dialog store={bindSeasonDialog}>
+      <Dialog store={dialog}>
         <div class="w-[520px]">
-          <Input store={seasonInput} />
+          <TMDBSearcherView store={mediaSearch} />
         </div>
       </Dialog>
-      <Dialog store={seasonDeletingConfirmDialog}>
+      <Dialog store={tvDeletingConfirmDialog}>
         <div class="w-[520px]">
-          <div>该操作并不会删除云盘内文件</div>
-          <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
+          <div class="text-lg">确认删除 {cur()?.name} 吗？</div>
+          <div class="text-sm text-slate-800">
+            <div>该操作并不会删除云盘内文件</div>
+            <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
+          </div>
         </div>
       </Dialog>
     </>

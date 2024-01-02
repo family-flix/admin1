@@ -15,8 +15,7 @@ import { TVManagePage } from "@/pages/season";
 import { SeasonProfilePage } from "@/pages/season/profile";
 import { MediaPlayingPage } from "@/pages/play/index";
 import { UnknownMediaLayout } from "@/pages/unknown_media/layout";
-import { UnknownSeasonMediaPage } from "@/pages/unknown_media/media";
-import { UnknownSeasonPage } from "@/pages/unknown_media/season";
+import { UnknownSeasonMediaPage } from "@/pages/unknown_media/season";
 import { UnknownEpisodePage } from "@/pages/unknown_media/episode";
 import { UnknownMoviePage } from "@/pages/unknown_media/movie";
 import { SyncTaskListPage } from "@/pages/sync_task";
@@ -41,6 +40,7 @@ import { InvalidMediaManagePage } from "@/pages/media_error";
 import { PrismaExecPage } from "@/pages/prisma";
 import { lazy } from "solid-js";
 import { MovieArchivePage } from "@/pages/archive/movie";
+import { OuterMediaProfilePage } from "@/pages/outer_profile";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -102,31 +102,18 @@ export const homeMovieListPage = new RouteViewCore({
   component: MovieManagePage,
 });
 export const homeUnknownTVPage = new RouteViewCore({
-  key: "/home/unknown_tv/tv",
+  key: "/home/unknown_media/season",
   title: "未识别的电视剧",
   component: UnknownSeasonMediaPage,
 });
-export const homeInvalidTVListPage = new RouteViewCore({
-  key: "/home/tv/invalid",
-  title: "有问题的电视剧列表",
-  component: InvalidTVManagePage,
-});
-export const homeUnknownSeasonPage = new RouteViewCore({
-  key: "/home/unknown_tv/season",
-  title: "未识别的季",
-  // component: UnknownSeasonPage,
-  component: UnknownSeasonPage,
-});
 export const homeUnknownEpisodePage = new RouteViewCore({
-  key: "/home/unknown_tv/episode",
+  key: "/home/unknown_media/episode",
   title: "未识别的剧集",
-  // component: UnknownMoviePage,
   component: UnknownEpisodePage,
 });
 export const homeUnknownMoviePage = new RouteViewCore({
-  key: "/home/unknown_tv/movie",
+  key: "/home/unknown_media/movie",
   title: "未识别的电影",
-  // component: UnknownMoviePage,
   component: UnknownMoviePage,
 });
 export const homeUnknownMediaLayout = new RouteViewCore({
@@ -134,7 +121,7 @@ export const homeUnknownMediaLayout = new RouteViewCore({
   title: "未识别影视剧",
   // component: UnknownMediaLayout,
   component: UnknownMediaLayout,
-  children: [homeUnknownTVPage, homeUnknownSeasonPage, homeUnknownEpisodePage, homeUnknownMoviePage],
+  children: [homeUnknownTVPage, homeUnknownEpisodePage, homeUnknownMoviePage],
 });
 // homeUnknownMediaLayout.replaceSubViews([homeUnknownTVPage, homeUnknownSeasonPage, homeUnknownMoviePage]);
 export const homeFilenameParsingPage = new RouteViewCore({
@@ -205,6 +192,11 @@ export const collectionEditPage = new RouteViewCore({
   title: "编辑集合",
   component: CollectionEditPage,
 });
+export const outerProfilePage = new RouteViewCore({
+  key: "/outer_profile",
+  title: "搜索外部详情",
+  component: OuterMediaProfilePage,
+});
 export const invalidMediasPage = new RouteViewCore({
   key: "/invalid_media",
   title: "待处理问题",
@@ -220,7 +212,6 @@ export const homeLayout = new RouteViewCore({
     homeTVProfilePage,
     homeMovieListPage,
     homeMovieProfilePage,
-    homeInvalidTVListPage,
     homeTaskListPage,
     homeTaskProfilePage,
     homePersonListPage,
@@ -239,6 +230,7 @@ export const homeLayout = new RouteViewCore({
     homeSubtitleListPage,
     homeFilenameParsingPage,
     invalidMediasPage,
+    outerProfilePage,
     driveProfilePage,
   ],
 });

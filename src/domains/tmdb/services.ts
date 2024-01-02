@@ -1,6 +1,7 @@
 import { FetchParams } from "@/domains/list/typing";
 import { request } from "@/utils/request";
-import { ListResponse, RequestedResource } from "@/types";
+import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
+import { MediaTypes } from "@/constants";
 
 /**
  * 在 TMDB 搜索影视剧
@@ -9,22 +10,66 @@ import { ListResponse, RequestedResource } from "@/types";
  */
 export async function searchMediaInTMDB(params: FetchParams & { keyword: string; type: "tv" | "movie" }) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  return request.get<
-    ListResponse<{
+  const r = await request.post<
+    ListResponseWithCursor<{
       id: number;
+      type: MediaTypes;
       name: string;
       original_name: string;
       overview: string;
       poster_path: string;
-      searched_tv_id: string;
-      first_air_date: string;
+      air_date: string;
+      sources: {
+        id: string;
+        name: string;
+        overview: string;
+        order: number;
+        air_date: string;
+      }[];
     }>
-  >(`/api/admin/tmdb/search`, {
+  >(`/api/v2/common/search`, {
     ...rest,
     keyword,
     page,
     page_size: pageSize,
-    type: type === "movie" ? "2" : "1",
+    type: type === "movie" ? MediaTypes.Movie : MediaTypes.Season,
+  });
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const { next_marker, list } = r.data;
+  return Result.Ok({
+    list: list.map((media) => {
+      if (media.type === MediaTypes.Movie) {
+        const { id, name, original_name, overview, air_date, poster_path, sources } = media;
+        return {
+          id,
+          name,
+          original_name,
+          overview,
+          poster_path,
+          air_date,
+        };
+      }
+      const { id, name, original_name, overview, air_date, poster_path, sources } = media;
+      return {
+        id,
+        name,
+        original_name,
+        overview,
+        poster_path,
+        air_date,
+        episodes: sources.map((episode) => {
+          const { id, name, air_date } = episode;
+          return {
+            id,
+            name,
+            air_date,
+          };
+        }),
+      };
+    }),
+    next_marker,
   });
 }
 export type TheTVInTMDB = RequestedResource<typeof searchMediaInTMDB>["list"][0];

@@ -6,6 +6,7 @@ import { MovieSelect } from "@/components/MovieSelect";
 import { TVSeasonSelect } from "@/components/SeasonSelect";
 import { ButtonCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
+
 import { CollectionFormCore } from "./core";
 
 export const CollectionEditPage: ViewComponent = (props) => {
@@ -32,7 +33,7 @@ export const CollectionEditPage: ViewComponent = (props) => {
   });
 
   collectionForm.profileRequest.run({
-    id: view.query.id,
+    collection_id: view.query.id,
   });
 
   return (

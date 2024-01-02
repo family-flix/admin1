@@ -109,9 +109,6 @@ export const TaskListPage: ViewComponent = (props) => {
         <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
           刷新
         </Button>
-        <Button class="space-x-1" icon={<Trash class="w-4 h-4" />} variant="subtle" store={jobDeletingBtn}>
-          删除7天前任务记录
-        </Button>
       </div>
       <div class="flex items-center space-x-2 mt-4">
         <Checkbox store={runningCheckbox} />

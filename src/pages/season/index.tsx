@@ -16,13 +16,11 @@ import {
   Smile,
 } from "lucide-solid";
 
+import { SeasonMediaItem, fetchSeasonMediaList, fetchPartialSeasonMedia } from "@/services/media";
 import {
-  fetchPartialSeason,
-  fetchSeasonList,
   moveSeasonToResourceDrive,
   refreshSeasonProfiles,
   transferSeasonToAnotherDrive,
-  TVSeasonItem,
   refreshSeasonProfile,
 } from "@/services";
 import {
@@ -60,7 +58,7 @@ import {
   pendingActions,
   homeTVProfilePage,
   seasonArchivePage,
-  homeInvalidTVListPage,
+  // homeInvalidTVListPage,
 } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
@@ -69,7 +67,7 @@ import { cn } from "@/utils";
 export const TVManagePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const seasonList = new ListCore(new RequestCore(fetchSeasonList), {
+  const seasonList = new ListCore(new RequestCore(fetchSeasonMediaList), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -104,7 +102,7 @@ export const TVManagePage: ViewComponent = (props) => {
       moveToResourceDriveConfirmDialog.hide();
     },
   });
-  const partialSeasonRequest = new RequestCore(fetchPartialSeason);
+  const partialSeasonRequest = new RequestCore(fetchPartialSeasonMedia);
   const refreshProfileRequest = new RequestCore(refreshSeasonProfile, {
     onSuccess(r) {
       createJob({
@@ -153,7 +151,7 @@ export const TVManagePage: ViewComponent = (props) => {
       transferConfirmDialog.hide();
     },
   });
-  const seasonRef = new RefCore<TVSeasonItem>();
+  const seasonRef = new RefCore<SeasonMediaItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
       seasonList.search({
@@ -273,7 +271,7 @@ export const TVManagePage: ViewComponent = (props) => {
       transferConfirmDialog.hide();
     },
   });
-  const transferBtn = new ButtonInListCore<TVSeasonItem>({
+  const transferBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
       if (record === null) {
         return;
@@ -282,7 +280,7 @@ export const TVManagePage: ViewComponent = (props) => {
       transferConfirmDialog.show();
     },
   });
-  const refreshPartialBtn = new ButtonInListCore<TVSeasonItem>({
+  const refreshPartialBtn = new ButtonInListCore<SeasonMediaItem>({
     async onClick(record) {
       refreshPartialBtn.setLoading(true);
       const r = await refreshPartialTV(record.id);
@@ -295,7 +293,7 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const refreshProfileBtn = new ButtonInListCore<TVSeasonItem>({
+  const refreshProfileBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
       app.tip({
         text: ["开始更新"],
@@ -304,11 +302,10 @@ export const TVManagePage: ViewComponent = (props) => {
       refreshProfileRequest.run({ season_id: record.id });
     },
   });
-  const profileBtn = new ButtonInListCore<TVSeasonItem>({
+  const profileBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
       homeTVProfilePage.query = {
-        id: record.tv_id,
-        season_id: record.id,
+        id: record.id,
       };
       app.showView(homeTVProfilePage);
     },
@@ -338,11 +335,11 @@ export const TVManagePage: ViewComponent = (props) => {
       refreshSeasonProfilesRequest.run();
     },
   });
-  const gotoInvalidTVListPageBtn = new ButtonCore({
-    onClick() {
-      app.showView(homeInvalidTVListPage);
-    },
-  });
+  // const gotoInvalidTVListPageBtn = new ButtonCore({
+  //   onClick() {
+  //     app.showView(homeInvalidTVListPage);
+  //   },
+  // });
   const gotoSeasonArchivePageBtn = new ButtonCore({
     onClick() {
       app.showView(seasonArchivePage);
@@ -365,7 +362,7 @@ export const TVManagePage: ViewComponent = (props) => {
       transferConfirmDialog.hide();
     },
   });
-  const moveToResourceDriveBtn = new ButtonInListCore<TVSeasonItem>({
+  const moveToResourceDriveBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
       if (record === null) {
         return;
@@ -510,19 +507,16 @@ export const TVManagePage: ViewComponent = (props) => {
                     {(season) => {
                       const {
                         id,
-                        tv_id,
                         name,
                         overview,
                         poster_path,
                         air_date,
                         vote_average,
                         cur_episode_count,
-                        season_text,
                         episode_count,
                       } = season;
                       homeTVProfilePage.query = {
-                        id: tv_id,
-                        season_id: id,
+                        id,
                       };
                       const url = homeTVProfilePage.buildUrlWithPrefix();
                       return (
@@ -536,7 +530,6 @@ export const TVManagePage: ViewComponent = (props) => {
                                 <h2 class="text-2xl text-slate-800">
                                   <a href={url}>{name}</a>
                                 </h2>
-                                <p class="ml-4 text-slate-500">{season_text}</p>
                               </div>
                               <div class="mt-2 overflow-hidden text-ellipsis">
                                 <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">
@@ -641,7 +634,7 @@ export const TVManagePage: ViewComponent = (props) => {
             <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
               更新近3月内电视剧详情
             </Button>
-            <Button store={gotoInvalidTVListPageBtn}>问题电视剧列表</Button>
+            {/* <Button store={gotoInvalidTVListPageBtn}>问题电视剧列表</Button> */}
             <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button>
           </div>
         </div>

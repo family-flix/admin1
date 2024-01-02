@@ -1,3 +1,6 @@
+/**
+ * @file 创建影视剧集合
+ */
 import { For, Show, createSignal } from "solid-js";
 import { Film, Tv2, X } from "lucide-solid";
 
@@ -84,7 +87,7 @@ export const CollectionCreatePage: ViewComponent = (props) => {
                           <div class="relative">
                             <div class="relative">
                               <LazyImage class="w-[78px] rounded-sm" src={poster_path} />
-                              <div class="absolute left-0 top-0">{type === 1 ? '电视剧' : '电影'}</div>
+                              <div class="absolute left-0 top-0">{type === 1 ? "电视剧" : "电影"}</div>
                             </div>
                             <div class="mt-2">
                               <div>{name}</div>

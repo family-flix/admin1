@@ -12,7 +12,7 @@ type TheTypesOfEvents<T> = {
   [Events.Scroll]: { left: number };
   [Events.LinePositionChange]: { left: number };
   [Events.Mounted]: void;
-  [Events.Change]: { index: number };
+  [Events.Change]: { index: number; value: unknown };
 };
 type TabHeaderState<T> = {
   tabs: T[];
@@ -23,6 +23,8 @@ type TabHeaderProps<T extends { id: string; text: string }> = {
   key: string;
   options: T[];
   targetLeftWhenSelected?: number;
+  onChange?: (opt: { index: number; value: unknown }) => void;
+  onMounted?: () => void;
 };
 
 export class TabHeaderCore<T extends { id: string; text: string }> extends BaseDomain<TheTypesOfEvents<T>> {
@@ -36,6 +38,7 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       left: number;
     }
   > = {};
+  mounted = false;
   current: number = 0;
   /** 父容器宽高等信息 */
   container = {
@@ -73,10 +76,16 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
   constructor(props: Partial<{ _name: string }> & TabHeaderProps<T>) {
     super(props);
 
-    const { key = "id", options, targetLeftWhenSelected = 0 } = props;
+    const { key = "id", options, targetLeftWhenSelected = 0, onChange, onMounted } = props;
     this.key = key;
     this.targetLeftWhenSelected = targetLeftWhenSelected;
     this.tabs = options;
+    if (onChange) {
+      this.onChange(onChange);
+    }
+    if (onMounted) {
+      this.onMounted(onMounted);
+    }
   }
   setTabs(options: T[]) {
     if (options.length === 0) {
@@ -103,6 +112,7 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
     }
     this.emit(Events.Change, {
       index,
+      value: matchedTab.id,
     });
   }
   selectById(id: string) {
@@ -136,6 +146,7 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       if (left !== null) {
         this.changeLinePosition(left);
       }
+      this.mounted = true;
       this.emit(Events.Mounted);
     }
   }

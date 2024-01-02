@@ -2,29 +2,30 @@
  * @file 未识别的剧集
  */
 import { For, Show, createSignal } from "solid-js";
-import { Edit, RotateCcw, Trash } from "lucide-solid";
+import { Brush, Edit, RotateCcw, Search, Trash } from "lucide-solid";
 
 import {
   UnknownEpisodeItem,
-  setProfileForUnknownMovie,
-  delete_unknown_episode,
-  delete_unknown_episode_list,
-  fetch_unknown_episode_list,
-} from "@/services";
+  fetchParsedMediaSourceList,
+  setParsedSeasonMediaSourceProfile,
+} from "@/services/parsed_media";
+import { delete_unknown_episode } from "@/services";
 import { renameFile } from "@/domains/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
-import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
 import { createJob } from "@/store";
+import { MediaTypes } from "@/constants";
+import { TMDBSearcherCore } from "@/domains/tmdb";
 
 export const UnknownEpisodePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const list = new ListCore(new RequestCore(fetch_unknown_episode_list), {
+  const list = new ListCore(new RequestCore(fetchParsedMediaSourceList), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
     },
@@ -52,15 +53,15 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
           }
           list.modifyItem((item) => {
             if (item.id === theEpisode.id) {
-              const { id, name, episode_number, season_number, file_id, file_name, parent_paths, drive } = item;
+              const { id, name, episode_text, season_text, parent_paths, profile, drive } = item;
               return {
                 id,
                 name,
-                episode_number,
-                season_number,
-                file_id,
+                episode_text,
+                season_text,
                 file_name: renameFileInput.value,
                 parent_paths,
+                profile,
                 drive,
               };
             }
@@ -96,7 +97,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
     },
   });
   const curEpisode = new RefCore<UnknownEpisodeItem>();
-  const bindEpisodeBtn = new ButtonInListCore<UnknownEpisodeItem>({
+  const selectMatchedProfileBtn = new ButtonInListCore<UnknownEpisodeItem>({
     onClick(record) {
       curEpisode.select(record);
       bindEpisodeDialog.show();
@@ -122,11 +123,10 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         });
         return;
       }
-      const { file_id, drive } = theEpisode;
+      const { id, drive } = theEpisode;
       renameFileRequest.run({
+        parsed_media_source_id: id,
         name: renameFileInput.value,
-        drive_id: drive.id,
-        file_id,
       });
     },
   });
@@ -147,7 +147,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       deleteConfirmDialog.show();
     },
   });
-  const bindMovieRequest = new RequestCore(setProfileForUnknownMovie, {
+  const setMediaSourceProfileRequest = new RequestCore(setParsedSeasonMediaSourceProfile, {
     onLoading(loading) {
       bindEpisodeDialog.okBtn.setLoading(loading);
     },
@@ -165,46 +165,49 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       });
     },
   });
-  const bindEpisodeDialog = new TMDBSearcherDialogCore({
-    type: "movie",
-    onOk(searched_tv) {
+  const mediaSearch = new TMDBSearcherCore({
+    episode: true,
+  });
+  const bindEpisodeDialog = new DialogCore({
+    onOk() {
       if (!curEpisode.value) {
         app.tip({ text: ["请先选择未识别的电影"] });
         return;
       }
+      const mediaProfile = mediaSearch.cur;
+      if (!mediaProfile) {
+        app.tip({ text: ["请先选择详情"] });
+        return;
+      }
       const { id } = curEpisode.value;
-      bindMovieRequest.run(id, {
-        unique_id: searched_tv.id,
+      setMediaSourceProfileRequest.run({
+        parsed_media_source_id: id,
+        media_profile: {
+          id: String(mediaProfile.id),
+          type: mediaProfile.type,
+          name: mediaProfile.name,
+        },
       });
     },
   });
-  const deleteRequest = new RequestCore(delete_unknown_episode_list, {
-    onLoading(loading) {
-      deleteListConfirmDialog.okBtn.setLoading(loading);
-      deleteListBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["删除失败", error.message],
-      });
-    },
-    onSuccess() {
-      app.tip({
-        text: ["删除成功"],
-      });
-      list.refresh();
-      deleteListConfirmDialog.hide();
-    },
-  });
-  const deleteListConfirmDialog = new DialogCore({
-    title: "确认删除所有未识别剧集吗？",
-    onOk() {
-      deleteRequest.run();
-    },
-  });
-  const deleteListBtn = new ButtonCore({
+  const resetBtn = new ButtonCore({
     onClick() {
-      deleteListConfirmDialog.show();
+      nameSearchInput.clear();
+      list.reset();
+    },
+  });
+  const nameSearchInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      searchBtn.click();
+    },
+  });
+  const searchBtn = new ButtonCore({
+    onClick() {
+      if (!nameSearchInput.value) {
+        return;
+      }
+      list.search({ name: nameSearchInput.value });
     },
   });
   const scrollView = new ScrollViewCore({
@@ -232,8 +235,16 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
           </Button>
+          <Button store={resetBtn}>重置</Button>
+        </div>
+        <div class="flex items-center space-x-2 mt-4">
+          <Input class="" store={nameSearchInput} />
+          <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+            搜索
+          </Button>
         </div>
         <ListView
+          class="mt-4"
           store={list}
           // skeleton={
           //   <div class="grid grid-cols-3 gap-2 lg:grid-cols-6">
@@ -249,23 +260,31 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={dataSource()}>
               {(episode) => {
-                const { id, name, episode_number, season_number, file_name, parent_paths, drive } = episode;
+                const { id, name, episode_text, season_text, file_name, parent_paths, profile, drive } = episode;
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
-                      <div class="w-full rounded">
-                        <LazyImage
-                          class="max-w-full max-h-full object-contain"
-                          src={(() => {
-                            return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
-                          })()}
-                        />
-                      </div>
+                      <Show
+                        when={profile}
+                        fallback={
+                          <div class="w-full rounded">
+                            <LazyImage
+                              class="max-w-full max-h-full object-contain"
+                              src={(() => {
+                                return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                              })()}
+                            />
+                          </div>
+                        }
+                      >
+                        <LazyImage class="w-full" src={profile?.poster_path} />
+                        <div>{profile?.name}</div>
+                      </Show>
                     </div>
-                    <div class="flex-1 mt-2">
+                    <div class="flex-1">
                       <div class="text-lg">{name}</div>
                       <div>
-                        {season_number}/{episode_number}
+                        {season_text}/{episode_text}
                       </div>
                       <div class="mt-2 flex items-center space-x-2 text-slate-800">
                         <div class="text-sm break-all">
@@ -286,11 +305,19 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                         <Button
                           class="box-content"
                           variant="subtle"
+                          store={selectMatchedProfileBtn.bind(episode)}
+                          icon={<Brush class="w-4 h-4" />}
+                        >
+                          设置
+                        </Button>
+                        {/* <Button
+                          class="box-content"
+                          variant="subtle"
                           store={deleteBtn.bind(episode)}
                           icon={<Trash class="w-4 h-4" />}
                         >
                           删除
-                        </Button>
+                        </Button> */}
                       </div>
                     </div>
                   </div>
@@ -300,15 +327,13 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
           </div>
         </ListView>
       </ScrollView>
-      <TMDBSearcherDialog store={bindEpisodeDialog} />
+      <Dialog store={bindEpisodeDialog}>
+        <div class="w-[520px]">
+          <TMDBSearcherView store={mediaSearch} />
+        </div>
+      </Dialog>
       <Dialog store={deleteConfirmDialog}>
         <div>仅删除该记录，不删除云盘文件。</div>
-      </Dialog>
-      <Dialog store={deleteListConfirmDialog}>
-        <div class="w-[520px]">
-          <div>该操作并不会删除云盘内文件</div>
-          <div>更新云盘内文件名或解析规则后可删除所有文件重新索引</div>
-        </div>
       </Dialog>
       <Dialog store={renameFileDialog}>
         <div class="w-[520px]">

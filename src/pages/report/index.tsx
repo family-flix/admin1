@@ -137,7 +137,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
         return;
       }
       seasonSelectDialog.okBtn.setLoading(true);
-      const { id, tv_id, name, poster_path, first_air_date } = seasonSelect.value;
+      const { id, tv_id, name, poster_path, air_date } = seasonSelect.value;
       const r = await replyRequest.run({
         report_id: curReport.value.id,
         content: commentInput.value,
@@ -146,7 +146,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
           tv_id,
           name,
           poster_path,
-          first_air_date,
+          first_air_date: air_date,
         },
       });
       seasonSelectDialog.okBtn.setLoading(false);
@@ -470,7 +470,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
             <div class="space-y-4 max-h-[240px] overflow-y-auto">
               <For each={movieListResponse().dataSource}>
                 {(movie) => {
-                  const { name, overview, poster_path, air_date, popularity, vote_average, runtime } = movie;
+                  const { name, overview, poster_path, air_date, vote_average, runtime } = movie;
                   return (
                     <div
                       classList={{

@@ -4,20 +4,8 @@
 import { createSignal, For } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
-import {
-  setProfileForUnknownMovie,
-  CollectionItem,
-  deleteCollection,
-  fetchCollectionList,
-  fetchMovieList,
-  moveMovieToResourceDrive,
-  MovieItem,
-  refreshMovieProfiles,
-  transferMovieToAnotherDrive,
-} from "@/services";
+import { CollectionItem, deleteCollection, fetchCollectionList } from "@/services/collection";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox, Dialog } from "@/components/ui";
-import { TMDBSearcherDialog } from "@/components/TMDBSearcher";
-import { TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import {
   InputCore,
   ButtonCore,
@@ -31,15 +19,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
-import {
-  collectionCreatePage,
-  collectionEditPage,
-  consumeAction,
-  createJob,
-  driveList,
-  homeMovieProfilePage,
-  pendingActions,
-} from "@/store";
+import { collectionCreatePage, collectionEditPage, consumeAction, driveList, pendingActions } from "@/store";
 import { DriveCore } from "@/domains/drive";
 
 export const CollectionListPage: ViewComponent = (props) => {
@@ -117,7 +97,7 @@ export const CollectionListPage: ViewComponent = (props) => {
         return;
       }
       collectionDeletingRequest.run({
-        id: collectionRef.value.id,
+        collection_id: collectionRef.value.id,
       });
     },
   });

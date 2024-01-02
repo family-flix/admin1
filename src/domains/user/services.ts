@@ -38,7 +38,6 @@ export async function register(body: { email: string; password: string }) {
 }
 
 export async function logout(body: { email: string; password: string }) {
-  console.log("[]login params", body);
   return await request.post("/api/admin/user/logout", body);
 }
 

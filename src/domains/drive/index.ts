@@ -15,13 +15,13 @@ import {
   setDriveRootFolderId,
   updateAliyunDrive,
   DriveItem,
-  fetchDriveFiles,
   addFolderInDrive,
   checkInDrive,
-  analysisDriveQuickly,
+  analysisNewFilesInDrive,
   deleteDrive,
-  matchMediaFilesMedia,
+  matchParsedMediasInDrive,
   receiveCheckInRewardOfDrive,
+  analysisSpecialFilesInDrive,
 } from "./services";
 import { AliyunDriveFile } from "./types";
 
@@ -138,7 +138,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
     const r = await (() => {
       if (quickly) {
-        return analysisDriveQuickly({ drive_id: this.id });
+        return analysisNewFilesInDrive({ drive_id: this.id });
       }
       return analysisDrive({
         drive_id: this.id,
@@ -169,6 +169,39 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     const { job_id } = r.data;
     return Result.Ok({ job_id });
   }
+  /**
+   * 索引指定文件/文件夹
+   * @param {boolean} [quickly=false] 是否增量索引
+   */
+  async analysisSpecialFolders(options: { target_folders: AliyunDriveFile[] }) {
+    const { target_folders } = options;
+    if (this.state.loading) {
+      this.tip({ text: ["索引正在进行中"] });
+      return Result.Ok(null);
+    }
+    this.state.loading = true;
+    this.emit(Events.StateChange, { ...this.state });
+    const r = await analysisSpecialFilesInDrive({
+      drive_id: this.id,
+      files: target_folders.map((folder) => {
+        const { file_id, name, type } = folder;
+        return {
+          file_id,
+          name,
+          type,
+        };
+      }),
+    });
+    if (r.error) {
+      this.state.loading = false;
+      this.emit(Events.StateChange, { ...this.state });
+      this.tip({ text: ["索引失败", r.error.message] });
+      return Result.Err(r.error);
+    }
+    this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
+    const { job_id } = r.data;
+    return Result.Ok({ job_id });
+  }
   finishAnalysis() {
     this.state.loading = false;
     this.tip({ text: ["索引完成"] });
@@ -182,7 +215,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
-    const r = await matchMediaFilesMedia({
+    const r = await matchParsedMediasInDrive({
       drive_id: this.id,
     });
     if (r.error) {

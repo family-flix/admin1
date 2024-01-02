@@ -1,13 +1,14 @@
 /**
  * @todo 如果删除当前选中的文件夹，子文件夹在视图上也要同步移除
  */
+import { fetchDriveFiles, renameFileInDrive, deleteFileInDrive } from "@/services/drive";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { ScrollViewCore } from "@/domains/ui";
+import { BizError } from "@/domains/error";
 import { FileType } from "@/constants";
 
-import { fetchDriveFiles, renameFile, deleteFile } from "./services";
 import { AliyunFilePath, AliyunDriveFile } from "./types";
 
 type FileColumn = {
@@ -21,6 +22,7 @@ enum Events {
   SelectFolder,
   LoadingChange,
   StateChange,
+  Error,
 }
 type TheTypesOfEvents = {
   [Events.Initialized]: void;
@@ -29,14 +31,16 @@ type TheTypesOfEvents = {
   [Events.SelectFolder]: [AliyunDriveFile, [number, number]];
   [Events.LoadingChange]: boolean;
   [Events.StateChange]: AliyunDriveFilesState;
-};
-type AliyunDriveFilesProps = {
-  id: string;
+  [Events.Error]: BizError;
 };
 type AliyunDriveFilesState = {
   initialized: boolean;
   curFolder: AliyunDriveFile | null;
   tmpHoverFile: [AliyunDriveFile, [number, number]] | null;
+};
+type AliyunDriveFilesProps = {
+  id: string;
+  onError?: (err: BizError) => void;
 };
 
 export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
@@ -65,17 +69,22 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   constructor(props: AliyunDriveFilesProps) {
     super();
 
-    const { id } = props;
+    const { id, onError } = props;
 
     this.id = id;
     this.folderColumns = [];
+    if (onError) {
+      this.onError(onError);
+    }
   }
   createColumn(folder: { file_id: string; name: string }) {
+    console.log("[DOMAIN]drive/files - createColumn", this.id);
+    const drive_id = this.id;
     const { file_id } = folder;
     const list = new ListCore<typeof fetchDriveFiles, AliyunDriveFile>(new RequestCore(fetchDriveFiles), {
       pageSize: 50,
       search: {
-        drive_id: this.id,
+        drive_id,
         file_id,
       },
       processor: (response, originalResponse) => {
@@ -219,7 +228,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
         return false;
       });
     }
-    const folderDeletingRequest = new RequestCore(deleteFile, {
+    const folderDeletingRequest = new RequestCore(deleteFileInDrive, {
       onLoading,
       onFailed,
       onSuccess: (data) => {
@@ -256,7 +265,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     const { file, position, onLoading, onFailed, onSuccess } = options;
     const [columnIndex, fileIndex] = position;
     const folderColumns = this.folderColumns;
-    const folderDeletingRequest = new RequestCore(renameFile, {
+    const folderDeletingRequest = new RequestCore(renameFileInDrive, {
       onLoading,
       onFailed,
       onSuccess: () => {
@@ -293,6 +302,9 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   }
   onLoadingChange(handler: Handler<TheTypesOfEvents[Events.LoadingChange]>) {
     return this.on(Events.LoadingChange, handler);
+  }
+  onError(handler: Handler<TheTypesOfEvents[Events.Error]>) {
+    return this.on(Events.Error, handler);
   }
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);

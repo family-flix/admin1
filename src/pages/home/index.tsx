@@ -11,10 +11,9 @@ import { RequestCore } from "@/domains/request";
 import { addAliyunDrive } from "@/domains/drive";
 import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
-import { code_get_drive_token } from "@/constants";
+import { code_get_drive_token, DriveTypes } from "@/constants";
 import { ViewComponent } from "@/types";
 import { driveProfilePage } from "@/store";
-import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -45,7 +44,7 @@ export const HomePage: ViewComponent = (props) => {
         app.tip({ text: ["请输入云盘信息"] });
         return;
       }
-      driveCreateRequest.run({ payload: driveTokenInput.value });
+      driveCreateRequest.run({ type: DriveTypes.AliyunBackupDrive, payload: driveTokenInput.value });
     },
   });
   const driveCreateBtn = new ButtonCore({

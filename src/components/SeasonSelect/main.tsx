@@ -175,7 +175,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                   overview,
                   cur_episode_count,
                   episode_count,
-                  first_air_date,
+                  air_date,
                   poster_path,
                   season_text,
                 } = season;
@@ -205,7 +205,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                         <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
                           <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
                             <Calendar class="w-4 h-4 text-slate-800" />
-                            <div class="break-keep whitespace-nowrap">{first_air_date}</div>
+                            <div class="break-keep whitespace-nowrap">{air_date}</div>
                           </div>
                           <Show
                             when={cur_episode_count !== episode_count}

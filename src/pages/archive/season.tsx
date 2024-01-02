@@ -16,14 +16,12 @@ import {
 } from "lucide-solid";
 
 import {
-  SeasonPrepareArchiveItem,
-  deleteSourceFile,
-  deleteSourceFiles,
-  fetchPartialSeasonPrepareArchive,
-  fetchSeasonPrepareArchiveList,
-  moveSeasonToResourceDrive,
-  transferSeasonToAnotherDrive,
-} from "@/services";
+  MediaPrepareArchiveItem,
+  fetchMediaListPrepareArchive,
+  fetchPartialMediaPrepareArchive,
+} from "@/services/media";
+import { deleteParsedMediaSource } from "@/services/parsed_media";
+import { moveSeasonToResourceDrive, transferSeasonToAnotherDrive } from "@/services";
 import { Button, CheckboxGroup, Dialog, Input, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
@@ -37,20 +35,20 @@ import { RefCore } from "@/domains/cur";
 
 export const SeasonArchivePage: ViewComponent = (props) => {
   const { app, view } = props;
-  const seasonList = new ListCore(new RequestCore(fetchSeasonPrepareArchiveList), {
+  const mediaList = new ListCore(new RequestCore(fetchMediaListPrepareArchive), {
     pageSize: 1,
     onLoadingChange(loading) {
       nameSearchInput.setLoading(loading);
       searchBtn.setLoading(loading);
     },
   });
-  const refreshPartialSeasonRequest = new RequestCore(fetchPartialSeasonPrepareArchive);
+  const refreshPartialSeasonRequest = new RequestCore(fetchPartialMediaPrepareArchive);
   const moveToResourceDriveRequest = new RequestCore(moveSeasonToResourceDrive, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
         onFinish() {
-          const curSeason = seasonList.response.dataSource[0];
+          const curSeason = mediaList.response.dataSource[0];
           if (!curSeason) {
             return;
           }
@@ -102,31 +100,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
     },
   });
-  const sourcesDeletingRequest = new RequestCore(deleteSourceFiles, {
-    onSuccess() {
-      const theDrive = curDriveRef.value;
-      if (!theDrive) {
-        app.tip({
-          text: ["删除成功，请刷新页面"],
-        });
-        return;
-      }
-      const theSeason = seasonRef.value;
-      if (!theSeason) {
-        app.tip({
-          text: ["删除成功"],
-        });
-        return;
-      }
-      refresh({ id: theSeason.id });
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["删除视频源失败", error.message],
-      });
-    },
-  });
-  const sourceDeletingRequest = new RequestCore(deleteSourceFile, {
+  const sourceDeletingRequest = new RequestCore(deleteParsedMediaSource, {
     onLoading(loading) {
       // fileDeletingConfirmDialog.okBtn.setLoading(loading);
     },
@@ -139,7 +113,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         });
         return;
       }
-      seasonList.modifyResponse((response) => {
+      mediaList.modifyResponse((response) => {
         return {
           ...response,
           dataSource: response.dataSource.map((season) => {
@@ -178,7 +152,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
     },
   });
-  const seasonRef = new RefCore<SeasonPrepareArchiveItem>();
+  const seasonRef = new RefCore<MediaPrepareArchiveItem>();
   const toDriveRef = new RefCore<DriveCore>();
   const curDriveRef = new RefCore<{ id: string }>();
   const episodeRef = new RefCore<{ id: string }>();
@@ -186,13 +160,13 @@ export const SeasonArchivePage: ViewComponent = (props) => {
   const driveCheckboxGroup = new CheckboxGroupCore({
     options: [] as { value: string; label: string }[],
     onChange(options) {
-      seasonList.search({
+      mediaList.search({
         next_marker: "",
         drive_ids: options.join("|"),
       });
     },
   });
-  const toResourceDriveBtn = new ButtonInListCore<SeasonPrepareArchiveItem>({
+  const toResourceDriveBtn = new ButtonInListCore<MediaPrepareArchiveItem>({
     onClick(record) {
       toResourceDriveBtn.setLoading(true);
       app.tip({
@@ -205,7 +179,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
   });
   async function refresh(record: { id: string }) {
     refreshPartialBtn.setLoading(true);
-    const r = await refreshPartialSeasonRequest.run({ id: record.id });
+    const r = await refreshPartialSeasonRequest.run({ media_id: record.id });
     refreshPartialBtn.setLoading(false);
     if (r.error) {
       app.tip({
@@ -213,19 +187,19 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
       return;
     }
-    seasonList.modifyDataSource((item) => {
+    mediaList.modifyDataSource((item) => {
       if (item.id === record.id) {
         return r.data;
       }
       return item;
     });
   }
-  const refreshPartialBtn = new ButtonInListCore<SeasonPrepareArchiveItem>({
+  const refreshPartialBtn = new ButtonInListCore<MediaPrepareArchiveItem>({
     async onClick(record) {
       refresh(record);
     },
   });
-  const transferBtn = new ButtonInListCore<SeasonPrepareArchiveItem>({
+  const transferBtn = new ButtonInListCore<MediaPrepareArchiveItem>({
     onClick(record) {
       seasonRef.select(record);
       if (!toDriveRef.value) {
@@ -286,7 +260,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         });
         return;
       }
-      seasonList.search({
+      mediaList.search({
         name: nameSearchInput.value,
       });
     },
@@ -295,7 +269,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
   // const drive = new DriveCore({ id});
   const scrollView = new ScrollViewCore({});
 
-  const [seasonListState, setSeasonListState] = createSignal(seasonList.response);
+  const [seasonListState, setSeasonListState] = createSignal(mediaList.response);
   const [toDriveState, setToDriveState] = createSignal<null | DriveCore["state"]>(null);
   const [driveListState, setDriveListState] = createSignal(driveList.response);
 
@@ -310,10 +284,10 @@ export const SeasonArchivePage: ViewComponent = (props) => {
     driveCheckboxGroup.setOptions(driveCheckBoxGroupOptions);
     setDriveListState(nextState);
   });
-  seasonList.onStateChange((nextState) => {
+  mediaList.onStateChange((nextState) => {
     setSeasonListState(nextState);
   });
-  seasonList.init();
+  mediaList.init();
   driveList.initAny();
 
   return (
@@ -354,7 +328,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             <div class="flex items-center space-x-2"></div>
             <div class="mt-4">
               <ListView
-                store={seasonList}
+                store={mediaList}
                 skeleton={
                   <div>
                     <div class="rounded-md border border-slate-300 bg-white shadow-sm">
@@ -387,7 +361,6 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                         id,
                         name,
                         cur_episode_count,
-                        season_text,
                         can_archive,
                         need_to_resource,
                         size_count_text,
@@ -401,7 +374,6 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
                                 <h2 class="text-2xl text-slate-800">{name}</h2>
-                                <p class="ml-4 text-slate-500">{season_text}</p>
                               </div>
                               <div class="mt-2 overflow-hidden text-ellipsis">{size_count_text}</div>
                               <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
@@ -466,10 +438,10 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                                                               <span
                                                                 class="p-1 cursor-pointer"
                                                                 onClick={() => {
-                                                                  episodeRef.select(episode);
-                                                                  sourceRef.select(source);
+                                                                  // episodeRef.select(episode);
+                                                                  // sourceRef.select(source);
                                                                   sourceDeletingRequest.run({
-                                                                    id: source.id,
+                                                                    parsed_media_source_id: source.id,
                                                                   });
                                                                 }}
                                                               >
@@ -545,9 +517,9 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             class="flex flex-col items-center cursor-pointer"
             onClick={() => {
               // @ts-ignore
-              const next_marker = seasonList.response.next_marker;
-              seasonList.params.next_marker = next_marker;
-              seasonList.next();
+              const next_marker = mediaList.response.next_marker;
+              mediaList.params.next_marker = next_marker;
+              mediaList.next();
             }}
           >
             <div class="p-2">

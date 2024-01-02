@@ -5,17 +5,17 @@ import { createSignal, For, Show } from "solid-js";
 import { ArrowUpCircle, Bell, ChevronRight, Folder, Pen, RotateCw, Search, Send, Smile, Trash } from "lucide-solid";
 
 import {
-  createSyncTaskWithUrl,
-  fetchPartialSyncTask,
+  SyncTaskItem,
   fetchSyncTaskList,
   runSyncTask,
-  SyncTaskItem,
+  createSyncTaskWithUrl,
+  fetchPartialSyncTask,
   updateSyncTask,
-  overrideResourceForSyncTask,
+  runSyncTaskList,
   completeSyncTask,
   deleteSyncTask,
-  runSyncTaskList,
-} from "@/services";
+  overrideResourceForSyncTask,
+} from "@/services/resource_sync_task";
 import { Skeleton, ScrollView, Input, Button, LazyImage, Dialog, Checkbox, BackToTop, ListView } from "@/components/ui";
 import { FileSearcherCore } from "@/components/FileSearcher";
 import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/SeasonSelect";
@@ -68,26 +68,25 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   });
   const syncTaskCompleteRequest = new RequestCore(completeSyncTask);
   const syncTaskDeletingRequest = new RequestCore(deleteSyncTask);
-  const syncTaskCreateRequest = new RequestCore(createSyncTaskWithUrl, {
-    onLoading(loading) {
-      syncTaskCreateDialog.okBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({ text: ["新增同步任务成功"] });
-      setFolders([]);
-      resourceUrlInput.clear();
-      sharedResource.clear();
-      syncTaskCreateDialog.hide();
-      refreshPartialTask();
-    },
-    onFailed(error) {
-      // console.log("[PAGE]tv/index - addFileSyncTask onFailed 1", error.code, error.data);
-      app.tip({ text: ["新增同步任务失败", error.message] });
-      if (error.code === 20001) {
-        folderPresence.show();
-      }
-    },
-  });
+  // const syncTaskCreateRequest = new RequestCore(createSyncTaskWithUrl, {
+  //   onLoading(loading) {
+  //     syncTaskCreateDialog.okBtn.setLoading(loading);
+  //   },
+  //   onSuccess() {
+  //     app.tip({ text: ["新增同步任务成功"] });
+  //     resourceUrlInput.clear();
+  //     sharedResource.clear();
+  //     syncTaskCreateDialog.hide();
+  //     refreshPartialTask();
+  //   },
+  //   onFailed(error) {
+  //     // console.log("[PAGE]tv/index - addFileSyncTask onFailed 1", error.code, error.data);
+  //     app.tip({ text: ["新增同步任务失败", error.message] });
+  //     if (error.code === 20001) {
+  //       folderPresence.show();
+  //     }
+  //   },
+  // });
   const runTaskListRequest = new RequestCore(runSyncTaskList, {
     beforeRequest() {
       runTaskListBtn.setLoading(true);
@@ -184,41 +183,39 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       });
     },
   });
-  const syncTaskCreateDialog = new DialogCore({
-    title: "新增同步任务",
-    onOk() {
-      if (!resourceUrlInput.value) {
-        app.tip({
-          text: ["请输入分享资源链接"],
-        });
-        return;
-      }
-      if (sharedResource.files.length === 0) {
-        app.tip({
-          text: ["请先获取分享资源内容"],
-        });
-        return;
-      }
-      if (sharedResource.files.length !== 1) {
-        app.tip({
-          text: ["请手动选择左边的分享资源"],
-        });
-        return;
-      }
-      const payload: Parameters<typeof createSyncTaskWithUrl>[0] = { url: resourceUrlInput.value };
-      // console.log("[PAGE]", folderRef.value);
-      // console.log("[PAGE]", resourceRef.value);
-      if (folderRef.value) {
-        payload.drive_file_id = folderRef.value.file_id;
-        payload.drive_file_name = folderRef.value.file_name;
-      }
-      if (resourceRef.value) {
-        payload.resource_file_id = resourceRef.value.file_id;
-        payload.resource_file_name = resourceRef.value.file_name;
-      }
-      syncTaskCreateRequest.run(payload);
-    },
-  });
+  // const syncTaskCreateDialog = new DialogCore({
+  //   title: "新增同步任务",
+  //   onOk() {
+  //     if (!resourceUrlInput.value) {
+  //       app.tip({
+  //         text: ["请输入分享资源链接"],
+  //       });
+  //       return;
+  //     }
+  //     if (sharedResource.files.length === 0) {
+  //       app.tip({
+  //         text: ["请先获取分享资源内容"],
+  //       });
+  //       return;
+  //     }
+  //     if (sharedResource.files.length !== 1) {
+  //       app.tip({
+  //         text: ["请手动选择左边的分享资源"],
+  //       });
+  //       return;
+  //     }
+  //     const payload: Parameters<typeof createSyncTaskWithUrl>[0] = { url: resourceUrlInput.value };
+  //     if (folderRef.value) {
+  //       payload.drive_file_id = folderRef.value.file_id;
+  //       payload.drive_file_name = folderRef.value.file_name;
+  //     }
+  //     if (resourceRef.value) {
+  //       payload.resource_file_id = resourceRef.value.file_id;
+  //       payload.resource_file_name = resourceRef.value.file_name;
+  //     }
+  //     syncTaskCreateRequest.run(payload);
+  //   },
+  // });
   const nameSearchInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入名称搜索",
@@ -257,11 +254,11 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       sharedResource.fetch();
     },
   });
-  const syncTaskCreateBtn = new ButtonCore<SyncTaskItem>({
-    onClick() {
-      syncTaskCreateDialog.show();
-    },
-  });
+  // const syncTaskCreateBtn = new ButtonCore<SyncTaskItem>({
+  //   onClick() {
+  //     syncTaskCreateDialog.show();
+  //   },
+  // });
   const completeTaskBtn = new ButtonInListCore<SyncTaskItem>({
     async onClick(record) {
       completeTaskBtn.setLoading(true);
@@ -464,9 +461,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
               <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
                 刷新
               </Button>
-              <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={syncTaskCreateBtn}>
+              {/* <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={syncTaskCreateBtn}>
                 新增同步任务
-              </Button>
+              </Button> */}
               <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={runTaskListBtn}>
                 同步所有文件夹
               </Button>
@@ -637,7 +634,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
           </div>
         </div>
       </ScrollView>
-      <Dialog store={syncTaskCreateDialog}>
+      {/* <Dialog store={syncTaskCreateDialog}>
         <div class="w-[680px] min-h-[360px]">
           <div class="grid grid-cols-12 gap-2">
             <div class="col-span-9">
@@ -752,7 +749,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
             </div>
           </div>
         </div>
-      </Dialog>
+      </Dialog> */}
       <Dialog store={syncTaskOverrideDialog}>
         <div class="w-[680px] min-h-[360px]">
           <div class="grid grid-cols-12 gap-2">

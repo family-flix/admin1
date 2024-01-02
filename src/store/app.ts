@@ -5,6 +5,7 @@
 import { ListCore } from "@/domains/list";
 import { Application } from "@/domains/app";
 import { NavigatorCore } from "@/domains/navigator";
+import { BizError } from "@/domains/error";
 import { setApp } from "@/utils/request";
 import { has_admin } from "@/services";
 import { Result } from "@/types";
@@ -72,7 +73,7 @@ ListCore.commonProcessor = <T>(
   total: number;
   empty: boolean;
   noMore: boolean;
-  error: Error | null;
+  error: BizError | null;
 } => {
   if (originalResponse === null) {
     return {
@@ -113,6 +114,9 @@ ListCore.commonProcessor = <T>(
     if (list.length === 0 && page === 1) {
       result.empty = true;
     }
+    if (list.length === 0) {
+      result.noMore = true;
+    }
     return result;
   } catch (error) {
     return {
@@ -122,7 +126,7 @@ ListCore.commonProcessor = <T>(
       total: 0,
       noMore: false,
       empty: false,
-      error: new Error(`${(error as Error).message}`),
+      error: new BizError(`${(error as Error).message}`),
       // next_marker: "",
     };
   }
