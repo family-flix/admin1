@@ -1,5 +1,6 @@
 import { MediaErrorTypes, MediaTypes } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
+import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
 import { ListResponseWithCursor, MutableRecord, RequestedResource, Result } from "@/types";
 import { request } from "@/utils/request";
 
@@ -178,5 +179,50 @@ export function deleteParsedMediaSource(params: { parsed_media_source_id: string
   const { parsed_media_source_id } = params;
   return request.post("/api/v2/admin/parsed_media_source/delete", {
     parsed_media_source_id,
+  });
+}
+
+export async function fetchSourcePreviewInfo(body: { id: string }) {
+  const { id } = body;
+  const r = await request.post<{
+    url: string;
+    thumbnail: string;
+    type: EpisodeResolutionTypes;
+    width: number;
+    height: number;
+    other: {
+      url: string;
+      thumbnail: string;
+      type: EpisodeResolutionTypes;
+      width: number;
+      height: number;
+    }[];
+  }>("/api/v2/admin/parsed_media_source/preview", {
+    id,
+  });
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { url, width, height, type, other, thumbnail } = r.data;
+  return Result.Ok({
+    file_id: id,
+    url,
+    width,
+    height,
+    type,
+    typeText: EpisodeResolutionTypeTexts[type],
+    thumbnail,
+    resolutions: other.map((r) => {
+      const { url, width, height, type, thumbnail } = r;
+      return {
+        file_id: id,
+        url,
+        width,
+        height,
+        type,
+        typeText: EpisodeResolutionTypeTexts[type],
+        thumbnail,
+      };
+    }),
   });
 }

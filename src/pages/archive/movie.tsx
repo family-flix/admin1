@@ -244,12 +244,11 @@ export const MovieArchivePage: ViewComponent = (props) => {
         return;
       }
       const drive = toDriveRef.value;
-      driveProfilePage.query = {
+      const url = driveProfilePage.buildUrlWithPrefix({
         id: drive.id,
         name: drive.name,
-      };
-      const url = driveProfilePage.buildUrlWithPrefix();
-      window.open(url, "black");
+      });
+      window.open(url, "blank");
       // app.showView(driveProfilePage);
     },
   });

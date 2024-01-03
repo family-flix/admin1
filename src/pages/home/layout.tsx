@@ -16,7 +16,6 @@ import {
   FileSearch,
   File,
   CircuitBoard,
-  Lock,
   Subtitles,
   MessageCircle,
   AlarmClock,
@@ -24,10 +23,10 @@ import {
 } from "lucide-solid";
 
 import { fetchSettings, notify_test, pushMessageToMembers, updateSettings } from "@/services";
-import { Button, Dialog, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
+import { Button, Dialog, DropdownMenu, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
-import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
+import { ButtonCore, DialogCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
 import { RouteViewCore } from "@/domains/route_view";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
@@ -62,7 +61,7 @@ export const HomeLayout: ViewComponent = (props) => {
       settingsBtn.setLoading(loading);
     },
     onSuccess(v) {
-      const { push_deer_token = "", extra_filename_rules = "", ignore_files_when_sync } = v;
+      const { push_deer_token = "", extra_filename_rules = "", ignore_files_when_sync = "" } = v;
       notify1TokenInput.setValue(push_deer_token);
       filenameParseRuleInput.setValue(extra_filename_rules);
       ignoreFilesRuleInput.setValue(ignore_files_when_sync);
@@ -292,6 +291,11 @@ export const HomeLayout: ViewComponent = (props) => {
       view: homeMovieListPage,
     },
     {
+      text: "未识别影视剧",
+      icon: <EyeOff class="w-6 h-6" />,
+      view: homeUnknownMediaLayout,
+    },
+    {
       text: "待处理影视剧问题",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
@@ -311,12 +315,6 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "同步任务",
       icon: <AlarmClock class="w-6 h-6" />,
       view: syncTaskListPage,
-    },
-
-    {
-      text: "未识别影视剧",
-      icon: <EyeOff class="w-6 h-6" />,
-      view: homeUnknownMediaLayout,
     },
     {
       text: "任务",
@@ -367,6 +365,32 @@ export const HomeLayout: ViewComponent = (props) => {
       view: homeFilenameParsingPage,
     },
   ]);
+  const userDropdown = new DropdownMenuCore({
+    align: "start",
+    side: "bottom",
+    items: [
+      new MenuItemCore({
+        icon: <Settings class="w-4 h-4" />,
+        label: "设置",
+        onClick() {
+          settingsRequest.run();
+          userDropdown.hide();
+          settingsDialog.show();
+        },
+      }),
+      new MenuItemCore({
+        icon: <LogOut class="w-4 h-4" />,
+        label: "退出登录",
+        async onClick() {
+          logoutBtn.setLoading(true);
+          app.user.logout();
+          await sleep(2000);
+          userDropdown.hide();
+          logoutBtn.setLoading(false);
+        },
+      }),
+    ],
+  });
 
   onMount(() => {
     console.log("[PAGE]home/layout onMount");
@@ -390,7 +414,7 @@ export const HomeLayout: ViewComponent = (props) => {
   return (
     <>
       <div class="flex w-full h-full bg-white">
-        <div class="w-[248px] py-8 pt-4 pl-2 pr-2 border border-r-slate-300">
+        <div class="w-[248px] py-4 pl-2 pr-2 border border-r-slate-300">
           <div class="flex flex-col justify-between h-full w-full">
             <div class="flex-1 space-y-1 p-2 w-full h-full overflow-y-auto rounded-xl self-start">
               <For each={menus()}>
@@ -413,14 +437,14 @@ export const HomeLayout: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            <div class="flex justify-center space-x-2 h-[68rpx] py-2">
+            {/* <div class="flex justify-center space-x-2 h-[68rpx] py-2">
               <Button class="" store={logoutBtn} variant="subtle" icon={<LogOut class="w-4 h-4" />}>
                 退出登录
               </Button>
               <Button class="" store={settingsBtn} variant="subtle" icon={<Settings class="w-4 h-4" />}>
                 设置
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
         <div class="flex-1 bg-slate-100">
@@ -445,6 +469,11 @@ export const HomeLayout: ViewComponent = (props) => {
             </For>
           </div>
         </div>
+      </div>
+      <div class="absolute z-50 right-8 top-6">
+        <DropdownMenu store={userDropdown}>
+          <div class="w-12 h-12 rounded-full bg-slate-300"></div>
+        </DropdownMenu>
       </div>
       <TMDBSearcherDialog store={tmdbDialog} />
       <FileSearchDialog store={fileSearchDialog} />

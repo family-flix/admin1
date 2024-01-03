@@ -218,11 +218,10 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         return;
       }
       const drive = toDriveRef.value;
-      driveProfilePage.query = {
+      const url = driveProfilePage.buildUrlWithPrefix({
         id: drive.id,
         name: drive.name,
-      };
-      const url = driveProfilePage.buildUrlWithPrefix();
+      });
       window.open(url, "black");
       // app.showView(driveProfilePage);
     },

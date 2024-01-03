@@ -4,7 +4,7 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { ArrowLeft } from "lucide-solid";
 
-import { fetchSourcePreviewInfo } from "@/services";
+import { fetchSourcePreviewInfo } from "@/services/parsed_media";
 import { Video } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { PlayerCore } from "@/domains/player";

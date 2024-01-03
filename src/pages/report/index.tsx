@@ -349,10 +349,9 @@ export const HomeReportListPage: ViewComponent = (props) => {
                           if (!movie) {
                             return null;
                           }
-                          homeMovieProfilePage.query = {
+                          const url = homeMovieProfilePage.buildUrlWithPrefix({
                             id: movie.id,
-                          };
-                          const url = homeMovieProfilePage.buildUrlWithPrefix();
+                          });
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">
@@ -374,11 +373,10 @@ export const HomeReportListPage: ViewComponent = (props) => {
                           if (!season) {
                             return null;
                           }
-                          homeTVProfilePage.query = {
+                          const url = homeTVProfilePage.buildUrlWithPrefix({
                             id: season.tv_id,
                             season_id: season.id,
-                          };
-                          const url = homeTVProfilePage.buildUrlWithPrefix();
+                          });
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">

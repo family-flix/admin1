@@ -464,6 +464,10 @@ export const TVManagePage: ViewComponent = (props) => {
                   </Show>
                 </div>
               </PurePopover>
+              {/* <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
+                更新近3月内电视剧详情
+              </Button> */}
+              <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button>
             </div>
             <div class="flex items-center space-x-2 mt-4">
               <Input class="" store={nameSearchInput} />
@@ -515,10 +519,9 @@ export const TVManagePage: ViewComponent = (props) => {
                         cur_episode_count,
                         episode_count,
                       } = season;
-                      homeTVProfilePage.query = {
+                      const url = homeTVProfilePage.buildUrlWithPrefix({
                         id,
-                      };
-                      const url = homeTVProfilePage.buildUrlWithPrefix();
+                      });
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
@@ -628,17 +631,6 @@ export const TVManagePage: ViewComponent = (props) => {
           </div>
         </div>
       </ScrollView>
-      <div class="fixed right-12 top-12">
-        <div class="p-4 rounded-xl">
-          <div class="flex space-x-2">
-            <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
-              更新近3月内电视剧详情
-            </Button>
-            {/* <Button store={gotoInvalidTVListPageBtn}>问题电视剧列表</Button> */}
-            <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button>
-          </div>
-        </div>
-      </div>
       <Dialog store={transferConfirmDialog}>
         <div class="w-[520px]">
           <div class="mt-2 space-y-4 h-[320px] overflow-y-auto">

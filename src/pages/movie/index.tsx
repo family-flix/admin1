@@ -267,9 +267,9 @@ export const MovieManagePage: ViewComponent = (props) => {
             <Button class="" store={resetBtn}>
               重置
             </Button>
-            <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshMovieListBtn}>
+            {/* <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshMovieListBtn}>
               更新近3月内电影详情
-            </Button>
+            </Button> */}
           </div>
           <div class="flex items-center space-x-2 mt-4">
             <Input class="" store={nameSearchInput} />
@@ -313,10 +313,9 @@ export const MovieManagePage: ViewComponent = (props) => {
                   {(movie) => {
                     const { id, name, overview, poster_path, air_date, vote_average, origin_country, tips, persons } =
                       movie;
-                    homeMovieProfilePage.query = {
+                    const url = homeMovieProfilePage.buildUrlWithPrefix({
                       id,
-                    };
-                    const url = homeMovieProfilePage.buildUrlWithPrefix();
+                    });
                     return (
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">

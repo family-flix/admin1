@@ -10,16 +10,17 @@ import { ToastCore } from "./domains/ui/toast";
 import { NavigatorCore } from "./domains/navigator";
 import { rootView, homeIndexPage } from "./store/views";
 import { app, router, initializeJobs, pages } from "./store";
+import { ViewComponent } from "./types";
 import { sleep } from "./utils";
 
 import "./style.css";
-import { ViewComponent } from "./types";
 
 app.onClickLink(({ href }) => {
   const { pathname, query } = NavigatorCore.parse(href);
   const matched = pages.find((v) => {
     return v.key === pathname;
   });
+  // console.log("[ROOT]app.onClickLink - matched", matched, pathname, query, href);
   if (matched) {
     matched.query = query as Record<string, string>;
     app.showView(matched);
@@ -65,7 +66,7 @@ function Application() {
       curView.isShowForBack = false;
       return;
     }
-    const r = curView.buildUrl();
+    const r = curView.buildUrl(curView.query);
     app.setTitle(`${curView.title} - FamilyFlix`);
     router.pushState(r);
   });

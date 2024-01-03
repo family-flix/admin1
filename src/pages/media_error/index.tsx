@@ -356,38 +356,45 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                       );
                     }
                     if (type === MediaErrorTypes.Episode) {
-                      const { name } = media;
                       // console.log("[]剧集", name, data);
+                      const href = homeTVProfilePage.buildUrlWithPrefix({
+                        id: media.id,
+                      });
                       return (
                         <div class="p-4 bg-white">
-                          <div>{typeTextMap[type]}</div>
-                          <div class="text-sm">{id}</div>
-                          <div class="text-xl">{name}</div>
-                          <div class="mt-4 space-y-2">
-                            <For each={texts}>
-                              {(text) => {
-                                return <div>{text}</div>;
-                              }}
-                            </For>
-                          </div>
+                          <a href={href} target="_blank">
+                            <div>{typeTextMap[type]}</div>
+                            {/* <div class="text-sm">{id}</div> */}
+                            <div class="text-xl">{media.name}</div>
+                            <div class="mt-4 space-y-2">
+                              <For each={texts}>
+                                {(text) => {
+                                  return <div>{text}</div>;
+                                }}
+                              </For>
+                            </div>
+                          </a>
                         </div>
                       );
                     }
                     if (type === MediaErrorTypes.Movie) {
-                      const { name } = media;
-                      // console.log("[]电影", name, data);
+                      const href = homeMovieProfilePage.buildUrlWithPrefix({
+                        id: media.id,
+                      });
                       return (
                         <div class="p-4 bg-white">
-                          <div>{typeTextMap[type]}</div>
-                          <div class="text-sm">{id}</div>
-                          <div class="text-xl">{name}</div>
-                          <div class="mt-4 space-y-2">
-                            <For each={texts}>
-                              {(text) => {
-                                return <div>{text}</div>;
-                              }}
-                            </For>
-                          </div>
+                          <a href={href} target="_blank">
+                            <div>{typeTextMap[type]}</div>
+                            {/* <div class="text-sm">{id}</div> */}
+                            <div class="text-xl">{media.name}</div>
+                            <div class="mt-4 space-y-2">
+                              <For each={texts}>
+                                {(text) => {
+                                  return <div>{text}</div>;
+                                }}
+                              </For>
+                            </div>
+                          </a>
                         </div>
                       );
                     }

@@ -517,13 +517,14 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                     {(task) => {
                       const { id, url, resource_file_name, invalid, drive_file_name, season } = task;
                       const name = `${resource_file_name} -> ${drive_file_name}`;
-                      homeTVProfilePage.query = season
-                        ? {
-                            id: season.tv_id,
-                            season_id: season.id,
-                          }
-                        : {};
-                      const seasonURL = homeTVProfilePage.buildUrlWithPrefix();
+                      const seasonURL = homeTVProfilePage.buildUrlWithPrefix(
+                        season
+                          ? {
+                              id: season.tv_id,
+                              season_id: season.id,
+                            }
+                          : {}
+                      );
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">

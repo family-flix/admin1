@@ -123,7 +123,7 @@ export type SeasonMediaProfile = RequestedResource<typeof fetchSeasonMediaProfil
  */
 export async function fetchMovieMediaList(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const resp = await request.post<
     ListResponseWithCursor<{
       id: string;
       name: string;

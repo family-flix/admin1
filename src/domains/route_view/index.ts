@@ -346,12 +346,12 @@ export class RouteViewCore extends BaseDomain<TheTypesOfEvents> {
     this.subViews = this.subViews.filter((v) => v !== view);
     this.emit(Events.ViewsChange, [...this.subViews]);
   }
-  buildUrl() {
-    const url = buildUrl(this.key, this.params, this.query);
+  buildUrl(query: Record<string, string | number>) {
+    const url = buildUrl(this.key, this.params, query);
     return url;
   }
-  buildUrlWithPrefix() {
-    const url = buildUrl(this.key, this.params, this.query);
+  buildUrlWithPrefix(query: Record<string, string | number>) {
+    const url = buildUrl(this.key, this.params, query);
     return NavigatorCore.prefix + url;
   }
   ready() {

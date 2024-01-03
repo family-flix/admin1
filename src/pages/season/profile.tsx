@@ -435,10 +435,9 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                   <For each={profile()?.series}>
                     {(season) => {
                       const { id, name, poster_path, air_date } = season;
-                      homeTVProfilePage.query = {
+                      const url = homeTVProfilePage.buildUrlWithPrefix({
                         id,
-                      };
-                      const url = homeTVProfilePage.buildUrlWithPrefix();
+                      });
                       return (
                         <div>
                           <a href={url} target="_blank">
