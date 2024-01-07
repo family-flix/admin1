@@ -3,6 +3,75 @@ import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 import { request } from "@/utils/request";
 
+// export async function fetchMediaProfileList(params: FetchParams & Partial<{ keyword: string; type: MediaTypes }>) {
+//   const { keyword, page, pageSize, type, ...rest } = params;
+//   const r = await request.post<
+//     ListResponseWithCursor<{
+//       id: string;
+//       type: MediaTypes;
+//       name: string;
+//       original_name: string;
+//       overview: string;
+//       poster_path: string;
+//       air_date: string;
+//       sources: {
+//         id: string;
+//         name: string;
+//         overview: string;
+//         order: number;
+//         air_date: string;
+//       }[];
+//     }>
+//   >(`/api/v2/media_profile/list`, {
+//     ...rest,
+//     keyword,
+//     page,
+//     page_size: pageSize,
+//     type,
+//   });
+//   if (r.error) {
+//     return Result.Err(r.error.message);
+//   }
+//   const { next_marker, list } = r.data;
+//   return Result.Ok({
+//     list: list.map((media) => {
+//       if (media.type === MediaTypes.Movie) {
+//         const { id, name, original_name, overview, air_date, poster_path } = media;
+//         return {
+//           id,
+//           type: MediaTypes.Movie,
+//           name,
+//           original_name,
+//           overview,
+//           poster_path,
+//           air_date,
+//           episodes: [],
+//         };
+//       }
+//       const { id, name, original_name, overview, air_date, poster_path, sources = [] } = media;
+//       return {
+//         id,
+//         type: MediaTypes.Season,
+//         name,
+//         original_name,
+//         overview,
+//         poster_path,
+//         air_date,
+//         episodes: sources.map((episode) => {
+//           const { id, name, air_date, order } = episode;
+//           return {
+//             id,
+//             name,
+//             air_date,
+//             order,
+//           };
+//         }),
+//       };
+//     }),
+//     next_marker,
+//   });
+// }
+
 /**
  * 搜索影视剧详情
  * @param params
@@ -79,6 +148,73 @@ export async function searchMediaProfile(
   });
 }
 export type MediaProfileItem = RequestedResource<typeof searchMediaProfile>["list"][0];
+
+export async function fetchPartialMediaProfile(body: { id: string }) {
+  const { id } = body;
+  const r = await request.post<{
+    id: string;
+    type: MediaTypes;
+    name: string;
+    original_name: string;
+    overview: string;
+    poster_path: string;
+    air_date: string;
+    sources: {
+      id: string;
+      name: string;
+      overview: string;
+      order: number;
+      air_date: string;
+    }[];
+  }>(`/api/v2/media_profile/partial`, {
+    media_profile_id: id,
+  });
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const media = r.data;
+  if (media.type === MediaTypes.Movie) {
+    const { id, name, original_name, overview, air_date, poster_path } = media;
+    return Result.Ok({
+      id,
+      type: MediaTypes.Movie,
+      name,
+      original_name,
+      overview,
+      poster_path,
+      air_date,
+      episodes: [],
+    });
+  }
+  if (media.type === MediaTypes.Season) {
+    const { id, name, original_name, overview, air_date, poster_path, sources = [] } = media;
+    return Result.Ok({
+      id,
+      type: MediaTypes.Season,
+      name,
+      original_name,
+      overview,
+      poster_path,
+      air_date,
+      episodes: sources.map((episode) => {
+        const { id, name, air_date, order } = episode;
+        return {
+          id,
+          name,
+          air_date,
+          order,
+        };
+      }),
+    });
+  }
+  return Result.Err("未知的 type");
+}
+
+export function deleteMediaProfile(body: { id: string }) {
+  return request.post<ListResponse<void>>(`/api/v2/media_profile/delete`, {
+    media_profile_id: body.id,
+  });
+}
 
 export async function prepareSeasonList(params: { series_id: string }) {
   const { series_id } = params;

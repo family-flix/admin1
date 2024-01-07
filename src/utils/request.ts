@@ -25,7 +25,7 @@ function getHost() {
 }
 
 const client = axios.create({
-  timeout: 6000,
+  timeout: 12000,
 });
 type RequestClient = {
   get: <T>(

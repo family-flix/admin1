@@ -177,15 +177,6 @@ export const HomePage: ViewComponent = (props) => {
                           avatar,
                         };
                         app.showView(driveProfilePage);
-                        // const url = `/home/drive/${drive.id}?${query_stringify({})}`;
-                        // router.push(url);
-                        // const pathname = `/home/drive/${drive.id}`;
-                        // router.push(pathname, {
-                        //   name,
-                        //   avatar,
-                        //   used_percent: String(used_percent),
-                        //   used_size,
-                        // });
                       }}
                     />
                   );

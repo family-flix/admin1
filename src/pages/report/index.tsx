@@ -137,13 +137,12 @@ export const HomeReportListPage: ViewComponent = (props) => {
         return;
       }
       seasonSelectDialog.okBtn.setLoading(true);
-      const { id, tv_id, name, poster_path, air_date } = seasonSelect.value;
+      const { id, name, poster_path, air_date } = seasonSelect.value;
       const r = await replyRequest.run({
         report_id: curReport.value.id,
         content: commentInput.value,
         season: {
           id,
-          tv_id,
           name,
           poster_path,
           first_air_date: air_date,

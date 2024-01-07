@@ -4,7 +4,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { Calendar, Send, Smile } from "lucide-solid";
 
-import { TVSeasonItem, fetchSeasonList } from "@/services";
+import { SeasonMediaItem, fetchSeasonMediaList } from "@/services/media";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, DialogCore, DialogProps, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
@@ -20,16 +20,16 @@ enum Events {
   Clear,
 }
 type TheTypesOfEvents = {
-  //   [Events.Change]: TVSeasonItem;
-  [Events.Select]: TVSeasonItem;
+  //   [Events.Change]: SeasonMediaItem;
+  [Events.Select]: SeasonMediaItem;
   [Events.Clear]: void;
 };
 type TVSeasonSelectProps = {
-  onSelect?: (v: TVSeasonItem) => void;
+  onSelect?: (v: SeasonMediaItem) => void;
 } & DialogProps;
 
 export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
-  curSeason = new RefCore<TVSeasonItem>();
+  curSeason = new RefCore<SeasonMediaItem>();
   /** 名称搜索输入框 */
   nameInput = new InputCore({
     defaultValue: "",
@@ -50,7 +50,7 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   /** 弹窗取消按钮 */
   cancelBtn: ButtonCore;
   /** 季列表 */
-  list = new ListCore(new RequestCore(fetchSeasonList), {
+  list = new ListCore(new RequestCore(fetchSeasonMediaList), {
     onLoadingChange: (loading) => {
       this.searchBtn.setLoading(loading);
     },
@@ -93,7 +93,7 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   clear() {
     this.curSeason.clear();
   }
-  select(season: TVSeasonItem) {
+  select(season: SeasonMediaItem) {
     //     console.log("[COMPONENT]TVSeasonSelect - select", season);
     this.curSeason.select(season);
     this.emit(Events.Select, season);
@@ -168,17 +168,7 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
           <div class="space-y-4">
             <For each={tvListResponse().dataSource}>
               {(season) => {
-                const {
-                  id,
-                  tv_id,
-                  name,
-                  overview,
-                  cur_episode_count,
-                  episode_count,
-                  air_date,
-                  poster_path,
-                  season_text,
-                } = season;
+                const { id, name, overview, cur_episode_count, episode_count, air_date, poster_path } = season;
                 return (
                   <div
                     classList={{
@@ -197,7 +187,6 @@ export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                       <div class="flex-1 w-0 p-4">
                         <div class="flex items-center">
                           <h2 class="text-2xl text-slate-800">{name}</h2>
-                          <p class="ml-4 text-slate-500">{season_text}</p>
                         </div>
                         <div class="mt-2 overflow-hidden text-ellipsis">
                           <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-3">{overview}</p>

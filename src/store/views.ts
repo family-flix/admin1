@@ -39,6 +39,8 @@ import { InvalidMediaManagePage } from "@/pages/media_error";
 import { PrismaExecPage } from "@/pages/prisma";
 import { MovieArchivePage } from "@/pages/archive/movie";
 import { OuterMediaProfilePage } from "@/pages/outer_profile";
+import { MediaProfileHomeLayout } from "@/pages/media_profile/layout";
+import { SeasonMediaProfileManagePage } from "@/pages/media_profile";
 
 export const pages: RouteViewCore[] = [];
 onViewCreated((created) => {
@@ -271,6 +273,17 @@ export const testPage = new RouteViewCore({
   // component: TestPage,
   component: TestPage,
 });
+export const seasonMediaProfilePage = new RouteViewCore({
+  key: "/media_profile/index",
+  title: "详情管理",
+  component: SeasonMediaProfileManagePage,
+});
+export const mediaProfileLayout = new RouteViewCore({
+  key: "/media_profile",
+  title: "详情管理",
+  component: MediaProfileHomeLayout,
+  children: [seasonMediaProfilePage],
+});
 export const rootView = new RouteViewCore({
   key: "/",
   title: "ROOT",
@@ -285,5 +298,6 @@ export const rootView = new RouteViewCore({
     loginPage,
     testPage,
     prismaPage,
+    mediaProfileLayout,
   ],
 });

@@ -2,7 +2,7 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft, ChevronRight, FolderInput, Trash } from "lucide-solid";
+import { ArrowLeft, Binary, ChevronRight, FolderInput, Trash } from "lucide-solid";
 
 import { renameFilesInDrive, fetchDriveFiles } from "@/services/drive";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
@@ -33,7 +33,9 @@ import { createJob, driveList } from "@/store";
 import { buildRegexp } from "@/utils";
 import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
 import { setFileEpisodeProfile, setFileMovieProfile } from "@/services";
-import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
+import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherCore } from "@/domains/tmdb";
+import { setParsedSeasonMediaProfile, setParsedSeasonMediaProfileInFileId } from "@/services/parsed_media";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -133,6 +135,24 @@ export const DriveProfilePage: ViewComponent = (props) => {
       app.tip({
         text: ["设置失败", error.message],
       });
+    },
+  });
+  const setProfileRequest = new RequestCore(setParsedSeasonMediaProfileInFileId, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({ text: ["修改失败", error.message] });
+    },
+    onSuccess() {
+      app.tip({ text: ["修改成功"] });
+      dialog.hide();
+      // list.deleteItem((item) => {
+      //   if (item.id === seasonRef.value?.id) {
+      //     return true;
+      //   }
+      //   return false;
+      // });
     },
   });
   // const fileProfileRequest = new RequestCore(fetchFileProfile);
@@ -418,6 +438,31 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const dialog = new DialogCore({
+    onOk() {
+      if (!curFile.value) {
+        app.tip({ text: ["请先选择未识别的电视剧"] });
+        return;
+      }
+      const { file_id } = curFile.value;
+      const media = mediaSearch.cur;
+      if (!media) {
+        app.tip({ text: ["请先选择设置的详情"] });
+        return;
+      }
+      setProfileRequest.run({
+        file_id,
+        media_profile: {
+          id: String(media.id),
+          type: media.type,
+          name: media.name,
+        },
+      });
+    },
+  });
+  const mediaSearch = new TMDBSearcherCore({
+    // type: MediaTypes.Season,
+  });
   const movieSelect = new TMDBSearcherDialogCore({
     type: MediaTypes.Movie,
     onOk(movieProfile) {
@@ -490,6 +535,15 @@ export const DriveProfilePage: ViewComponent = (props) => {
       folderDeletingConfirmDialog.setTitle(`删除文件`);
       folderDeletingConfirmDialog.show();
       fileMenu.hide();
+    },
+  });
+  const setProfileBtn = new ButtonCore({
+    onClick() {
+      const file = curFile.value;
+      if (!file) {
+        return;
+      }
+      console.log(file);
     },
   });
   const folderDeletingItem = new MenuItemCore({
@@ -826,9 +880,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
                 <Button store={folderDeletingBtn} variant="subtle" icon={<Trash class="w-4 h-4" />}>
                   删除
                 </Button>
-                {/* <Button store={setProfileBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
-                  关联电视剧
-                </Button> */}
+                <Button store={setProfileBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
+                  设置详情
+                </Button>
                 {/* <Button store={deletingBtn} variant="subtle" icon={<Play class="w-4 h-4" />}>
                   播放
                 </Button> */}
@@ -844,6 +898,11 @@ export const DriveProfilePage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <TMDBSearcherDialog store={movieSelect} />
+      <Dialog store={dialog}>
+        <div class="w-[520px]">
+          <TMDBSearcherView store={mediaSearch} />
+        </div>
+      </Dialog>
     </>
   );
 };

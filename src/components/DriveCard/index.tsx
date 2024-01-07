@@ -35,6 +35,7 @@ import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { DriveCore, addAliyunDrive, updateAliyunDrive } from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
+import { BizError } from "@/domains/error";
 import { DriveTypes, FileType } from "@/constants";
 import { createJob } from "@/store";
 
@@ -405,6 +406,7 @@ export const DriveCard = (props: {
 
   const [state, setState] = createSignal(drive.state);
   const [folderColumns, setFolderColumns] = createSignal(driveFileManage.folderColumns);
+  const [hasError, setHasError] = createSignal<BizError | null>(null);
   const [filesState, setFilesState] = createSignal(driveFileManage.state);
 
   drive.onStateChange((nextState) => {
@@ -414,6 +416,9 @@ export const DriveCard = (props: {
   driveFileManage.onFolderColumnChange((nextColumns) => {
     console.log("[COMPONENT]onFolderColumnChange", nextColumns);
     setFolderColumns(nextColumns);
+  });
+  driveFileManage.onError((e) => {
+    setHasError(e);
   });
   driveFileManage.onStateChange((nextState) => {
     setFilesState(nextState);
@@ -498,11 +503,20 @@ export const DriveCard = (props: {
             <Show
               when={hasFolders()}
               fallback={
-                <div class="position">
-                  <div class="flex items-center justify-center">
-                    <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
+                <Show
+                  when={!hasError()}
+                  fallback={
+                    <div>
+                      <div class="text-center">发生了错误</div>
+                    </div>
+                  }
+                >
+                  <div class="position">
+                    <div class="flex items-center justify-center">
+                      <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
+                    </div>
                   </div>
-                </div>
+                </Show>
               }
             >
               <div class="flex-1 flex space-x-2 max-w-full max-h-full overflow-x-auto bg-white">

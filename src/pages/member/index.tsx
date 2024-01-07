@@ -213,8 +213,8 @@ export const MemberManagePage: ViewComponent = (props) => {
       if (!token) {
         return;
       }
-      const { name, tv_id, id } = seasonSelect.value;
-      const originalURL = `${window.location.origin}/mobile/tv_play?id=${tv_id}&season_id=${id}&rate=1.5&hide_menu=1&token=${token.id}`;
+      const { name, id } = seasonSelect.value;
+      const originalURL = `${window.location.origin}/mobile/tv_play?id=${id}&season_id=${id}&rate=1.5&hide_menu=1&token=${token.id}`;
       const shotURLRes = await create_link(originalURL);
       if (shotURLRes.error) {
         return;

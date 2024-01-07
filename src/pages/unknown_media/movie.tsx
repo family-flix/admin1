@@ -90,6 +90,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
   const nameSearchInput = new InputCore({
     defaultValue: "",
     onEnter() {
+      // console.log(nameSearchInput.value);
       searchBtn.click();
     },
   });

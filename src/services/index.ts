@@ -1740,7 +1740,7 @@ type AnswerPayload = Partial<{
   content: string;
   season: {
     id: string;
-    tv_id: string;
+    // tv_id: string;
     name: string;
     first_air_date: string;
     poster_path: string;

@@ -338,7 +338,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
                   <div class="relative z-3">
                     <div class="flex">
                       <LazyImage
-                        class="overflow-hidden w-[240px] rounded-lg mr-4 object-cover"
+                        class="overflow-hidden w-[240px] h-[360px] rounded-lg mr-4 object-cover"
                         src={profile()?.poster_path ?? undefined}
                       />
                       <div class="flex-1 mt-4">

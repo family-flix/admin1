@@ -45,7 +45,7 @@ export const RegisterPage: ViewComponent = (props) => {
   });
 
   return (
-    <div class="flex justify-center items-center h-screen">
+    <div class="flex justify-center items-center h-screen bg-[#f8f9fa]">
       <form>
         <div class="p-12 rounded-xl w-[480px] bg-white">
           <h1 class="text-4xl text-center">管理员注册</h1>

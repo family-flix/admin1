@@ -108,6 +108,10 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
       },
     });
     list.onStateChange((response) => {
+      if (response.error) {
+        this.emit(Events.Error, new BizError(response.error.message));
+        return;
+      }
       if (response.initial === false) {
         this.initialized = true;
         this.emit(Events.StateChange, { ...this.state });

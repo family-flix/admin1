@@ -156,8 +156,20 @@ export function setParsedSeasonMediaProfile(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { parsed_media_id, media_profile } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/parsed_media/set_profile", {
+  return request.post<void>("/api/v2/admin/parsed_media/set_profile", {
     parsed_media_id,
+    media_profile,
+  });
+}
+
+/** 设置未解析的影视剧详情 */
+export function setParsedSeasonMediaProfileInFileId(body: {
+  file_id: string;
+  media_profile: { id: string; type: MediaTypes; name: string };
+}) {
+  const { file_id, media_profile } = body;
+  return request.post<void>("/api/v2/admin/parsed_media/set_profile_in_file_id", {
+    file_id,
     media_profile,
   });
 }

@@ -86,7 +86,7 @@ export const DriveFileCard = (props: {
                   fallback={
                     <div class="flex">
                       <div class="mr-4">
-                        <LazyImage class="w-[120px] object-fit" />
+                        <LazyImage class="w-[120px] h-[180px]" />
                       </div>
                       <div>{profile()?.unknown_media?.name}</div>
                       <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
@@ -97,7 +97,7 @@ export const DriveFileCard = (props: {
                 >
                   <div class="flex">
                     <div class="mr-4">
-                      <LazyImage class="w-[120px] object-fit" src={profile()?.media?.poster_path} />
+                      <LazyImage class="w-[120px] h-[180px]" src={profile()?.media?.poster_path} />
                     </div>
                     <div>
                       <div class="text-lg">{profile()?.media?.name}</div>

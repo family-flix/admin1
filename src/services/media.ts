@@ -117,6 +117,7 @@ export async function fetchSeasonMediaProfile(body: { season_id: string }) {
   });
 }
 export type SeasonMediaProfile = RequestedResource<typeof fetchSeasonMediaProfile>;
+export type MediaSourceItem = RequestedResource<typeof fetchSeasonMediaProfile>["episodes"][number];
 
 /**
  * 获取电影列表
