@@ -7,13 +7,18 @@ import { request } from "@/utils/request";
 /**
  * 获取无法识别的 tv
  */
-export async function fetchUnknownSeasonMediaList(params: FetchParams) {
-  const { page, pageSize, ...rest } = params;
+export async function fetchUnknownSeasonMediaList(params: FetchParams & { type?: MediaTypes }) {
+  const { page, pageSize, type = MediaTypes.Season, ...rest } = params;
   const r = await request.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
       season_text: string;
+      profile: {
+        id: string;
+        name: string;
+        poster_path: string;
+      } | null;
       sources: {
         id: string;
         name: string;
@@ -22,7 +27,11 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams) {
         episode_text: string;
         file_name: string;
         parent_paths: string;
-        profile: null | {};
+        profile: null | {
+          id: string;
+          name: string;
+          order: number;
+        };
         drive: {
           id: string;
           name: string;
@@ -31,7 +40,7 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams) {
     }>
   >(`/api/v2/admin/parsed_media/list`, {
     ...rest,
-    type: MediaTypes.Season,
+    type,
     page,
     page_size: pageSize,
   });
@@ -62,6 +71,11 @@ export async function fetchUnknownMovieMediaList(params: FetchParams) {
       id: string;
       name: string;
       season_text: string;
+      profile: {
+        id: string;
+        name: string;
+        poster_path: string;
+      } | null;
       sources: {
         id: string;
         name: string;
@@ -70,7 +84,11 @@ export async function fetchUnknownMovieMediaList(params: FetchParams) {
         episode_text: string;
         file_name: string;
         parent_paths: string;
-        profile: null | {};
+        profile: null | {
+          id: string;
+          name: string;
+          poster_path: string;
+        };
         drive: {
           id: string;
           name: string;
@@ -89,11 +107,12 @@ export async function fetchUnknownMovieMediaList(params: FetchParams) {
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, season_text, sources } = tv;
+      const { id, name, season_text, profile, sources } = tv;
       return {
         id,
         name,
         season_text,
+        profile,
         sources,
       };
     }),

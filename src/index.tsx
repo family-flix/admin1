@@ -15,21 +15,25 @@ import { sleep } from "./utils";
 
 import "./style.css";
 
-app.onClickLink(({ href }) => {
+app.onClickLink(({ href, target }) => {
   const { pathname, query } = NavigatorCore.parse(href);
   const matched = pages.find((v) => {
     return v.key === pathname;
   });
   // console.log("[ROOT]app.onClickLink - matched", matched, pathname, query, href);
-  if (matched) {
-    matched.query = query as Record<string, string>;
-    app.showView(matched);
+  if (!matched) {
+    app.tip({
+      text: ["没有匹配的页面"],
+    });
     return;
   }
-  app.tip({
-    text: ["没有匹配的页面"],
-  });
-  // app.showView(homeIndexPage);
+  matched.query = query as Record<string, string>;
+  if (target === "_blank") {
+    matched.buildUrlWithPrefix(matched.query);
+    return;
+  }
+  app.showView(matched);
+  return;
 });
 app.onPopState((options) => {
   const { pathname } = NavigatorCore.parse(options.pathname);

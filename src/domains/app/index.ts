@@ -48,6 +48,7 @@ type TheTypesOfEvents = {
   [Events.EscapeKeyDown]: void;
   [Events.ClickLink]: {
     href: string;
+    target: string | null;
   };
   [Events.Blur]: void;
   [Events.Show]: void;

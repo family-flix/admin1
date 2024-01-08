@@ -2,7 +2,7 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft, Binary, ChevronRight, FolderInput, Trash } from "lucide-solid";
+import { ArrowLeft, Binary, ChevronRight, FolderInput, Search, Trash } from "lucide-solid";
 
 import { renameFilesInDrive, fetchDriveFiles } from "@/services/drive";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
@@ -36,6 +36,7 @@ import { setFileEpisodeProfile, setFileMovieProfile } from "@/services";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { setParsedSeasonMediaProfile, setParsedSeasonMediaProfileInFileId } from "@/services/parsed_media";
+import { ListCore } from "@/domains/list";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -162,6 +163,12 @@ export const DriveProfilePage: ViewComponent = (props) => {
       app.tip({
         text: [err.message],
       });
+    },
+  });
+  const list = new ListCore<typeof fetchDriveFiles, AliyunDriveFile>(new RequestCore(fetchDriveFiles), {
+    pageSize: 50,
+    search: {
+      drive_id: view.query.id,
     },
   });
   const drive = new DriveCore({ ...(view.query as unknown as DriveItem) });
@@ -483,6 +490,16 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const fileSearchDialog = new DialogCore({
+    title: "云盘文件搜索",
+    footer: false,
+  });
+  const fileSearchInput = new InputCore({
+    defaultValue: "",
+    onEnter(v) {
+      list.search({ name: v });
+    },
+  });
   const childNamesModifyItem = new MenuItemCore({
     label: "修改子文件名称",
     async onClick() {
@@ -543,6 +560,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       if (!file) {
         return;
       }
+      dialog.show();
       console.log(file);
     },
   });
@@ -652,9 +670,13 @@ export const DriveProfilePage: ViewComponent = (props) => {
     group2: [],
   });
   const [selectedFile, setSelectedFile] = createSignal(curFile.value);
+  const [searchResponse, setSearchResponse] = createSignal(list.response);
 
   curFile.onStateChange((v) => {
     setSelectedFile(v);
+  });
+  list.onStateChange((v) => {
+    setSearchResponse(v);
   });
   drive.onStateChange((nextState) => {
     setState(nextState);
@@ -729,6 +751,13 @@ export const DriveProfilePage: ViewComponent = (props) => {
               <ArrowLeft class="w-6 h-6" />
             </div>
             <div class="text-2xl">{state().name}</div>
+            <div
+              onClick={() => {
+                fileSearchDialog.show();
+              }}
+            >
+              <Search class="w-6 h-6 cursor-pointer" />
+            </div>
           </div>
           <div class="flex mt-2 space-x-2 text-slate-800">
             <For each={paths()}>
@@ -883,24 +912,81 @@ export const DriveProfilePage: ViewComponent = (props) => {
                 <Button store={setProfileBtn} variant="subtle" icon={<Binary class="w-4 h-4" />}>
                   设置详情
                 </Button>
-                {/* <Button store={deletingBtn} variant="subtle" icon={<Play class="w-4 h-4" />}>
-                  播放
-                </Button> */}
               </div>
             }
           />
         </div>
       </Dialog>
-      <Dialog store={episodeSelect.dialog}>
-        <div class="w-[520px]">
-          <div class="p-2">{selectedFile()?.name}</div>
-          <EpisodeSelect store={episodeSelect} />
-        </div>
-      </Dialog>
-      <TMDBSearcherDialog store={movieSelect} />
       <Dialog store={dialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={mediaSearch} />
+        </div>
+      </Dialog>
+      <Dialog store={fileSearchDialog}>
+        <div class="w-[520px]">
+          <div class="">
+            <Input class="" prefix={<Search class="w-4 h-4" />} store={fileSearchInput} />
+          </div>
+          <ListView
+            class="mt-4"
+            store={list}
+            skeleton={
+              <div>
+                <div class="space-y-2">
+                  <Skeleton class="w-12 h-[24px]" />
+                  <Skeleton class="w-full h-[24px]" />
+                  <Skeleton class="w-4 h-[24px]" />
+                </div>
+              </div>
+            }
+          >
+            <div class="h-[480px] overflow-y-auto">
+              <List
+                store={list}
+                renderItem={(folder, fileIndex) => {
+                  // @ts-ignore
+                  const { file_id, name, type, hover } = folder;
+                  return (
+                    <div
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        curFile.select(folder);
+                        driveFileManage.virtualSelect(folder, [0, fileIndex]);
+                        const { x, y } = event;
+                        fileMenu.toggle({
+                          x,
+                          y,
+                        });
+                      }}
+                    >
+                      <div
+                        class="flex items-center justify-between p-2 cursor-pointer rounded-sm hover:bg-slate-300"
+                        classList={{
+                          "bg-slate-200": file_id === selectedFile()?.file_id,
+                          "outline outline-2 outline-slate-800": hover,
+                        }}
+                        onClick={() => {
+                          if (folder.type === FileType.File) {
+                            curFile.select(folder);
+                            driveFileManage.virtualSelect(folder, [0, fileIndex]);
+                            fileProfileDialog.show();
+                            return;
+                          }
+                        }}
+                      >
+                        <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis" title={name}>
+                          {name}
+                        </div>
+                        {/* <Show when={type === FileType.Folder}>
+                          <ChevronRight class="ml-2 w-4 h-4" />
+                        </Show> */}
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+            </div>
+          </ListView>
         </div>
       </Dialog>
     </>

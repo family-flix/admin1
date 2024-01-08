@@ -667,13 +667,24 @@ export function delete_movie(body: { movie_id: string }) {
 /**
  * 获取无法识别的 tv
  */
-export async function fetchUnknownSeasonMediaList(params: FetchParams & { type: MediaTypes }) {
+export async function fetchUnknownSeasonMediaList(
+  params: FetchParams & {
+    type: MediaTypes;
+    /** 1只返回未识别的 2返回所有解析结果 */
+    empty?: 0 | 1;
+  }
+) {
   const { page, pageSize, ...rest } = params;
   const r = await request.post<
-    ListResponse<{
+    ListResponseWithCursor<{
       id: string;
       name: string;
       season_text: string;
+      profile: {
+        id: string;
+        name: string;
+        poster_path: string;
+      } | null;
       sources: {
         id: string;
         name: string;
@@ -682,7 +693,11 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams & { type: 
         episode_text: string;
         file_name: string;
         parent_paths: string;
-        profile: null | {};
+        profile: null | {
+          id: string;
+          name: string;
+          order: number;
+        };
         drive: {
           id: string;
           name: string;
@@ -701,11 +716,12 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams & { type: 
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, season_text, sources } = tv;
+      const { id, name, season_text, profile, sources } = tv;
       return {
         id,
         name,
         season_text,
+        profile,
         sources,
       };
     }),

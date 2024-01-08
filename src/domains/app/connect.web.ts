@@ -134,8 +134,11 @@ export function connect(app: Application) {
     if (href.startsWith("http")) {
       return;
     }
+    if (t.getAttribute("target") === "_blank") {
+      return;
+    }
     event.preventDefault();
-    app.emit(app.Events.ClickLink, { href });
+    app.emit(app.Events.ClickLink, { href, target: null });
   });
   router.back = () => {
     window.history.back();

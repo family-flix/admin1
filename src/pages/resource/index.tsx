@@ -179,35 +179,38 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
             获取
           </Button>
         </div>
-        <Show when={files().length}>
-          <div class="relative mt-4 p-4 bg-white rounded-sm">
-            <Show when={paths().length}>
-              <div class="flex items-center flex-wrap space-x-2">
-                <Folder class="w-4 h-4" />
-                <For each={paths()}>
-                  {(path, index) => {
-                    const { file_id, name } = path;
-                    return (
-                      <div class="flex items-center">
-                        <div
-                          class="cursor-pointer hover:text-blue-500"
-                          onClick={() => {
-                            sharedResource.fetch({ file_id, name });
-                          }}
-                        >
-                          {name}
-                        </div>
-                        {index() === paths().length - 1 ? null : (
-                          <div class="mx-1">
-                            <ChevronRight class="w-4 h-4" />
-                          </div>
-                        )}
+        <div class="relative mt-4 p-4 bg-white rounded-sm">
+          <Show when={paths().length}>
+            <div class="flex items-center flex-wrap space-x-2">
+              <Folder class="w-4 h-4" />
+              <For each={paths()}>
+                {(path, index) => {
+                  const { file_id, name } = path;
+                  return (
+                    <div class="flex items-center">
+                      <div
+                        class="cursor-pointer hover:text-blue-500"
+                        onClick={() => {
+                          sharedResource.fetch({ file_id, name });
+                        }}
+                      >
+                        {name}
                       </div>
-                    );
-                  }}
-                </For>
-              </div>
-            </Show>
+                      {index() === paths().length - 1 ? null : (
+                        <div class="mx-1">
+                          <ChevronRight class="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+            <div class="fixed right-12 bottom-12 p-4 bg-white rounded-md">
+              <Input store={searchInput} />
+            </div>
+          </Show>
+          <Show when={files().length} fallback={<div></div>}>
             <div class="mt-8 grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
               <For each={files()}>
                 {(file) => {
@@ -237,21 +240,18 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            <Show when={state().next_marker}>
-              <div
-                class="text-center"
-                onClick={() => {
-                  sharedResource.loadMore();
-                }}
-              >
-                加载更多
-              </div>
-            </Show>
-            <div class="fixed right-12 bottom-12 p-4 bg-white rounded-md">
-              <Input store={searchInput} />
+          </Show>
+          <Show when={state().next_marker}>
+            <div
+              class="text-center"
+              onClick={() => {
+                sharedResource.loadMore();
+              }}
+            >
+              加载更多
             </div>
-          </div>
-        </Show>
+          </Show>
+        </div>
       </div>
       <DropdownMenu store={dropdownMenu}></DropdownMenu>
     </div>

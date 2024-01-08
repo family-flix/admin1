@@ -19,7 +19,14 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
 import { ViewComponent } from "@/types";
-import { consumeAction, driveList, homeMovieProfilePage, homeTVProfilePage, pendingActions } from "@/store";
+import {
+  consumeAction,
+  driveList,
+  homeMovieProfilePage,
+  homeTVProfilePage,
+  pendingActions,
+  seasonMediaProfilePage,
+} from "@/store";
 import { MediaErrorTypeOptions, MediaErrorTypes } from "@/constants";
 
 export const InvalidMediaManagePage: ViewComponent = (props) => {
@@ -338,13 +345,15 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                     };
                     if (type === MediaErrorTypes.Season) {
                       const { id, name, poster_path } = media;
-                      // console.log("[]季", name, data);
+                      const url = homeTVProfilePage.buildUrlWithPrefix({ id });
                       return (
                         <div class="p-4 bg-white">
                           <div>{typeTextMap[type]}</div>
                           <div class="text-sm">{id}</div>
-                          <LazyImage class="w-[80px] h-[120px]" src={poster_path!} alt={name!} />
-                          <div class="">{name}</div>
+                          <a href={url} target="_blank">
+                            <LazyImage class="w-[80px] h-[120px]" src={poster_path!} alt={name!} />
+                            <div class="">{name}</div>
+                          </a>
                           <div class="mt-4 space-y-2">
                             <For each={texts}>
                               {(text) => {
@@ -355,46 +364,24 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                         </div>
                       );
                     }
-                    if (type === MediaErrorTypes.Episode) {
-                      // console.log("[]剧集", name, data);
-                      const href = homeTVProfilePage.buildUrlWithPrefix({
-                        id: media.id,
-                      });
-                      return (
-                        <div class="p-4 bg-white">
-                          <a href={href} target="_blank">
-                            <div>{typeTextMap[type]}</div>
-                            {/* <div class="text-sm">{id}</div> */}
-                            <div class="text-xl">{media.name}</div>
-                            <div class="mt-4 space-y-2">
-                              <For each={texts}>
-                                {(text) => {
-                                  return <div>{text}</div>;
-                                }}
-                              </For>
-                            </div>
-                          </a>
-                        </div>
-                      );
-                    }
                     if (type === MediaErrorTypes.Movie) {
-                      const href = homeMovieProfilePage.buildUrlWithPrefix({
-                        id: media.id,
-                      });
+                      const { id, name, poster_path } = media;
+                      const url = homeMovieProfilePage.buildUrlWithPrefix({ id });
                       return (
                         <div class="p-4 bg-white">
-                          <a href={href} target="_blank">
-                            <div>{typeTextMap[type]}</div>
-                            {/* <div class="text-sm">{id}</div> */}
-                            <div class="text-xl">{media.name}</div>
-                            <div class="mt-4 space-y-2">
-                              <For each={texts}>
-                                {(text) => {
-                                  return <div>{text}</div>;
-                                }}
-                              </For>
-                            </div>
+                          <div>{typeTextMap[type]}</div>
+                          <div class="text-sm">{id}</div>
+                          <a href={url} target="_blank">
+                            <LazyImage class="w-[80px] h-[120px]" src={poster_path!} alt={name!} />
+                            <div class="">{name}</div>
                           </a>
+                          <div class="mt-4 space-y-2">
+                            <For each={texts}>
+                              {(text) => {
+                                return <div>{text}</div>;
+                              }}
+                            </For>
+                          </div>
                         </div>
                       );
                     }

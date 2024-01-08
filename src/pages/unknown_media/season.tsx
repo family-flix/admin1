@@ -2,18 +2,18 @@
  * @file 未识别的电视剧
  */
 import { For, Show, createSignal } from "solid-js";
-import { Brush, RotateCcw, Search, Trash } from "lucide-solid";
+import { Brush, CheckCircle, RotateCcw, Search, Trash } from "lucide-solid";
 
+import { setParsedSeasonMediaProfile } from "@/services/parsed_media";
 import { UnknownSeasonMediaItem, deleteUnknownTV, fetchUnknownSeasonMediaList } from "@/services";
-import { Button, ListView, Dialog, LazyImage, ScrollView, Input } from "@/components/ui";
+import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, CheckboxCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
-import { ViewComponent } from "@/types";
-import { setParsedSeasonMediaProfile } from "@/services/parsed_media";
 import { TMDBSearcherCore } from "@/domains/tmdb";
+import { ViewComponent } from "@/types";
 
 export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -114,6 +114,13 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
     },
   });
   const seasonRef = new RefCore<UnknownSeasonMediaItem>();
+  const checkbox = new CheckboxCore({
+    onChange(checked) {
+      list.search({
+        empty: checked ? 0 : 1,
+      });
+    },
+  });
   const unknownTVProfileSetBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
     onClick(record) {
       seasonRef.select(record);
@@ -172,6 +179,10 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
             刷新
           </Button>
           <Button store={resetBtn}>重置</Button>
+          <div class="flex items-center space-x-2">
+            <Checkbox store={checkbox}></Checkbox>
+            <span>全部内容</span>
+          </div>
         </div>
         <div class="flex items-center space-x-2 mt-4">
           <Input class="" store={nameSearchInput} />
@@ -196,31 +207,50 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={response().dataSource}>
               {(parsedMedia) => {
-                const { id, name, season_text, sources } = parsedMedia;
+                const { id, name, season_text, profile, sources } = parsedMedia;
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
-                      <div class="w-full rounded">
-                        <LazyImage
-                          class="max-w-full max-h-full object-contain"
-                          src={(() => {
-                            return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
-                          })()}
-                        />
-                      </div>
+                      <Show
+                        when={!profile}
+                        fallback={
+                          <div>
+                            <div class="w-full rounded">
+                              <LazyImage class="max-w-full max-h-full object-contain" src={profile?.poster_path} />
+                            </div>
+                            <div>{profile?.name}</div>
+                          </div>
+                        }
+                      >
+                        <div class="w-full rounded">
+                          <LazyImage
+                            class="max-w-full max-h-full object-contain"
+                            src={(() => {
+                              return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                            })()}
+                          />
+                        </div>
+                      </Show>
                     </div>
                     <div class="flex-1 w-0 mt-2">
                       <div class="text-lg">
-                        {name} {season_text}
+                        {name}/{season_text}
                       </div>
                       <Show when={sources}>
-                        <div class="mt-4 p-2">
+                        <div class="mt-4 p-2 space-y-2">
                           <For each={sources}>
                             {(parsedSource) => {
-                              const { name, episode_text, parent_paths, file_name, drive } = parsedSource;
+                              const { name, episode_text, parent_paths, profile, file_name, drive } = parsedSource;
                               return (
                                 <div title={name}>
                                   <div>{episode_text}</div>
+                                  <Show when={profile}>
+                                    <div class="flex items-center">
+                                      <CheckCircle class="w-4 h-4 text-green-500" />
+                                      <div>{profile?.order}、</div>
+                                      <div>{profile?.name}</div>
+                                    </div>
+                                  </Show>
                                   <div class="text-sm text-gray-500">
                                     [{drive.name}]{parent_paths}/{file_name}
                                   </div>
