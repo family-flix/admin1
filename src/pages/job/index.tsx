@@ -134,9 +134,10 @@ export const TaskListPage: ViewComponent = (props) => {
         <div class="space-y-4">
           <For each={dataSource()}>
             {(task, i) => {
-              const { id, desc, unique_id, created, status, statusText } = task;
+              const { id, desc, output_id, created, status, statusText } = task;
               return (
                 <div class={cn("space-y-1 p-4 rounded-sm bg-white")}>
+                  <div>{output_id}</div>
                   <h2 class="text-xl">{desc}</h2>
                   <div class="flex space-x-4">
                     <div>{created}</div>

@@ -6,13 +6,13 @@ import { Brush, Edit, RotateCcw, Search, Trash } from "lucide-solid";
 
 import {
   UnknownMovieMediaItem,
-  fetchUnknownMovieMediaList,
-  setParsedSeasonMediaProfile,
+  fetchUnknownMediaList,
+  setParsedMediaProfile,
   setParsedSeasonMediaSourceProfile,
 } from "@/services/parsed_media";
-import { Button, ListView, LazyImage, ScrollView, Input, Dialog } from "@/components/ui";
+import { Button, ListView, LazyImage, ScrollView, Input, Dialog, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, ButtonInListCore, CheckboxCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ListCore } from "@/domains/list";
@@ -21,14 +21,18 @@ import { ViewComponent } from "@/types";
 import { MediaTypes } from "@/constants";
 
 export const UnknownMoviePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, view, parent } = props;
 
-  const list = new ListCore(new RequestCore(fetchUnknownMovieMediaList), {
+  const list = new ListCore(new RequestCore(fetchUnknownMediaList), {
+    pageSize: 50,
+    search: {
+      type: MediaTypes.Movie,
+    },
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
     },
   });
-  const setProfileRequest = new RequestCore(setParsedSeasonMediaProfile, {
+  const setProfileRequest = new RequestCore(setParsedMediaProfile, {
     onLoading(loading) {
       dialog.okBtn.setLoading(loading);
     },
@@ -81,10 +85,22 @@ export const UnknownMoviePage: ViewComponent = (props) => {
     },
   });
   const mediaRef = new RefCore<UnknownMovieMediaItem>();
+  const checkbox = new CheckboxCore({
+    onChange(checked) {
+      list.search({
+        empty: checked ? 0 : 1,
+      });
+    },
+  });
   const mediaSourceRef = new RefCore<UnknownMovieMediaItem["sources"][number]>();
   const refreshBtn = new ButtonCore({
     onClick() {
       list.refresh();
+    },
+  });
+  const resetBtn = new ButtonCore({
+    onClick() {
+      list.reset();
     },
   });
   const nameSearchInput = new InputCore({
@@ -172,10 +188,15 @@ export const UnknownMoviePage: ViewComponent = (props) => {
 
   const [response, setResponse] = createSignal(list.response);
 
+  console.log("[PAGE]/unknown_media/season - ", parent);
+  if (parent?.scrollView) {
+    parent?.scrollView.onReachBottom(() => {
+      list.loadMore();
+    });
+  }
   list.onStateChange((nextState) => {
     setResponse(nextState);
   });
-
   view.onShow(() => {
     list.init();
   });
@@ -189,6 +210,11 @@ export const UnknownMoviePage: ViewComponent = (props) => {
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
           </Button>
+          <Button store={resetBtn}>重置</Button>
+          <div class="flex items-center space-x-2">
+            <Checkbox store={checkbox}></Checkbox>
+            <span>全部内容</span>
+          </div>
         </div>
         <div class="flex items-center space-x-2 mt-4">
           <Input class="" store={nameSearchInput} />

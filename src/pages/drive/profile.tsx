@@ -35,7 +35,7 @@ import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
 import { setFileEpisodeProfile, setFileMovieProfile } from "@/services";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/domains/tmdb";
-import { setParsedSeasonMediaProfile, setParsedSeasonMediaProfileInFileId } from "@/services/parsed_media";
+import { setParsedMediaProfile, setParsedMediaProfileInFileId } from "@/services/parsed_media";
 import { ListCore } from "@/domains/list";
 
 export const DriveProfilePage: ViewComponent = (props) => {
@@ -138,7 +138,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const setProfileRequest = new RequestCore(setParsedSeasonMediaProfileInFileId, {
+  const setProfileRequest = new RequestCore(setParsedMediaProfileInFileId, {
     onLoading(loading) {
       dialog.okBtn.setLoading(loading);
     },
@@ -407,6 +407,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       filesRenameRequest.run({
         drive_id: view.query.id,
         file_id: file.file_id,
+        name: file.name,
         regexp,
         replace,
       });

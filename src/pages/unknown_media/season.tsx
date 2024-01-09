@@ -1,11 +1,11 @@
 /**
  * @file 未识别的电视剧
  */
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, onMount } from "solid-js";
 import { Brush, CheckCircle, RotateCcw, Search, Trash } from "lucide-solid";
 
-import { setParsedSeasonMediaProfile } from "@/services/parsed_media";
-import { UnknownSeasonMediaItem, deleteUnknownTV, fetchUnknownSeasonMediaList } from "@/services";
+import { UnknownSeasonMediaItem, fetchUnknownMediaList, setParsedMediaProfile } from "@/services/parsed_media";
+import { deleteUnknownTV } from "@/services";
 import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, CheckboxCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
@@ -14,13 +14,36 @@ import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ViewComponent } from "@/types";
+import { MediaTypes } from "@/constants";
 
 export const UnknownSeasonMediaPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, view, parent } = props;
 
-  const list = new ListCore(new RequestCore(fetchUnknownSeasonMediaList), {
+  const list = new ListCore(new RequestCore(fetchUnknownMediaList), {
+    pageSize: 50,
+    search: {
+      type: MediaTypes.Movie,
+    },
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
+    },
+  });
+  const setProfileRequest = new RequestCore(setParsedMediaProfile, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({ text: ["修改失败", error.message] });
+    },
+    onSuccess() {
+      app.tip({ text: ["修改成功"] });
+      dialog.hide();
+      list.deleteItem((item) => {
+        if (item.id === seasonRef.value?.id) {
+          return true;
+        }
+        return false;
+      });
     },
   });
   const tvDeletingRequest = new RequestCore(deleteUnknownTV, {
@@ -47,24 +70,6 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
     onFailed(error) {
       app.tip({
         text: ["删除失败", error.message],
-      });
-    },
-  });
-  const setProfileRequest = new RequestCore(setParsedSeasonMediaProfile, {
-    onLoading(loading) {
-      dialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({ text: ["修改失败", error.message] });
-    },
-    onSuccess() {
-      app.tip({ text: ["修改成功"] });
-      dialog.hide();
-      list.deleteItem((item) => {
-        if (item.id === seasonRef.value?.id) {
-          return true;
-        }
-        return false;
       });
     },
   });
@@ -152,15 +157,16 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const mediaSearch = new TMDBSearcherCore({
     // type: MediaTypes.Season,
   });
-  const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      list.loadMore();
-    },
-  });
 
   const [response, setResponse] = createSignal(list.response);
   const [cur, setCur] = createSignal(seasonRef.value);
 
+  console.log("[PAGE]/unknown_media/season - ", parent);
+  if (parent?.scrollView) {
+    parent?.scrollView.onReachBottom(() => {
+      list.loadMore();
+    });
+  }
   list.onStateChange((nextState) => {
     setResponse(nextState);
   });
@@ -173,7 +179,7 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView class="px-8 pb-12" store={scrollView}>
+      <div class="px-8 pb-12">
         <div class="my-4 flex items-center space-x-2">
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
@@ -277,7 +283,7 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
             </For>
           </div>
         </ListView>
-      </ScrollView>
+      </div>
       <Dialog store={dialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={mediaSearch} />

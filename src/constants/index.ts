@@ -285,14 +285,14 @@ export enum DriveTypes {
 
 export enum MediaErrorTypes {
   Unknown = 0,
-  TVProfile = 1,
-  SeasonProfile = 2,
-  EpisodeProfile = 3,
-  MovieProfile = 4,
+  Season = 1,
+  Movie = 2,
+  Episode = 3,
   TV = 5,
-  Season = 6,
-  Episode = 7,
-  Movie = 8,
+  TVProfile = 6,
+  SeasonProfile = 7,
+  MovieProfile = 8,
+  EpisodeProfile = 9,
 }
 export const MediaErrorTypeTextMap: Record<MediaErrorTypes, string> = {
   [MediaErrorTypes.Unknown]: "未知",

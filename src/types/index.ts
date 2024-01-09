@@ -4,6 +4,7 @@ import { Application } from "@/domains/app";
 import { NavigatorCore } from "@/domains/navigator";
 import { RouteViewCore } from "@/domains/route_view";
 import { BizError } from "@/domains/error";
+import { ScrollViewCore } from "@/domains/ui";
 
 export type Resp<T> = {
   data: T extends null ? null : T;
@@ -87,7 +88,12 @@ export type ListResponseWithCursor<T> = {
 };
 
 export type RequestedResource<T extends (...args: any[]) => any> = UnpackedResult<Unpacked<ReturnType<T>>>;
-export type ViewComponentProps = { app: Application; router: NavigatorCore; view: RouteViewCore };
+export type ViewComponentProps = {
+  app: Application;
+  router: NavigatorCore;
+  view: RouteViewCore;
+  parent?: { scrollView?: ScrollViewCore };
+};
 export type ViewComponent = (props: ViewComponentProps) => JSX.Element;
 
 export type Rect = {

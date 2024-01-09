@@ -7,8 +7,8 @@ import { request } from "@/utils/request";
 /**
  * 获取无法识别的 tv
  */
-export async function fetchUnknownSeasonMediaList(params: FetchParams & { type?: MediaTypes }) {
-  const { page, pageSize, type = MediaTypes.Season, ...rest } = params;
+export async function fetchUnknownMediaList(params: FetchParams & { type?: MediaTypes }) {
+  const { page, pageSize, ...rest } = params;
   const r = await request.post<
     ListResponseWithCursor<{
       id: string;
@@ -30,6 +30,7 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams & { type?:
         profile: null | {
           id: string;
           name: string;
+          poster_path: string;
           order: number;
         };
         drive: {
@@ -40,7 +41,7 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams & { type?:
     }>
   >(`/api/v2/admin/parsed_media/list`, {
     ...rest,
-    type,
+    type: MediaTypes.Movie,
     page,
     page_size: pageSize,
   });
@@ -50,17 +51,18 @@ export async function fetchUnknownSeasonMediaList(params: FetchParams & { type?:
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, season_text, sources } = tv;
+      const { id, name, season_text, profile, sources } = tv;
       return {
         id,
         name,
         season_text,
+        profile,
         sources,
       };
     }),
   });
 }
-export type UnknownSeasonMediaItem = RequestedResource<typeof fetchUnknownSeasonMediaList>["list"][0];
+export type UnknownSeasonMediaItem = RequestedResource<typeof fetchUnknownMediaList>["list"][0];
 /**
  * 获取无法识别的 tv
  */
@@ -170,7 +172,7 @@ export async function fetchParsedMediaSourceList(params: FetchParams) {
 export type UnknownEpisodeItem = RequestedResource<typeof fetchParsedMediaSourceList>["list"][0];
 
 /** 设置未解析的影视剧详情 */
-export function setParsedSeasonMediaProfile(body: {
+export function setParsedMediaProfile(body: {
   parsed_media_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
@@ -182,7 +184,7 @@ export function setParsedSeasonMediaProfile(body: {
 }
 
 /** 设置未解析的影视剧详情 */
-export function setParsedSeasonMediaProfileInFileId(body: {
+export function setParsedMediaProfileInFileId(body: {
   file_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {

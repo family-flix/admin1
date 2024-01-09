@@ -14,7 +14,9 @@ import { TabHeaderCore } from "@/domains/ui/tab-header";
 export const UnknownMediaLayout: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const scrollView = new ScrollViewCore({});
+  const scrollView = new ScrollViewCore({
+    _name: "unknown_media/layout",
+  });
   const tab = new TabHeaderCore({
     key: "id",
     options: [
@@ -97,7 +99,14 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                       immediately={true}
                       index={i()}
                     >
-                      <PageContent app={app} router={app.router} view={view} />
+                      <PageContent
+                        app={app}
+                        router={app.router}
+                        parent={{
+                          scrollView,
+                        }}
+                        view={view}
+                      />
                     </KeepAliveRouteView>
                   );
                 }}

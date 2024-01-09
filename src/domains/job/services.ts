@@ -17,6 +17,7 @@ export async function fetchJobList(params: FetchParams) {
       type: TaskTypes;
       status: TaskStatus;
       desc: string;
+      output_id: string;
       error?: string;
       created: string;
     }>
@@ -27,9 +28,10 @@ export async function fetchJobList(params: FetchParams) {
   const result = {
     ...res.data,
     list: res.data.list.map((task) => {
-      const { created, status, ...rest } = task;
+      const { created, output_id, status, ...rest } = task;
       return {
         ...rest,
+        output_id,
         status,
         statusText: (() => {
           if (status === TaskStatus.Running) {

@@ -110,11 +110,18 @@ export function fetchFileProfile(values: { file_id: string; drive_id: string }) 
 }
 
 /** 用正则重命名多个文件 */
-export function renameFilesInDrive(values: { drive_id: string; file_id: string; regexp: string; replace: string }) {
-  const { drive_id, file_id, regexp, replace } = values;
+export function renameFilesInDrive(values: {
+  drive_id: string;
+  file_id: string;
+  name: string;
+  regexp: string;
+  replace: string;
+}) {
+  const { drive_id, file_id, name, regexp, replace } = values;
   return request.post<{ job_id: string }>(`/api/v2/drive/rename_files`, {
     drive_id,
     file_id,
+    name,
     regexp,
     replace,
   });

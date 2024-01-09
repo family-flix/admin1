@@ -8,7 +8,6 @@ import {
   SyncTaskItem,
   fetchSyncTaskList,
   runSyncTask,
-  createSyncTaskWithUrl,
   fetchPartialSyncTask,
   updateSyncTask,
   runSyncTaskList,
