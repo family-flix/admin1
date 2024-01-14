@@ -131,4 +131,6 @@ export interface ListProps<T> {
   initial?: boolean;
   onLoadingChange?: (loading: boolean) => void;
   onStateChange?: (state: Response<T>) => void;
+  beforeSearch?: () => void;
+  afterSearch?: () => void;
 }

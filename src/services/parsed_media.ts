@@ -8,7 +8,8 @@ import { request } from "@/utils/request";
  * 获取无法识别的 tv
  */
 export async function fetchUnknownMediaList(params: FetchParams & { type?: MediaTypes }) {
-  const { page, pageSize, ...rest } = params;
+  const { page, pageSize, type, ...rest } = params;
+  console.log("[SERVICES]fetchUnknownMediaList", type);
   const r = await request.post<
     ListResponseWithCursor<{
       id: string;
@@ -41,7 +42,7 @@ export async function fetchUnknownMediaList(params: FetchParams & { type?: Media
     }>
   >(`/api/v2/admin/parsed_media/list`, {
     ...rest,
-    type: MediaTypes.Movie,
+    type,
     page,
     page_size: pageSize,
   });

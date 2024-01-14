@@ -14,7 +14,7 @@ import {
   refreshSeasonProfile,
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
-import { TMDBSearcherDialog, TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore, InputCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
@@ -36,9 +36,9 @@ export const SeasonProfilePage: ViewComponent = (props) => {
     },
   });
   const sourceDeletingRequest = new RequestCore(deleteParsedMediaSource, {
-    onLoading(loading) {
-      fileDeletingConfirmDialog.okBtn.setLoading(loading);
-    },
+    // onLoading(loading) {
+    //   fileDeletingConfirmDialog.okBtn.setLoading(loading);
+    // },
     onSuccess() {
       const theEpisode = episodeRef.value;
       const theSource = fileRef.value;
@@ -71,7 +71,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
           }),
         };
       });
-      fileDeletingConfirmDialog.hide();
+      // fileDeletingConfirmDialog.hide();
       app.tip({
         text: ["删除成功"],
       });
@@ -402,7 +402,10 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                                         onClick={() => {
                                           episodeRef.select(episode);
                                           fileRef.select(source);
-                                          fileDeletingConfirmDialog.show();
+                                          // fileDeletingConfirmDialog.show();
+                                          sourceDeletingRequest.run({
+                                            parsed_media_source_id: id,
+                                          });
                                         }}
                                       >
                                         <Trash class="w-4 h-4" />
@@ -473,12 +476,12 @@ export const SeasonProfilePage: ViewComponent = (props) => {
           </div>
         </div>
       </Dialog>
-      <Dialog store={fileDeletingConfirmDialog}>
+      {/* <Dialog store={fileDeletingConfirmDialog}>
         <div class="w-[520px]">
           <div>该操作仅删除解析结果</div>
           <div>不影响云盘内文件</div>
         </div>
-      </Dialog>
+      </Dialog> */}
       <ContextMenu store={seasonContextMenu} />
     </>
   );

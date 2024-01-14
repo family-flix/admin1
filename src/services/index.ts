@@ -1510,8 +1510,8 @@ export async function fetchSourcePreviewInfo(body: { id: string }) {
 }
 
 export async function fetchReportList(params: FetchParams) {
-  const r = await request.get<
-    ListResponse<{
+  const r = await request.post<
+    ListResponseWithCursor<{
       id: string;
       type: ReportTypes;
       member: {
@@ -1520,30 +1520,20 @@ export async function fetchReportList(params: FetchParams) {
       };
       data: string;
       answer: string;
-      movie?: {
+      media?: {
         id: string;
+        type: MediaTypes;
         name: string;
         poster_path: string;
       };
-      tv?: {
+      media_source?: {
         id: string;
         name: string;
-        poster_path: string;
-      };
-      season?: {
-        id: string;
-        tv_id: string;
-        name: string;
-        poster_path: string;
-        season_text: string;
-      };
-      episode?: {
-        id: string;
-        episode_text: string;
+        order: number;
       };
       created: string;
     }>
-  >(`/api/admin/report/list`, params);
+  >("/api/v2/admin/report/list", params);
   if (r.error) {
     return Result.Err(r.error);
   }
@@ -1551,7 +1541,7 @@ export async function fetchReportList(params: FetchParams) {
   return Result.Ok({
     ...rest,
     list: list.map((report) => {
-      const { id, type, answer, member, data, movie, season, episode, created } = report;
+      const { id, type, answer, data, created, media, media_source, member } = report;
       return {
         id,
         type,
@@ -1559,9 +1549,8 @@ export async function fetchReportList(params: FetchParams) {
         answer,
         member,
         data,
-        movie,
-        season,
-        episode,
+        media,
+        media_source,
         created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
       };
     }),
@@ -1754,30 +1743,18 @@ export function sync_folder(values: { drive_id: string; file_id: string }) {
 
 type AnswerPayload = Partial<{
   content: string;
-  season: {
-    id: string;
-    // tv_id: string;
-    name: string;
-    first_air_date: string;
-    poster_path: string;
-  };
-  movie: {
-    id: string;
-    name: string;
-    first_air_date: string;
-    poster_path: string;
-  };
+  media_id: string;
 }>;
 export function replyReport(
   values: {
     report_id: string;
   } & AnswerPayload
 ) {
-  const { report_id, content, movie, season } = values;
-  return request.post(`/api/admin/report/${report_id}/reply`, {
+  const { report_id, content, media_id } = values;
+  return request.post(`/api/v2/admin/report/reply`, {
+    id: report_id,
     content,
-    movie,
-    season,
+    media_id,
   });
 }
 

@@ -13,27 +13,25 @@ import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { clear_expired_job_list } from "@/domains/job";
-import { ReportTypes } from "@/constants";
+import { MediaTypes, ReportTypes } from "@/constants";
 import { ViewComponent } from "@/types";
 import { homeMovieProfilePage, homeTVProfilePage, refreshJobs } from "@/store";
 import { cn } from "@/utils";
+import { fetchMovieMediaList } from "@/services/media";
 
 function buildMsg(report: ReportItem) {
-  const { type, data, season, episode, movie } = report;
+  const { type, data, member, media, media_source } = report;
   if (type === ReportTypes.Want) {
-    if (movie) {
-      return `${movie.name}」已收录，点击观看`;
-    }
-    if (season) {
-      return `${season.name}」已收录，点击观看`;
+    if (media) {
+      return `${media.name}」已收录，点击观看`;
     }
     return "你想看的电视剧/电影已收录";
   }
-  if (type === ReportTypes.Movie && movie) {
-    return `电影《${movie.name}》的问题 '${data}' 已解决`;
+  if (type === ReportTypes.Movie && media && media.type === MediaTypes.Movie) {
+    return `电影《${media.name}》的问题 '${data}' 已解决`;
   }
-  if (type === ReportTypes.TV && season) {
-    return `电视剧《${season.name}》的问题 '${data}' 已解决`;
+  if (type === ReportTypes.TV && media && media.type === MediaTypes.Season) {
+    return `电视剧《${media.name}》的问题 '${data}' 已解决`;
   }
   return `你反馈的问题 '${data}' 已解决`;
 }
@@ -141,12 +139,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
       const r = await replyRequest.run({
         report_id: curReport.value.id,
         content: commentInput.value,
-        season: {
-          id,
-          name,
-          poster_path,
-          first_air_date: air_date,
-        },
+        media_id: id,
       });
       seasonSelectDialog.okBtn.setLoading(false);
       if (r.error) {
@@ -169,16 +162,16 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const tvSelectBtn = new ButtonInListCore<ReportItem>({
     onClick(report) {
       curReport.select(report);
-      if (report.season) {
-        seasonSelect.nameInput.setValue(report.season.name);
-        seasonSelect.list.search({ name: report.season.name });
+      if (report.media && report.media.type === MediaTypes.Season) {
+        seasonSelect.nameInput.setValue(report.media.name);
+        seasonSelect.list.search({ name: report.media.name });
       }
       commentInput.setValue(buildMsg(report));
       seasonSelectDialog.show();
     },
   });
 
-  const movieList = new ListCore(new RequestCore(fetchMovieList), {
+  const movieList = new ListCore(new RequestCore(fetchMovieMediaList), {
     onLoadingChange(loading) {
       movieSearchBtn.setLoading(loading);
     },
@@ -220,12 +213,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
       const r = await replyRequest.run({
         report_id: curReport.value.id,
         content: commentInput.value,
-        movie: {
-          id: curMovie.value.id,
-          name: curMovie.value.name,
-          poster_path: curMovie.value.poster_path,
-          first_air_date: curMovie.value.air_date,
-        },
+        media_id: curMovie.value.id,
       });
       movieDialog.okBtn.setLoading(false);
       if (r.error) {
@@ -248,10 +236,10 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const movieSelectBtn = new ButtonInListCore<ReportItem>({
     onClick(report) {
       curReport.select(report);
-      console.log(report.movie);
-      if (report.movie) {
-        movieNameSearchInput.setValue(report.movie.name);
-        movieList.search({ name: report.movie.name });
+      // console.log(report.movie);
+      if (report.media && report.media.type === MediaTypes.Movie) {
+        movieNameSearchInput.setValue(report.media.name);
+        movieList.search({ name: report.media.name });
       }
       commentInput.setValue(buildMsg(report));
       movieDialog.show();
@@ -330,7 +318,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={dataSource()}>
               {(report, i) => {
-                const { id, type, typeText, data, answer, movie, season, member, created } = report;
+                const { id, type, typeText, data, answer, media, member, created } = report;
                 return (
                   <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
                     <div class="mr-4">
@@ -343,48 +331,24 @@ export const HomeReportListPage: ViewComponent = (props) => {
                     </div>
                     <div class="flex-1">
                       <h2 class="text-xl">{data}</h2>
-                      <Show when={movie}>
+                      <Show when={media}>
                         {(() => {
-                          if (!movie) {
+                          if (!media) {
                             return null;
                           }
                           const url = homeMovieProfilePage.buildUrlWithPrefix({
-                            id: movie.id,
+                            id: media.id,
                           });
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">
-                                <LazyImage class="w-[68px] h-[102px]" src={movie.poster_path} alt={movie.name} />
+                                <LazyImage class="w-[68px] h-[102px]" src={media.poster_path} alt={media.name} />
                               </div>
                               <div class="flex-1 w-0">
                                 <div class="flex items-center">
                                   <h2 class="text-2xl text-slate-800">
-                                    <a href={url}>{movie.name}</a>
-                                  </h2>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </Show>
-                      <Show when={season}>
-                        {(() => {
-                          if (!season) {
-                            return null;
-                          }
-                          const url = homeTVProfilePage.buildUrlWithPrefix({
-                            id: season.tv_id,
-                            season_id: season.id,
-                          });
-                          return (
-                            <div class="flex p-2 bg-gray-100 rounded-sm">
-                              <div class="overflow-hidden mr-2 rounded-sm">
-                                <LazyImage class="w-[68px] h-[102px]" src={season.poster_path} alt={season.name} />
-                              </div>
-                              <div class="flex-1 w-0">
-                                <div class="flex items-center">
-                                  <h2 class="text-2xl text-slate-800">
-                                    <a href={url}>{season.name}</a>
+                                    <a href={url}>{media.name}</a>
+                                    <div>{media.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
                                   </h2>
                                 </div>
                               </div>
@@ -433,71 +397,75 @@ export const HomeReportListPage: ViewComponent = (props) => {
         </div>
       </Dialog>
       <Dialog store={movieDialog}>
-        <div>
-          <Textarea store={commentInput} />
-        </div>
-        <div class="flex items-center space-x-2 mt-4">
-          <Input store={movieNameSearchInput} />
-          <Button store={movieSearchBtn} variant="subtle">
-            搜索
-          </Button>
-        </div>
-        <div class="mt-2">
-          <ListView
-            store={movieList}
-            skeleton={
-              <div>
-                <div class="rounded-md border border-slate-300 bg-white shadow-sm">
-                  <div class="flex">
-                    <div class="overflow-hidden mr-2 rounded-sm">
-                      <Skeleton class="w-[120px] h-[180px]" />
-                    </div>
-                    <div class="flex-1 p-4">
-                      <Skeleton class="h-[36px] w-[180px]"></Skeleton>
-                      <div class="mt-2 space-y-1">
-                        <Skeleton class="h-[24px] w-[120px]"></Skeleton>
-                        <Skeleton class="h-[24px] w-[240px]"></Skeleton>
+        <div class="w-[520px]">
+          <div>
+            <Textarea store={commentInput} />
+          </div>
+          <div class="flex items-center space-x-2 mt-4">
+            <Input store={movieNameSearchInput} />
+            <Button store={movieSearchBtn} variant="subtle">
+              搜索
+            </Button>
+          </div>
+          <div class="mt-2">
+            <ListView
+              store={movieList}
+              skeleton={
+                <div>
+                  <div class="rounded-md border border-slate-300 bg-white shadow-sm">
+                    <div class="flex">
+                      <div class="overflow-hidden mr-2 rounded-sm">
+                        <Skeleton class="w-[120px] h-[180px]" />
+                      </div>
+                      <div class="flex-1 p-4">
+                        <Skeleton class="h-[36px] w-[180px]"></Skeleton>
+                        <div class="mt-2 space-y-1">
+                          <Skeleton class="h-[24px] w-[120px]"></Skeleton>
+                          <Skeleton class="h-[24px] w-[240px]"></Skeleton>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            }
-          >
-            <div class="space-y-4 max-h-[240px] overflow-y-auto">
-              <For each={movieListResponse().dataSource}>
-                {(movie) => {
-                  const { name, overview, poster_path, air_date, vote_average, runtime } = movie;
-                  return (
-                    <div
-                      classList={{
-                        "rounded-md border border-slate-300 bg-white shadow-sm": true,
-                        "border-green-500": curMovieState()?.id === movie.id,
-                      }}
-                      onClick={() => {
-                        if (curReport.value?.type === ReportTypes.Want) {
-                          commentInput.setValue(`你想看的电影「${movie.name}」已收录，点击观看`);
-                        }
-                        curMovie.select(movie);
-                      }}
-                    >
-                      <div class="flex">
-                        <div class="overflow-hidden mr-2 rounded-sm">
-                          <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
-                        </div>
-                        <div class="flex-1 w-0 p-4">
-                          <h2 class="text-2xl text-slate-800">{name}</h2>
-                          <div class="mt-2 overflow-hidden text-ellipsis">
-                            <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</p>
+              }
+            >
+              <div class="space-y-4 max-h-[240px] overflow-y-auto">
+                <For each={movieListResponse().dataSource}>
+                  {(movie) => {
+                    const { name, overview, poster_path, air_date, vote_average, runtime } = movie;
+                    return (
+                      <div
+                        classList={{
+                          "rounded-md border border-slate-300 bg-white shadow-sm": true,
+                          "border-green-500": curMovieState()?.id === movie.id,
+                        }}
+                        onClick={() => {
+                          if (curReport.value?.type === ReportTypes.Want) {
+                            commentInput.setValue(`你想看的电影「${movie.name}」已收录，点击观看`);
+                          }
+                          curMovie.select(movie);
+                        }}
+                      >
+                        <div class="flex">
+                          <div class="overflow-hidden mr-2 rounded-sm">
+                            <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
+                          </div>
+                          <div class="flex-1 w-0 p-4">
+                            <h2 class="text-2xl text-slate-800">{name}</h2>
+                            <div class="mt-2 overflow-hidden text-ellipsis">
+                              <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
+                                {overview}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                }}
-              </For>
-            </div>
-          </ListView>
+                    );
+                  }}
+                </For>
+              </div>
+            </ListView>
+          </div>
         </div>
       </Dialog>
     </>

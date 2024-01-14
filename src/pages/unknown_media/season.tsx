@@ -22,7 +22,7 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const list = new ListCore(new RequestCore(fetchUnknownMediaList), {
     pageSize: 50,
     search: {
-      type: MediaTypes.Movie,
+      type: MediaTypes.Season,
     },
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
@@ -76,6 +76,7 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const resetBtn = new ButtonCore({
     onClick() {
       nameSearchInput.clear();
+      checkbox.reset();
       list.reset();
     },
   });

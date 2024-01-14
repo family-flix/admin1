@@ -3,7 +3,6 @@
  */
 import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
-import { BizError } from "@/domains/error";
 import { JSONValue, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
 
 import { DEFAULT_RESPONSE, DEFAULT_PARAMS, DEFAULT_CURRENT_PAGE, DEFAULT_PAGE_SIZE, DEFAULT_TOTAL } from "./constants";
@@ -24,7 +23,7 @@ const RESPONSE_PROCESSOR = <T>(
   total: number;
   empty: boolean;
   noMore: boolean;
-  error: BizError | null;
+  error: Error | null;
 } => {
   if (originalResponse === null) {
     return {
@@ -34,7 +33,7 @@ const RESPONSE_PROCESSOR = <T>(
       total: DEFAULT_TOTAL,
       noMore: false,
       empty: false,
-      error: new BizError(`process response fail, because response is null`),
+      error: new Error(`process response fail, because response is null`),
     };
   }
   try {
@@ -87,13 +86,15 @@ const RESPONSE_PROCESSOR = <T>(
       total: DEFAULT_TOTAL,
       noMore: false,
       empty: false,
-      error: new BizError(`process response fail, because ${(error as Error).message}`),
+      error: new Error(`process response fail, because ${(error as Error).message}`),
     };
   }
 };
 // type ServiceFn = (...args: unknown[]) => Promise<Result<OriginalResponse>>;
 enum Events {
   LoadingChange,
+  BeforeSearch,
+  AfterSearch,
   ParamsChange,
   DataSourceChange,
   DataSourceAdded,
@@ -104,11 +105,13 @@ enum Events {
 }
 type TheTypesOfEvents<T> = {
   [Events.LoadingChange]: boolean;
+  [Events.BeforeSearch]: void;
+  [Events.AfterSearch]: void;
   [Events.ParamsChange]: FetchParams;
   [Events.DataSourceAdded]: unknown[];
   [Events.DataSourceChange]: T[];
   [Events.StateChange]: ListState<T>;
-  [Events.Error]: BizError;
+  [Events.Error]: Error;
   [Events.Completed]: void;
 };
 interface ListState<T> extends Response<T> {}
@@ -155,11 +158,13 @@ export class ListCore<
     const {
       debug,
       rowKey = "id",
-      extraDefaultResponse,
       beforeRequest,
       processor,
+      extraDefaultResponse,
       onLoadingChange,
       onStateChange,
+      beforeSearch,
+      afterSearch,
     } = options;
     this.debug = !!debug;
     this.rowKey = rowKey;
@@ -189,6 +194,12 @@ export class ListCore<
     }
     if (onStateChange) {
       this.onStateChange(onStateChange);
+    }
+    if (beforeSearch) {
+      this.onBeforeSearch(beforeSearch);
+    }
+    if (afterSearch) {
+      this.onAfterSearch(afterSearch);
     }
     this.initialize(options);
   }
@@ -313,14 +324,12 @@ export class ListCore<
    * 使用初始参数请求一次，初始化时请调用该方法
    */
   async init(params = {}) {
-    const p = {
+    const res = await this.fetch({
       ...this.initialParams,
       ...params,
-    };
-    console.log("[DOMAIN]list/index - init", p);
-    const res = await this.fetch(p);
+    });
     if (res.error) {
-      // this.tip({ icon: "error", text: [res.error.message] });
+      this.tip({ icon: "error", text: [res.error.message] });
       this.response.error = res.error;
       this.emit(Events.Error, res.error);
       this.emit(Events.StateChange, { ...this.response });
@@ -493,11 +502,12 @@ export class ListCore<
     return Result.Ok({ ...this.response });
   }
   async search(params: Search) {
-    // async search(params: Parameters<S>[0]) {
+    this.emit(Events.BeforeSearch);
     const res = await this.fetch({
       ...this.initialParams,
       ...params,
     });
+    this.emit(Events.AfterSearch);
     if (res.error) {
       this.tip({ icon: "error", text: [res.error.message] });
       this.response.error = res.error;
@@ -551,7 +561,6 @@ export class ListCore<
     const res = await this.fetch({
       ...restParams,
       page: 1,
-      next_marker: "",
     });
     this.response.refreshing = false;
     if (res.error) {
@@ -617,6 +626,10 @@ export class ListCore<
     this.emit(Events.StateChange, { ...this.response });
     this.emit(Events.DataSourceChange, [...this.response.dataSource]);
   }
+  replaceDataSource(dataSource: T[]) {
+    this.response.dataSource = dataSource;
+    this.emit(Events.DataSourceChange, [...this.response.dataSource]);
+  }
   /**
    * 手动修改当前 dataSource
    * @param fn
@@ -661,6 +674,12 @@ export class ListCore<
   }
   onLoadingChange(handler: Handler<TheTypesOfEvents<T>[Events.LoadingChange]>) {
     return this.on(Events.LoadingChange, handler);
+  }
+  onBeforeSearch(handler: Handler<TheTypesOfEvents<T>[Events.BeforeSearch]>) {
+    return this.on(Events.BeforeSearch, handler);
+  }
+  onAfterSearch(handler: Handler<TheTypesOfEvents<T>[Events.AfterSearch]>) {
+    return this.on(Events.AfterSearch, handler);
   }
   onDataSourceChange(handler: Handler<TheTypesOfEvents<T>[Events.DataSourceChange]>) {
     return this.on(Events.DataSourceChange, handler);
