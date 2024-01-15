@@ -5,7 +5,8 @@ import { RequestCore } from "@/domains/request";
 import { BaseDomain, Handler } from "@/domains/base";
 import { MovieSelectCore } from "@/components/MovieSelect";
 import { TVSeasonSelectCore } from "@/components/SeasonSelect";
-import { MediaTypes } from "@/constants";
+import { CollectionTypes, MediaTypes } from "@/constants";
+import { SimpleSelectCore } from "@/domains/ui/simple-select";
 
 enum Events {
   StateChange,
@@ -34,6 +35,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
     title: InputCore<string>;
     desc: InputCore<string>;
     sort: InputCore<number>;
+    type: SimpleSelectCore;
   };
   createRequest = new RequestCore(createCollection, {
     onLoading: (loading) => {
@@ -70,10 +72,11 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.Loading, loading);
     },
     onSuccess: (v) => {
-      const { title, desc = "", sort = 0, medias } = v;
+      const { title, desc = "", sort = 0, type = CollectionTypes.Manually, medias } = v;
       this.fields.title.setValue(title);
       this.fields.desc.setValue(desc);
       this.fields.sort.setValue(sort);
+      this.fields.type.setValue(type);
       const seasons = medias.map((media) => {
         const { id, type, name, poster_path } = media;
         return {
@@ -175,11 +178,25 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       defaultValue: 0,
       type: "number",
     });
+    const typeSelect = new SimpleSelectCore({
+      defaultValue: CollectionTypes.Manually,
+      options: [
+        {
+          value: CollectionTypes.Manually,
+          label: "默认",
+        },
+        {
+          value: CollectionTypes.ManuallyRank,
+          label: "排行榜",
+        },
+      ],
+    });
 
     this.fields = {
       title: titleInput,
       desc: descInput,
       sort: sortInput,
+      type: typeSelect,
     };
   }
 
@@ -198,6 +215,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
     const title = this.fields.title.value;
     const desc = this.fields.desc.value;
     const sort = this.fields.sort.value;
+    const type = this.fields.type.value;
     const medias = this.state.medias;
     if (!title) {
       this.tip({
@@ -215,6 +233,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       title,
       desc,
       sort,
+      type,
       medias,
     });
   }
@@ -223,6 +242,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
     const title = this.fields.title.value;
     const desc = this.fields.desc.value;
     const sort = this.fields.sort.value;
+    const type = this.fields.type.value;
     const medias = this.state.medias;
     if (!title) {
       this.tip({
@@ -236,10 +256,12 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
       });
       return;
     }
+    console.log(type);
     this.updateRequest.run({
       collection_id: id,
       title,
       desc,
+      type,
       sort,
       medias,
     });

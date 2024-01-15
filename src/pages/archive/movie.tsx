@@ -1,5 +1,6 @@
 /**
  * @file 电视剧归档
+ * @deprecated 使用 season.tsx 页面
  */
 import { For, Show, createSignal } from "solid-js";
 import {

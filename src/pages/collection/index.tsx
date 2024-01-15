@@ -200,14 +200,14 @@ export const CollectionListPage: ViewComponent = (props) => {
                         <div class="flex">
                           <div class="flex-1 w-0 p-4">
                             <h2 class="text-2xl text-slate-800">{title}</h2>
-                            <div class="mt-2 flex space-x-2">
+                            <div class="mt-2 flex flex-wrap space-x-2">
                               <For each={medias}>
                                 {(media) => {
                                   const { id, name, poster_path } = media;
                                   return (
                                     <div>
-                                      <div>
-                                        <LazyImage class="w-[78px] rounded-sm" src={poster_path} />
+                                      <div class="w-[78px]">
+                                        <LazyImage class="w-full rounded-sm" src={poster_path} />
                                         <div class="mt-2">{name}</div>
                                       </div>
                                     </div>

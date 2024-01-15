@@ -318,7 +318,7 @@ export async function fetchMediaListPrepareArchive(params: FetchParams & Partial
 export type MediaPrepareArchiveItem = RequestedResource<typeof fetchMediaListPrepareArchive>["list"][number];
 export async function fetchPartialMediaPrepareArchive(body: { media_id: string }) {
   const { media_id } = body;
-  const r = await request.get<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
+  const r = await request.post<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
     media_id,
   });
   if (r.error) {
@@ -403,3 +403,14 @@ export async function fetchInvalidMediaList(body: FetchParams) {
   });
 }
 export type MediaErrorItem = RequestedResource<typeof fetchInvalidMediaList>["list"][number];
+
+/**
+ * 转存指定季到指定云盘
+ */
+export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_id: string }) {
+  const { media_id, to_drive_id } = body;
+  return request.post<{ job_id: string }>("/api/v2/admin/media/transfer", {
+    media_id,
+    to_drive_id,
+  });
+}

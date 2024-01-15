@@ -206,7 +206,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
   return (
     <>
       <ScrollView class="px-8 pb-12" store={scrollView}>
-        <div class="my-4 space-x-2">
+        <div class="flex items-center my-4 space-x-2">
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
           </Button>
@@ -239,18 +239,30 @@ export const UnknownMoviePage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={response().dataSource}>
               {(parsedMedia) => {
-                const { id, name, sources } = parsedMedia;
+                const { id, name, profile, sources } = parsedMedia;
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
-                      <div class="w-full rounded">
-                        <LazyImage
-                          class="max-w-full max-h-full object-contain"
-                          src={(() => {
-                            return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
-                          })()}
-                        />
-                      </div>
+                      <Show
+                        when={!profile}
+                        fallback={
+                          <div>
+                            <div class="w-full rounded">
+                              <LazyImage class="max-w-full max-h-full object-contain" src={profile?.poster_path} />
+                            </div>
+                            <div>{profile?.name}</div>
+                          </div>
+                        }
+                      >
+                        <div class="w-full rounded">
+                          <LazyImage
+                            class="max-w-full max-h-full object-contain"
+                            src={(() => {
+                              return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
+                            })()}
+                          />
+                        </div>
+                      </Show>
                     </div>
                     <div class="flex-1 w-0 mt-2">
                       <div class="text-lg">{name}</div>

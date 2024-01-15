@@ -1,5 +1,6 @@
+import { CollectionTypes } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
-import { ListResponseWithCursor, RequestedResource } from "@/types";
+import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
 import { request } from "@/utils/request";
 
 export function fetchCollectionList(params: FetchParams) {
@@ -20,12 +21,19 @@ export function fetchCollectionList(params: FetchParams) {
 }
 export type CollectionItem = RequestedResource<typeof fetchCollectionList>["list"][number];
 
-export function createCollection(values: { title: string; sort: number; desc?: string; medias: { id: string }[] }) {
-  const { title, sort, desc, medias } = values;
+export function createCollection(values: {
+  title: string;
+  sort: number;
+  type: CollectionTypes;
+  desc?: string;
+  medias: { id: string }[];
+}) {
+  const { title, sort, desc, type = CollectionTypes.Manually, medias } = values;
   return request.post("/api/v2/admin/collection/create", {
     title,
     desc,
     sort,
+    type,
     orders: medias
       .map((media, index) => {
         return {
@@ -41,21 +49,35 @@ export function createCollection(values: { title: string; sort: number; desc?: s
     medias,
   });
 }
-export function fetchCollectionProfile(values: { collection_id: string }) {
+export async function fetchCollectionProfile(values: { collection_id: string }) {
   const { collection_id } = values;
-  return request.post<{
+  const r = await request.post<{
     id: string;
     title: string;
     desc?: string;
     sort?: number;
+    type?: CollectionTypes;
     medias: {
       id: string;
       type: number;
       name: string;
       poster_path: string;
+      order: number;
     }[];
   }>("/api/v2/admin/collection/profile", {
-    collection_id,
+    id: collection_id,
+  });
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const { id, title, desc, sort, type, medias } = r.data;
+  return Result.Ok({
+    id,
+    title,
+    desc,
+    sort,
+    type,
+    medias: medias.sort((a, b) => a.order - b.order),
   });
 }
 export function editCollection(body: {
@@ -63,14 +85,16 @@ export function editCollection(body: {
   title: string;
   desc?: string;
   sort?: number;
+  type?: CollectionTypes;
   medias: { id: string; tv_id?: string }[];
 }) {
-  const { collection_id, title, desc, sort, medias } = body;
-  return request.post("/api/admin/collection/edit", {
-    collection_id,
+  const { collection_id, title, desc, sort, type, medias } = body;
+  return request.post("/api/v2/admin/collection/edit", {
+    id: collection_id,
     title,
     desc,
     sort,
+    type,
     orders: medias
       .map((media, index) => {
         return {
@@ -89,7 +113,7 @@ export function editCollection(body: {
 
 export function deleteCollection(body: { collection_id: string }) {
   const { collection_id } = body;
-  return request.post("/api/admin/collection/delete", {
-    collection_id,
+  return request.post("/api/v2/admin/collection/delete", {
+    id: collection_id,
   });
 }

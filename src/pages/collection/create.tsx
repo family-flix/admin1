@@ -11,6 +11,8 @@ import { ButtonCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
 
 import { CollectionFormCore } from "./core";
+import { CollectionTypes } from "@/constants";
+import { SimpleSelect } from "@/components/ui/simple-select";
 
 export const CollectionCreatePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -52,6 +54,10 @@ export const CollectionCreatePage: ViewComponent = (props) => {
             <div class="space-y-2">
               <div>排序</div>
               <Input store={collectionForm.fields.sort} />
+            </div>
+            <div class="space-y-2">
+              <div>类型</div>
+              <SimpleSelect store={collectionForm.fields.type} />
             </div>
             <div class="space-y-2">
               <div>内容</div>

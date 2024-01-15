@@ -1,4 +1,4 @@
-import { DriveTypes } from "@/constants";
+import { DriveTypes, MediaTypes } from "@/constants";
 import { bytes_to_size } from "@/utils";
 
 import { MediaSource, MediaPrepareArchiveItemResp } from "./media";
@@ -75,7 +75,7 @@ export function processMediaPrepareArchive(season: MediaPrepareArchiveItemResp) 
     drives: Object.values(drive_group),
     /** 需要转存到资源盘 */
     need_to_resource: (() => {
-      if (!is_completed) {
+      if (type === MediaTypes.Season && !is_completed) {
         return false;
       }
       if (drives.length !== 1) {
@@ -88,7 +88,7 @@ export function processMediaPrepareArchive(season: MediaPrepareArchiveItemResp) 
       return true;
     })(),
     can_archive: (() => {
-      if (!is_completed) {
+      if (type === MediaTypes.Season && !is_completed) {
         return false;
       }
       if (drives.length === 0) {

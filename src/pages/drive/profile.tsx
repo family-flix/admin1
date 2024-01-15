@@ -35,7 +35,11 @@ import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
 import { setFileEpisodeProfile, setFileMovieProfile } from "@/services";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/domains/tmdb";
-import { setParsedMediaProfile, setParsedMediaProfileInFileId } from "@/services/parsed_media";
+import {
+  setParsedMediaProfile,
+  setParsedMediaProfileInFileId,
+  setParsedSeasonMediaSourceProfile,
+} from "@/services/parsed_media";
 import { ListCore } from "@/domains/list";
 
 export const DriveProfilePage: ViewComponent = (props) => {
@@ -117,22 +121,19 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const movieProfileSetRequest = new RequestCore(setFileMovieProfile, {
-    onSuccess(v) {
-      createJob({
-        job_id: v.job_id,
-        onFinish() {
-          movieSelect.dialog.okBtn.setLoading(false);
-          movieSelect.dialog.hide();
-          curFile.clear();
-          app.tip({
-            text: ["完成设置"],
-          });
-        },
+  const movieProfileSetRequest = new RequestCore(setParsedMediaProfileInFileId, {
+    onLoading(loading) {
+      dialog2.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      dialog2.okBtn.setLoading(false);
+      dialog2.hide();
+      curFile.clear();
+      app.tip({
+        text: ["完成设置"],
       });
     },
     onFailed(error) {
-      movieSelect.dialog.okBtn.setLoading(false);
       app.tip({
         text: ["设置失败", error.message],
       });
@@ -471,25 +472,36 @@ export const DriveProfilePage: ViewComponent = (props) => {
   const mediaSearch = new TMDBSearcherCore({
     // type: MediaTypes.Season,
   });
-  const movieSelect = new TMDBSearcherDialogCore({
-    type: MediaTypes.Movie,
-    onOk(movieProfile) {
-      if (!curFile.value) {
+  const dialog2 = new DialogCore({
+    onOk() {
+      const file = curFile.value;
+      if (!file) {
         app.tip({
           text: ["请先选择要设置的文件"],
         });
         return;
       }
-      const file = curFile.value;
+      const media = movieSelect.cur;
+      if (!media) {
+        app.tip({ text: ["请先选择设置的详情"] });
+        return;
+      }
       app.tip({
         text: ["开始设置"],
       });
-      movieSelect.dialog.okBtn.setLoading(true);
+      dialog2.okBtn.setLoading(true);
       movieProfileSetRequest.run({
         file_id: file.file_id,
-        unique_id: movieProfile.id,
+        media_profile: {
+          id: String(media.id),
+          type: media.type,
+          name: media.name,
+        },
       });
     },
+  });
+  const movieSelect = new TMDBSearcherCore({
+    type: MediaTypes.Movie,
   });
   const fileSearchDialog = new DialogCore({
     title: "云盘文件搜索",
@@ -627,7 +639,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       }
       const [file] = driveFileManage.virtualSelectedFolder;
       curFile.select(file);
-      movieSelect.show();
+      dialog2.show();
       fileMenu.hide();
     },
   });
@@ -921,6 +933,11 @@ export const DriveProfilePage: ViewComponent = (props) => {
       <Dialog store={dialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={mediaSearch} />
+        </div>
+      </Dialog>
+      <Dialog store={dialog2}>
+        <div class="w-[520px]">
+          <TMDBSearcherView store={movieSelect} />
         </div>
       </Dialog>
       <Dialog store={fileSearchDialog}>

@@ -19,9 +19,10 @@ import {
   MediaPrepareArchiveItem,
   fetchMediaListPrepareArchive,
   fetchPartialMediaPrepareArchive,
+  transferMediaToAnotherDrive,
 } from "@/services/media";
 import { deleteParsedMediaSource } from "@/services/parsed_media";
-import { moveSeasonToResourceDrive, transferSeasonToAnotherDrive } from "@/services";
+import { moveSeasonToResourceDrive } from "@/services";
 import { Button, CheckboxGroup, Dialog, Input, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
@@ -32,6 +33,7 @@ import { DriveCore, DriveItem } from "@/domains/drive";
 import { DriveSelectCore } from "@/components/DriveSelect";
 import { DriveSelect } from "@/components/DriveSelect/dialog";
 import { RefCore } from "@/domains/cur";
+import { MediaTypes } from "@/constants";
 
 export const SeasonArchivePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -67,7 +69,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
     },
   });
-  const transferRequest = new RequestCore(transferSeasonToAnotherDrive, {
+  const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
     beforeRequest() {
       app.tip({
         text: ["开始归档，请等待一段时间"],
@@ -95,6 +97,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
     },
     onFailed(error) {
+      transferBtn.setLoading(false);
       app.tip({
         text: ["归档失败", error.message],
       });
@@ -206,7 +209,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         toDriveSelectDialog.show();
         return;
       }
-      transferRequest.run({ season_id: record.id, target_drive_id: toDriveRef.value.id });
+      transferRequest.run({ media_id: record.id, to_drive_id: toDriveRef.value.id });
     },
   });
   const gotoDriveProfileBtn = new ButtonCore({
@@ -223,7 +226,6 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         name: drive.name,
       });
       window.open(url, "black");
-      // app.showView(driveProfilePage);
     },
   });
   const toDriveSelectBtn = new ButtonCore({
@@ -302,7 +304,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             >
               <ArrowLeft class="w-6 h-6" />
             </div>
-            <h1 class="text-2xl">电视剧列表({seasonListState().total})</h1>
+            <h1 class="text-2xl">影视剧列表({seasonListState().total})</h1>
           </div>
           <div class="mt-8">
             <div class="flex items-center space-x-2 mt-4">
@@ -358,6 +360,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                     {(season) => {
                       const {
                         id,
+                        type,
                         name,
                         cur_episode_count,
                         can_archive,
@@ -376,21 +379,23 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                               </div>
                               <div class="mt-2 overflow-hidden text-ellipsis">{size_count_text}</div>
                               <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
-                                <Show
-                                  when={cur_episode_count !== episode_count}
-                                  fallback={
-                                    <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
-                                      <Smile class="w-4 h-4" />
-                                      <div>全{episode_count}集</div>
+                                <Show when={type === MediaTypes.Season}>
+                                  <Show
+                                    when={cur_episode_count !== episode_count}
+                                    fallback={
+                                      <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                        <Smile class="w-4 h-4" />
+                                        <div>全{episode_count}集</div>
+                                      </div>
+                                    }
+                                  >
+                                    <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                      <Send class="w-4 h-4" />
+                                      <div>
+                                        {cur_episode_count}/{episode_count}
+                                      </div>
                                     </div>
-                                  }
-                                >
-                                  <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
-                                    <Send class="w-4 h-4" />
-                                    <div>
-                                      {cur_episode_count}/{episode_count}
-                                    </div>
-                                  </div>
+                                  </Show>
                                 </Show>
                               </div>
                               <div class="flex items-center space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
@@ -413,10 +418,12 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                               <div class="mt-6 space-y-4">
                                 <For each={episodes}>
                                   {(episode) => {
-                                    const { id: episode_id, name: episode_name, drives } = episode;
+                                    const { name: episode_name, drives } = episode;
                                     return (
                                       <div>
-                                        <div class="text-lg">{episode_name}</div>
+                                        <Show when={type === MediaTypes.Season}>
+                                          <div class="text-lg">{episode_name}</div>
+                                        </Show>
                                         <div>
                                           <For each={drives}>
                                             {(drive) => {

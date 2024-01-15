@@ -16,13 +16,13 @@ import {
   Smile,
 } from "lucide-solid";
 
-import { SeasonMediaItem, fetchSeasonMediaList, fetchPartialSeasonMedia } from "@/services/media";
 import {
-  moveSeasonToResourceDrive,
-  refreshSeasonProfiles,
-  transferSeasonToAnotherDrive,
-  refreshSeasonProfile,
-} from "@/services";
+  SeasonMediaItem,
+  transferMediaToAnotherDrive,
+  fetchSeasonMediaList,
+  fetchPartialSeasonMedia,
+} from "@/services/media";
+import { moveSeasonToResourceDrive, refreshSeasonProfiles, refreshSeasonProfile } from "@/services";
 import {
   Skeleton,
   Popover,
@@ -31,7 +31,6 @@ import {
   Button,
   LazyImage,
   Dialog,
-  Checkbox,
   PurePopover,
   BackToTop,
   CheckboxGroup,
@@ -51,15 +50,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import {
-  createJob,
-  driveList,
-  consumeAction,
-  pendingActions,
-  homeTVProfilePage,
-  seasonArchivePage,
-  // homeInvalidTVListPage,
-} from "@/store";
+import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, seasonArchivePage } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
@@ -123,7 +114,7 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const transferRequest = new RequestCore(transferSeasonToAnotherDrive, {
+  const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
     onLoading(loading) {
       transferConfirmDialog.okBtn.setLoading(loading);
     },
@@ -262,8 +253,8 @@ export const TVManagePage: ViewComponent = (props) => {
         return;
       }
       transferRequest.run({
-        season_id: curSeason.id,
-        target_drive_id: driveRef.value.id,
+        media_id: curSeason.id,
+        to_drive_id: driveRef.value.id,
       });
     },
     onCancel() {

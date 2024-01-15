@@ -4,7 +4,7 @@
 import { createSignal, For, Show } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, Info, LocateIcon, MapPin, RotateCw, Search, Star } from "lucide-solid";
 
-import { MovieMediaItem, fetchMovieMediaList } from "@/services/media";
+import { MovieMediaItem, fetchMovieMediaList, transferMediaToAnotherDrive } from "@/services/media";
 import { moveMovieToResourceDrive, refreshMovieProfiles, transferMovieToAnotherDrive } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Dialog } from "@/components/ui";
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, DialogCore, CheckboxGroupCore } from "@/domains/ui";
@@ -18,7 +18,7 @@ import { DriveCore } from "@/domains/drive";
 export const MovieManagePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const transferRequest = new RequestCore(transferMovieToAnotherDrive, {
+  const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
     onLoading(loading) {
       transferConfirmDialog.okBtn.setLoading(loading);
     },
@@ -149,8 +149,8 @@ export const MovieManagePage: ViewComponent = (props) => {
         return;
       }
       transferRequest.run({
-        movie_id: curMovie.id,
-        target_drive_id: driveRef.value.id,
+        media_id: curMovie.id,
+        to_drive_id: driveRef.value.id,
       });
     },
     onCancel() {
