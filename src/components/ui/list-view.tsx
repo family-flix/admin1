@@ -22,24 +22,30 @@ export function ListView(
   return (
     <div class={cn("relative")}>
       <div class={props.class}>
-        <Show when={response().initial && skeleton}>{skeleton}</Show>
         <Show
-          when={!response().empty}
+          when={response().initial}
           fallback={
-            <div class="w-full h-[480px] center flex items-center justify-center">
-              <div class="flex flex-col items-center justify-center text-slate-500">
-                <Bird class="w-24 h-24" />
-                <div class="mt-4 flex items-center space-x-2">
-                  <Show when={response().loading}>
-                    <Loader class="w-6 h-6 animate-spin" />
-                  </Show>
-                  <div class="text-center text-xl">{response().loading ? "加载中" : "列表为空"}</div>
+            <Show
+              when={!response().empty}
+              fallback={
+                <div class="w-full h-[360px] center flex items-center justify-center">
+                  <div class="flex flex-col items-center justify-center text-slate-500">
+                    <Bird class="w-24 h-24" />
+                    <div class="mt-4 flex items-center space-x-2">
+                      <Show when={response().loading}>
+                        <Loader class="w-6 h-6 animate-spin" />
+                      </Show>
+                      <div class="text-center text-xl">{response().loading ? "加载中" : "列表为空"}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              }
+            >
+              {props.children}
+            </Show>
           }
         >
-          {props.children}
+          <Show when={skeleton}>{skeleton}</Show>
         </Show>
       </div>
       <Show
@@ -62,7 +68,7 @@ export function ListView(
           </Show>
         }
       >
-        <div class="w-full h-[480px] center flex items-center justify-center">
+        <div class="absolute top-0 z-10 w-full h-[360px] center flex items-center justify-center">
           <div class="flex flex-col items-center justify-center text-slate-500">
             <AlertCircle class="w-24 h-24" />
             <div class="mt-4 flex items-center space-x-2">

@@ -24,15 +24,15 @@ import {
 import { deleteParsedMediaSource } from "@/services/parsed_media";
 import { moveSeasonToResourceDrive } from "@/services";
 import { Button, CheckboxGroup, Dialog, Input, ListView, ScrollView, Skeleton } from "@/components/ui";
+import { DriveSelectCore } from "@/components/DriveSelect";
+import { DriveSelect } from "@/components/DriveSelect/dialog";
 import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
+import { DriveCore, DriveItem } from "@/domains/drive";
+import { RefCore } from "@/domains/cur";
 import { createJob, driveList, driveProfilePage, homeIndexPage, homeTVListPage } from "@/store";
 import { ViewComponent } from "@/types";
-import { DriveCore, DriveItem } from "@/domains/drive";
-import { DriveSelectCore } from "@/components/DriveSelect";
-import { DriveSelect } from "@/components/DriveSelect/dialog";
-import { RefCore } from "@/domains/cur";
 import { MediaTypes } from "@/constants";
 
 export const SeasonArchivePage: ViewComponent = (props) => {
@@ -56,7 +56,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
           }
           const { name } = curSeason;
           app.tip({
-            text: [`完成电视剧 '${name}' 移动到资源盘`],
+            text: [`「${name}」移动到资源盘成功`],
           });
           refresh(curSeason);
           toResourceDriveBtn.setLoading(false);
@@ -104,9 +104,6 @@ export const SeasonArchivePage: ViewComponent = (props) => {
     },
   });
   const sourceDeletingRequest = new RequestCore(deleteParsedMediaSource, {
-    onLoading(loading) {
-      // fileDeletingConfirmDialog.okBtn.setLoading(loading);
-    },
     onSuccess() {
       const theEpisode = episodeRef.value;
       const theSource = sourceRef.value;
@@ -362,6 +359,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                         id,
                         type,
                         name,
+                        air_date,
                         cur_episode_count,
                         can_archive,
                         need_to_resource,
@@ -377,6 +375,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                               <div class="flex items-center">
                                 <h2 class="text-2xl text-slate-800">{name}</h2>
                               </div>
+                              <div class="mt-2 overflow-hidden text-ellipsis">{air_date}</div>
                               <div class="mt-2 overflow-hidden text-ellipsis">{size_count_text}</div>
                               <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
                                 <Show when={type === MediaTypes.Season}>
@@ -444,8 +443,8 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                                                               <span
                                                                 class="p-1 cursor-pointer"
                                                                 onClick={() => {
-                                                                  // episodeRef.select(episode);
-                                                                  // sourceRef.select(source);
+                                                                  episodeRef.select(episode);
+                                                                  sourceRef.select(source);
                                                                   sourceDeletingRequest.run({
                                                                     parsed_media_source_id: source.id,
                                                                   });

@@ -7,7 +7,15 @@ import { Award, BookOpen, Calendar, Clock, Info, LocateIcon, MapPin, RotateCw, S
 import { MovieMediaItem, fetchMovieMediaList, transferMediaToAnotherDrive } from "@/services/media";
 import { moveMovieToResourceDrive, refreshMovieProfiles, transferMovieToAnotherDrive } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Dialog } from "@/components/ui";
-import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, DialogCore, CheckboxGroupCore } from "@/domains/ui";
+import {
+  InputCore,
+  ButtonCore,
+  ButtonInListCore,
+  ScrollViewCore,
+  DialogCore,
+  CheckboxGroupCore,
+  PopoverCore,
+} from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
@@ -126,6 +134,9 @@ export const MovieManagePage: ViewComponent = (props) => {
       nameSearchInput.clear();
     },
   });
+  const tipPopover = new PopoverCore({
+    align: "end",
+  });
   const profileBtn = new ButtonInListCore<MovieMediaItem>({
     onClick(record) {
       homeMovieProfilePage.query = {
@@ -221,6 +232,7 @@ export const MovieManagePage: ViewComponent = (props) => {
   const [state, setState] = createSignal(movieList.response);
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(driveRef.value);
+  const [tips, setTips] = createSignal<string[]>([]);
 
   view.onShow(() => {
     const { deleteMovie } = pendingActions;
@@ -352,11 +364,11 @@ export const MovieManagePage: ViewComponent = (props) => {
                                   onMouseEnter={(event) => {
                                     const { x, y, width, height, left, top, right, bottom } =
                                       event.currentTarget.getBoundingClientRect();
-                                    // setTips(season.tips);
-                                    // tipPopover.show({ x, y, width, height: height + 8, left, top, right, bottom });
+                                    setTips(tips);
+                                    tipPopover.show({ x, y, width, height: height + 8, left, top, right, bottom });
                                   }}
                                   onMouseLeave={() => {
-                                    // tipPopover.hide();
+                                    tipPopover.hide();
                                   }}
                                 >
                                   <Info class="w-4 h-4" />

@@ -1,7 +1,7 @@
 /**
  * @file 搜索本地数据库已归档的影视剧详情
  */
-import { searchMediaProfile, MediaProfileItem } from "@/services/media_profile";
+import { fetchMediaProfileList, MediaProfileItem } from "@/services/media_profile";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, InputCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
@@ -30,7 +30,7 @@ type MediaSearchProps = {
 };
 
 export class MediaSearchCore extends BaseDomain<TheTypesOfEvents> {
-  $list = new ListCore(new RequestCore(searchMediaProfile));
+  $list = new ListCore(new RequestCore(fetchMediaProfileList));
   form: FormCore<{}>;
   input: InputCore<string>;
   searchBtn: ButtonCore;

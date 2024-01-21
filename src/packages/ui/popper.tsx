@@ -101,7 +101,7 @@ const Content = (
         // prettier-ignore
         transform: isPlaced() ? `translate3d(${Math.round(x())}px, ${Math.round(y())}px, 0)` : "translate3d(0, -200%, 0)",
         "min-width": "max-content",
-        "z-index": 999,
+        "z-index": 99,
         // zIndex: contentZIndex,
         // ["--radix-popper-transform-origin" as any]: [
         //   middlewareData.transformOrigin?.x,

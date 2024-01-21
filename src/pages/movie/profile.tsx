@@ -70,16 +70,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
     },
   });
   const sourceDeletingRequest = new RequestCore(deleteParsedMediaSource, {
-    onLoading(loading) {
-      sourceDeletingConfirmDialog.okBtn.setLoading(loading);
-    },
     onSuccess() {
-      if (!profileRequest.response) {
-        app.tip({
-          text: ["删除成功，请刷新页面"],
-        });
-        return;
-      }
       const theSource = sourceRef.value;
       if (!theSource) {
         app.tip({
@@ -95,7 +86,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
           }),
         };
       });
-      sourceDeletingConfirmDialog.hide();
       app.tip({
         text: ["删除成功"],
       });
@@ -239,21 +229,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const sourceDeletingConfirmDialog = new DialogCore({
-    title: "删除视频源",
-    onOk() {
-      const theSource = sourceRef.value;
-      if (!theSource) {
-        app.tip({
-          text: ["请先选择要删除的源"],
-        });
-        return;
-      }
-      sourceDeletingRequest.run({
-        parsed_media_source_id: theSource.id,
-      });
-    },
-  });
   const searcher = new TMDBSearcherCore({
     type: MediaTypes.Movie,
   });
@@ -394,7 +369,9 @@ export const MovieProfilePage: ViewComponent = (props) => {
                                 title="删除源"
                                 onClick={() => {
                                   sourceRef.select(source);
-                                  sourceDeletingConfirmDialog.show();
+                                  sourceDeletingRequest.run({
+                                    parsed_media_source_id: id,
+                                  });
                                 }}
                               >
                                 <Trash class="w-4 h-4" />
@@ -426,12 +403,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
       <Dialog store={subtitleUploadDialog}>
         <div class="w-[520px]">
           <Input store={subtitleUploadInput} />
-        </div>
-      </Dialog>
-      <Dialog store={sourceDeletingConfirmDialog}>
-        <div class="w-[520px]">
-          <div>该操作仅删除解析结果</div>
-          <div>不影响云盘内文件</div>
         </div>
       </Dialog>
     </>

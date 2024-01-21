@@ -74,7 +74,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
     <ScrollView store={scrollView} class="flex flex-col box-border h-screen">
       <div class="relative">
         <div class="p-8 pb-0">
-          <h1 class="text-2xl">未识别的影视剧</h1>
+          <h1 class="text-2xl">解析结果</h1>
           <div class="mt-8">
             <TabHeader store={tab} />
           </div>

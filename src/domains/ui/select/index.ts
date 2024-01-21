@@ -428,15 +428,15 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
 type SelectInListProps<T = unknown> = {
   onChange: (record: T) => void;
 } & SelectProps<T>;
-type TheTypesInListOfEvents<K extends object, T> = {
+type TheTypesInListOfEvents<K extends string, T> = {
   [Events.Change]: [K, T | null];
   [Events.StateChange]: SelectProps<T>;
 };
 
-export class SelectInListCore<K extends object, T> extends BaseDomain<TheTypesInListOfEvents<K, T>> {
+export class SelectInListCore<K extends string, T> extends BaseDomain<TheTypesInListOfEvents<K, T>> {
   options: SelectProps<T>["options"] = [];
   list: SelectCore<T>[] = [];
-  cached = new WeakMap<K, SelectCore<T>>();
+  cached = new Map<K, SelectCore<T>>();
   values: Map<K, T | null> = new Map();
 
   constructor(props: Partial<{ _name: string } & SelectInListProps<T>> = {}) {
@@ -492,7 +492,7 @@ export class SelectInListCore<K extends object, T> extends BaseDomain<TheTypesIn
   }
   clear() {
     this.list = [];
-    this.cached = new WeakMap();
+    this.cached = new Map();
     this.values = new Map();
   }
   toJson<R>(handler: (value: [K, T | null]) => R) {

@@ -149,3 +149,13 @@ export function deleteFileInDrive(body: { drive_id: string; file_id: string }) {
     file_id,
   });
 }
+
+/** 归档指定文件到资源盘 */
+export function transferFileToAnotherDrive(values: { drive_id: string; file_id: string; to_drive_id: string }) {
+  const { drive_id, to_drive_id, file_id } = values;
+  return request.post<{ job_id: string }>("/api/v2/drive/file/transfer", {
+    file_id,
+    from_drive_id: drive_id,
+    to_drive_id,
+  });
+}

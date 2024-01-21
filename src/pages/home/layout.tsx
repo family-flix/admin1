@@ -47,6 +47,7 @@ import {
   homePersonListPage,
   homeReportListPage,
   homeSubtitleListPage,
+  homeUnknownTVPage,
   invalidMediasPage,
   onJobsChange,
   syncTaskListPage,
@@ -291,9 +292,9 @@ export const HomeLayout: ViewComponent = (props) => {
       view: homeMovieListPage,
     },
     {
-      text: "未识别影视剧",
+      text: "解析结果",
       icon: <EyeOff class="w-6 h-6" />,
-      view: homeUnknownMediaLayout,
+      view: homeUnknownTVPage,
     },
     {
       text: "待处理影视剧问题",

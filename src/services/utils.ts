@@ -4,7 +4,7 @@ import { bytes_to_size } from "@/utils";
 import { MediaSource, MediaPrepareArchiveItemResp } from "./media";
 
 export function processMediaPrepareArchive(season: MediaPrepareArchiveItemResp) {
-  const { id, type, name, poster_path, episode_count, cur_episode_count, sources: episodes } = season;
+  const { id, type, name, poster_path, air_date, episode_count, cur_episode_count, sources: episodes } = season;
   const drive_group: Record<
     string,
     {
@@ -66,6 +66,7 @@ export function processMediaPrepareArchive(season: MediaPrepareArchiveItemResp) 
     id,
     type,
     name,
+    air_date,
     poster_path,
     episode_count,
     cur_episode_count,

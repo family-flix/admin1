@@ -140,52 +140,57 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         <Show when={!store.type}>
           <TabHeader store={tab} />
         </Show>
-        <ListView
-          store={store.$list}
-          skeleton={
-            <div class="relative h-[480px] p-2 space-y-4">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="flex flex-col items-center justify-center text-slate-500">
-                  <Search class="w-24 h-24" />
-                  <div class="text-xl">搜索 TMDB 数据库</div>
+        <ScrollView store={scrollView} class="relative h-[360px] overflow-y-auto py-2 space-y-4">
+          <ListView
+            store={store.$list}
+            skeleton={
+              <div class="relative h-[360px] p-2 space-y-4">
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="flex flex-col items-center justify-center text-slate-500">
+                    <Search class="w-24 h-24" />
+                    <div class="text-xl">搜索 TMDB 数据库</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          }
-        >
-          <div class="relative">
-            <ScrollView store={scrollView} class="relative max-h-[480px] overflow-y-auto py-2 space-y-4">
-              <For each={dataSource()}>
-                {(media) => {
-                  const { id, type, name, original_name, overview, poster_path, air_date } = media;
-                  return (
-                    <div
-                      class={cn("p-2", media.id === cur()?.id ? "bg-slate-300" : "bg-white")}
-                      onClick={async () => {
-                        if (type === MediaTypes.Season) {
-                          searchPanel.hide();
-                          seasonPanel.show();
-                          const r = await prepareSeasonList({ series_id: String(id) });
-                          if (r.error) {
-                            return;
-                          }
-                          // @ts-ignore
-                          mediaSearch.$list.setDataSource(r.data.list);
+            }
+          >
+            <For each={dataSource()}>
+              {(media) => {
+                const { id, type, name, original_name, overview, poster_path, air_date } = media;
+                return (
+                  <div
+                    class={cn("p-2", media.id === cur()?.id ? "bg-slate-300" : "bg-white")}
+                    onClick={async () => {
+                      if (type === MediaTypes.Season) {
+                        searchPanel.hide();
+                        seasonPanel.show();
+                        const r = await prepareSeasonList({ series_id: String(id) });
+                        if (r.error) {
                           return;
                         }
-                        store.toggle(media);
-                      }}
-                    >
-                      <div class="flex">
-                        <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
-                        <div class="flex-1 overflow-hidden text-ellipsis">
-                          <div class="text-2xl">{name}</div>
-                          <div class="text-slate-500">{original_name}</div>
-                          <div class="break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</div>
-                          <div>{air_date}</div>
-                        </div>
+                        // @ts-ignore
+                        mediaSearch.$list.modifyResponse((v) => {
+                          return {
+                            ...v,
+                            dataSource: r.data.list,
+                            noMore: !r.data.next_marker,
+                          };
+                        });
+                        return;
+                      }
+                      store.toggle(media);
+                    }}
+                  >
+                    <div class="flex">
+                      <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
+                      <div class="flex-1 overflow-hidden text-ellipsis">
+                        <div class="text-2xl">{name}</div>
+                        <div class="text-slate-500">{original_name}</div>
+                        <div class="break-all whitespace-pre-wrap truncate line-clamp-4">{overview}</div>
+                        <div>{air_date}</div>
                       </div>
-                      {/* <Show when={episodes}>
+                    </div>
+                    {/* <Show when={episodes}>
                       <For each={episodes}>
                         {(episode) => {
                           const { name, air_date } = episode;
@@ -198,13 +203,12 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                         }}
                       </For>
                     </Show> */}
-                    </div>
-                  );
-                }}
-              </For>
-            </ScrollView>
-          </div>
-        </ListView>
+                  </div>
+                );
+              }}
+            </For>
+          </ListView>
+        </ScrollView>
       </Presence>
       <Presence
         classList={{

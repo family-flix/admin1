@@ -5,10 +5,11 @@ import { createSignal, For, Show } from "solid-js";
 import { Award, BookOpen, Calendar, RotateCw, Search, SlidersHorizontal, Train } from "lucide-solid";
 
 import {
-  searchMediaProfile,
+  fetchMediaProfileList,
   fetchPartialMediaProfile,
   MediaProfileItem,
   deleteMediaProfile,
+  editMediaProfile,
 } from "@/services/media_profile";
 import {
   moveSeasonToResourceDrive,
@@ -44,23 +45,16 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import {
-  createJob,
-  driveList,
-  consumeAction,
-  pendingActions,
-  homeTVProfilePage,
-  seasonArchivePage,
-  // homeInvalidTVListPage,
-} from "@/store";
+import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, seasonArchivePage } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
+import { MediaProfileValues, MediaProfileValuesCore } from "@/components/MediaProfileValues";
 
 export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const seasonList = new ListCore(new RequestCore(searchMediaProfile), {
+  const seasonList = new ListCore(new RequestCore(fetchMediaProfileList), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -93,6 +87,22 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
         },
       });
       moveToResourceDriveConfirmDialog.hide();
+    },
+  });
+  const editMediaRequest = new RequestCore(editMediaProfile, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
+    onSuccess(r) {
+      app.tip({
+        text: ["编辑成功"],
+      });
+      dialog.hide();
+    },
+    onFailed(error) {
+      app.tip({
+        text: ["编辑失败", error.message],
+      });
     },
   });
   const partialSeasonRequest = new RequestCore(fetchPartialMediaProfile);
@@ -333,12 +343,29 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
       refreshProfileRequest.run({ season_id: record.id });
     },
   });
-  const profileBtn = new ButtonInListCore<MediaProfileItem>({
+  const editBtn = new ButtonInListCore<MediaProfileItem>({
     onClick(record) {
-      homeTVProfilePage.query = {
-        id: record.id,
-      };
-      app.showView(homeTVProfilePage);
+      seasonRef.select(record);
+      dialog.show();
+    },
+  });
+  const values = new MediaProfileValuesCore();
+  const dialog = new DialogCore({
+    title: "编辑详情",
+    onOk() {
+      const media = seasonRef.value;
+      if (!media) {
+        app.tip({
+          text: ["请先选择"],
+        });
+        return;
+      }
+      const value = values.validate();
+      editMediaRequest.run({
+        id: media.id,
+        name: value.name,
+        source_count: value.episodeCount,
+      });
     },
   });
   const profileDeleteBtn = new ButtonInListCore<MediaProfileItem>({
@@ -349,7 +376,6 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
       });
     },
   });
-
   const refreshSeasonListBtn = new ButtonCore({
     onClick() {
       app.tip({ text: ["开始更新"] });
@@ -579,11 +605,11 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
                                   更新详情
                                 </Button>
                                 <Button
-                                  store={profileBtn.bind(season)}
+                                  store={editBtn.bind(season)}
                                   variant="subtle"
                                   icon={<BookOpen class="w-4 h-4" />}
                                 >
-                                  详情
+                                  编辑
                                 </Button>
                                 <Button
                                   store={profileDeleteBtn.bind(season)}
@@ -641,6 +667,11 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
       <Dialog store={moveToResourceDriveConfirmDialog}>
         <div class="w-[520px]">
           <div>将电视剧移动到资源盘后才能公开分享</div>
+        </div>
+      </Dialog>
+      <Dialog store={dialog}>
+        <div class="w-[520px]">
+          <MediaProfileValues store={values} />
         </div>
       </Dialog>
       <Popover

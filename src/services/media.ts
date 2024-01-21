@@ -75,7 +75,7 @@ export async function fetchSeasonMediaProfile(body: { season_id: string }) {
       id: string;
       name: string;
       overview: string;
-      episode_number: string;
+      episode_number: number;
       air_date: string;
       runtime: number;
       sources: {
@@ -196,7 +196,7 @@ export async function fetchMovieMediaProfile(body: { movie_id: string }) {
       };
     }[];
   }>("/api/v2/admin/movie/profile", {
-    movie_id,
+    media_id: movie_id,
   });
   if (r.error) {
     return Result.Err(r.error.message);
@@ -220,8 +220,8 @@ export type MovieProfile = RequestedResource<typeof fetchMovieMediaProfile>;
 /*
  * 获取电视剧部分详情
  */
-export async function fetchPartialSeasonMedia(params: { season_id: string }) {
-  const { season_id } = params;
+export async function fetchPartialSeasonMedia(params: { media_id: string }) {
+  const { media_id } = params;
   const r = await request.post<{
     id: string;
     name: string;
@@ -236,7 +236,7 @@ export async function fetchPartialSeasonMedia(params: { season_id: string }) {
     genres: { value: string; label: string }[];
     tips: string[];
   }>(`/api/v2/admin/season/partial`, {
-    season_id,
+    media_id,
   });
   if (r.error) {
     return Result.Err(r.error.message);

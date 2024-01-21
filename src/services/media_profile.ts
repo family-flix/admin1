@@ -77,7 +77,7 @@ import { request } from "@/utils/request";
  * @param params
  * @returns
  */
-export async function searchMediaProfile(
+export async function fetchMediaProfileList(
   params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
@@ -111,43 +111,33 @@ export async function searchMediaProfile(
   const { next_marker, list } = r.data;
   return Result.Ok({
     list: list.map((media) => {
-      if (media.type === MediaTypes.Movie) {
-        const { id, name, original_name, overview, air_date, poster_path } = media;
-        return {
-          id,
-          type: MediaTypes.Movie,
-          name,
-          original_name,
-          overview,
-          poster_path,
-          air_date,
-          episodes: [],
-        };
-      }
       const { id, name, original_name, overview, air_date, poster_path, sources = [] } = media;
       return {
         id,
-        type: MediaTypes.Season,
+        type: media.type,
         name,
         original_name,
         overview,
         poster_path,
         air_date,
-        episodes: sources.map((episode) => {
-          const { id, name, air_date, order } = episode;
-          return {
-            id,
-            name,
-            air_date,
-            order,
-          };
-        }),
+        episodes:
+          media.type === MediaTypes.Movie
+            ? []
+            : sources.map((episode) => {
+                const { id, name, air_date, order } = episode;
+                return {
+                  id,
+                  name,
+                  air_date,
+                  order,
+                };
+              }),
       };
     }),
     next_marker,
   });
 }
-export type MediaProfileItem = RequestedResource<typeof searchMediaProfile>["list"][0];
+export type MediaProfileItem = RequestedResource<typeof fetchMediaProfileList>["list"][0];
 
 export async function fetchPartialMediaProfile(body: { id: string }) {
   const { id } = body;
@@ -216,10 +206,19 @@ export function deleteMediaProfile(body: { id: string }) {
   });
 }
 
+export function editMediaProfile(body: { id: string; name?: string; source_count?: number }) {
+  const { id, name, source_count } = body;
+  return request.post<ListResponse<void>>(`/api/v2/media_profile/edit`, {
+    id,
+    name,
+    source_count,
+  });
+}
+
 export async function prepareSeasonList(params: { series_id: string }) {
   const { series_id } = params;
-  return request.post<
-    ListResponse<{
+  const r = await request.post<
+    ListResponseWithCursor<{
       id: string | number;
       type: MediaTypes;
       name: string;
@@ -231,6 +230,19 @@ export async function prepareSeasonList(params: { series_id: string }) {
     }>
   >(`/api/v2/media_profile/init_series`, {
     series_id,
+  });
+  if (r.error) {
+    return Result.Err(r.error);
+  }
+  const { list, next_marker } = r.data;
+  return Result.Ok({
+    list: list.map((item) => {
+      return {
+        ...item,
+        episodes: [],
+      };
+    }),
+    next_marker,
   });
 }
 
@@ -267,7 +279,6 @@ export async function searchMediaInTMDB(params: Partial<FetchParams> & { keyword
       original_name: string;
       overview: string;
       poster_path: string;
-      //       searched_tv_id: string;
       air_date: string;
     }>
   >(`/api/v2/media_profile/search_tmdb`, {

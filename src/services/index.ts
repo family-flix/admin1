@@ -1799,74 +1799,52 @@ export function addPermission(values: { desc: string }) {
 /**
  * 校验字幕文件名是否合法
  */
-export function validateSubtitleFiles(values: { tv_id?: string; filenames: string[] }) {
-  const { tv_id, filenames } = values;
-  return request.post<{
-    files: {
+export function validateSubtitleFiles(values: { filenames: string[] }) {
+  const { filenames } = values;
+  return request.post<
+    {
       filename: string;
-      season: {
-        id: string;
-        name: string;
-      } | null;
       season_text: string;
-      episode: {
-        id: string;
-        name: string;
-      } | null;
       episode_text: string;
       language: string;
-    }[];
-    tvs: {
-      id: string;
-      name: string;
-      original_name: string;
-      poster_path: string;
-      seasons: {
-        id: string;
-        season_text: string;
-      }[];
-      episodes: {
-        id: string;
-        episode_text: string;
-      }[];
-    }[];
-    drives: {
-      id: string;
-    }[];
-  }>("/api/admin/subtitle/validate", {
-    tv_id,
+    }[]
+  >("/api/v2/admin/subtitle/parse", {
     filenames,
   });
 }
 
-export function batchUploadSubtitles(params: {
-  tv_id: string;
-  drive_id: string;
+export function batchUploadSubtitles(values: {
+  media_id: string;
+  type: MediaTypes;
   files: {
     filename: string;
-    season_id: string;
-    episode_id: string;
+    episode_id?: string;
     language: string;
     file: File;
   }[];
 }) {
-  const { tv_id, drive_id, files } = params;
+  const { media_id, type, files } = values;
   const body = new FormData();
-  for (const payload of files) {
-    const { file, ...restPayload } = payload;
-    const { episode_id } = restPayload;
-    if (payload.file) {
-      body.append(episode_id, payload.file);
+  body.append("media_id", media_id);
+  body.append("type", String(type));
+  if (type === MediaTypes.Season) {
+    for (const payload of files) {
+      const { file, ...restPayload } = payload;
+      const { episode_id } = restPayload;
+      if (payload.file && episode_id) {
+        body.append(episode_id, payload.file);
+      }
+      body.append("payloads", JSON.stringify(restPayload));
     }
-    body.append("payloads", JSON.stringify(restPayload));
   }
-  body.append("drive", drive_id);
-  body.append("tv", tv_id);
-  const search = query_stringify({
-    tv_id,
-    drive_id,
-  });
-  return request.post<{ job_id: string }>(`/api/admin/subtitle/batch_add?${search}`, body);
+  if (type === MediaTypes.Movie) {
+    for (const payload of files) {
+      const { file, ...restPayload } = payload;
+      body.append("files", file);
+      body.append("payloads", JSON.stringify(restPayload));
+    }
+  }
+  return request.post<{ job_id: string }>("/api/v2/admin/subtitle/batch_create", body);
 }
 
 export function fetchSubtitleList(params: FetchParams) {

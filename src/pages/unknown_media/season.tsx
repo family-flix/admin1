@@ -123,7 +123,7 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const checkbox = new CheckboxCore({
     onChange(checked) {
       list.search({
-        empty: checked ? 0 : 1,
+        empty: checked ? 1 : 0,
       });
     },
   });
@@ -188,7 +188,7 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
           <Button store={resetBtn}>重置</Button>
           <div class="flex items-center space-x-2">
             <Checkbox store={checkbox}></Checkbox>
-            <span>全部内容</span>
+            <span>未匹配详情</span>
           </div>
         </div>
         <div class="flex items-center space-x-2 mt-4">

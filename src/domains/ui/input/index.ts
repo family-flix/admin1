@@ -170,30 +170,36 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
 }
 
 type InputInListProps<T = unknown> = {
-  onChange: (record: T) => void;
+  onChange?: (record: T) => void;
 } & InputProps<T>;
-type TheTypesInListOfEvents<K extends object, T> = {
+type TheTypesInListOfEvents<K extends string, T> = {
   [Events.Change]: [K, T];
   [Events.StateChange]: InputProps<T>;
 };
 
-export class InputInListCore<K extends object, T> extends BaseDomain<TheTypesInListOfEvents<K, T>> {
+export class InputInListCore<K extends string, T> extends BaseDomain<TheTypesInListOfEvents<K, T>> {
+  defaultValue: T;
+
   list: InputCore<T>[] = [];
-  cached = new WeakMap<K, InputCore<T>>();
+  cached: Record<K, InputCore<T>> = {} as Record<K, InputCore<T>>;
   values: Map<K, T | null> = new Map();
 
-  constructor(props: Partial<{ _name: string } & InputInListProps<T>> = {}) {
+  constructor(props: Partial<{ _name: string }> & InputInListProps<T>) {
     super(props);
+
+    const { defaultValue } = props;
+    this.defaultValue = defaultValue;
   }
 
   bind(
     unique_id: K,
     options: {
-      defaultValue: T;
-    }
+      defaultValue?: T;
+    } = {}
   ) {
-    const { defaultValue } = options;
-    const existing = this.cached.get(unique_id);
+    const { defaultValue = this.defaultValue } = options;
+    console.log("[DOMAIN]input/index - bind", unique_id, this.cached);
+    const existing = this.cached[unique_id];
     if (existing) {
       return existing;
     }
@@ -206,8 +212,15 @@ export class InputInListCore<K extends object, T> extends BaseDomain<TheTypesInL
     });
     this.list.push(select);
     this.values.set(unique_id, defaultValue);
-    this.cached.set(unique_id, select);
+    this.cached[unique_id] = select;
     return select;
+  }
+  getCur(unique_id: K) {
+    const existing = this.cached[unique_id];
+    if (existing) {
+      return existing;
+    }
+    return null;
   }
   setValue(v: T) {
     for (let i = 0; i < this.list.length; i += 1) {
@@ -217,10 +230,10 @@ export class InputInListCore<K extends object, T> extends BaseDomain<TheTypesInL
   }
   clear() {
     this.list = [];
-    this.cached = new WeakMap();
+    this.cached = {} as Record<string, InputCore<T>>;
     this.values = new Map();
   }
-  getValue(key: K) {
+  getValueByUniqueId(key: K) {
     return this.values.get(key) ?? null;
   }
   toJson<R>(handler: (value: [K, T | null]) => R) {

@@ -6,7 +6,7 @@ import { Film, Tv2, X } from "lucide-solid";
 
 import { Button, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { MovieSelect } from "@/components/MovieSelect";
-import { TVSeasonSelect } from "@/components/SeasonSelect";
+import { SeasonSelect } from "@/components/SeasonSelect";
 import { ButtonCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
 
@@ -140,7 +140,7 @@ export const CollectionCreatePage: ViewComponent = (props) => {
       </div>
       <Dialog store={collectionForm.seasonSelectDialog}>
         <div class="w-[520px]">
-          <TVSeasonSelect store={collectionForm.seasonSelect} />
+          <SeasonSelect store={collectionForm.seasonSelect} />
         </div>
       </Dialog>
       <Dialog store={collectionForm.movieSelectDialog}>

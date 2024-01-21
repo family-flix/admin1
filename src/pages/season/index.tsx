@@ -199,11 +199,11 @@ export const TVManagePage: ViewComponent = (props) => {
     align: "end",
   });
   const refreshPartialTV = async (id?: string) => {
-    const season_id = id || seasonRef.value?.id;
-    if (!season_id) {
+    const media_id = id || seasonRef.value?.id;
+    if (!media_id) {
       return Result.Err("缺少季 id");
     }
-    const r = await partialSeasonRequest.run({ season_id });
+    const r = await partialSeasonRequest.run({ media_id: media_id });
     if (r.error) {
       app.tip({
         text: ["获取电视剧最新信息失败", r.error.message],
@@ -211,7 +211,7 @@ export const TVManagePage: ViewComponent = (props) => {
       return Result.Err(r.error.message);
     }
     seasonList.modifyItem((item) => {
-      if (item.id !== season_id) {
+      if (item.id !== media_id) {
         return item;
       }
       return {

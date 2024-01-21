@@ -82,7 +82,7 @@ export const SubtitlePreview = (props: { store: SubtitleReaderCore }) => {
         </div>
       </Show>
       <Show when={!!state().content}>
-        <div class="w-[480px] max-h-[360px] overflow-x-auto overflow-y-auto">
+        <div class="w-full max-h-[360px] overflow-x-auto overflow-y-auto">
           <div class="p-4 keep-all white-space-nowrap">{state().content}</div>
         </div>
       </Show>

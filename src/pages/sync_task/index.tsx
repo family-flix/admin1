@@ -17,7 +17,7 @@ import {
 } from "@/services/resource_sync_task";
 import { Skeleton, ScrollView, Input, Button, LazyImage, Dialog, Checkbox, BackToTop, ListView } from "@/components/ui";
 import { FileSearcherCore } from "@/components/FileSearcher";
-import { TVSeasonSelectCore, TVSeasonSelect } from "@/components/SeasonSelect";
+import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";
 import {
   ScrollViewCore,
   DialogCore,
@@ -828,7 +828,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={seasonSelectDialog}>
         <div class="w-[520px]">
-          <TVSeasonSelect store={seasonSelect} />
+          <SeasonSelect store={seasonSelect} />
         </div>
       </Dialog>
       <Dialog store={deleteTaskDialog}>

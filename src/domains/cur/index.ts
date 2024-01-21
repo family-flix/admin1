@@ -39,6 +39,13 @@ export class RefCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.value = value;
     this.emit(Events.StateChange, this.value);
   }
+  patch(value: Partial<T>) {
+    this.value = {
+      ...this.value,
+      ...value,
+    } as T;
+    this.emit(Events.StateChange, this.value);
+  }
   /** 暂存的值是否为空 */
   isEmpty() {
     return this.value === null;

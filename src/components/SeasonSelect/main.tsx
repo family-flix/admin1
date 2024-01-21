@@ -113,7 +113,7 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
   }
 }
 
-export const TVSeasonSelect = (props: { store: TVSeasonSelectCore }) => {
+export const SeasonSelect = (props: { store: TVSeasonSelectCore }) => {
   const { store } = props;
 
   const [tvListResponse, setTVListResponse] = createSignal(store.response);

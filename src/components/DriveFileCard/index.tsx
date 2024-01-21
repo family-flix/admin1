@@ -79,50 +79,52 @@ export const DriveFileCard = (props: {
         </div>
         <Show when={profile()}>
           <div class="space-y-2">
-            <Show when={profile()?.media}>
-              <div>
-                <Show
-                  when={profile()?.media}
-                  fallback={
-                    <div class="flex">
-                      <div class="mr-4">
-                        <LazyImage class="w-[120px] h-[180px]" />
-                      </div>
-                      <div>{profile()?.unknown_media?.name}</div>
-                      <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
-                      <div>{profile()?.file_name}</div>
-                      <div>没有匹配到详情信息</div>
-                    </div>
-                  }
-                >
-                  <div class="flex">
-                    <div class="mr-4">
-                      <LazyImage class="w-[120px] h-[180px]" src={profile()?.media?.poster_path} />
-                    </div>
-                    <div>
-                      <div class="text-lg">{profile()?.media?.name}</div>
-                      <div>{profile()?.media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
-                      <div class="text-sm">
-                        <Show
-                          when={profile()?.media?.episode_name}
-                          fallback={
-                            <div>
-                              <div class="flex items-center">
-                                <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
-                                <span>{profile()?.media?.episode_text}</span>
-                              </div>
-                            </div>
-                          }
-                        >
-                          <div class="flex items-center">
-                            <CheckCircle2 class="w-4 h-4 mr-1 text-green-800" />
-                            <span>{profile()?.media?.episode_name}</span>
-                          </div>
-                        </Show>
-                      </div>
-                    </div>
+            <Show
+              when={profile()?.media}
+              fallback={
+                <div class="flex">
+                  <div class="mr-4">
+                    <LazyImage class="w-[120px] h-[180px]" />
                   </div>
-                </Show>
+                  <div>
+                    <div>{profile()?.unknown_media?.name}</div>
+                    <div class="flex items-center">
+                      <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
+                      <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
+                    </div>
+                    <div>{profile()?.file_name}</div>
+                    <div>{profile()?.unknown_media?.episode_text}</div>
+                    <div>没有匹配到详情信息</div>
+                  </div>
+                </div>
+              }
+            >
+              <div class="flex">
+                <div class="mr-4">
+                  <LazyImage class="w-[120px] h-[180px]" src={profile()?.media?.poster_path} />
+                </div>
+                <div>
+                  <div class="text-lg">{profile()?.media?.name}</div>
+                  <div>{profile()?.media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
+                  <div class="text-sm">
+                    <Show
+                      when={profile()?.media?.episode_name}
+                      fallback={
+                        <div>
+                          <div class="flex items-center">
+                            <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
+                            <span>{profile()?.media?.episode_text}</span>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <div class="flex items-center">
+                        <CheckCircle2 class="w-4 h-4 mr-1 text-green-800" />
+                        <span>{profile()?.media?.episode_name}</span>
+                      </div>
+                    </Show>
+                  </div>
+                </div>
               </div>
             </Show>
           </div>

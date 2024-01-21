@@ -438,6 +438,7 @@ export class ListCore<
    * 无限加载时使用的下一页
    */
   async loadMore() {
+    console.log("this.response.noMore", this.response.noMore);
     if (this.response.loading || this.response.noMore) {
       return;
     }
@@ -560,6 +561,7 @@ export class ListCore<
     this.emit(Events.StateChange, { ...this.response });
     const res = await this.fetch({
       ...restParams,
+      next_marker: "",
       page: 1,
     });
     this.response.refreshing = false;
