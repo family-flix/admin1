@@ -49,6 +49,9 @@ export const MemberManagePage: ViewComponent = (props) => {
         text: ["权限更新失败", error.message],
       });
     },
+    onCompleted() {
+      permissionMultipleSelect.clear();
+    },
   });
   const memberSelect = new RefCore<MemberItem>();
   const generateToken = new RequestCore(create_member_auth_link, {
@@ -240,7 +243,6 @@ ${url}`;
         });
         return;
       }
-      console.log(permissionMultipleSelect.values);
       memberPermissionUpdateRequest.run({
         member_id: memberRef.value.id,
         permissions: permissionMultipleSelect.values.map((p) => p.code),

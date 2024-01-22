@@ -42,16 +42,17 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
     },
   });
   const [state, setState] = createSignal(store.state);
+  // const [dataSource, setDataSource] = createSignal(store.state.response.dataSource);
 
   store.onStateChange((nextState) => {
-    console.log("----2", nextState.response.dataSource);
+    // console.log("----2", nextState.response.dataSource);
+    // nextState.response.dataSource = [...nextState.response.dataSource];
     setState(nextState);
+    // setDataSource(nextState.response.dataSource);
   });
 
   const dataSource = () => state().response.dataSource;
   const cur = () => state().cur;
-
-  console.log("----3", state().response.dataSource);
 
   return (
     <div>
@@ -79,17 +80,17 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
       <Show when={!store.type}>
         <TabHeader store={tab} />
       </Show> */}
-      <ListView store={store.$list}>
-        <div class="relative">
-          <ScrollView store={scrollView} class="relative max-h-[480px] overflow-y-auto space-y-4">
+      <ScrollView store={scrollView} class="relative max-h-[480px] overflow-y-auto space-y-4">
+        <ListView store={store.$list}>
+          <div class="relative">
             <For each={dataSource()}>
-              {(tv) => {
-                const { name, original_name, overview, poster_path, air_date, episodes } = tv;
+              {(media) => {
+                const { name, original_name, overview, poster_path, air_date, episodes } = media;
                 return (
                   <div
-                    class={cn("p-2", tv.id === cur()?.id ? "bg-slate-300" : "bg-white")}
+                    class={cn("p-2", media.id === cur()?.id ? "bg-slate-300" : "bg-white")}
                     onClick={() => {
-                      store.toggle(tv);
+                      store.toggle(media);
                     }}
                   >
                     <div class="flex">
@@ -118,9 +119,9 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
                 );
               }}
             </For>
-          </ScrollView>
-        </div>
-      </ListView>
+          </div>
+        </ListView>
+      </ScrollView>
     </div>
   );
 };

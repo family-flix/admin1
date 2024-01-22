@@ -172,7 +172,8 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                         mediaSearch.$list.modifyResponse((v) => {
                           return {
                             ...v,
-                            dataSource: r.data.list,
+                            initial: false,
+                            dataSource: [...r.data.list],
                             noMore: !r.data.next_marker,
                           };
                         });

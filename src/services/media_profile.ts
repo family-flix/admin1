@@ -90,12 +90,22 @@ export async function fetchMediaProfileList(
       overview: string;
       poster_path: string;
       air_date: string;
+      vote_average: number;
+      source_count: number;
       sources: {
         id: string;
         name: string;
         overview: string;
         order: number;
         air_date: string;
+      }[];
+      genres: string[];
+      origin_country: string[];
+      persons: {
+        id: string;
+        name: string;
+        role: string;
+        order: number;
       }[];
     }>
   >(`/api/v2/media_profile/list`, {
@@ -111,7 +121,20 @@ export async function fetchMediaProfileList(
   const { next_marker, list } = r.data;
   return Result.Ok({
     list: list.map((media) => {
-      const { id, name, original_name, overview, air_date, poster_path, sources = [] } = media;
+      const {
+        id,
+        name,
+        original_name,
+        overview,
+        air_date,
+        poster_path,
+        vote_average,
+        source_count: episode_count,
+        sources = [],
+        genres,
+        persons,
+        origin_country,
+      } = media;
       return {
         id,
         type: media.type,
@@ -120,6 +143,8 @@ export async function fetchMediaProfileList(
         overview,
         poster_path,
         air_date,
+        vote_average,
+        episode_count,
         episodes:
           media.type === MediaTypes.Movie
             ? []
@@ -132,6 +157,9 @@ export async function fetchMediaProfileList(
                   order,
                 };
               }),
+        genres,
+        persons,
+        origin_country,
       };
     }),
     next_marker,
@@ -149,6 +177,8 @@ export async function fetchPartialMediaProfile(body: { id: string }) {
     overview: string;
     poster_path: string;
     air_date: string;
+    vote_average: number;
+    source_count: number;
     sources: {
       id: string;
       name: string;
@@ -156,48 +186,60 @@ export async function fetchPartialMediaProfile(body: { id: string }) {
       order: number;
       air_date: string;
     }[];
-  }>(`/api/v2/media_profile/partial`, {
+    genres: string[];
+    origin_country: string[];
+    persons: {
+      id: string;
+      name: string;
+      role: string;
+      order: number;
+    }[];
+  }>("/api/v2/media_profile/partial", {
     media_profile_id: id,
   });
   if (r.error) {
     return Result.Err(r.error.message);
   }
   const media = r.data;
-  if (media.type === MediaTypes.Movie) {
-    const { id, name, original_name, overview, air_date, poster_path } = media;
-    return Result.Ok({
-      id,
-      type: MediaTypes.Movie,
-      name,
-      original_name,
-      overview,
-      poster_path,
-      air_date,
-      episodes: [],
-    });
-  }
-  if (media.type === MediaTypes.Season) {
-    const { id, name, original_name, overview, air_date, poster_path, sources = [] } = media;
-    return Result.Ok({
-      id,
-      type: MediaTypes.Season,
-      name,
-      original_name,
-      overview,
-      poster_path,
-      air_date,
-      episodes: sources.map((episode) => {
-        const { id, name, air_date, order } = episode;
-        return {
-          id,
-          name,
-          air_date,
-          order,
-        };
-      }),
-    });
-  }
-  return Result.Err("未知的 type");
+  const {
+    name,
+    original_name,
+    overview,
+    air_date,
+    vote_average,
+    poster_path,
+    source_count: episode_count,
+    sources = [],
+    genres,
+    persons,
+    origin_country,
+  } = media;
+  return Result.Ok({
+    id: media.id,
+    type: media.type,
+    name,
+    original_name,
+    overview,
+    poster_path,
+    air_date,
+    vote_average,
+    episode_count,
+    episodes:
+      media.type === MediaTypes.Season
+        ? sources.map((episode) => {
+            const { id, name, air_date, order } = episode;
+            return {
+              id,
+              name,
+              air_date,
+              order,
+            };
+          })
+        : [],
+    genres,
+    persons,
+    origin_country,
+  });
 }
 
 export function deleteMediaProfile(body: { id: string }) {
@@ -290,3 +332,9 @@ export async function searchMediaInTMDB(params: Partial<FetchParams> & { keyword
   });
 }
 export type TheMediaInTMDB = RequestedResource<typeof searchMediaInTMDB>["list"][0];
+
+/** 刷新电视剧详情 */
+export function refreshMediaProfile(body: { media_id: string }) {
+  const { media_id } = body;
+  return request.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });
+}

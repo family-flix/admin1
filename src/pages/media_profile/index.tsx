@@ -2,7 +2,7 @@
  * @file 影视剧详情列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, BookOpen, Calendar, RotateCw, Search, SlidersHorizontal, Train } from "lucide-solid";
+import { Award, Send, BookOpen, Calendar, RotateCw, Search, SlidersHorizontal, Train } from "lucide-solid";
 
 import {
   fetchMediaProfileList,
@@ -10,6 +10,7 @@ import {
   MediaProfileItem,
   deleteMediaProfile,
   editMediaProfile,
+  refreshMediaProfile,
 } from "@/services/media_profile";
 import {
   moveSeasonToResourceDrive,
@@ -47,7 +48,7 @@ import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
 import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, seasonArchivePage } from "@/store";
 import { Result, ViewComponent } from "@/types";
-import { MediaSourceOptions, TVGenresOptions } from "@/constants";
+import { MediaSourceOptions, MediaTypes, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
 import { MediaProfileValues, MediaProfileValuesCore } from "@/components/MediaProfileValues";
 
@@ -105,19 +106,21 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const partialSeasonRequest = new RequestCore(fetchPartialMediaProfile);
-  const refreshProfileRequest = new RequestCore(refreshSeasonProfile, {
+  const partialMediaRequest = new RequestCore(fetchPartialMediaProfile);
+  const refreshProfileRequest = new RequestCore(refreshMediaProfile, {
     onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          refreshProfileBtn.setLoading(false);
-          refreshPartialTV();
-        },
-        onTip(msg) {
-          app.tip(msg);
-        },
-      });
+      refreshProfileBtn.setLoading(false);
+      refreshPartialMedia();
+      // createJob({
+      //   job_id: r.job_id,
+      //   onFinish() {
+      //     refreshProfileBtn.setLoading(false);
+      //     refreshPartialTV();
+      //   },
+      //   onTip(msg) {
+      //     app.tip(msg);
+      //   },
+      // });
     },
     onFailed(error) {
       refreshProfileBtn.setLoading(false);
@@ -248,12 +251,12 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
   const tipPopover = new PopoverCore({
     align: "end",
   });
-  const refreshPartialTV = async (id?: string) => {
+  const refreshPartialMedia = async (id?: string) => {
     const season_id = id || seasonRef.value?.id;
     if (!season_id) {
       return Result.Err("缺少季 id");
     }
-    const r = await partialSeasonRequest.run({ id: season_id });
+    const r = await partialMediaRequest.run({ id: season_id });
     if (r.error) {
       app.tip({
         text: ["获取电视剧最新信息失败", r.error.message],
@@ -324,7 +327,7 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
   const refreshPartialBtn = new ButtonInListCore<MediaProfileItem>({
     async onClick(record) {
       refreshPartialBtn.setLoading(true);
-      const r = await refreshPartialTV(record.id);
+      const r = await refreshPartialMedia(record.id);
       refreshPartialBtn.setLoading(false);
       if (r.error) {
         return;
@@ -340,7 +343,8 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
         text: ["开始更新"],
       });
       refreshProfileBtn.setLoading(true);
-      refreshProfileRequest.run({ season_id: record.id });
+      seasonRef.select(record);
+      refreshProfileRequest.run({ media_id: record.id });
     },
   });
   const editBtn = new ButtonInListCore<MediaProfileItem>({
@@ -556,16 +560,28 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
                 <div class="space-y-4">
                   <For each={seasonListState().dataSource}>
                     {(season) => {
-                      const { id, name, overview, poster_path, air_date } = season;
+                      const {
+                        id,
+                        type,
+                        name,
+                        overview,
+                        poster_path,
+                        vote_average,
+                        air_date,
+                        genres,
+                        persons,
+                        origin_country,
+                        episode_count,
+                      } = season;
                       const url = homeTVProfilePage.buildUrlWithPrefix({
                         id,
                       });
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
-                            <div class="overflow-hidden mr-2 rounded-sm">
+                            {/* <div class="overflow-hidden mr-2 rounded-sm">
                               <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
-                            </div>
+                            </div> */}
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
                                 <h2 class="text-2xl text-slate-800">
@@ -577,6 +593,30 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
                                   {overview}
                                 </p>
                               </div>
+                              <div class="flex items-center flex-wrap space-x-2">
+                                <For each={origin_country}>
+                                  {(country) => {
+                                    return <div>{country}</div>;
+                                  }}
+                                </For>
+                                <For each={genres}>
+                                  {(genre) => {
+                                    return <div>{genre}</div>;
+                                  }}
+                                </For>
+                              </div>
+                              <div class="flex items-center flex-wrap space-x-2">
+                                <For each={persons}>
+                                  {(person) => {
+                                    return (
+                                      <div class="w-[48px]">
+                                        <div>{person.name}</div>
+                                        <div>{person.role}</div>
+                                      </div>
+                                    );
+                                  }}
+                                </For>
+                              </div>
                               <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
                                 <div class="flex items-center space-x-1 px-2 border border-slate-600 rounded-xl text-slate-600">
                                   <Calendar class="w-4 h-4 text-slate-800" />
@@ -584,12 +624,14 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
                                 </div>
                                 <div class="flex items-center space-x-1 px-2 border border-yellow-600 rounded-xl text-yellow-600">
                                   <Award class="w-4 h-4" />
-                                  {/* <div>{vote_average}</div> */}
+                                  <div>{vote_average}</div>
                                 </div>
-                                {/* <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
-                                  <Send class="w-4 h-4" />
-                                  <div>{episode_count}</div>
-                                </div> */}
+                                <Show when={type === MediaTypes.Season}>
+                                  <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                    <Send class="w-4 h-4" />
+                                    <div>{episode_count}</div>
+                                  </div>
+                                </Show>
                               </div>
                               <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
                                 <Button

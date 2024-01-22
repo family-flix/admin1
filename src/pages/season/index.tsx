@@ -94,26 +94,7 @@ export const TVManagePage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetchPartialSeasonMedia);
-  const refreshProfileRequest = new RequestCore(refreshSeasonProfile, {
-    onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          refreshProfileBtn.setLoading(false);
-          refreshPartialTV();
-        },
-        onTip(msg) {
-          app.tip(msg);
-        },
-      });
-    },
-    onFailed(error) {
-      refreshProfileBtn.setLoading(false);
-      app.tip({
-        text: ["更新失败", error.message],
-      });
-    },
-  });
+
   const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
     onLoading(loading) {
       transferConfirmDialog.okBtn.setLoading(loading);
@@ -284,15 +265,15 @@ export const TVManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const refreshProfileBtn = new ButtonInListCore<SeasonMediaItem>({
-    onClick(record) {
-      app.tip({
-        text: ["开始更新"],
-      });
-      refreshProfileBtn.setLoading(true);
-      refreshProfileRequest.run({ season_id: record.id });
-    },
-  });
+  // const refreshProfileBtn = new ButtonInListCore<SeasonMediaItem>({
+  //   onClick(record) {
+  //     app.tip({
+  //       text: ["开始更新"],
+  //     });
+  //     refreshProfileBtn.setLoading(true);
+  //     refreshProfileRequest.run({ season_id: record.id });
+  //   },
+  // });
   const profileBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
       homeTVProfilePage.query = {
@@ -579,13 +560,6 @@ export const TVManagePage: ViewComponent = (props) => {
                                   variant="subtle"
                                   icon={<RotateCw class="w-4 h-4" />}
                                 ></Button>
-                                <Button
-                                  store={refreshProfileBtn.bind(season)}
-                                  variant="subtle"
-                                  icon={<BookOpen class="w-4 h-4" />}
-                                >
-                                  更新详情
-                                </Button>
                                 <Button
                                   store={profileBtn.bind(season)}
                                   variant="subtle"

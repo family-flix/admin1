@@ -15,7 +15,7 @@ export function ListView(
   const [response, setResponse] = createSignal(store.response);
 
   store.onStateChange((nextState) => {
-    console.log("[COMPONENT]ListView - store.onStateChange", nextState.noMore, nextState.initial, nextState.error);
+    console.log("[COMPONENT]ListView - store.onStateChange", nextState.dataSource);
     setResponse(nextState);
   });
 
