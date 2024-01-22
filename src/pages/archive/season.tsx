@@ -86,7 +86,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
           }
           const { name } = seasonRef.value;
           app.tip({
-            text: [`完成电视剧 '${name}' 归档`],
+            text: [`完成「${name}」归档`],
           });
           if (toDriveRef.value) {
             await toDriveRef.value.refresh();

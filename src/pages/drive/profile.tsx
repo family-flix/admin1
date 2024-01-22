@@ -4,7 +4,7 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Binary, ChevronRight, FolderInput, Search, Trash } from "lucide-solid";
 
-import { renameFilesInDrive, fetchDriveFiles } from "@/services/drive";
+import { renameFilesInDrive, fetchDriveFiles, transferFileToAnotherDrive } from "@/services/drive";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
@@ -22,7 +22,6 @@ import {
   AliyunDriveFilesCore,
   DriveItem,
   AliyunDriveFile,
-  transferFileToAnotherDrive,
   transferFileToResourceDrive,
 } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
@@ -716,7 +715,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
             const r = await toAnotherDriveRequest.run({
               file_id: file.file_id,
               drive_id: view.query.id,
-              target_drive_id: drive.id,
+              to_drive_id: drive.id,
             });
             if (r.data) {
               createJob({
