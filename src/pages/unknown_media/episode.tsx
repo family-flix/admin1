@@ -14,13 +14,12 @@ import { renameFile } from "@/domains/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
 import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import { TMDBSearcherCore } from "@/domains/tmdb";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
 import { createJob } from "@/store";
-import { MediaTypes } from "@/constants";
-import { TMDBSearcherCore } from "@/domains/tmdb";
 
 export const UnknownEpisodePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -97,6 +96,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
     },
   });
   const curEpisode = new RefCore<UnknownEpisodeItem>();
+  const mediaSourceRef = new RefCore<UnknownEpisodeItem>();
   const selectMatchedProfileBtn = new ButtonInListCore<UnknownEpisodeItem>({
     onClick(record) {
       curEpisode.select(record);
@@ -180,6 +180,50 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
         return;
       }
       const { id } = curEpisode.value;
+      setMediaSourceProfileRequest.run({
+        parsed_media_source_id: id,
+        media_profile: {
+          id: String(mediaProfile.id),
+          type: mediaProfile.type,
+          name: mediaProfile.name,
+        },
+      });
+    },
+  });
+  const searcher2 = new TMDBSearcherCore({
+    episode: true,
+  });
+  const dialog2 = new DialogCore({
+    onOk() {
+      if (!mediaSourceRef.value) {
+        app.tip({ text: ["请先选择未识别的电影"] });
+        return;
+      }
+      const mediaProfile = searcher2.cur;
+      if (!mediaProfile) {
+        app.tip({ text: ["请先选择电影详情"] });
+        return;
+      }
+      const { id } = mediaSourceRef.value;
+      const sourceProfile = searcher2.curEpisode;
+      if (searcher2.needEpisode) {
+        if (!sourceProfile) {
+          app.tip({ text: ["请先选择剧集详情"] });
+          return;
+        }
+        setMediaSourceProfileRequest.run({
+          parsed_media_source_id: id,
+          media_profile: {
+            id: String(mediaProfile.id),
+            type: mediaProfile.type,
+            name: mediaProfile.name,
+          },
+          media_source_profile: {
+            id: String(sourceProfile.id),
+          },
+        });
+        return;
+      }
       setMediaSourceProfileRequest.run({
         parsed_media_source_id: id,
         media_profile: {
@@ -294,8 +338,8 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                           class="p-1 cursor-pointer"
                           onClick={() => {
                             curEpisode.select(episode);
-                            renameFileInput.setValue(episode.file_name);
-                            renameFileDialog.show();
+                            mediaSourceRef.select(episode);
+                            dialog2.show();
                           }}
                         >
                           <Edit class="w-4 h-4" />
@@ -310,14 +354,6 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                         >
                           设置
                         </Button>
-                        {/* <Button
-                          class="box-content"
-                          variant="subtle"
-                          store={deleteBtn.bind(episode)}
-                          icon={<Trash class="w-4 h-4" />}
-                        >
-                          删除
-                        </Button> */}
                       </div>
                     </div>
                   </div>
@@ -330,6 +366,11 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       <Dialog store={bindEpisodeDialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={mediaSearch} />
+        </div>
+      </Dialog>
+      <Dialog store={dialog2}>
+        <div class="w-[520px]">
+          <TMDBSearcherView store={searcher2} />
         </div>
       </Dialog>
       <Dialog store={deleteConfirmDialog}>

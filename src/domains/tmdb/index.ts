@@ -18,6 +18,7 @@ type TheTypesOfEvents = {
 interface TMDBSearcherState {
   response: Response<TheMediaInTMDB>;
   cur: TheMediaInTMDB | null;
+  curEpisode: { id: string | number } | null;
 }
 type TMDBSearcherProps = {
   type?: MediaTypes;
@@ -34,11 +35,13 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   resetBtn: ButtonCore;
 
   cur: null | TheMediaInTMDB = null;
+  curEpisode: null | { id: string | number } = null;
   needEpisode = false;
   get state(): TMDBSearcherState {
     return {
       response: this.$list.response,
       cur: this.cur,
+      curEpisode: this.curEpisode,
     };
   }
 
@@ -89,6 +92,10 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   }
   select(v: TheMediaInTMDB) {
     this.cur = v;
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  selectEpisode(v: { id: string | number }) {
+    this.curEpisode = v;
     this.emit(Events.StateChange, { ...this.state });
   }
   unSelect() {

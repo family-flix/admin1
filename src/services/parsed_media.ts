@@ -200,11 +200,13 @@ export function setParsedMediaProfileInFileId(body: {
 export function setParsedSeasonMediaSourceProfile(body: {
   parsed_media_source_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
+  media_source_profile?: { id: string };
 }) {
-  const { parsed_media_source_id, media_profile } = body;
+  const { parsed_media_source_id, media_profile, media_source_profile } = body;
   return request.post<void>("/api/v2/admin/parsed_media_source/set_profile", {
     parsed_media_source_id,
     media_profile,
+    media_source_profile,
   });
 }
 

@@ -56,6 +56,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         if (!value) {
           return;
         }
+        store.select(value);
         const r = await prepareEpisodeList({
           media_id: value.id,
         });
@@ -105,6 +106,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
   });
   const dataSource = () => state().response.dataSource;
   const cur = () => state().cur;
+  const curEpisode = () => state().curEpisode;
 
   return (
     <div>
@@ -237,10 +239,10 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                 <div
                   classList={{
                     "p-2": true,
-                    "bg-slate-300": id === cur()?.id,
+                    "bg-slate-300": id === curEpisode()?.id,
                   }}
                   onClick={() => {
-                    store.toggle(episode);
+                    store.selectEpisode(episode);
                   }}
                 >
                   <div>
