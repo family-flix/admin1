@@ -37,7 +37,6 @@ import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
 import { InvalidMediaManagePage } from "@/pages/media_error";
 import { PrismaExecPage } from "@/pages/prisma";
-import { MovieArchivePage } from "@/pages/archive/movie";
 import { OuterMediaProfilePage } from "@/pages/outer_profile";
 import { MediaProfileHomeLayout } from "@/pages/media_profile/layout";
 import { SeasonMediaProfileManagePage } from "@/pages/media_profile";
@@ -239,11 +238,6 @@ export const seasonArchivePage = new RouteViewCore({
   title: "电视剧归档",
   component: SeasonArchivePage,
 });
-export const movieArchivePage = new RouteViewCore({
-  key: "/movie_archive",
-  title: "电影归档",
-  component: MovieArchivePage,
-});
 export const mediaPlayingPage = new RouteViewCore({
   key: "/preview",
   title: "文件播放",
@@ -293,7 +287,6 @@ export const rootView = new RouteViewCore({
     homeLayout,
     mediaPlayingPage,
     seasonArchivePage,
-    movieArchivePage,
     registerPage,
     loginPage,
     testPage,

@@ -20,6 +20,7 @@ import {
   fetchMediaListPrepareArchive,
   fetchPartialMediaPrepareArchive,
   transferMediaToAnotherDrive,
+  transferMediaToResourceDrive,
 } from "@/services/media";
 import { deleteParsedMediaSource } from "@/services/parsed_media";
 import { moveSeasonToResourceDrive } from "@/services";
@@ -29,9 +30,9 @@ import { DriveSelect } from "@/components/DriveSelect/dialog";
 import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { DriveCore, DriveItem } from "@/domains/drive";
+import { DriveCore } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
-import { createJob, driveList, driveProfilePage, homeIndexPage, homeTVListPage } from "@/store";
+import { createJob, driveList, driveProfilePage, homeTVListPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { MediaTypes } from "@/constants";
 
@@ -45,7 +46,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
     },
   });
   const refreshPartialSeasonRequest = new RequestCore(fetchPartialMediaPrepareArchive);
-  const moveToResourceDriveRequest = new RequestCore(moveSeasonToResourceDrive, {
+  const moveToResourceDriveRequest = new RequestCore(transferMediaToResourceDrive, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -173,7 +174,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         text: ["开始移动，请等待一段时间"],
       });
       moveToResourceDriveRequest.run({
-        season_id: record.id,
+        media_id: record.id,
       });
     },
   });
@@ -417,11 +418,13 @@ export const SeasonArchivePage: ViewComponent = (props) => {
                               <div class="mt-6 space-y-4">
                                 <For each={episodes}>
                                   {(episode) => {
-                                    const { name: episode_name, drives } = episode;
+                                    const { name: episode_name, episode_number: order, drives } = episode;
                                     return (
                                       <div>
                                         <Show when={type === MediaTypes.Season}>
-                                          <div class="text-lg">{episode_name}</div>
+                                          <div class="text-lg">
+                                            {order}、{episode_name}
+                                          </div>
                                         </Show>
                                         <div>
                                           <For each={drives}>

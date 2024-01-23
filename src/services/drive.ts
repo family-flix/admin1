@@ -159,3 +159,11 @@ export function transferFileToAnotherDrive(values: { drive_id: string; file_id: 
     to_drive_id,
   });
 }
+
+export function transferFileToResourceDrive(values: { drive_id: string; file_id: string }) {
+  const { drive_id, file_id } = values;
+  return request.post<{ job_id: string }>("/api/v2/drive/file/to_resource_drive", {
+    file_id,
+    from_drive_id: drive_id,
+  });
+}

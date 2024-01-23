@@ -414,3 +414,13 @@ export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_i
     to_drive_id,
   });
 }
+
+/**
+ * 转存指定季到对应资源盘
+ */
+export function transferMediaToResourceDrive(body: { media_id: string }) {
+  const { media_id } = body;
+  return request.post<{ job_id: string }>("/api/v2/admin/media/to_resource_drive", {
+    media_id,
+  });
+}

@@ -50,7 +50,7 @@ export const UnknownMoviePage: ViewComponent = (props) => {
       });
     },
   });
-  const setSourceProfileRequest = new RequestCore(setParsedSeasonMediaSourceProfile, {
+  const setMediaSourceProfileRequest = new RequestCore(setParsedSeasonMediaSourceProfile, {
     onLoading(loading) {
       dialog2.okBtn.setLoading(loading);
     },
@@ -164,18 +164,37 @@ export const UnknownMoviePage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择未识别的电影"] });
         return;
       }
-      const media = searcher2.cur;
-      if (!media) {
+      const mediaProfile = searcher2.cur;
+      if (!mediaProfile) {
         app.tip({ text: ["请先选择电影详情"] });
         return;
       }
       const { id } = mediaSourceRef.value;
-      setSourceProfileRequest.run({
+      const sourceProfile = searcher2.curEpisode;
+      if (mediaProfile.type === MediaTypes.Season) {
+        if (!sourceProfile) {
+          app.tip({ text: ["请先选择剧集详情"] });
+          return;
+        }
+        setMediaSourceProfileRequest.run({
+          parsed_media_source_id: id,
+          media_profile: {
+            id: String(mediaProfile.id),
+            type: mediaProfile.type,
+            name: mediaProfile.name,
+          },
+          media_source_profile: {
+            id: String(sourceProfile.id),
+          },
+        });
+        return;
+      }
+      setMediaSourceProfileRequest.run({
         parsed_media_source_id: id,
         media_profile: {
-          id: String(media.id),
-          type: media.type,
-          name: media.name,
+          id: String(mediaProfile.id),
+          type: mediaProfile.type,
+          name: mediaProfile.name,
         },
       });
     },

@@ -13,6 +13,8 @@ import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus } 
 import { homeLayout, homeTaskProfilePage, refreshJobs } from "@/store";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
+import { TabHeader } from "@/components/ui/tab-header";
+import { TabHeaderCore } from "@/domains/ui/tab-header";
 
 export const TaskListPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -77,6 +79,24 @@ export const TaskListPage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore();
+  const tab = new TabHeaderCore({
+    key: "id",
+    options: [
+      {
+        id: String(TaskStatus.Running),
+        text: "进行中",
+      },
+      {
+        id: String(TaskStatus.Finished),
+        text: "已完成",
+      },
+    ],
+    onChange(opt) {
+      jobList.search({
+        status: Number(opt.value),
+      });
+    },
+  });
 
   jobList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
@@ -110,9 +130,7 @@ export const TaskListPage: ViewComponent = (props) => {
           刷新
         </Button>
       </div>
-      <div class="flex items-center space-x-2 mt-4">
-        <Checkbox store={runningCheckbox} />
-      </div>
+      <TabHeader store={tab} />
       <ListView
         class="mt-4"
         store={jobList}

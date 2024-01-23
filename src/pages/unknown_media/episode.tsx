@@ -20,6 +20,7 @@ import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
 import { createJob } from "@/store";
+import { MediaTypes } from "@/constants";
 
 export const UnknownEpisodePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -206,7 +207,7 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       }
       const { id } = mediaSourceRef.value;
       const sourceProfile = searcher2.curEpisode;
-      if (searcher2.needEpisode) {
+      if (mediaProfile.type === MediaTypes.Season) {
         if (!sourceProfile) {
           app.tip({ text: ["请先选择剧集详情"] });
           return;

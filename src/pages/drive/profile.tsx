@@ -4,7 +4,12 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Binary, ChevronRight, FolderInput, Search, Trash } from "lucide-solid";
 
-import { renameFilesInDrive, fetchDriveFiles, transferFileToAnotherDrive } from "@/services/drive";
+import {
+  renameFilesInDrive,
+  fetchDriveFiles,
+  transferFileToAnotherDrive,
+  transferFileToResourceDrive,
+} from "@/services/drive";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
@@ -17,22 +22,16 @@ import {
   ScrollViewCore,
   MenuCore,
 } from "@/domains/ui";
-import {
-  DriveCore,
-  AliyunDriveFilesCore,
-  DriveItem,
-  AliyunDriveFile,
-  transferFileToResourceDrive,
-} from "@/domains/drive";
+import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { FileType, MediaTypes } from "@/constants";
 import { createJob, driveList } from "@/store";
 import { buildRegexp } from "@/utils";
-import { EpisodeSelect, EpisodeSelectCore } from "@/components/EpisodeSelect";
-import { setFileEpisodeProfile, setFileMovieProfile } from "@/services";
-import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
+import { EpisodeSelectCore } from "@/components/EpisodeSelect";
+import { setFileEpisodeProfile } from "@/services";
+import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import {
   setParsedMediaProfile,
@@ -606,42 +605,42 @@ export const DriveProfilePage: ViewComponent = (props) => {
         text: ["开始归档"],
       });
       toResourceDriveRequest.run({
-        drive_id: view.query.id,
         file_id: file.file_id,
+        drive_id: view.query.id,
       });
       fileMenu.hide();
     },
   });
-  const setEpisodeProfileItem = new MenuItemCore({
-    label: "设置剧集信息",
-    async onClick() {
-      if (!driveFileManage.virtualSelectedFolder) {
-        app.tip({
-          text: ["请先选择要设置的文件"],
-        });
-        return;
-      }
-      const [file] = driveFileManage.virtualSelectedFolder;
-      curFile.select(file);
-      episodeSelect.show();
-      fileMenu.hide();
-    },
-  });
-  const setMovieProfileItem = new MenuItemCore({
-    label: "设置电影信息",
-    async onClick() {
-      if (!driveFileManage.virtualSelectedFolder) {
-        app.tip({
-          text: ["请先选择要设置的文件"],
-        });
-        return;
-      }
-      const [file] = driveFileManage.virtualSelectedFolder;
-      curFile.select(file);
-      dialog2.show();
-      fileMenu.hide();
-    },
-  });
+  // const setEpisodeProfileItem = new MenuItemCore({
+  //   label: "设置剧集信息",
+  //   async onClick() {
+  //     if (!driveFileManage.virtualSelectedFolder) {
+  //       app.tip({
+  //         text: ["请先选择要设置的文件"],
+  //       });
+  //       return;
+  //     }
+  //     const [file] = driveFileManage.virtualSelectedFolder;
+  //     curFile.select(file);
+  //     episodeSelect.show();
+  //     fileMenu.hide();
+  //   },
+  // });
+  // const setMovieProfileItem = new MenuItemCore({
+  //   label: "设置电影信息",
+  //   async onClick() {
+  //     if (!driveFileManage.virtualSelectedFolder) {
+  //       app.tip({
+  //         text: ["请先选择要设置的文件"],
+  //       });
+  //       return;
+  //     }
+  //     const [file] = driveFileManage.virtualSelectedFolder;
+  //     curFile.select(file);
+  //     dialog2.show();
+  //     fileMenu.hide();
+  //   },
+  // });
   const driveSubMenu = new MenuCore({
     _name: "menus-of-drives",
     side: "right",
@@ -662,8 +661,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
         menu: driveSubMenu,
       }),
       toResourceDriveItem,
-      setEpisodeProfileItem,
-      setMovieProfileItem,
+      // setEpisodeProfileItem,
+      // setMovieProfileItem,
       folderDeletingItem,
     ],
     onHidden() {
