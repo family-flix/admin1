@@ -9,7 +9,7 @@ import { LazyImage } from "@/components/ui";
 import { RefCore } from "@/domains/cur";
 import { AliyunDriveFile, DriveCore } from "@/domains/drive";
 import { RequestCore } from "@/domains/request";
-import { bytes_to_size } from "@/utils";
+import { bytes_to_size, is_video_file } from "@/utils";
 import { MediaTypes } from "@/constants";
 
 export const DriveFileCard = (props: {
@@ -51,8 +51,12 @@ export const DriveFileCard = (props: {
     if (!store.value) {
       return;
     }
+    const file = store.value;
+    if (!is_video_file(file.name)) {
+      return;
+    }
     fileProfileRequest.run({
-      file_id: store.value.file_id,
+      file_id: file.file_id,
       drive_id: drive.id,
     });
   });
@@ -87,14 +91,16 @@ export const DriveFileCard = (props: {
                     <LazyImage class="w-[120px] h-[180px]" />
                   </div>
                   <div>
-                    <div>{profile()?.unknown_media?.name}</div>
-                    <div class="flex items-center">
-                      <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
-                      <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
-                    </div>
-                    <div>{profile()?.file_name}</div>
-                    <div>{profile()?.unknown_media?.episode_text}</div>
-                    <div>没有匹配到详情信息</div>
+                    <Show when={profile()?.unknown_media}>
+                      <div>{profile()?.unknown_media?.name}</div>
+                      <div class="flex items-center">
+                        <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
+                        <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
+                      </div>
+                      <div>{profile()?.file_name}</div>
+                      <div>{profile()?.unknown_media?.episode_text}</div>
+                      <div>没有匹配到详情信息</div>
+                    </Show>
                   </div>
                 </div>
               }

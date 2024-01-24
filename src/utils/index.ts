@@ -173,3 +173,9 @@ export function buildRegexp(value: string) {
     return Result.Err(e.message);
   }
 }
+
+export const video_file_type_regexp =
+  /\.[mM][kK][vV]$|\.[mM][pP]4$|\.[tT][sS]$|\.[fF][lL][vV]$|\.[rR][mM][vV][bB]$|\.[mM][oO][vV]$/;
+export function is_video_file(filename: string) {
+  return video_file_type_regexp.test(filename);
+}
