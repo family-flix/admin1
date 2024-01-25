@@ -37,7 +37,7 @@ import {
   homeIndexPage,
   homeMemberListPage,
   homeMovieListPage,
-  homeTVListPage,
+  homeSeasonListPage,
   homeTaskListPage,
   homeTransferPage,
   homeUnknownMediaLayout,
@@ -48,7 +48,7 @@ import {
   homeReportListPage,
   homeSubtitleListPage,
   homeUnknownTVPage,
-  invalidMediasPage,
+  homeInvalidMediaListPage,
   onJobsChange,
   syncTaskListPage,
 } from "@/store";
@@ -73,17 +73,6 @@ export const HomeLayout: ViewComponent = (props) => {
       });
     },
   });
-  const pushRequest = new RequestCore(pushMessageToMembers, {
-    onLoading(loading) {
-      pushDialog.okBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({
-        text: ["推送成功"],
-      });
-      pushDialog.hide();
-    },
-  });
   const expiredDeletingRequest = new RequestCore(fetchSettings, {
     onLoading(loading) {
       expiredDeletingBtn.setLoading(loading);
@@ -104,26 +93,6 @@ export const HomeLayout: ViewComponent = (props) => {
   });
   const fileSearchDialog = new FileSearcherCore({
     footer: false,
-  });
-  const pushInput = new InputCore({
-    defaultValue: "",
-    onEnter() {
-      pushDialog.okBtn.click();
-    },
-  });
-  const pushDialog = new DialogCore({
-    title: "群发消息",
-    onOk() {
-      if (!pushInput.value) {
-        app.tip({
-          text: ["请输入推送内容"],
-        });
-        return;
-      }
-      pushRequest.run({
-        content: pushInput.value,
-      });
-    },
   });
   const logoutBtn = new ButtonCore({
     async onClick() {
@@ -284,7 +253,7 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "电视剧",
       icon: <Tv class="w-6 h-6" />,
-      view: homeTVListPage,
+      view: homeSeasonListPage,
     },
     {
       text: "电影",
@@ -300,7 +269,7 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "待处理影视剧问题",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
-      view: invalidMediasPage,
+      view: homeInvalidMediaListPage,
     },
     {
       text: "集合管理",
@@ -343,13 +312,13 @@ export const HomeLayout: ViewComponent = (props) => {
         tmdbDialog.show();
       },
     },
-    {
-      text: "群发消息",
-      icon: <MessageCircle class="w-6 h-6" />,
-      onClick() {
-        pushDialog.show();
-      },
-    },
+    // {
+    //   text: "群发消息",
+    //   icon: <MessageCircle class="w-6 h-6" />,
+    //   onClick() {
+    //     pushDialog.show();
+    //   },
+    // },
     {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
@@ -360,11 +329,11 @@ export const HomeLayout: ViewComponent = (props) => {
       icon: <FolderInput class="w-6 h-6" />,
       view: homeTransferPage,
     },
-    {
-      text: "文件名解析",
-      icon: <FileSearch class="w-6 h-6" />,
-      view: homeFilenameParsingPage,
-    },
+    // {
+    //   text: "文件名解析",
+    //   icon: <FileSearch class="w-6 h-6" />,
+    //   view: homeFilenameParsingPage,
+    // },
   ]);
   const userDropdown = new DropdownMenuCore({
     align: "start",
@@ -498,18 +467,10 @@ export const HomeLayout: ViewComponent = (props) => {
             <div>转存忽略规则</div>
             <Textarea store={ignoreFilesRuleInput} />
           </div>
-          <div class="mt-4">
+          {/* <div class="mt-4">
             <div>其他</div>
             <Button store={expiredDeletingBtn}>清除失效视频源</Button>
-          </div>
-        </div>
-      </Dialog>
-      <Dialog store={pushDialog}>
-        <div class="w-[520px]">
-          <div>
-            <div>消息内容</div>
-            <Textarea store={pushInput} />
-          </div>
+          </div> */}
         </div>
       </Dialog>
     </>

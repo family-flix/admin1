@@ -4,6 +4,7 @@
 import { RouteViewCore, onViewCreated } from "@/domains/route_view";
 
 import { HomePage } from "@/pages/home";
+import { DriveListPage } from "@/pages/drive";
 import { TaskListPage } from "@/pages/job";
 import { PersonListPage } from "@/pages/person";
 import { TaskProfilePage } from "@/pages/job/profile";
@@ -11,7 +12,7 @@ import { DriveProfilePage } from "@/pages/drive/profile";
 import { SharedFilesTransferPage } from "@/pages/resource";
 import { MovieManagePage } from "@/pages/movie";
 import { MovieProfilePage } from "@/pages/movie/profile";
-import { TVManagePage } from "@/pages/season";
+import { SeasonListPage } from "@/pages/season";
 import { SeasonProfilePage } from "@/pages/season/profile";
 import { MediaPlayingPage } from "@/pages/play/index";
 import { UnknownMediaLayout } from "@/pages/unknown_media/layout";
@@ -54,6 +55,11 @@ export const homeIndexPage = new RouteViewCore({
   title: "首页",
   component: HomePage,
 });
+export const homeDriveListPage = new RouteViewCore({
+  key: "/home/drive",
+  title: "云盘详情",
+  component: DriveListPage,
+});
 export const driveProfilePage = new RouteViewCore({
   key: "/home/drive_profile",
   title: "云盘详情",
@@ -82,22 +88,19 @@ export const homeTVProfilePage = new RouteViewCore({
   // component: TVProfilePage,
   component: SeasonProfilePage,
 });
-export const homeTVListPage = new RouteViewCore({
+export const homeSeasonListPage = new RouteViewCore({
   key: "/home/tv",
   title: "电视剧列表",
-  // component: TVManagePage,
-  component: TVManagePage,
+  component: SeasonListPage,
 });
 export const homeMovieProfilePage = new RouteViewCore({
   key: "/home/movie_profile",
   title: "电影详情",
-  // component: MovieProfilePage,
   component: MovieProfilePage,
 });
 export const homeMovieListPage = new RouteViewCore({
   key: "/home/movie",
   title: "电影列表",
-  // component: MovieManagePage,
   component: MovieManagePage,
 });
 export const homeUnknownTVPage = new RouteViewCore({
@@ -196,7 +199,7 @@ export const outerProfilePage = new RouteViewCore({
   title: "搜索外部详情",
   component: OuterMediaProfilePage,
 });
-export const invalidMediasPage = new RouteViewCore({
+export const homeInvalidMediaListPage = new RouteViewCore({
   key: "/invalid_media",
   title: "待处理问题",
   component: InvalidMediaManagePage,
@@ -207,7 +210,8 @@ export const homeLayout = new RouteViewCore({
   component: HomeLayout,
   children: [
     homeIndexPage,
-    homeTVListPage,
+    homeDriveListPage,
+    homeSeasonListPage,
     homeTVProfilePage,
     homeMovieListPage,
     homeMovieProfilePage,
@@ -228,7 +232,7 @@ export const homeLayout = new RouteViewCore({
     homeSubtitleAddingPage,
     homeSubtitleListPage,
     homeFilenameParsingPage,
-    invalidMediasPage,
+    homeInvalidMediaListPage,
     outerProfilePage,
     driveProfilePage,
   ],

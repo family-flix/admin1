@@ -32,7 +32,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { DriveCore } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
-import { createJob, driveList, driveProfilePage, homeTVListPage } from "@/store";
+import { createJob, driveList, driveProfilePage, homeSeasonListPage } from "@/store";
 import { ViewComponent } from "@/types";
 import { MediaTypes } from "@/constants";
 
@@ -297,7 +297,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             <div
               class="p-1 cursor-pointer"
               onClick={() => {
-                app.showView(homeTVListPage);
+                app.showView(homeSeasonListPage);
               }}
             >
               <ArrowLeft class="w-6 h-6" />

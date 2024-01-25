@@ -25,6 +25,8 @@ export function fetchSyncTaskList(body: FetchParams & { in_production: number; i
       };
       drive: {
         id: string;
+        name: string;
+        avatar: string;
       };
     }>
   >("/api/v2/admin/sync_task/list", body);
@@ -76,6 +78,8 @@ export function fetchPartialSyncTask(params: { id: string }) {
     };
     drive: {
       id: string;
+      name: string;
+      avatar: string;
     };
   }>("/api/v2/admin/sync_task/partial", {
     id: params.id,

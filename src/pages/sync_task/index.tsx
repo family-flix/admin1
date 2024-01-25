@@ -2,7 +2,21 @@
  * @file 同步列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { ArrowUpCircle, Bell, ChevronRight, Folder, Pen, RotateCw, Search, Send, Smile, Trash } from "lucide-solid";
+import {
+  ArrowUpCircle,
+  Bell,
+  ChevronRight,
+  FileInput,
+  Folder,
+  FolderHeart,
+  HardDriveDownload,
+  Pen,
+  RotateCw,
+  Search,
+  Send,
+  Smile,
+  Trash,
+} from "lucide-solid";
 
 import {
   SyncTaskItem,
@@ -31,10 +45,9 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
-import { createJob, homeTVProfilePage } from "@/store";
+import { createJob, driveProfilePage, homeTVProfilePage } from "@/store";
 import { Result, ViewComponent } from "@/types";
 import { FileType } from "@/constants";
-import { Presence } from "@/components/ui/presence";
 
 export const SyncTaskListPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -460,9 +473,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
               <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
                 刷新
               </Button>
-              {/* <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={syncTaskCreateBtn}>
-                新增同步任务
-              </Button> */}
+              <Button class="" store={resetBtn}>
+                重置
+              </Button>
               <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={runTaskListBtn}>
                 同步所有文件夹
               </Button>
@@ -475,9 +488,6 @@ export const SyncTaskListPage: ViewComponent = (props) => {
               <Input class="" store={nameSearchInput} />
               <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
                 搜索
-              </Button>
-              <Button class="" store={resetBtn}>
-                重置
               </Button>
             </div>
             <div class="mt-4">
@@ -514,8 +524,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                 <div class="space-y-4">
                   <For each={syncTaskListState().dataSource}>
                     {(task) => {
-                      const { id, url, resource_file_name, invalid, drive_file_name, season } = task;
+                      const { id, url, resource_file_name, invalid, drive_file_name, season, drive } = task;
                       const name = `${resource_file_name} -> ${drive_file_name}`;
+                      const driveURL = driveProfilePage.buildUrlWithPrefix(drive);
                       const seasonURL = homeTVProfilePage.buildUrlWithPrefix(
                         season
                           ? {
@@ -534,9 +545,31 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                   <LazyImage class="w-[180px] h-[272px]" src={season?.poster_path} alt={name} />
                                 }
                               >
-                                <a href={seasonURL}>
-                                  <LazyImage class="w-[180px] h-[272px]" src={season?.poster_path} alt={name} />
-                                </a>
+                                <div class="relative">
+                                  <a href={seasonURL}>
+                                    <LazyImage class="w-[180px] h-[272px]" src={season?.poster_path} alt={name} />
+                                  </a>
+                                  <div class="absolute right-2 bottom-2 flex items-center space-x-4 mt-2 break-keep overflow-hidden">
+                                    <Show when={season}>
+                                      <Show
+                                        when={season?.cur_episode_count !== season?.episode_count}
+                                        fallback={
+                                          <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
+                                            <Smile class="w-4 h-4" />
+                                            <div>全{season?.episode_count}集</div>
+                                          </div>
+                                        }
+                                      >
+                                        <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
+                                          <Send class="w-4 h-4" />
+                                          <div>
+                                            {season?.cur_episode_count}/{season?.episode_count}
+                                          </div>
+                                        </div>
+                                      </Show>
+                                    </Show>
+                                  </div>
+                                </div>
                               </Show>
                             </div>
                             <div class="flex-1 w-0 p-4">
@@ -546,38 +579,31 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                 }}
                               >
                                 <div class="flex items-center">
-                                  <h2
-                                    classList={{
-                                      "text-2xl text-slate-800": true,
-                                    }}
-                                  >
-                                    {name}
-                                  </h2>
-                                </div>
-                                <div class="flex items-center space-x-4 mt-2 break-keep overflow-hidden">
-                                  <Show when={season}>
-                                    <Show
-                                      when={season?.cur_episode_count !== season?.episode_count}
-                                      fallback={
-                                        <div class="flex items-center space-x-1 px-2 border border-green-600 rounded-xl text-green-600">
-                                          <Smile class="w-4 h-4" />
-                                          <div>全{season?.episode_count}集</div>
-                                        </div>
-                                      }
-                                    >
-                                      <div class="flex items-center space-x-1 px-2 border border-blue-600 rounded-xl text-blue-600">
-                                        <Send class="w-4 h-4" />
-                                        <div>
-                                          {season?.cur_episode_count}/{season?.episode_count}
-                                        </div>
-                                      </div>
-                                    </Show>
-                                  </Show>
-                                </div>
-                                <div class="mt-2 text-slate-500">
-                                  <a href={url} target="_blank">
-                                    {url}
-                                  </a>
+                                  <div class="flex flex-1 flex-col items-center p-4 h-[132px] rounded-md bg-slate-100 border">
+                                    <div>
+                                      <FolderHeart class="w-8 h-8" />
+                                    </div>
+                                    <div class="mt-2">{resource_file_name}</div>
+                                    <div class="text-slate-500">
+                                      <a href={url} target="_blank">
+                                        {url}
+                                      </a>
+                                    </div>
+                                  </div>
+                                  <div class="mx-4">
+                                    <FileInput class="w-6 h-6 text-slate-800" />
+                                  </div>
+                                  <div class="flex flex-1 flex-col items-center p-4 h-[132px] rounded-md bg-slate-100 border">
+                                    <div>
+                                      <HardDriveDownload class="w-8 h-8" />
+                                    </div>
+                                    <div class="mt-2">{drive_file_name}</div>
+                                    <div class="text-slate-500">
+                                      <a href={driveURL} target="_blank">
+                                        {drive.name}
+                                      </a>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                               <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">

@@ -270,7 +270,7 @@ export const MovieManagePage: ViewComponent = (props) => {
   return (
     <>
       <ScrollView store={scrollView} class="h-screen p-8">
-        <h1 class="text-2xl">电影列表</h1>
+        <h1 class="text-2xl">电影列表({state().total})</h1>
         <div class="mt-8">
           <div class="flex items-center space-x-2">
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>

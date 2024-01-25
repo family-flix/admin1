@@ -30,8 +30,9 @@ type RequestState<T extends (...args: any[]) => Promise<Result<any>>> = {
   loading: boolean;
   response: UnpackedResult<Unpacked<ReturnType<T>>> | null;
 };
-type RequestProps<T> = {
+type RequestProps<T extends (...args: any[]) => Promise<Result<any>>> = {
   delay?: null | number;
+  defaultResponse?: UnpackedResult<Unpacked<ReturnType<T>>>;
   onSuccess: (v: T) => void;
   onFailed: (error: BizError) => void;
   onCompleted: () => void;
@@ -72,9 +73,12 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
       throw new Error("service must be a function");
     }
     this._service = service;
-    const { delay, onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
+    const { delay, defaultResponse, onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
     if (delay !== undefined) {
       this.delay = delay;
+    }
+    if (defaultResponse) {
+      this.response = defaultResponse;
     }
     if (onSuccess) {
       this.onSuccess(onSuccess);

@@ -55,7 +55,7 @@ import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
 
-export const TVManagePage: ViewComponent = (props) => {
+export const SeasonListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const seasonList = new ListCore(new RequestCore(fetchSeasonMediaList), {

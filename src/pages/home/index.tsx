@@ -1,9 +1,10 @@
 /**
  * @file 管理后台首页(云盘列表)
  */
-import { createSignal, For } from "solid-js";
-import { RotateCcw, HardDrive, Search } from "lucide-solid";
+import { createSignal, For, Show } from "solid-js";
+import { RotateCcw, HardDrive, Search, Send, FileSearch } from "lucide-solid";
 
+import { fetchDashboard } from "@/services/common";
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
@@ -13,7 +14,17 @@ import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
 import { code_get_drive_token, DriveTypes } from "@/constants";
 import { ViewComponent } from "@/types";
-import { driveProfilePage } from "@/store";
+import {
+  driveProfilePage,
+  homeDriveListPage,
+  homeIndexPage,
+  homeMovieListPage,
+  homeReportListPage,
+  homeSeasonListPage,
+  homeInvalidMediaListPage,
+} from "@/store";
+import { pushMessageToMembers } from "@/services";
+import { FilenameParserCore } from "@/components/FilenameParser";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -21,6 +32,36 @@ export const HomePage: ViewComponent = (props) => {
   const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
     search: {
       hidden: 0,
+    },
+  });
+  const dashboardRequest = new RequestCore(fetchDashboard, {
+    defaultResponse: {
+      drive_count: 0,
+      drive_total_size_count: 0,
+      drive_total_size_count_text: 0,
+      drive_used_size_count: 0,
+      drive_used_size_count_text: 0,
+      movie_count: 0,
+      tv_count: 0,
+      season_count: 0,
+      episode_count: 0,
+      sync_task_count: 0,
+      report_count: 0,
+      media_request_count: 0,
+      invalid_season_count: 0,
+      invalid_sync_task_count: 0,
+      updated_at: null,
+    },
+  });
+  const pushRequest = new RequestCore(pushMessageToMembers, {
+    onLoading(loading) {
+      pushDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({
+        text: ["推送成功"],
+      });
+      pushDialog.hide();
     },
   });
   const driveCreateRequest = new RequestCore(addAliyunDrive, {
@@ -63,6 +104,26 @@ export const HomePage: ViewComponent = (props) => {
       });
     },
   });
+  const pushInput = new InputCore({
+    defaultValue: "",
+    onEnter() {
+      pushDialog.okBtn.click();
+    },
+  });
+  const pushDialog = new DialogCore({
+    title: "群发消息",
+    onOk() {
+      if (!pushInput.value) {
+        app.tip({
+          text: ["请输入推送内容"],
+        });
+        return;
+      }
+      pushRequest.run({
+        content: pushInput.value,
+      });
+    },
+  });
   const refreshBtn = new ButtonCore({
     onClick() {
       driveList.refresh();
@@ -87,6 +148,11 @@ export const HomePage: ViewComponent = (props) => {
       searchBtn.click();
     },
   });
+  const filenameParseDialog = new DialogCore({
+    title: "文件名解析",
+    footer: false,
+  });
+  const filenameParser = new FilenameParserCore({});
   const resetBtn = new ButtonCore({
     onClick() {
       driveList.reset();
@@ -99,6 +165,8 @@ export const HomePage: ViewComponent = (props) => {
   });
 
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  const [dashboard, setDashboard] = createSignal(dashboardRequest.response);
+  const [info, setInfo] = createSignal(filenameParser.state);
 
   driveList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
@@ -106,113 +174,183 @@ export const HomePage: ViewComponent = (props) => {
   driveList.onStateChange((nextState) => {
     setDriveResponse(nextState);
   });
+  dashboardRequest.onResponseChange((v) => {
+    setDashboard(v);
+  });
+  filenameParser.onStateChange((nextState) => {
+    setInfo(nextState);
+  });
+
   driveList.initAny();
+  dashboardRequest.run();
 
   return (
     <>
       <ScrollView store={scrollView} class="h-screen p-8 whitespace-nowrap">
         <div class="flex items-center space-x-4">
-          <h1 class="text-2xl">云盘列表</h1>
+          <h1 class="text-2xl">
+            <div>数据统计</div>
+          </h1>
+          <Show when={dashboard()}>
+            <div>{dashboard()?.updated_at}</div>
+          </Show>
         </div>
         <div class="mt-8">
-          <div class="flex items-center space-x-2">
-            <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
-              刷新
-            </Button>
-            <Button class="" store={resetBtn}>
-              重置
-            </Button>
-            <Button store={driveCreateBtn} icon={<HardDrive class="w-4 h-4" />}>
-              新增云盘
-            </Button>
-          </div>
-          <div class="mt-4 space-x-2">
-            <div class="flex items-center space-x-2">
-              <Checkbox store={allDriveCheckbox}></Checkbox>
-              <span>全部内容</span>
-            </div>
-          </div>
-          <div class="flex items-center space-x-2 mt-4">
-            <Input class="" store={nameSearchInput} />
-            <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
-              搜索
-            </Button>
-          </div>
-          <ListView
-            store={driveList}
-            skeleton={
-              <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2">
-                <div class="relative p-4 bg-white rounded-xl border border-1">
-                  <div class="flex">
-                    <Skeleton class="w-16 h-16 mr-4 rounded"></Skeleton>
-                    <div class="flex-1 pr-12">
-                      <Skeleton class="h-[24px]"></Skeleton>
-                      <Skeleton class="mt-2 h-[18px]"></Skeleton>
-                      <Skeleton class="mt-2 h-[24px]"></Skeleton>
-                      <div class="flex items-center mt-4 space-x-2">
-                        <Skeleton class="w-[56px] h-[28px]"></Skeleton>
-                        <Skeleton class="w-[56px] h-[28px]"></Skeleton>
-                      </div>
-                    </div>
-                  </div>
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-8 p-4 rounded-md border bg-white">
+              <div>
+                <div class="text-lg">云盘信息</div>
+              </div>
+              <div class="flex items-center mt-4">
+                <div class="w-[240px]">
+                  <div class="text-3xl">{dashboard()?.drive_total_size_count_text}</div>
+                  <div class="text-slate-800">云盘总容量</div>
+                </div>
+                <div class="w-[240px]">
+                  <div class="text-3xl">{dashboard()?.drive_used_size_count_text}</div>
+                  <div class="text-slate-800">云盘已用容量</div>
+                </div>
+                <div
+                  class="w-[240px] cursor-pointer"
+                  onClick={() => {
+                    app.showView(homeDriveListPage);
+                  }}
+                >
+                  <div class="text-3xl">{dashboard()?.drive_count}</div>
+                  <div class="text-slate-800">云盘总数</div>
                 </div>
               </div>
-            }
-          >
-            <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2">
-              <For each={driveResponse().dataSource}>
-                {(drive) => {
-                  const { name, avatar, used_percent, used_size } = drive.state;
-                  return (
-                    <DriveCard
-                      app={app}
-                      store={drive}
-                      onRefresh={() => {
-                        driveList.refresh();
-                      }}
-                      onClick={() => {
-                        driveProfilePage.query = {
-                          id: drive.id,
-                          name,
-                          avatar,
-                        };
-                        app.showView(driveProfilePage);
-                      }}
-                    />
-                  );
-                }}
-              </For>
             </div>
-          </ListView>
-        </div>
-      </ScrollView>
-      <Dialog store={driveCreateDialog}>
-        <div class="w-[520px] p-4">
-          <p>1、在网页端登录阿里云盘</p>
-          <p
-            onClick={() => {
-              app.copy(code_get_drive_token);
-              app.tip({ text: ["复制成功"] });
-            }}
-          >
-            2、点击复制下面代码
-          </p>
-          <div
-            class="mt-2 border rounded-sm bg-gray-200"
-            onClick={() => {
-              app.copy(code_get_drive_token);
-              app.tip({ text: ["复制成功"] });
-            }}
-          >
-            <div class="relative p-2">
-              <div class="overflow-y-auto h-[120px] break-all whitespace-pre-wrap">{code_get_drive_token}</div>
+            <div class="col-span-4 p-4 rounded-md border bg-white">
+              <div>
+                <div class="text-lg">媒体信息</div>
+              </div>
+              <div class="flex items-center mt-4">
+                <div
+                  class="w-[240px] cursor-pointer"
+                  onClick={() => {
+                    app.showView(homeSeasonListPage);
+                  }}
+                >
+                  <div class="text-3xl">{dashboard()?.season_count}</div>
+                  <div class="text-slate-800">电视剧</div>
+                </div>
+                <div
+                  class="w-[240px] cursor-pointer"
+                  onClick={() => {
+                    app.showView(homeMovieListPage);
+                  }}
+                >
+                  <div class="text-3xl">{dashboard()?.movie_count}</div>
+                  <div class="text-slate-800">电影</div>
+                </div>
+              </div>
             </div>
           </div>
-          <p>3、回到已登录的阿里云盘页面，在浏览器「地址栏」手动输入 `javascript:`</p>
-          <p>4、紧接着粘贴复制的代码并回车</p>
-          <p>5、将得到的代码粘贴到下方输入框，点击确认即可</p>
+          <div class="mt-4 p-4 rounded-md border bg-white">
+            <div>
+              <div class="text-lg">待处理问题</div>
+            </div>
+            <div class="flex items-center mt-4">
+              <div
+                class="w-[240px] cursor-pointer"
+                onClick={() => {
+                  app.showView(homeInvalidMediaListPage);
+                }}
+              >
+                <div class="text-3xl">{dashboard()?.invalid_season_count}</div>
+                <div class="text-slate-800">问题影视剧</div>
+              </div>
+              <div
+                class="w-[240px] cursor-pointer"
+                onClick={() => {
+                  app.showView(homeInvalidMediaListPage);
+                }}
+              >
+                <div class="text-3xl">{dashboard()?.invalid_sync_task_count}</div>
+                <div class="text-slate-800">问题资源同步任务</div>
+              </div>
+              <div
+                class="w-[240px] cursor-pointer"
+                onClick={() => {
+                  app.showView(homeReportListPage);
+                }}
+              >
+                <div class="text-3xl">{dashboard()?.media_request_count}</div>
+                <div class="text-slate-800">用户想看</div>
+              </div>
+              <div
+                class="w-[240px] cursor-pointer"
+                onClick={() => {
+                  app.showView(homeReportListPage);
+                }}
+              >
+                <div class="text-3xl">{dashboard()?.report_count}</div>
+                <div class="text-slate-800">用户反馈</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-8">
+            <h1 class="text-2xl">
+              <div>常用工具</div>
+            </h1>
+            <div class="mt-4 flex items-center space-x-2">
+              <div class=" relative">
+                <div
+                  class="flex flex-col items-center p-4 rounded-md bg-white border cursor-pointer"
+                  onClick={() => {
+                    pushDialog.show();
+                  }}
+                >
+                  <Send class="w-6 h-6" />
+                </div>
+                <div class="mt-2 break-all text-sm text-center">消息推送</div>
+              </div>
+              <div class=" relative">
+                <div
+                  class="flex flex-col items-center p-4 rounded-md bg-white border cursor-pointer"
+                  onClick={() => {
+                    filenameParseDialog.show();
+                  }}
+                >
+                  <FileSearch class="w-6 h-6" />
+                </div>
+                <div class="mt-2 break-all text-sm text-center">文件名解析</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <Textarea store={driveTokenInput} />
+      </ScrollView>
+      <Dialog store={pushDialog}>
+        <div class="w-[520px]">
+          <div>
+            <div>消息内容</div>
+            <Textarea store={pushInput} />
+          </div>
+        </div>
+      </Dialog>
+      <Dialog store={filenameParseDialog}>
+        <div class="w-[520px]">
+          <div class="flex items-center space-x-2">
+            <Input store={filenameParser.input} />
+            <Button store={filenameParser.btn} class="btn btn--primary btn--block">
+              解析
+            </Button>
+          </div>
+          <div class="mt-4">
+            <For each={info().fields}>
+              {(field) => {
+                return (
+                  <div class="flex align-middle">
+                    <div class="align-left min-w-[114px]">{field.label}</div>
+                    <span>：</span>
+                    <div class="align-left w-full break-all whitespace-pre-wrap">{field.text}</div>
+                  </div>
+                );
+              }}
+            </For>
+          </div>
+        </div>
       </Dialog>
     </>
   );
