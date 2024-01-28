@@ -2,11 +2,22 @@
  * @file 管理后台首页(云盘列表)
  */
 import { createSignal, For, Show } from "solid-js";
-import { RotateCcw, HardDrive, Search, Send, FileSearch } from "lucide-solid";
+import {
+  RotateCcw,
+  HardDrive,
+  Search,
+  Send,
+  FileSearch,
+  Loader2,
+  Loader,
+  RefreshCcw,
+  AlertTriangle,
+} from "lucide-solid";
 
-import { fetchDashboard } from "@/services/common";
-import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
+import { fetchDashboard, fetchMediaRecentlyCreated, refreshDashboard } from "@/services/common";
+import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
+import { ImageCore, ImageInListCore } from "@/domains/ui/image";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { addAliyunDrive } from "@/domains/drive";
@@ -25,6 +36,8 @@ import {
 } from "@/store";
 import { pushMessageToMembers } from "@/services";
 import { FilenameParserCore } from "@/components/FilenameParser";
+import { DynamicContent } from "@/components/DynamicContent";
+import { DynamicContentCore } from "@/domains/ui/dynamic-content";
 
 export const HomePage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -38,9 +51,9 @@ export const HomePage: ViewComponent = (props) => {
     defaultResponse: {
       drive_count: 0,
       drive_total_size_count: 0,
-      drive_total_size_count_text: 0,
+      drive_total_size_count_text: "0",
       drive_used_size_count: 0,
-      drive_used_size_count_text: 0,
+      drive_used_size_count_text: "0",
       movie_count: 0,
       tv_count: 0,
       season_count: 0,
@@ -53,6 +66,7 @@ export const HomePage: ViewComponent = (props) => {
       updated_at: null,
     },
   });
+  const mediaListRecentlyCreated = new ListCore(new RequestCore(fetchMediaRecentlyCreated));
   const pushRequest = new RequestCore(pushMessageToMembers, {
     onLoading(loading) {
       pushDialog.okBtn.setLoading(loading);
@@ -76,6 +90,14 @@ export const HomePage: ViewComponent = (props) => {
     },
     onFailed(error) {
       app.tip({ text: ["添加云盘失败", error.message] });
+    },
+  });
+  const refreshRequest = new RequestCore(refreshDashboard, {
+    onSuccess() {
+      app.tip({
+        text: ["刷新成功"],
+      });
+      dashboardRequest.reload();
     },
   });
   const driveCreateDialog = new DialogCore({
@@ -158,21 +180,29 @@ export const HomePage: ViewComponent = (props) => {
       driveList.reset();
     },
   });
+  const poster = new ImageInListCore({});
+  const refreshIcon = new DynamicContentCore({
+    value: 1,
+  });
   const scrollView = new ScrollViewCore({
     onReachBottom() {
       driveList.loadMore();
     },
   });
 
-  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  // const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [dashboard, setDashboard] = createSignal(dashboardRequest.response);
   const [info, setInfo] = createSignal(filenameParser.state);
+  const [mediaResponse, setMediaResponse] = createSignal(mediaListRecentlyCreated.response);
 
   driveList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
-  driveList.onStateChange((nextState) => {
-    setDriveResponse(nextState);
+  // driveList.onStateChange((nextState) => {
+  //   setDriveResponse(nextState);
+  // });
+  mediaListRecentlyCreated.onStateChange((v) => {
+    setMediaResponse(v);
   });
   dashboardRequest.onResponseChange((v) => {
     setDashboard(v);
@@ -181,7 +211,8 @@ export const HomePage: ViewComponent = (props) => {
     setInfo(nextState);
   });
 
-  driveList.initAny();
+  // driveList.initAny();
+  mediaListRecentlyCreated.init();
   dashboardRequest.run();
 
   return (
@@ -191,9 +222,40 @@ export const HomePage: ViewComponent = (props) => {
           <h1 class="text-2xl">
             <div>数据统计</div>
           </h1>
-          <Show when={dashboard()}>
-            <div>{dashboard()?.updated_at}</div>
-          </Show>
+          <div class="flex items-center space-x-2">
+            <Show when={dashboard()}>
+              <div>{dashboard()?.updated_at}</div>
+              <div
+                onClick={async () => {
+                  refreshIcon.show(2);
+                  const r = await refreshRequest.run();
+                  if (r.error) {
+                    refreshIcon.show(3);
+                    return;
+                  }
+                  refreshIcon.show(1);
+                }}
+              >
+                <DynamicContent
+                  store={refreshIcon}
+                  options={[
+                    {
+                      value: 1,
+                      content: <RefreshCcw class="w-4 h-4 cursor-pointer" />,
+                    },
+                    {
+                      value: 2,
+                      content: <RefreshCcw class="w-4 h-4 animate animate-spin" />,
+                    },
+                    {
+                      value: 3,
+                      content: <AlertTriangle class="w-4 h-4" />,
+                    },
+                  ]}
+                />
+              </div>
+            </Show>
+          </div>
         </div>
         <div class="mt-8">
           <div class="grid grid-cols-12 gap-4">
@@ -288,6 +350,33 @@ export const HomePage: ViewComponent = (props) => {
                 <div class="text-3xl">{dashboard()?.report_count}</div>
                 <div class="text-slate-800">用户反馈</div>
               </div>
+            </div>
+          </div>
+          <div class="mt-8">
+            <h1 class="text-2xl">
+              <div>今日新增剧集</div>
+            </h1>
+            <div class="mt-4 h-[360px] p-4 rounded-md border bg-white">
+              <ListView class="" store={mediaListRecentlyCreated}>
+                <div class="space-y-2">
+                  <For each={mediaResponse().dataSource}>
+                    {(media) => {
+                      const { name, poster_path, text } = media;
+                      return (
+                        <div class="flex items-center p-2">
+                          <div class="mr-2">
+                            <LazyImage class="w-[32px] h-[52px]" store={poster.bind(poster_path)} />
+                          </div>
+                          <div>
+                            <div>{name}</div>
+                            <div class="mt-2 text-sm">{text}</div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  </For>
+                </div>
+              </ListView>
             </div>
           </div>
           <div class="mt-8">

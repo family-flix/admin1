@@ -5,7 +5,15 @@ import { For, createSignal } from "solid-js";
 import { Calendar } from "lucide-solid";
 
 import { BaseDomain, Handler } from "@/domains/base";
-import { ButtonCore, DialogCore, DialogProps, InputCore, PresenceCore, ScrollViewCore } from "@/domains/ui";
+import {
+  ButtonCore,
+  DialogCore,
+  DialogProps,
+  ImageInListCore,
+  InputCore,
+  PresenceCore,
+  ScrollViewCore,
+} from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
@@ -205,6 +213,9 @@ export class EpisodeSelectCore extends BaseDomain<TheTypesOfEvents> {
 export const EpisodeSelect = (props: { store: EpisodeSelectCore }) => {
   const { store } = props;
 
+  const seriesPoster = new ImageInListCore({});
+  const seasonPoster = new ImageInListCore({});
+
   const [tvListResponse, setTVListResponse] = createSignal(store.tvListResponse);
   const [tvProfileResponse, setTVProfile] = createSignal(store.tvProfile);
   const [seasonProfileResponse, setSeasonProfile] = createSignal(store.seasonProfile);
@@ -265,7 +276,7 @@ export const EpisodeSelect = (props: { store: EpisodeSelectCore }) => {
                     >
                       <div class="flex">
                         <div class="overflow-hidden mr-2 rounded-sm">
-                          <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
+                          <LazyImage class="w-[120px] h-[180px]" store={seriesPoster.bind(poster_path)} alt={name} />
                         </div>
                         <div class="flex-1 w-0 p-4">
                           <div class="flex items-center">
@@ -313,7 +324,7 @@ export const EpisodeSelect = (props: { store: EpisodeSelectCore }) => {
                 >
                   <div class="flex">
                     <div class="overflow-hidden mr-2 rounded-sm">
-                      <LazyImage class="w-[60px]" src={poster_path} alt={name} />
+                      <LazyImage class="w-[60px]" store={seasonPoster.bind(poster_path)} alt={name} />
                     </div>
                     <div class="flex-1 w-0 p-2">
                       <div class="flex items-center">

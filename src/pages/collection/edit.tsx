@@ -4,7 +4,7 @@ import { Film, Tv2, X } from "lucide-solid";
 import { Button, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { MovieSelect } from "@/components/MovieSelect";
 import { SeasonSelect } from "@/components/SeasonSelect";
-import { ButtonCore } from "@/domains/ui";
+import { ButtonCore, ImageInListCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
 
 import { CollectionFormCore } from "./core";
@@ -15,6 +15,12 @@ export const CollectionEditPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const collectionForm = new CollectionFormCore({});
+  const poster = new ImageInListCore({});
+  const submitBtn = new ButtonCore({
+    onClick() {
+      collectionForm.edit(view.query.id);
+    },
+  });
 
   const [state, setState] = createSignal(collectionForm.state);
 
@@ -27,13 +33,6 @@ export const CollectionEditPage: ViewComponent = (props) => {
   collectionForm.onTip((msg) => {
     app.tip(msg);
   });
-
-  const submitBtn = new ButtonCore({
-    onClick() {
-      collectionForm.edit(view.query.id);
-    },
-  });
-
   collectionForm.profileRequest.run({
     collection_id: view.query.id,
   });
@@ -93,7 +92,7 @@ export const CollectionEditPage: ViewComponent = (props) => {
                         return (
                           <div class="relative">
                             <div class="">
-                              <LazyImage class="w-[78px] rounded-sm" src={poster_path} />
+                              <LazyImage class="w-[78px] rounded-sm" store={poster.bind(poster_path)} />
                             </div>
                             <div class="mt-2">
                               <div>{name}</div>

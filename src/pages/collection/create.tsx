@@ -7,7 +7,7 @@ import { Film, Tv2, X } from "lucide-solid";
 import { Button, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { MovieSelect } from "@/components/MovieSelect";
 import { SeasonSelect } from "@/components/SeasonSelect";
-import { ButtonCore } from "@/domains/ui";
+import { ButtonCore, ImageInListCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
 
 import { CollectionFormCore } from "./core";
@@ -18,6 +18,7 @@ export const CollectionCreatePage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const collectionForm = new CollectionFormCore({});
+  const poster = new ImageInListCore({});
 
   const [state, setState] = createSignal(collectionForm.state);
 
@@ -92,7 +93,7 @@ export const CollectionCreatePage: ViewComponent = (props) => {
                         return (
                           <div class="relative">
                             <div class="relative">
-                              <LazyImage class="w-[78px] rounded-sm" src={poster_path} />
+                              <LazyImage class="w-[78px] rounded-sm" store={poster.bind(poster_path)} />
                               <div class="absolute left-0 top-0">{type === 1 ? "电视剧" : "电影"}</div>
                             </div>
                             <div class="mt-2">

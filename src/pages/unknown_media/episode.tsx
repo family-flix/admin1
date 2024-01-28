@@ -13,7 +13,15 @@ import { delete_unknown_episode } from "@/services";
 import { renameFile } from "@/domains/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
-import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import {
+  ButtonCore,
+  ButtonInListCore,
+  DialogCore,
+  ImageCore,
+  ImageInListCore,
+  InputCore,
+  ScrollViewCore,
+} from "@/domains/ui";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
@@ -260,6 +268,10 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
       list.loadMore();
     },
   });
+  const poster = new ImageInListCore({});
+  const folderImg = new ImageCore({
+    src: "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png",
+  });
 
   const [response, setResponse] = createSignal(list.response);
 
@@ -313,16 +325,11 @@ export const UnknownEpisodePage: ViewComponent = (props) => {
                         when={profile}
                         fallback={
                           <div class="w-full rounded">
-                            <LazyImage
-                              class="max-w-full max-h-full object-contain"
-                              src={(() => {
-                                return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
-                              })()}
-                            />
+                            <LazyImage class="max-w-full max-h-full object-contain" store={folderImg} />
                           </div>
                         }
                       >
-                        <LazyImage class="w-full" src={profile?.poster_path} />
+                        <LazyImage class="w-full" store={poster.bind(profile?.poster_path)} />
                         <div>{profile?.name}</div>
                       </Show>
                     </div>

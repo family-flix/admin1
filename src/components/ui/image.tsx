@@ -8,12 +8,14 @@ import { ImageCore, ImageStep } from "@/domains/ui/image";
 import { connect } from "@/domains/ui/image/connect.web";
 import { cn } from "@/utils";
 
-export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttributes<HTMLImageElement>) {
+export function LazyImage(props: { store: ImageCore; alt?: string } & JSX.HTMLAttributes<HTMLImageElement>) {
+  const { store } = props;
+
   let $img: HTMLImageElement | undefined = undefined;
 
-  const image = new ImageCore({ width: 200, height: 100, src: props.src, alt: props.alt });
-  const [state, setState] = createSignal(image.state);
-  image.onStateChange((nextState) => {
+  const [state, setState] = createSignal(store.state);
+
+  store.onStateChange((nextState) => {
     // console.log("[COMPONENT]LazyImage - image.onStateChange", nextState);
     setState(nextState);
   });
@@ -21,38 +23,36 @@ export function LazyImage(props: { src?: string; alt?: string } & JSX.HTMLAttrib
     if (!$img) {
       return;
     }
-    connect($img, image);
+    connect($img, store);
   });
-  effect(() => {
-    if (!props.src) {
-      return;
-    }
-    image.updateSrc(props.src);
-  });
+  // effect(() => {
+  //   if (!props.src) {
+  //     return;
+  //   }
+  //   store.updateSrc(props.src);
+  // });
 
   return (
-    <Switch>
-      <Match when={state().step === ImageStep.Failed}>
-        <div class={cn(props.class, "flex items-center justify-center bg-slate-200")}>
+    <div ref={$img} class={cn(props.class, "flex items-center justify-center bg-slate-200")}>
+      <Switch>
+        <Match when={state().step === ImageStep.Failed}>
           <ImageOff class="w-8 h-8 text-slate-500" />
-        </div>
-      </Match>
-      <Match when={state().step === ImageStep.Pending}>
-        <div ref={$img} class={cn(props.class, "flex items-center justify-center bg-slate-200")}>
+        </Match>
+        <Match when={state().step === ImageStep.Pending}>
           <Image class="w-8 h-8 text-slate-500" />
-        </div>
-      </Match>
-      <Match when={[ImageStep.Loading, ImageStep.Loaded].includes(state().step)}>
-        <img
-          class={props.class}
-          style={{ "object-fit": state().fit }}
-          src={state().src}
-          alt={state().alt}
-          onError={() => {
-            image.handleError();
-          }}
-        />
-      </Match>
-    </Switch>
+        </Match>
+        <Match when={[ImageStep.Loading, ImageStep.Loaded].includes(state().step)}>
+          <img
+            class={props.class}
+            style={{ "object-fit": state().fit }}
+            src={state().src}
+            alt={state().alt}
+            onError={() => {
+              store.handleError();
+            }}
+          />
+        </Match>
+      </Switch>
+    </div>
   );
 }

@@ -84,6 +84,7 @@ export type ListResponse<T> = {
 export type ListResponseWithCursor<T> = {
   page_size: number;
   next_marker?: string;
+  total: number;
   list: T[];
 };
 

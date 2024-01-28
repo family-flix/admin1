@@ -1,3 +1,6 @@
+/**
+ * @file 文件管理器
+ */
 import { BaseDomain, Handler } from "@/domains/base";
 
 enum Events {}

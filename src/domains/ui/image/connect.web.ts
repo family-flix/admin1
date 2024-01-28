@@ -1,6 +1,6 @@
 import { ImageCore } from ".";
 
-export function connect($img: HTMLImageElement, store: ImageCore) {
+export function connect($img: HTMLDivElement, store: ImageCore) {
   const io = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -19,6 +19,5 @@ export function connect($img: HTMLImageElement, store: ImageCore) {
     { threshold: 0.01 }
   );
   io.observe($img);
-
-  store.onStartLoad(() => {});
+  // store.onStartLoad(() => {});
 }

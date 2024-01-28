@@ -13,7 +13,7 @@ import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
-import { DialogCore, PresenceCore } from "@/domains/ui";
+import { DialogCore, ImageInListCore, PresenceCore } from "@/domains/ui";
 import { MediaSearchCore } from "@/domains/media_search";
 import { MediaTypes } from "@/constants";
 import { prepareEpisodeList, prepareSeasonList } from "@/services/media_profile";
@@ -78,6 +78,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
       store.unSelect();
     },
   });
+  const poster = new ImageInListCore({});
   const scrollView = new ScrollViewCore({
     // onScroll(pos) {
     //   console.log('scroll', pos);
@@ -185,7 +186,11 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                     }}
                   >
                     <div class="flex">
-                      <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
+                      <LazyImage
+                        class="w-[120px] rounded-sm object-fit mr-4"
+                        store={poster.bind(poster_path)}
+                        alt={name}
+                      />
                       <div class="flex-1 overflow-hidden text-ellipsis">
                         <div class="text-2xl">{name}</div>
                         <div class="text-slate-500">{original_name}</div>

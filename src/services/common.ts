@@ -99,3 +99,20 @@ export function fetchDashboard() {
     updated_at: string;
   }>("/api/v2/admin/dashboard", {});
 }
+
+export function refreshDashboard() {
+  return request.post("/api/v2/admin/dashboard/refresh", {});
+}
+
+export function fetchMediaRecentlyCreated(params: FetchParams) {
+  return request.post<
+    ListResponseWithCursor<{
+      id: string;
+      media_id: string;
+      name: string;
+      poster_path: string;
+      air_date: string;
+      text: string;
+    }>
+  >("/api/v2/admin/dashboard/added_media", params);
+}

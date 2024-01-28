@@ -8,7 +8,16 @@ import { UnknownSeasonMediaItem, fetchUnknownMediaList, setParsedMediaProfile } 
 import { deleteUnknownTV } from "@/services";
 import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { ButtonCore, ButtonInListCore, CheckboxCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import {
+  ButtonCore,
+  ButtonInListCore,
+  CheckboxCore,
+  DialogCore,
+  ImageCore,
+  ImageInListCore,
+  InputCore,
+  ScrollViewCore,
+} from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
@@ -158,6 +167,10 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
   const mediaSearch = new TMDBSearcherCore({
     // type: MediaTypes.Season,
   });
+  const poster = new ImageInListCore({});
+  const folderImg = new ImageCore({
+    src: "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png",
+  });
 
   const [response, setResponse] = createSignal(list.response);
   const [cur, setCur] = createSignal(seasonRef.value);
@@ -223,19 +236,17 @@ export const UnknownSeasonMediaPage: ViewComponent = (props) => {
                         fallback={
                           <div>
                             <div class="w-full rounded">
-                              <LazyImage class="max-w-full max-h-full object-contain" src={profile?.poster_path} />
+                              <LazyImage
+                                class="max-w-full max-h-full object-contain"
+                                store={poster.bind(profile?.poster_path)}
+                              />
                             </div>
                             <div>{profile?.name}</div>
                           </div>
                         }
                       >
                         <div class="w-full rounded">
-                          <LazyImage
-                            class="max-w-full max-h-full object-contain"
-                            src={(() => {
-                              return "https://img.alicdn.com/imgextra/i1/O1CN01rGJZac1Zn37NL70IT_!!6000000003238-2-tps-230-180.png";
-                            })()}
-                          />
+                          <LazyImage class="max-w-full max-h-full object-contain" store={folderImg} />
                         </div>
                       </Show>
                     </div>

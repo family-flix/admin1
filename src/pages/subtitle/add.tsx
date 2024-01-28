@@ -6,7 +6,15 @@ import { ChevronRight, Eye, Folder, FolderInput, Loader, MoreHorizontal, Scroll,
 
 import { batchUploadSubtitles, validateSubtitleFiles } from "@/services";
 import { Button, Dialog, DropdownMenu, Input, LazyImage, ScrollView } from "@/components/ui";
-import { ButtonCore, DialogCore, ScrollViewCore, SelectCore, SelectInListCore, InputInListCore } from "@/domains/ui";
+import {
+  ButtonCore,
+  DialogCore,
+  ScrollViewCore,
+  SelectCore,
+  SelectInListCore,
+  InputInListCore,
+  ImageCore,
+} from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { createJob } from "@/store";
@@ -161,6 +169,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
         });
         return;
       }
+      poster.setURL(movie.poster_path);
       curMedia.select({
         id: movie.id,
         type: MediaTypes.Movie,
@@ -305,6 +314,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
   });
   const fileReader = new SubtitleReaderCore({});
   const scrollView = new ScrollViewCore();
+  const poster = new ImageCore({});
 
   const [state, setState] = createSignal(uploadZone.state);
   const [selectedMedia, setSelectedSeason] = createSignal(curMedia.value);
@@ -337,7 +347,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
             >
               <div class="flex">
                 <div class="w-[120px] mr-4">
-                  <LazyImage src={selectedMedia()?.poster_path} />
+                  <LazyImage store={poster} />
                 </div>
                 <div class="flex-1">
                   <div>{selectedMedia()?.name}</div>

@@ -6,7 +6,7 @@ import { Calendar, Send, Smile } from "lucide-solid";
 
 import { SeasonMediaItem, fetchSeasonMediaList } from "@/services/media";
 import { BaseDomain, Handler } from "@/domains/base";
-import { ButtonCore, DialogCore, DialogProps, InputCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, DialogCore, DialogProps, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
@@ -119,6 +119,7 @@ export const SeasonSelect = (props: { store: TVSeasonSelectCore }) => {
   const [tvListResponse, setTVListResponse] = createSignal(store.response);
   const [curSeason, setCurSeason] = createSignal(store.value);
 
+  const poster = new ImageInListCore({});
   const scrollView = new ScrollViewCore({
     onReachBottom() {
       store.list.loadMore();
@@ -182,7 +183,7 @@ export const SeasonSelect = (props: { store: TVSeasonSelectCore }) => {
                   >
                     <div class="flex">
                       <div class="overflow-hidden mr-2 rounded-sm">
-                        <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
+                        <LazyImage class="w-[120px] h-[180px]" store={poster.bind(poster_path)} alt={name} />
                       </div>
                       <div class="flex-1 w-0 p-4">
                         <div class="flex items-center">

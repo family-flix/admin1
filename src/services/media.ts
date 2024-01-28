@@ -388,8 +388,9 @@ export async function fetchInvalidMediaList(body: FetchParams) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
-  const { next_marker, list } = r.data;
+  const { next_marker, total, list } = r.data;
   return Result.Ok({
+    total,
     next_marker,
     list: list.map((tip) => {
       const { id, type, media, tips } = tip;

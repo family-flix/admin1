@@ -8,7 +8,7 @@ import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 import { MovieItem, ReportItem, fetchReportList, fetchMovieList, replyReport } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";
-import { ButtonCore, ButtonInListCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, ButtonInListCore, DialogCore, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
@@ -257,6 +257,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore();
+  const poster = new ImageInListCore({});
 
   const [response, setResponse] = createSignal(reportList.response);
   const [movieListResponse, setMovieListResponse] = createSignal(movieList.response);
@@ -342,7 +343,11 @@ export const HomeReportListPage: ViewComponent = (props) => {
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">
-                                <LazyImage class="w-[68px] h-[102px]" src={media.poster_path} alt={media.name} />
+                                <LazyImage
+                                  class="w-[68px] h-[102px]"
+                                  store={poster.bind(media.poster_path)}
+                                  alt={media.name}
+                                />
                               </div>
                               <div class="flex-1 w-0">
                                 <div class="flex items-center">
@@ -448,7 +453,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
                       >
                         <div class="flex">
                           <div class="overflow-hidden mr-2 rounded-sm">
-                            <LazyImage class="w-[120px] h-[180px]" src={poster_path} alt={name} />
+                            <LazyImage class="w-[120px] h-[180px]" store={poster.bind(poster_path)} alt={name} />
                           </div>
                           <div class="flex-1 w-0 p-4">
                             <h2 class="text-2xl text-slate-800">{name}</h2>

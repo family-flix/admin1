@@ -163,7 +163,7 @@ export const DriveListPage: ViewComponent = (props) => {
             <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2">
               <For each={driveResponse().dataSource}>
                 {(drive) => {
-                  const { name, avatar, used_percent, used_size } = drive.state;
+                  const { name, avatar, drive_id, used_percent, used_size } = drive.state;
                   return (
                     <DriveCard
                       app={app}

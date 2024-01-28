@@ -11,6 +11,7 @@ import { AliyunDriveFile, DriveCore } from "@/domains/drive";
 import { RequestCore } from "@/domains/request";
 import { bytes_to_size, is_video_file } from "@/utils";
 import { MediaTypes } from "@/constants";
+import { ImageCore } from "@/domains/ui";
 
 export const DriveFileCard = (props: {
   store: RefCore<AliyunDriveFile>;
@@ -21,6 +22,7 @@ export const DriveFileCard = (props: {
   const { store, drive, footer } = props;
 
   const fileProfileRequest = new RequestCore(fetchFileProfile);
+  const poster = new ImageCore({});
 
   const [state, setState] = createSignal(store.value);
   const [profile, setProfile] = createSignal(fileProfileRequest.response);
@@ -28,8 +30,9 @@ export const DriveFileCard = (props: {
   store.onStateChange((nextState) => {
     setState(nextState);
   });
-  fileProfileRequest.onStateChange((nextState) => {
-    setProfile(nextState.response);
+  fileProfileRequest.onStateChange((v) => {
+    setProfile(v.response);
+    poster.setURL(v.response?.media?.poster_path);
   });
 
   const filepath = () => {
@@ -88,7 +91,7 @@ export const DriveFileCard = (props: {
               fallback={
                 <div class="flex">
                   <div class="mr-4">
-                    <LazyImage class="w-[120px] h-[180px]" />
+                    <div class="w-[120px] h-[180px]" />
                   </div>
                   <div>
                     <Show when={profile()?.unknown_media}>
@@ -97,7 +100,6 @@ export const DriveFileCard = (props: {
                         <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
                         <div>{profile()?.unknown_media?.type === MediaTypes.Movie ? "电影" : "电视剧"}</div>
                       </div>
-                      <div>{profile()?.file_name}</div>
                       <div>{profile()?.unknown_media?.episode_text}</div>
                       <div>没有匹配到详情信息</div>
                     </Show>
@@ -107,7 +109,7 @@ export const DriveFileCard = (props: {
             >
               <div class="flex">
                 <div class="mr-4">
-                  <LazyImage class="w-[120px] h-[180px]" src={profile()?.media?.poster_path} />
+                  <LazyImage class="w-[120px] h-[180px]" store={poster} />
                 </div>
                 <div>
                   <div class="text-lg">{profile()?.media?.name}</div>

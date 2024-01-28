@@ -14,6 +14,7 @@ import {
   CheckboxCore,
   DialogCore,
   CheckboxGroupCore,
+  ImageInListCore,
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
@@ -112,6 +113,7 @@ export const CollectionListPage: ViewComponent = (props) => {
       app.showView(collectionCreatePage);
     },
   });
+  const poster = new ImageInListCore({});
   const scrollView = new ScrollViewCore();
 
   const [state, setState] = createSignal(collectionList.response);
@@ -207,7 +209,7 @@ export const CollectionListPage: ViewComponent = (props) => {
                                   return (
                                     <div>
                                       <div class="w-[78px]">
-                                        <LazyImage class="w-full rounded-sm" src={poster_path} />
+                                        <LazyImage class="w-full rounded-sm" store={poster.bind(poster_path)} />
                                         <div class="mt-2">{name}</div>
                                       </div>
                                     </div>

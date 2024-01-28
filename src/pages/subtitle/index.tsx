@@ -6,7 +6,7 @@ import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
 import { SubtitleItem, deleteSubtitle, fetchSubtitleList } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, LazyImage, Dialog } from "@/components/ui";
-import { ButtonCore, DialogCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, DialogCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
@@ -94,6 +94,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   //     },
   //   });
   const scrollView = new ScrollViewCore();
+  const poster = new ImageInListCore({});
 
   const [response, setResponse] = createSignal(seasonList.response);
 
@@ -154,7 +155,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
                 return (
                   <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
                     <div class="flex flex-1">
-                      <LazyImage class="w-[120px] object-cover" src={poster_path} />
+                      <LazyImage class="w-[120px] object-cover" store={poster.bind(poster_path)} />
                       <div class="flex-1 ml-4 w-full">
                         <div class="text-xl">{name}</div>
                         <div class="text-xl">{season_text}</div>

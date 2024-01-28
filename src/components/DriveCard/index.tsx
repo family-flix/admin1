@@ -30,7 +30,15 @@ import {
   DropdownMenu,
 } from "@/components/ui";
 import { List } from "@/components/List";
-import { InputCore, ButtonCore, DropdownMenuCore, DialogCore, ProgressCore, MenuItemCore } from "@/domains/ui";
+import {
+  InputCore,
+  ButtonCore,
+  DropdownMenuCore,
+  DialogCore,
+  ProgressCore,
+  MenuItemCore,
+  ImageCore,
+} from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { DriveCore, addAliyunDrive, updateAliyunDrive } from "@/domains/drive";
@@ -403,6 +411,7 @@ export const DriveCard = (props: {
       refreshBtn.setLoading(false);
     },
   });
+  const avatarImage = new ImageCore({});
 
   const [state, setState] = createSignal(drive.state);
   const [folderColumns, setFolderColumns] = createSignal(driveFileManage.folderColumns);
@@ -411,6 +420,7 @@ export const DriveCard = (props: {
 
   drive.onStateChange((nextState) => {
     analysisBtn.setLoading(nextState.loading);
+    avatarImage.setURL(nextState.avatar);
     setState(nextState);
   });
   driveFileManage.onFolderColumnChange((nextColumns) => {
@@ -427,8 +437,6 @@ export const DriveCard = (props: {
     app.tip(texts);
   });
   // const { avatar, user_name, used_size, total_size, used_percent } = state();
-  const avatar = () => state().avatar;
-  const name = () => state().name;
   const usedSize = () => state().used_size;
   const totalSize = () => state().total_size;
   const hasFolders = () => {
@@ -454,12 +462,13 @@ export const DriveCard = (props: {
             </DropdownMenu>
           </div>
           <div class="flex">
-            <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" src={avatar()} alt={name()} />
+            <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" store={avatarImage} alt={state().name} />
             <div class="flex-1 w-0 pr-12">
-              <div class="text-xl">{name()}</div>
+              <div class="text-xl">{state().name}</div>
+              <div class="text-sm text-slate-500">{state().drive_id}</div>
               <Progress class="mt-2" store={progress} />
               <div class="mt-2">
-                {usedSize()}/{totalSize()}
+                {state().used_size}/{state().total_size}
               </div>
               <Show when={state().vip}>
                 <div class="mt-4 space-y-2">
@@ -487,7 +496,7 @@ export const DriveCard = (props: {
           </div>
         </div>
       </div>
-      <Dialog title={name()} store={foldersModal}>
+      <Dialog title={state().name} store={foldersModal}>
         <div class="w-[520px] overflow-x-auto h-[320px]">
           <Show
             when={filesState().initialized}

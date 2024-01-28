@@ -15,7 +15,16 @@ import {
 } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { MenuItemCore, ContextMenuCore, ScrollViewCore, DialogCore, ButtonCore, InputCore } from "@/domains/ui";
+import {
+  MenuItemCore,
+  ContextMenuCore,
+  ScrollViewCore,
+  DialogCore,
+  ButtonCore,
+  InputCore,
+  ImageCore,
+  ImageInListCore,
+} from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
@@ -29,6 +38,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
 
   const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
     onSuccess(v) {
+      poster.setURL(v.poster_path);
       setProfile(v);
     },
     onFailed(error) {
@@ -229,6 +239,8 @@ export const SeasonProfilePage: ViewComponent = (props) => {
   const seasonContextMenu = new ContextMenuCore({
     items: [deleteSeasonMenuItem],
   });
+  const poster = new ImageCore({});
+  const seriesPoster = new ImageInListCore({});
   // const profileTitleInput = new InputCore({
   //   defaultValue: "",
   //   placeholder: "请输入电视剧标题",
@@ -340,7 +352,8 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                     <div class="flex">
                       <LazyImage
                         class="overflow-hidden w-[240px] h-[360px] rounded-lg mr-4 object-cover"
-                        src={profile()?.poster_path ?? undefined}
+                        store={poster}
+                        // src={profile()?.poster_path ?? undefined}
                       />
                       <div class="flex-1 mt-4">
                         <h2 class="text-5xl">{profile()?.name}</h2>
@@ -432,7 +445,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                         <div>
                           <a href={url} target="_blank">
                             <div>
-                              <LazyImage class="w-[120px]" src={poster_path} />
+                              <LazyImage class="w-[120px]" store={seriesPoster.bind(poster_path)} />
                             </div>
                           </a>
                           <div class="text-xl whitespace-nowrap">{name}</div>

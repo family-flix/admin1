@@ -5,7 +5,7 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
 import { Button, Skeleton, ScrollView, ListView, Checkbox, LazyImage } from "@/components/ui";
-import { ButtonCore, ButtonInListCore, CheckboxCore, ScrollViewCore } from "@/domains/ui";
+import { ButtonCore, ButtonInListCore, CheckboxCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus, fetchPersonList } from "@/domains/job";
@@ -76,6 +76,7 @@ export const PersonListPage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore();
+  const personAvatar = new ImageInListCore({});
 
   personList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
@@ -136,7 +137,7 @@ export const PersonListPage: ViewComponent = (props) => {
                   }}
                 >
                   <div>
-                    <LazyImage class="w-[120px]" src={avatar} />
+                    <LazyImage class="w-[120px]" store={personAvatar.bind(avatar)} />
                   </div>
                   <h2 class="text-xl">{name}</h2>
                   <div class="flex space-x-4"></div>

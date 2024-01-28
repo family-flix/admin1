@@ -88,6 +88,7 @@ export async function fetchDriveList(params: FetchParams) {
       total_size: number;
       /** 索引根目录 */
       root_folder_id?: string;
+      drive_id: string;
       vip?: {
         name: string;
         expired_at: number;
@@ -110,7 +111,7 @@ export async function fetchDriveList(params: FetchParams) {
     page_size,
     no_more,
     list: list.map((item) => {
-      const { id, name, avatar, total_size, used_size, root_folder_id, vip = [] } = item;
+      const { id, name, avatar, drive_id, total_size, used_size, root_folder_id, vip = [] } = item;
       const valid_vip = vip
         .filter((v) => {
           return dayjs(v.expired_at * 1000).isAfter(dayjs());
@@ -125,6 +126,7 @@ export async function fetchDriveList(params: FetchParams) {
         id,
         name,
         avatar,
+        drive_id,
         /** 云盘总大小 */
         total_size: bytes_to_size(total_size),
         /** 云盘已使用大小 */

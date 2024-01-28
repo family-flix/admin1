@@ -15,7 +15,7 @@ import { deleteParsedMediaSource } from "@/services/parsed_media";
 import { upload_subtitle_for_movie } from "@/services";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { DialogCore, ButtonCore, ScrollViewCore, InputCore } from "@/domains/ui";
+import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { RefCore } from "@/domains/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
@@ -32,6 +32,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },
     onSuccess(v) {
+      poster.setURL(v.poster_path);
       setProfile(v);
     },
   });
@@ -184,6 +185,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const poster = new ImageCore({});
   const subtitleUploadBtn = new ButtonCore({
     onClick() {
       subtitleUploadDialog.show();
@@ -314,7 +316,8 @@ export const MovieProfilePage: ViewComponent = (props) => {
                     <div class="flex">
                       <LazyImage
                         class="overflow-hidden w-[240px] h-[360px] rounded-lg mr-4 object-cover"
-                        src={profile()?.poster_path ?? undefined}
+                        store={poster}
+                        // src={profile()?.poster_path ?? undefined}
                       />
                       <div class="flex-1 mt-4">
                         <h2 class="text-5xl">{profile()?.name}</h2>

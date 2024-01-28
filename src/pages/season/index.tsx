@@ -45,6 +45,7 @@ import {
   ButtonInListCore,
   CheckboxCore,
   CheckboxGroupCore,
+  ImageInListCore,
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
@@ -357,6 +358,7 @@ export const SeasonListPage: ViewComponent = (props) => {
       tipPopover.hide();
     },
   });
+  const poster = new ImageInListCore({});
 
   const [seasonListState, setSeasonListState] = createSignal(seasonList.response);
   const [tips, setTips] = createSignal<string[]>([]);
@@ -498,7 +500,7 @@ export const SeasonListPage: ViewComponent = (props) => {
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
                             <div class="overflow-hidden mr-2 rounded-sm">
-                              <LazyImage class="w-[180px] h-[272px]" src={poster_path} alt={name} />
+                              <LazyImage class="w-[180px] h-[272px]" store={poster.bind(poster_path)} alt={name} />
                             </div>
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">

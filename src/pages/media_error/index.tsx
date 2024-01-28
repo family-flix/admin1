@@ -13,7 +13,15 @@ import {
   deleteMovieProfileInMediaError,
 } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView } from "@/components/ui";
-import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxCore, CheckboxGroupCore } from "@/domains/ui";
+import {
+  InputCore,
+  ButtonCore,
+  ButtonInListCore,
+  ScrollViewCore,
+  CheckboxCore,
+  CheckboxGroupCore,
+  ImageInListCore,
+} from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
@@ -193,6 +201,7 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
       nameSearchInput.clear();
     },
   });
+  const poster = new ImageInListCore();
   const profileBtn = new ButtonInListCore<MediaErrorItem>({
     onClick(record) {
       homeMovieProfilePage.query = {
@@ -264,7 +273,7 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
   return (
     <>
       <ScrollView store={scrollView} class="h-screen p-8">
-        <h1 class="text-2xl">待处理问题列表</h1>
+        <h1 class="text-2xl">待处理问题列表({state().total})</h1>
         <div class="mt-8">
           {/* <div class="flex space-x-2">
             <For each={MediaErrorTypeOptions}>
@@ -351,7 +360,7 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                           <div>{typeTextMap[type]}</div>
                           <div class="text-sm">{id}</div>
                           <a href={url} target="_blank">
-                            <LazyImage class="w-[80px] h-[120px]" src={poster_path!} alt={name!} />
+                            <LazyImage class="w-[80px] h-[120px]" store={poster.bind(poster_path)} alt={name!} />
                             <div class="">{name}</div>
                           </a>
                           <div class="mt-4 space-y-2">
@@ -372,7 +381,7 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                           <div>{typeTextMap[type]}</div>
                           <div class="text-sm">{id}</div>
                           <a href={url} target="_blank">
-                            <LazyImage class="w-[80px] h-[120px]" src={poster_path!} alt={name!} />
+                            <LazyImage class="w-[80px] h-[120px]" store={poster.bind(poster_path)} alt={name!} />
                             <div class="">{name}</div>
                           </a>
                           <div class="mt-4 space-y-2">

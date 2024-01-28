@@ -11,6 +11,7 @@ import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { MediaSearchCore } from "@/domains/media_search";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
+import { ImageInListCore } from "@/domains/ui";
 
 export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
@@ -33,6 +34,7 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
       });
     },
   });
+  const poster = new ImageInListCore({});
   const scrollView = new ScrollViewCore({
     // onScroll(pos) {
     //   console.log('scroll', pos);
@@ -94,7 +96,11 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
                     }}
                   >
                     <div class="flex">
-                      <LazyImage class="w-[120px] rounded-sm object-fit mr-4" src={poster_path} alt={name} />
+                      <LazyImage
+                        class="w-[120px] rounded-sm object-fit mr-4"
+                        store={poster.bind(poster_path)}
+                        alt={name}
+                      />
                       <div class="flex-1 overflow-hidden text-ellipsis">
                         <div class="text-2xl">{name}</div>
                         <div class="text-slate-500">{original_name}</div>
