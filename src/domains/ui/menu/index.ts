@@ -226,9 +226,9 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   }
   unmount() {
     // this.log("destroy", this.name);
-    super.unmount();
-    this.layer.unmount();
-    this.popper.unmount();
+    super.destroy();
+    this.layer.destroy();
+    this.popper.destroy();
     this.presence.unmount();
     for (let i = 0; i < this.subs.length; i += 1) {
       this.subs[i].unmount();

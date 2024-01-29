@@ -47,7 +47,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
-import { createJob, driveProfilePage, homeTVProfilePage } from "@/store";
+import { createJob } from "@/store/job";
 import { Result, ViewComponent } from "@/types";
 import { FileType } from "@/constants";
 
@@ -530,15 +530,18 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                     {(task) => {
                       const { id, url, resource_file_name, invalid, drive_file_name, season, drive } = task;
                       const name = `${resource_file_name} -> ${drive_file_name}`;
-                      const driveURL = driveProfilePage.buildUrlWithPrefix(drive);
-                      const seasonURL = homeTVProfilePage.buildUrlWithPrefix(
-                        season
-                          ? {
-                              id: season.tv_id,
-                              season_id: season.id,
-                            }
-                          : {}
-                      );
+                      // const driveURL = driveProfilePage.buildUrlWithPrefix(drive);
+                      const driveURL = `/home/drive_profile?id=${drive.id}`;
+                      // @todo
+                      const seasonURL = `/home/season_profile?id=${season?.tv_id}`;
+                      // const seasonURL = homeTVProfilePage.buildUrlWithPrefix(
+                      //   season
+                      //     ? {
+                      //         id: season.tv_id,
+                      //         season_id: season.id,
+                      //       }
+                      //     : {}
+                      // );
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">

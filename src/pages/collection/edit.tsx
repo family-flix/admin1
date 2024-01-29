@@ -4,12 +4,12 @@ import { Film, Tv2, X } from "lucide-solid";
 import { Button, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { MovieSelect } from "@/components/MovieSelect";
 import { SeasonSelect } from "@/components/SeasonSelect";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { ButtonCore, ImageInListCore } from "@/domains/ui";
+import { CollectionTypes } from "@/constants";
 import { ViewComponent } from "@/types";
 
 import { CollectionFormCore } from "./core";
-import { CollectionTypes } from "@/constants";
-import { SimpleSelect } from "@/components/ui/simple-select";
 
 export const CollectionEditPage: ViewComponent = (props) => {
   const { app, view } = props;

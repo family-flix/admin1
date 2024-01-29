@@ -121,12 +121,17 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       return;
     }
     this.current = matchedIndex;
-    // console.log('[] select', this.tabs, this.selectedTab);
-    if (!this.selectedTab) {
-      return;
+    console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab);
+    const left = this.calcLineLeft(this.current);
+    if (left !== null) {
+      this.changeLinePosition(left);
     }
-    this.calcScrollLeft(this.selectedTab);
+    this.emit(Events.Change, {
+      index: matchedIndex,
+      value: this.selectedTab.id,
+    });
   }
+  /** 计算下划线的位置 */
   calcLineLeft(index: number) {
     const matchedTab = this.tabs[index];
     if (!matchedTab) {

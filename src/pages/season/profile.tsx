@@ -27,13 +27,14 @@ import {
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
+import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ListCore } from "@/domains/list";
-import { createJob, appendAction, mediaPlayingPage, homeTVProfilePage } from "@/store";
+import { appendAction } from "@/store/actions";
+import { createJob } from "@/store/job";
 import { ViewComponent } from "@/types";
 import { bytes_to_size, cn } from "@/utils";
-import { TMDBSearcherCore } from "@/domains/tmdb";
 
-export const SeasonProfilePage: ViewComponent = (props) => {
+export const HomeSeasonProfilePage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
@@ -401,10 +402,11 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                                         class="p-1 cursor-pointer"
                                         title="播放"
                                         onClick={() => {
-                                          mediaPlayingPage.query = {
-                                            id,
-                                          };
-                                          app.showView(mediaPlayingPage);
+                                          app.push("/preview", { id });
+                                          // mediaPlayingPage.query = {
+                                          //   id,
+                                          // };
+                                          // app.showView(mediaPlayingPage);
                                         }}
                                       >
                                         <Play class="w-4 h-4" />
@@ -438,9 +440,10 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                   <For each={profile()?.series}>
                     {(season) => {
                       const { id, name, poster_path, air_date } = season;
-                      const url = homeTVProfilePage.buildUrlWithPrefix({
-                        id,
-                      });
+                      const url = `/home/season_profile?id=${id}`;
+                      // const url = homeTVProfilePage.buildUrlWithPrefix({
+                      //   id,
+                      // });
                       return (
                         <div>
                           <a href={url} target="_blank">

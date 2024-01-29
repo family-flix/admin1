@@ -27,17 +27,11 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
 import { ViewComponent } from "@/types";
-import {
-  consumeAction,
-  driveList,
-  homeMovieProfilePage,
-  homeTVProfilePage,
-  pendingActions,
-  seasonMediaProfilePage,
-} from "@/store";
+import { consumeAction, pendingActions } from "@/store/actions";
+import { driveList } from "@/store/drives";
 import { MediaErrorTypeOptions, MediaErrorTypes } from "@/constants";
 
-export const InvalidMediaManagePage: ViewComponent = (props) => {
+export const InvalidMediaListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const errorList = new ListCore(new RequestCore(fetchInvalidMediaList), {
@@ -204,10 +198,11 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
   const poster = new ImageInListCore();
   const profileBtn = new ButtonInListCore<MediaErrorItem>({
     onClick(record) {
-      homeMovieProfilePage.query = {
-        id: record.id,
-      };
-      app.showView(homeMovieProfilePage);
+      app.push("/home/movie_profile", { id: record.id });
+      // homeMovieProfilePage.query = {
+      //   id: record.id,
+      // };
+      // app.showView(homeMovieProfilePage);
       // homeLayout.showSubView(homeMovieProfilePage);
       // router.push(`/home/movie/${record.id}`);
     },
@@ -354,7 +349,8 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                     };
                     if (type === MediaErrorTypes.Season) {
                       const { id, name, poster_path } = media;
-                      const url = homeTVProfilePage.buildUrlWithPrefix({ id });
+                      // const url = homeTVProfilePage.buildUrlWithPrefix({ id });
+                      const url = `/home/season_profile?id=${id}`;
                       return (
                         <div class="p-4 bg-white">
                           <div>{typeTextMap[type]}</div>
@@ -375,7 +371,8 @@ export const InvalidMediaManagePage: ViewComponent = (props) => {
                     }
                     if (type === MediaErrorTypes.Movie) {
                       const { id, name, poster_path } = media;
-                      const url = homeMovieProfilePage.buildUrlWithPrefix({ id });
+                      // const url = homeMovieProfilePage.buildUrlWithPrefix({ id });
+                      const url = `/home/season_movie?id=${id}`;
                       return (
                         <div class="p-4 bg-white">
                           <div>{typeTextMap[type]}</div>

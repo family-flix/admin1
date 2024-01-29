@@ -1,6 +1,6 @@
 import { FetchParams } from "@/domains/list/typing";
 import { FileType, MediaTypes } from "@/constants";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { Result } from "@/types";
 
 /**

@@ -45,7 +45,7 @@ import { DriveCore, addAliyunDrive, updateAliyunDrive } from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
 import { BizError } from "@/domains/error";
 import { DriveTypes, FileType } from "@/constants";
-import { createJob } from "@/store";
+import { createJob } from "@/store/job";
 
 export const DriveCard = (props: {
   app: Application;

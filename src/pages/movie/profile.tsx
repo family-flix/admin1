@@ -21,7 +21,8 @@ import { RefCore } from "@/domains/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
-import { appendAction, createJob, mediaPlayingPage } from "@/store";
+import { appendAction } from "@/store/actions";
+import { createJob } from "@/store/job";
 import { MediaTypes } from "@/constants";
 
 export const MovieProfilePage: ViewComponent = (props) => {
@@ -359,10 +360,11 @@ export const MovieProfilePage: ViewComponent = (props) => {
                                 class="p-1 cursor-pointer"
                                 title="播放"
                                 onClick={() => {
-                                  mediaPlayingPage.query = {
-                                    id,
-                                  };
-                                  app.showView(mediaPlayingPage);
+                                  app.push(`/preview?id=${id}`);
+                                  // mediaPlayingPage.query = {
+                                  //   id,
+                                  // };
+                                  // app.showView(mediaPlayingPage);
                                 }}
                               >
                                 <Play class="w-4 h-4" />

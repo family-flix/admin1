@@ -4,28 +4,25 @@
 
 import { BaseDomain, Handler } from "@/domains/base";
 import { UserCore } from "@/domains/user";
-import { NavigatorCore } from "@/domains/navigator";
-import { RouteViewCore } from "@/domains/route_view";
+import { HistoryCore } from "@/domains/history";
 import { Result } from "@/types";
 
 enum Events {
-  Ready,
   Tip,
   Error,
   Login,
   Logout,
-  // 一些平台相关的事件
+  /** 生命周期 */
+  Ready,
+  Show,
+  Hidden,
+  /** 平台相关 */
   PopState,
   Resize,
   Blur,
   Keydown,
   EscapeKeyDown,
-  ClickLink,
-  Show,
-  Hidden,
   StateChange,
-  // 该怎么处理？
-  DrivesChange,
 }
 type TheTypesOfEvents = {
   [Events.Ready]: void;
@@ -46,10 +43,6 @@ type TheTypesOfEvents = {
     key: string;
   };
   [Events.EscapeKeyDown]: void;
-  [Events.ClickLink]: {
-    href: string;
-    target: string | null;
-  };
   [Events.Blur]: void;
   [Events.Show]: void;
   [Events.Hidden]: void;
@@ -58,7 +51,7 @@ type TheTypesOfEvents = {
 
 type ApplicationProps = {
   user: UserCore;
-  router: NavigatorCore;
+  history: HistoryCore;
   /**
    * 应用加载前的声明周期，只有返回 Result.Ok() 页面才会展示内容
    */
@@ -70,8 +63,9 @@ type ApplicationState = {
 };
 
 export class Application extends BaseDomain<TheTypesOfEvents> {
-  user: UserCore;
-  router: NavigatorCore;
+  /** 用户 */
+  $user: UserCore;
+  $history: HistoryCore;
 
   lifetimes: Pick<ApplicationProps, "beforeReady" | "onReady">;
 
@@ -95,16 +89,18 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     };
   }
 
-  constructor(options: ApplicationProps) {
+  constructor(props: ApplicationProps) {
     super();
 
-    const { user, router, beforeReady, onReady } = options;
+    const { user: user, history: history, beforeReady, onReady } = props;
+
+    this.$user = user;
+    this.$history = history;
+
     this.lifetimes = {
       beforeReady,
       onReady,
     };
-    this.user = user;
-    this.router = router;
     // const { availHeight, availWidth } = window.screen;
     // if (window.navigator.userAgent.match(/iphone/i)) {
     //   const matched = [
@@ -140,45 +136,16 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     // console.log("[]Application - before start");
     return Result.Ok(null);
   }
-  prevViews: RouteViewCore[] = [];
-  views: RouteViewCore[] = [];
-  curView: RouteViewCore | null = null;
-  showView(view: RouteViewCore, options: Partial<{ back: boolean }> = {}) {
-    console.log("[DOMAIN]Application - showView", view._name, view.parent);
-    if (options.back) {
-      if (!this.curView) {
-        // 异常行为
-        return;
-      }
-      if (!this.curView.parent) {
-        return;
-      }
-      this.curView.parent.uncoverPrevView();
-      return;
-    }
-    this.curView = view;
-    this.prevViews = this.views;
-    this.views = [];
-    const _show = (view: RouteViewCore) => {
-      if (view.parent) {
-        _show(view.parent);
-        (() => {
-          if (view.parent.canLayer) {
-            view.parent.layerSubView(view);
-            return;
-          }
-          view.parent.showSubView(view);
-        })();
-      }
-      view.show();
-      this.views.push(view);
-    };
-    _show(view);
-    // console.log("[DOMAIN]Application - after show", this.views);
+  push(...args: Parameters<HistoryCore["push"]>) {
+    return this.$history.push(...args);
   }
-  back() {
-    history.back();
+  replace(...args: Parameters<HistoryCore["replace"]>) {
+    return this.$history.replace(...args);
   }
+  back(...args: Parameters<HistoryCore["back"]>) {
+    return this.$history.back(...args);
+  }
+
   /** 手机震动 */
   vibrate() {}
   setSize(size: { width: number; height: number }) {
@@ -247,9 +214,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   }
   onHidden(handler: Handler<TheTypesOfEvents[Events.Hidden]>) {
     return this.on(Events.Hidden, handler);
-  }
-  onClickLink(handler: Handler<TheTypesOfEvents[Events.ClickLink]>) {
-    return this.on(Events.ClickLink, handler);
   }
   onKeydown(handler: Handler<TheTypesOfEvents[Events.Keydown]>) {
     return this.on(Events.Keydown, handler);

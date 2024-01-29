@@ -10,9 +10,19 @@ import {
   transferFileToAnotherDrive,
   transferFileToResourceDrive,
 } from "@/services/drive";
+import { setFileEpisodeProfile } from "@/services";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
+import { EpisodeSelectCore } from "@/components/EpisodeSelect";
+import { TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherCore } from "@/domains/tmdb";
+import {
+  setParsedMediaProfile,
+  setParsedMediaProfileInFileId,
+  setParsedSeasonMediaSourceProfile,
+} from "@/services/parsed_media";
+import { ListCore } from "@/domains/list";
 import {
   DialogCore,
   DropdownMenuCore,
@@ -27,18 +37,9 @@ import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ViewComponent } from "@/types";
 import { FileType, MediaTypes } from "@/constants";
-import { createJob, driveList } from "@/store";
+import { createJob } from "@/store/job";
+import { driveList } from "@/store/drives";
 import { buildRegexp } from "@/utils";
-import { EpisodeSelectCore } from "@/components/EpisodeSelect";
-import { setFileEpisodeProfile } from "@/services";
-import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { TMDBSearcherCore } from "@/domains/tmdb";
-import {
-  setParsedMediaProfile,
-  setParsedMediaProfileInFileId,
-  setParsedSeasonMediaSourceProfile,
-} from "@/services/parsed_media";
-import { ListCore } from "@/domains/list";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, view } = props;

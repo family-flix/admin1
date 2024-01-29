@@ -10,13 +10,13 @@ import { ButtonCore, ButtonInListCore, CheckboxCore, ScrollViewCore } from "@/do
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus } from "@/domains/job";
-import { homeLayout, homeTaskProfilePage, refreshJobs } from "@/store";
+import { refreshJobs } from "@/store/job";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 import { TabHeader } from "@/components/ui/tab-header";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 
-export const TaskListPage: ViewComponent = (props) => {
+export const LogListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const jobList = new ListCore(new RequestCore(fetchJobList), {});
@@ -54,10 +54,11 @@ export const TaskListPage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      homeTaskProfilePage.query = {
-        id: task.id,
-      };
-      app.showView(homeTaskProfilePage);
+      app.push("/home/log_profile", { id: task.id });
+      // homeTaskProfilePage.query = {
+      //   id: task.id,
+      // };
+      // app.showView(homeTaskProfilePage);
       // homeLayout.showSubView(homeTaskProfilePage);
       // router.push(`/home/task/${task.id}`);
     },

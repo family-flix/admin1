@@ -12,7 +12,7 @@ import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ReportTypes } from "@/constants";
 import { ViewComponent } from "@/types";
-import { homeSubtitleAddingPage, refreshJobs } from "@/store";
+import { refreshJobs } from "@/store/job";
 import { cn } from "@/utils";
 
 export const HomeSubtitleListPage: ViewComponent = (props) => {
@@ -86,7 +86,8 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   });
   const gotoUploadBtn = new ButtonCore({
     onClick() {
-      app.showView(homeSubtitleAddingPage);
+      // app.showView(homeSubtitleAddingPage);
+      app.push("/home/subtitle/create");
     },
   });
   //   const subtitleDeletingBtn = new ButtonCore({

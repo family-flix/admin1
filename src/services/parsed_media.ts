@@ -2,7 +2,7 @@ import { MediaErrorTypes, MediaTypes } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
 import { ListResponseWithCursor, MutableRecord, RequestedResource, Result } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 /**
  * 获取无法识别的 tv

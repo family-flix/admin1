@@ -29,7 +29,7 @@ import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
 import { MediaTypes } from "@/constants";
 
-export const UnknownMoviePage: ViewComponent = (props) => {
+export const UnknownMovieListPage: ViewComponent = (props) => {
   const { app, view, parent } = props;
 
   const list = new ListCore(new RequestCore(fetchUnknownMediaList), {

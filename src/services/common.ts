@@ -1,7 +1,7 @@
 import { MediaTypes } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 /**
  * 搜索影视剧详情

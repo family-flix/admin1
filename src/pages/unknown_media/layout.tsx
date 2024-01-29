@@ -3,13 +3,12 @@
  */
 import { createSignal, For, onMount, Show } from "solid-js";
 
+import { TabHeader } from "@/components/ui/tab-header";
+import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { ScrollView, KeepAliveRouteView } from "@/components/ui";
 import { ViewComponent } from "@/types";
-import { homeUnknownEpisodePage, homeUnknownMoviePage, homeUnknownTVPage } from "@/store";
 import { cn } from "@/utils";
-import { TabHeader } from "@/components/ui/tab-header";
-import { TabHeaderCore } from "@/domains/ui/tab-header";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
   const { app, view } = props;
@@ -21,48 +20,44 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
     key: "id",
     options: [
       {
-        id: "season",
+        id: "/home/unknown_media/season",
         text: "电视剧",
       },
       {
-        id: "episode",
+        id: "/home/unknown_media/episode",
         text: "剧集",
       },
       {
-        id: "movie",
+        id: "/home/unknown_media/movie",
         text: "电影",
       },
     ],
     onChange(opt) {
-      console.log(opt);
-      if (opt.value === "season") {
-        app.showView(homeUnknownTVPage);
-        return;
-      }
-      if (opt.value === "episode") {
-        app.showView(homeUnknownEpisodePage);
-        return;
-      }
-      if (opt.value === "movie") {
-        app.showView(homeUnknownMoviePage);
-      }
+      app.push(opt.value as string);
     },
     onMounted() {
-      if (view.curView === homeUnknownTVPage) {
-        tab.select(0);
-      }
-      if (view.curView === homeUnknownEpisodePage) {
-        tab.select(1);
-      }
-      if (view.curView === homeUnknownMoviePage) {
-        tab.select(2);
-      }
+      tab.selectById(view.key);
+      // if (view.curView === homeUnknownTVPage) {
+      //   tab.select(0);
+      // }
+      // if (view.curView === homeUnknownEpisodePage) {
+      //   tab.select(1);
+      // }
+      // if (view.curView === homeUnknownMoviePage) {
+      //   tab.select(2);
+      // }
     },
   });
 
   const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
 
+  app.$history.onHrefChange((v) => {
+    if (!tab.mounted) {
+      return;
+    }
+    tab.selectById(v.pathname);
+  });
   view.onCurViewChange((nextCurView) => {
     setCurSubView(nextCurView);
   });
@@ -101,7 +96,6 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                     >
                       <PageContent
                         app={app}
-                        router={app.router}
                         parent={{
                           scrollView,
                         }}

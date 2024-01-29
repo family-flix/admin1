@@ -20,11 +20,13 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { ViewComponent } from "@/types";
-import { consumeAction, createJob, driveList, homeMovieProfilePage, pendingActions } from "@/store";
 import { DriveCore } from "@/domains/drive";
+import { ViewComponent } from "@/types";
+import { consumeAction, pendingActions } from "@/store/actions";
+import { createJob } from "@/store/job";
+import { driveList } from "@/store/drives";
 
-export const MovieManagePage: ViewComponent = (props) => {
+export const MovieListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
@@ -140,12 +142,12 @@ export const MovieManagePage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<MovieMediaItem>({
     onClick(record) {
-      homeMovieProfilePage.query = {
-        id: record.id,
-      };
-      app.showView(homeMovieProfilePage);
+      // homeMovieProfilePage.query = {
+      //   id: record.id,
+      // };
+      // app.showView(homeMovieProfilePage);
       // homeLayout.showSubView(homeMovieProfilePage);
-      // router.push(`/home/movie/${record.id}`);
+      app.push(`/home/movie_profile/${record.id}`);
     },
   });
   const transferConfirmDialog = new DialogCore({
@@ -328,9 +330,7 @@ export const MovieManagePage: ViewComponent = (props) => {
                   {(movie) => {
                     const { id, name, overview, poster_path, air_date, vote_average, origin_country, tips, persons } =
                       movie;
-                    const url = homeMovieProfilePage.buildUrlWithPrefix({
-                      id,
-                    });
+                    const url = `/home/movie_profile?id=${id}`;
                     return (
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">

@@ -1,6 +1,6 @@
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils";
 
 import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";

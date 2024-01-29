@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 import { DriveTypes, FileType, MediaTypes } from "@/constants";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { bytes_to_size } from "@/utils";
 
 import { DriveCore } from ".";

@@ -1,5 +1,6 @@
-import { request } from "@/utils/request";
 import { For, createSignal } from "solid-js";
+
+import { request } from "@/store/request";
 
 type SeasonProfileResult = {
   id: string;

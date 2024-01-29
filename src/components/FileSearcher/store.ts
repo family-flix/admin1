@@ -3,7 +3,7 @@ import { BaseDomain, Handler } from "@/domains/base";
 import { FetchParams, Response } from "@/domains/list/typing";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
 
 async function searchDriveFiles(params: FetchParams & { name: string }) {

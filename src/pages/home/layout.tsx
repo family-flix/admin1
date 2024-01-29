@@ -32,26 +32,7 @@ import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
-import {
-  homeFilenameParsingPage,
-  homeIndexPage,
-  homeMemberListPage,
-  homeMovieListPage,
-  homeSeasonListPage,
-  homeTaskListPage,
-  homeTransferPage,
-  homeUnknownMediaLayout,
-} from "@/store/views";
-import {
-  collectionListPage,
-  homePersonListPage,
-  homeReportListPage,
-  homeSubtitleListPage,
-  homeUnknownTVPage,
-  homeInvalidMediaListPage,
-  onJobsChange,
-  syncTaskListPage,
-} from "@/store";
+import { onJobsChange } from "@/store/job";
 import { cn, sleep } from "@/utils";
 
 export const HomeLayout: ViewComponent = (props) => {
@@ -97,7 +78,7 @@ export const HomeLayout: ViewComponent = (props) => {
   const logoutBtn = new ButtonCore({
     async onClick() {
       logoutBtn.setLoading(true);
-      app.user.logout();
+      app.$user.logout();
       await sleep(2000);
       logoutBtn.setLoading(false);
     },
@@ -248,55 +229,65 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
-      view: homeIndexPage,
+      url: "/home/index",
+      // view: homeIndexPage,
     },
     {
       text: "电视剧",
       icon: <Tv class="w-6 h-6" />,
-      view: homeSeasonListPage,
+      url: "/home/season",
+      // view: homeSeasonListPage,
     },
     {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
-      view: homeMovieListPage,
+      url: "/home/movie",
+      // view: homeMovieListPage,
     },
     {
       text: "解析结果",
       icon: <EyeOff class="w-6 h-6" />,
-      view: homeUnknownTVPage,
+      url: "/home/unknown_media/season",
+      // view: homeUnknownTVPage,
     },
     {
       text: "待处理影视剧问题",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
-      view: homeInvalidMediaListPage,
+      url: "/home/invalid_media",
+      // view: homeInvalidMediaListPage,
     },
     {
       text: "集合管理",
       icon: <Folder class="w-6 h-6" />,
-      view: collectionListPage,
+      url: "/home/collection",
+      // view: collectionListPage,
     },
     {
       text: "字幕管理",
       icon: <Subtitles class="w-6 h-6" />,
-      view: homeSubtitleListPage,
+      url: "/home/subtitle",
+      // view: homeSubtitleListPage,
     },
     {
       text: "同步任务",
       icon: <AlarmClock class="w-6 h-6" />,
-      view: syncTaskListPage,
+      // view: syncTaskListPage,
+      url: "/home/sync_task",
     },
     {
       text: "任务",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
-      view: homeTaskListPage,
+      url: "/home/log",
+      // view: homeTaskListPage,
     },
     {
       text: "问题反馈",
       icon: <CircuitBoard class="w-6 h-6" />,
       badge: false,
-      view: homeReportListPage,
+      url: "/home/report",
+      // view: homeReportListPage,
     },
     {
       text: "云盘文件搜索",
@@ -322,12 +313,14 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
-      view: homeMemberListPage,
+      // view: homeMemberListPage,
+      url: "/home/member",
     },
     {
       text: "转存资源",
       icon: <FolderInput class="w-6 h-6" />,
-      view: homeTransferPage,
+      // view: homeTransferPage,
+      url: "/home/transfer",
     },
     // {
     //   text: "文件名解析",
@@ -353,7 +346,7 @@ export const HomeLayout: ViewComponent = (props) => {
         label: "退出登录",
         async onClick() {
           logoutBtn.setLoading(true);
-          app.user.logout();
+          app.$user.logout();
           await sleep(2000);
           userDropdown.hide();
           logoutBtn.setLoading(false);
@@ -369,8 +362,8 @@ export const HomeLayout: ViewComponent = (props) => {
   onJobsChange((jobs) => {
     setMenus(
       menus().map((menu) => {
-        const { view } = menu;
-        if (view === homeTaskListPage) {
+        const { url } = menu;
+        if (url === "home/log") {
           return {
             ...menu,
             badge: jobs.length !== 0,
@@ -389,15 +382,15 @@ export const HomeLayout: ViewComponent = (props) => {
             <div class="flex-1 space-y-1 p-2 w-full h-full overflow-y-auto rounded-xl self-start">
               <For each={menus()}>
                 {(menu) => {
-                  const { icon, text, view, badge, onClick } = menu;
+                  const { icon, text, url, badge, onClick } = menu;
                   return (
                     <Menu
                       app={app}
                       icon={icon}
-                      highlight={(() => {
-                        return curSubView() === view;
-                      })()}
-                      view={view}
+                      // highlight={(() => {
+                      //   return curSubView() === view;
+                      // })()}
+                      url={url}
                       badge={badge}
                       onClick={onClick}
                     >
@@ -432,7 +425,7 @@ export const HomeLayout: ViewComponent = (props) => {
                     store={subView}
                     index={i()}
                   >
-                    <PageContent app={app} router={app.router} view={subView} />
+                    <PageContent app={app} view={subView} />
                   </KeepAliveRouteView>
                 );
               }}
@@ -481,7 +474,7 @@ function Menu(
   props: {
     app: Application;
     highlight?: boolean;
-    view?: RouteViewCore;
+    url?: string;
     icon: JSX.Element;
     badge?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
@@ -506,13 +499,14 @@ function Menu(
     </div>
   );
   return (
-    <Show when={props.view} fallback={inner}>
+    <Show when={props.url} fallback={inner}>
       <div
         onClick={() => {
-          if (!props.view) {
+          if (!props.url) {
             return;
           }
-          props.app.showView(props.view);
+          props.app.push(props.url);
+          // props.app.showView(props.view);
         }}
       >
         {inner}

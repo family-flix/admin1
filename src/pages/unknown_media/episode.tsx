@@ -27,10 +27,10 @@ import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
-import { createJob } from "@/store";
+import { createJob } from "@/store/job";
 import { MediaTypes } from "@/constants";
 
-export const UnknownEpisodePage: ViewComponent = (props) => {
+export const UnknownEpisodeListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const list = new ListCore(new RequestCore(fetchParsedMediaSourceList), {

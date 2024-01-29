@@ -2,6 +2,7 @@
  * @file 查询过的分享文件列表
  */
 import { For, createSignal } from "solid-js";
+import { Search } from "lucide-solid";
 
 import { SharedFileTransferItem, fetch_shared_files_transfer_list } from "@/services";
 import { Button, Input, ScrollView } from "@/components/ui";
@@ -9,7 +10,6 @@ import { ButtonCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { ViewComponent } from "@/types";
-import { Search } from "lucide-solid";
 
 export const SharedFilesTransferListPage: ViewComponent = (props) => {
   const { app } = props;

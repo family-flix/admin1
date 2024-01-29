@@ -20,7 +20,8 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ViewComponent } from "@/types";
-import { collectionCreatePage, collectionEditPage, consumeAction, driveList, pendingActions } from "@/store";
+import { driveList } from "@/store/drives";
+import { consumeAction, pendingActions } from "@/store/actions";
 import { DriveCore } from "@/domains/drive";
 
 export const CollectionListPage: ViewComponent = (props) => {
@@ -85,10 +86,11 @@ export const CollectionListPage: ViewComponent = (props) => {
   });
   const editBtn = new ButtonInListCore<CollectionItem>({
     onClick(record) {
-      collectionEditPage.query = {
-        id: record.id,
-      };
-      app.showView(collectionEditPage);
+      // collectionEditPage.query = {
+      //   id: record.id,
+      // };
+      // app.showView(collectionEditPage);
+      app.push("/home/collection/edit", { id: record.id });
     },
   });
   const deletingConfirmDialog = new DialogCore({
@@ -110,7 +112,8 @@ export const CollectionListPage: ViewComponent = (props) => {
   });
   const gotoCollectionCreatePage = new ButtonCore({
     onClick() {
-      app.showView(collectionCreatePage);
+      app.push("/home/collection/create");
+      // app.showView(collectionCreatePage);
     },
   });
   const poster = new ImageInListCore({});

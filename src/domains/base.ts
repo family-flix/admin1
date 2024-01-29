@@ -97,14 +97,18 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     return content.text.join("\n");
   }
   /** 主动销毁所有的监听事件 */
-  unmount() {
+  destroy() {
+    // console.log("[DOMAIN]base - destroy", this._name);
     // this.log(this.name, "destroy");
     for (let i = 0; i < this.listeners.length; i += 1) {
       const off = this.listeners[i];
       off();
     }
+    this.listeners = [];
+    this._emitter.off("*");
     this.emit(BaseEvents.Destroy);
   }
+
   onTip(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Tip]>) {
     return this.on(BaseEvents.Tip, handler);
   }

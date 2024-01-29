@@ -1,5 +1,5 @@
 import { RequestedResource } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 /**
  * 解析文件名

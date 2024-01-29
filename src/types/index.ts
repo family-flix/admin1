@@ -6,6 +6,16 @@ import { RouteViewCore } from "@/domains/route_view";
 import { BizError } from "@/domains/error";
 import { ScrollViewCore } from "@/domains/ui";
 
+export type PathnameKey = string;
+export type RouteConfig = {
+  title: string;
+  /** 组件隐藏后销毁 */
+  destroy?: boolean;
+  pathname: PathnameKey;
+  parent_pathname: PathnameKey;
+  component: unknown;
+};
+
 export type Resp<T> = {
   data: T extends null ? null : T;
   error: T extends null ? BizError : null;
@@ -91,7 +101,7 @@ export type ListResponseWithCursor<T> = {
 export type RequestedResource<T extends (...args: any[]) => any> = UnpackedResult<Unpacked<ReturnType<T>>>;
 export type ViewComponentProps = {
   app: Application;
-  router: NavigatorCore;
+  // router: NavigatorCore;
   view: RouteViewCore;
   parent?: { scrollView?: ScrollViewCore };
 };

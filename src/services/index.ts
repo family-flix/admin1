@@ -5,7 +5,7 @@ import { CancelToken } from "axios";
 import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import {
   JSONObject,
   ListResponse,

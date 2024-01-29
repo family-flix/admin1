@@ -1,7 +1,7 @@
 import { MediaTypes } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 // export async function fetchMediaProfileList(params: FetchParams & Partial<{ keyword: string; type: MediaTypes }>) {
 //   const { keyword, page, pageSize, type, ...rest } = params;

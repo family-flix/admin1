@@ -7,12 +7,11 @@ import { ViewComponent } from "@/types";
 
 export const LoginPage: ViewComponent = (props) => {
   const { app, view } = props;
-  const { user } = app;
   const emailInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入邮箱",
     onChange(v) {
-      user.inputEmail(v);
+      app.$user.inputEmail(v);
     },
   });
   const passwordInput = new InputCore({
@@ -20,13 +19,13 @@ export const LoginPage: ViewComponent = (props) => {
     type: "password",
     placeholder: "请输入密码",
     onChange(v) {
-      user.inputPassword(v);
+      app.$user.inputPassword(v);
     },
   });
   const loginBtn = new ButtonCore({
     async onClick() {
       loginBtn.setLoading(true);
-      await user.login();
+      await app.$user.login();
       loginBtn.setLoading(false);
     },
   });

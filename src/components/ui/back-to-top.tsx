@@ -5,7 +5,7 @@ import { Show, createSignal } from "solid-js";
 import { ArrowUp } from "lucide-solid";
 
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { app } from "@/store/app";
+// import { app } from "@/store";
 
 export function BackToTop(props: { store: ScrollViewCore }) {
   const { store } = props;
@@ -15,9 +15,9 @@ export function BackToTop(props: { store: ScrollViewCore }) {
 
   store.onScroll((instance) => {
     let needShow = false;
-    if (instance.scrollTop >= app.screen.height) {
-      needShow = true;
-    }
+    // if (instance.scrollTop >= app.screen.height) {
+    //   needShow = true;
+    // }
     if (needShow === ref) {
       return;
     }

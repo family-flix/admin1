@@ -51,12 +51,14 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import { createJob, driveList, consumeAction, pendingActions, homeTVProfilePage, seasonArchivePage } from "@/store";
+import { consumeAction, pendingActions } from "@/store/actions";
+import { createJob } from "@/store/job";
+import { driveList } from "@/store/drives";
 import { Result, ViewComponent } from "@/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
 
-export const SeasonListPage: ViewComponent = (props) => {
+export const HomeSeasonListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const seasonList = new ListCore(new RequestCore(fetchSeasonMediaList), {
@@ -277,10 +279,11 @@ export const SeasonListPage: ViewComponent = (props) => {
   // });
   const profileBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
-      homeTVProfilePage.query = {
-        id: record.id,
-      };
-      app.showView(homeTVProfilePage);
+      // homeTVProfilePage.query = {
+      //   id: record.id,
+      // };
+      // app.showView(homeTVProfilePage);
+      app.push("/home/season_profile", { id: record.id });
     },
   });
   const refreshSeasonProfilesRequest = new RequestCore(refreshSeasonProfiles, {
@@ -315,7 +318,8 @@ export const SeasonListPage: ViewComponent = (props) => {
   // });
   const gotoSeasonArchivePageBtn = new ButtonCore({
     onClick() {
-      app.showView(seasonArchivePage);
+      // app.showView(seasonArchivePage);
+      app.push("/archive");
     },
   });
   const moveToResourceDriveConfirmDialog = new DialogCore({
@@ -493,9 +497,10 @@ export const SeasonListPage: ViewComponent = (props) => {
                         cur_episode_count,
                         episode_count,
                       } = season;
-                      const url = homeTVProfilePage.buildUrlWithPrefix({
-                        id,
-                      });
+                      const url = `/home/season_profile?id=${id}`;
+                      // const url = homeTVProfilePage.buildUrlWithPrefix({
+                      //   id,
+                      // });
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">

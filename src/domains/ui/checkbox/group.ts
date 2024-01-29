@@ -116,7 +116,7 @@ export class CheckboxGroupCore<T extends any> extends BaseDomain<TheTypesOfEvent
     for (let i = 0; i < this.options.length; i += 1) {
       const opt = this.options[i];
       // console.log("[DOMAIN]ui/checkbox/group - setOptions", opt, i);
-      opt.core.unmount();
+      opt.core.destroy();
     }
     this.options = options.map((opt) => {
       const { label, value, checked, disabled } = opt;

@@ -7,7 +7,7 @@ import { Button, Textarea } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { ButtonCore, InputCore } from "@/domains/ui";
 import { ViewComponent } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 function execPrismaCode(code: string) {
   return request.post<unknown[][]>("/api/admin/prisma_exec", { code });

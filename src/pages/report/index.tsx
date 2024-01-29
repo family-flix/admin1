@@ -15,7 +15,7 @@ import { ListCore } from "@/domains/list";
 import { clear_expired_job_list } from "@/domains/job";
 import { MediaTypes, ReportTypes } from "@/constants";
 import { ViewComponent } from "@/types";
-import { homeMovieProfilePage, homeTVProfilePage, refreshJobs } from "@/store";
+import { refreshJobs } from "@/store/job";
 import { cn } from "@/utils";
 import { fetchMovieMediaList } from "@/services/media";
 
@@ -337,9 +337,10 @@ export const HomeReportListPage: ViewComponent = (props) => {
                           if (!media) {
                             return null;
                           }
-                          const url = homeMovieProfilePage.buildUrlWithPrefix({
-                            id: media.id,
-                          });
+                          const url = '/';
+                          // const url = homeMovieProfilePage.buildUrlWithPrefix({
+                          //   id: media.id,
+                          // });
                           return (
                             <div class="flex p-2 bg-gray-100 rounded-sm">
                               <div class="overflow-hidden mr-2 rounded-sm">

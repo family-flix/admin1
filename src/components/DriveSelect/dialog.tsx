@@ -3,7 +3,7 @@ import { For, createSignal } from "solid-js";
 import { Dialog } from "@/components/ui";
 import { DialogCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
-import { driveList } from "@/store";
+import { driveList } from "@/store/drives";
 
 import { DriveSelectCore } from ".";
 

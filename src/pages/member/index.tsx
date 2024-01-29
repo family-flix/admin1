@@ -14,19 +14,18 @@ import {
   updateMemberPermission,
 } from "@/services";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
+import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { Qrcode } from "@/components/Qrcode";
 import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxGroupCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
+import { MultipleSelectionCore } from "@/domains/multiple";
+import { create_link } from "@/domains/shortlink";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
-import { MultipleSelectionCore } from "@/domains/multiple";
-import { homePermissionListPage } from "@/store";
-import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
-import { create_link } from "@/domains/shortlink";
 
-export const MemberManagePage: ViewComponent = (props) => {
+export const MemberListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const memberList = new ListCore(new RequestCore(fetchMemberList), {
@@ -101,7 +100,8 @@ export const MemberManagePage: ViewComponent = (props) => {
   });
   const permissionBtn = new ButtonCore({
     onClick() {
-      app.showView(homePermissionListPage);
+      app.push("/home/permission");
+      // app.showView(homePermissionListPage);
     },
   });
   const addMemberBtn = new ButtonCore({

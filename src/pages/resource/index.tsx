@@ -10,7 +10,8 @@ import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from 
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { RequestCore } from "@/domains/request";
 import { FolderCard } from "@/components/FolderCard";
-import { createJob, driveList, sharedFilesHistoryPage, sharedFilesTransferListPage } from "@/store";
+import { createJob } from "@/store/job";
+import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/types";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
@@ -102,12 +103,14 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   });
   const searchHistoryBtn = new ButtonCore({
     onClick() {
-      app.showView(sharedFilesHistoryPage);
+      // app.showView(sharedFilesHistoryPage);
+      app.push("/home/transfer/search");
     },
   });
   const transferHistoryBtn = new ButtonCore({
     onClick() {
-      app.showView(sharedFilesTransferListPage);
+      app.push("/home/transfer/history");
+      // app.showView(sharedFilesTransferListPage);
     },
   });
   const searchInput = new InputCore({

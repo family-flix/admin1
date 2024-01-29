@@ -5,6 +5,7 @@ import { For, Show, createSignal } from "solid-js";
 import { ChevronRight, Eye, Folder, FolderInput, Loader, MoreHorizontal, Scroll, Search, Send } from "lucide-solid";
 
 import { batchUploadSubtitles, validateSubtitleFiles } from "@/services";
+import { fetchMovieMediaProfile, fetchSeasonMediaProfile } from "@/services/media";
 import { Button, Dialog, DropdownMenu, Input, LazyImage, ScrollView } from "@/components/ui";
 import {
   ButtonCore,
@@ -16,8 +17,6 @@ import {
   ImageCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/types";
-import { createJob } from "@/store";
 import { MediaTypes, SubtitleLanguageOptions } from "@/constants";
 import { DragZoneCore } from "@/domains/ui/drag-zone";
 import { SeasonSelect } from "@/components/SeasonSelect/main";
@@ -26,7 +25,8 @@ import { RefCore } from "@/domains/cur";
 import { Select } from "@/components/ui/select";
 import { SubtitlePreview, SubtitleReaderCore } from "@/components/SubtitlePreview";
 import { MovieSelect, MovieSelectCore } from "@/components/MovieSelect";
-import { fetchMovieMediaProfile, fetchSeasonMediaProfile } from "@/services/media";
+import { ViewComponent } from "@/types";
+import { createJob } from "@/store/job";
 import { padding_zero } from "@/utils";
 
 export const HomeSubtitleUploadPage: ViewComponent = (props) => {

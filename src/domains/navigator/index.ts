@@ -1,6 +1,6 @@
 /**
- * @file 仅负责路由的核心类
- *
+ * @file 仅负责「地址」的核心类
+ * 包括 URL 解析、应用等
  */
 import qs from "qs";
 import parse from "url-parse";
@@ -97,17 +97,17 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 当前 pathname */
   pathname: string = "/";
-  /** 发生跳转前的 pathname */
-  prevPathname: string | null = null;
   /** 当前路由的 query */
   query: Record<string, string> = {};
   /** 当前路由的 params */
   params: Record<string, string> = {};
-  prevHistories: { pathname: string }[] = [];
-  histories: { pathname: string }[] = [];
-  /** 当前访问地址 */
-  // url: string;
+  /** 当前 URL */
   location: Partial<RouteLocation> = {};
+  href: string = "/";
+  histories: { pathname: string }[] = [];
+  prevHistories: { pathname: string }[] = [];
+  /** 发生跳转前的 pathname */
+  prevPathname: string | null = null;
 
   /** router 基础信息 */
   // host: string;

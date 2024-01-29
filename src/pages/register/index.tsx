@@ -7,12 +7,11 @@ import { ViewComponent } from "@/types";
 
 export const RegisterPage: ViewComponent = (props) => {
   const { app } = props;
-  const { user } = app;
   const emailInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入邮箱",
     onChange(v) {
-      user.inputEmail(v);
+      app.$user.inputEmail(v);
     },
   });
   const passwordInput = new InputCore({
@@ -20,13 +19,13 @@ export const RegisterPage: ViewComponent = (props) => {
     type: "password",
     placeholder: "请输入密码",
     onChange(v) {
-      user.inputPassword(v);
+      app.$user.inputPassword(v);
     },
   });
   const registerBtn = new ButtonCore({
     async onClick() {
       registerBtn.setLoading(true);
-      const r = await user.register();
+      const r = await app.$user.register();
       registerBtn.setLoading(false);
       if (r.error) {
         app.tip({
@@ -38,10 +37,6 @@ export const RegisterPage: ViewComponent = (props) => {
         text: ["注册成功"],
       });
     },
-  });
-
-  user.onTip((msg) => {
-    app.tip(msg);
   });
 
   return (

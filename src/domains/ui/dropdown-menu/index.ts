@@ -137,7 +137,7 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     this.menu.hide();
   }
   unmount() {
-    super.unmount();
+    super.destroy();
     this.menu.unmount();
   }
 

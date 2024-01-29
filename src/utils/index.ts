@@ -4,7 +4,7 @@ import relative_time from "dayjs/plugin/relativeTime";
 import { twMerge } from "tailwind-merge";
 
 import { cn as nzhcn } from "./nzh";
-import { Result } from "@/types";
+import { JSONObject, Result } from "@/types";
 
 dayjs.extend(relative_time);
 dayjs.locale("zh-cn");
@@ -75,13 +75,20 @@ export function update<T>(arr: T[], index: number, nextItem: T) {
  * @param query
  * @returns
  */
-export function query_stringify(query: Record<string, string | number | undefined>) {
+export function query_stringify(query?: null | JSONObject) {
+  if (query === null) {
+    return "";
+  }
+  if (query === undefined) {
+    return "";
+  }
   return Object.keys(query)
     .filter((key) => {
       return query[key] !== undefined;
     })
     .map((key) => {
-      return `${key}=${encodeURIComponent(query[key]!)}`;
+      // @ts-ignore
+      return `${key}=${encodeURIComponent(query[key])}`;
     })
     .join("&");
 }

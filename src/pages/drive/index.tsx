@@ -13,7 +13,6 @@ import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
 import { code_get_drive_token, DriveTypes } from "@/constants";
 import { ViewComponent } from "@/types";
-import { driveProfilePage } from "@/store";
 
 export const DriveListPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -172,12 +171,17 @@ export const DriveListPage: ViewComponent = (props) => {
                         driveList.refresh();
                       }}
                       onClick={() => {
-                        driveProfilePage.query = {
+                        // driveProfilePage.query = {
+                        //   id: drive.id,
+                        //   name,
+                        //   avatar,
+                        // };
+                        // app.showView(driveProfilePage);
+                        app.push("/home/drive_profile", {
                           id: drive.id,
                           name,
                           avatar,
-                        };
-                        app.showView(driveProfilePage);
+                        });
                       }}
                     />
                   );

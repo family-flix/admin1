@@ -13,7 +13,7 @@ import { upload_file } from "@/services";
 import { Select } from "@/components/ui/select";
 import { SelectItemCore } from "@/domains/ui/select/item";
 import { PopperCore } from "@/domains/ui/popper";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 export const TestPage: ViewComponent = (props) => {
   const { app } = props;

@@ -25,7 +25,7 @@ import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ViewComponent } from "@/types";
 import { MediaTypes } from "@/constants";
 
-export const UnknownSeasonMediaPage: ViewComponent = (props) => {
+export const UnknownSeasonListPage: ViewComponent = (props) => {
   const { app, view, parent } = props;
 
   const list = new ListCore(new RequestCore(fetchUnknownMediaList), {

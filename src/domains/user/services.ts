@@ -1,5 +1,5 @@
 import { Result } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 /**
  * 用户登录

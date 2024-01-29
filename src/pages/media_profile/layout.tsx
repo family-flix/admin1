@@ -10,7 +10,7 @@ import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { Show } from "@/packages/ui/show";
 import { ViewComponent } from "@/types";
-import { homeIndexPage, homeMovieListPage, homeSeasonListPage } from "@/store/views";
+// import { homeIndexPage, homeMovieListPage, homeSeasonListPage } from "@/store/views";
 import { cn, sleep } from "@/utils";
 
 export const MediaProfileHomeLayout: ViewComponent = (props) => {
@@ -30,17 +30,20 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
-      view: homeIndexPage,
+      url: "/media_profile/home/index",
+      // view: homeIndexPage,
     },
     {
       text: "电视剧",
       icon: <Tv class="w-6 h-6" />,
-      view: homeSeasonListPage,
+      url: "/media_profile/home/season",
+      // view: homeSeasonListPage,
     },
     {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
-      view: homeMovieListPage,
+      url: "/media_profile/home/movie",
+      // view: homeMovieListPage,
     },
   ]);
 
@@ -56,15 +59,15 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
             <div class="flex-1 space-y-1 p-2 w-full h-full overflow-y-auto rounded-xl self-start">
               <For each={menus()}>
                 {(menu) => {
-                  const { icon, text, view } = menu;
+                  const { icon, text, url } = menu;
                   return (
                     <Menu
                       app={app}
                       icon={icon}
-                      highlight={(() => {
-                        return curSubView() === view;
-                      })()}
-                      view={view}
+                      // highlight={(() => {
+                      //   return curSubView() === view;
+                      // })()}
+                      url={url}
                     >
                       {text}
                     </Menu>
@@ -89,7 +92,7 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
                     store={subView}
                     index={i()}
                   >
-                    <PageContent app={app} router={app.router} view={subView} />
+                    <PageContent app={app} view={subView} />
                   </KeepAliveRouteView>
                 );
               }}
@@ -105,7 +108,7 @@ function Menu(
   props: {
     app: Application;
     highlight?: boolean;
-    view?: RouteViewCore;
+    url?: string;
     icon: JSX.Element;
     badge?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
@@ -130,13 +133,14 @@ function Menu(
     </div>
   );
   return (
-    <Show when={props.view} fallback={inner}>
+    <Show when={props.url} fallback={inner}>
       <div
         onClick={() => {
-          if (!props.view) {
+          if (!props.url) {
             return;
           }
-          props.app.showView(props.view);
+          props.app.push(props.url);
+          // props.app.showView(props.url);
         }}
       >
         {inner}

@@ -1,81 +1,89 @@
 /* @refresh reload */
+
 import { createSignal, For, JSX, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
-import { Toast } from "./components/ui/toast";
-import { RouteView } from "./components/ui/route-view";
-import { connect } from "./domains/app/connect.web";
-import { ToastCore } from "./domains/ui/toast";
-import { NavigatorCore } from "./domains/navigator";
-import { rootView, homeIndexPage } from "./store/views";
-import { app, router, initializeJobs, pages } from "./store";
-import { ViewComponent } from "./types";
-import { sleep } from "./utils";
+import "@/store/request";
+import { app } from "@/store";
+import { initializeJobs } from "@/store/job";
+import { KeepAliveRouteView } from "@/components/ui";
+import { Toast } from "@/components/ui/toast";
+import { ToastCore } from "@/domains/ui/toast";
+import { connect as connectApplication } from "@/domains/app/connect.web";
+import { connect as connectHistory } from "@/domains/history/connect.web";
+import { ViewComponent } from "@/types";
+import { sleep } from "@/utils";
 
 import "./style.css";
 
-app.onClickLink(({ href, target }) => {
-  const { pathname, query } = NavigatorCore.parse(href);
-  const matched = pages.find((v) => {
-    return v.key === pathname;
-  });
-  // console.log("[ROOT]app.onClickLink - matched", matched, pathname, query, href);
-  if (!matched) {
-    app.tip({
-      text: ["没有匹配的页面"],
-    });
-    return;
-  }
-  matched.query = query as Record<string, string>;
-  if (target === "_blank") {
-    matched.buildUrlWithPrefix(matched.query);
-    return;
-  }
-  app.showView(matched);
-  return;
-});
-app.onPopState((options) => {
-  const { pathname } = NavigatorCore.parse(options.pathname);
-  console.log("[ROOT]index - app.onPopState", options.type, pathname);
-  const matched = pages.find((v) => {
-    return v.key === pathname;
-  });
-  if (matched) {
-    matched.isShowForBack = true;
-    matched.query = router.query;
-    app.showView(matched, { back: true });
-    return;
-  }
-  homeIndexPage.isShowForBack = true;
-  app.showView(homeIndexPage, { back: true });
-});
-connect(app);
+// app.onClickLink(({ href, target }) => {
+//   const { pathname, query } = NavigatorCore.parse(href);
+//   const matched = pages.find((v) => {
+//     return v.key === pathname;
+//   });
+//   if (!matched) {
+//     app.tip({
+//       text: ["没有匹配的页面"],
+//     });
+//     return;
+//   }
+//   matched.query = query as Record<string, string>;
+//   if (target === "_blank") {
+//     matched.buildUrlWithPrefix(matched.query);
+//     return;
+//   }
+//   app.showView(matched);
+//   return;
+// });
+// app.onPopState((options) => {
+//   const { pathname } = NavigatorCore.parse(options.pathname);
+//   console.log("[ROOT]index - app.onPopState", options.type, pathname);
+//   const matched = pages.find((v) => {
+//     return v.key === pathname;
+//   });
+//   if (matched) {
+//     matched.isShowForBack = true;
+//     matched.query = router.query;
+//     app.showView(matched, { back: true });
+//     return;
+//   }
+//   homeIndexPage.isShowForBack = true;
+//   app.showView(homeIndexPage, { back: true });
+// });
+connectApplication(app);
+connectHistory(app.$history);
 
 function Application() {
+  const view = app.$history.$view;
+  const router = app.$history.$router;
   const toast = new ToastCore();
 
   const [state, setState] = createSignal(app.state);
-  const [subViews, setSubViews] = createSignal(rootView.subViews);
+  const [subViews, setSubViews] = createSignal(view.subViews);
 
   app.onStateChange((nextState) => {
     setState(nextState);
   });
-  rootView.onViewShow((views) => {
-    const curView = views.pop();
-    if (!curView) {
-      return;
-    }
-    if (curView.isShowForBack) {
-      curView.isShowForBack = false;
-      return;
-    }
-    const r = curView.buildUrl(curView.query);
-    app.setTitle(`${curView.title} - FamilyFlix`);
-    router.pushState(r);
-  });
-  rootView.onSubViewsChange((nextSubViews) => {
+  // rootView.onViewShow((views) => {
+  //   const curView = views.pop();
+  //   if (!curView) {
+  //     return;
+  //   }
+  //   if (curView.isShowForBack) {
+  //     curView.isShowForBack = false;
+  //     return;
+  //   }
+  //   const r = curView.buildUrl(curView.query);
+  //   app.setTitle(`${curView.title} - FamilyFlix`);
+  //   router.pushState(r);
+  // });
+  view.onSubViewsChange((nextSubViews) => {
+    console.log("[ROOT]rootView.onSubViewsChange", nextSubViews.length);
     setSubViews(nextSubViews);
+  });
+  app.$history.onTopViewChange((view) => {
+    app.setTitle(`${view.title} - FamilyFlix 管理后台`);
   });
   app.onTip((msg) => {
     const { text } = msg;
@@ -90,25 +98,25 @@ function Application() {
   //   router.start();
   // });
   onMount(async () => {
-    // @todo 让 app 能监听页面的生命周期
-    await sleep(1000);
-    initializeJobs();
+    // await sleep(1000);
+    app.push("/home/index");
+    // initializeJobs();
   });
   // console.log("[]Application - before start", window.history);
   const { innerWidth, innerHeight, location } = window;
   router.prepare(location);
-  (() => {
-    const { pathname } = NavigatorCore.parse(router.pathname);
-    const matched = pages.find((v) => {
-      return v.key === pathname;
-    });
-    if (matched) {
-      matched.query = router.query;
-      app.showView(matched);
-      return;
-    }
-    app.showView(homeIndexPage);
-  })();
+  // (() => {
+  //   const { pathname } = NavigatorCore.parse(router.pathname);
+  //   const matched = pages.find((v) => {
+  //     return v.key === pathname;
+  //   });
+  //   if (matched) {
+  //     matched.query = router.query;
+  //     app.showView(matched);
+  //     return;
+  //   }
+  //   app.showView(homeIndexPage);
+  // })();
   app.start({
     width: innerWidth,
     height: innerHeight,
@@ -129,9 +137,9 @@ function Application() {
           {(subView, i) => {
             const PageContent = subView.component as ViewComponent;
             return (
-              <RouteView class="absolute inset-0 opacity-100 dark:bg-black" store={subView} index={i()}>
-                <PageContent app={app} view={subView} router={router} />
-              </RouteView>
+              <KeepAliveRouteView class="absolute inset-0 opacity-100 dark:bg-black" store={subView} index={i()}>
+                <PageContent app={app} view={subView} />
+              </KeepAliveRouteView>
             );
           }}
         </For>
@@ -140,7 +148,6 @@ function Application() {
     </div>
   );
 }
-
 const root = document.getElementById("root");
 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
@@ -148,4 +155,5 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
     "Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got mispelled?"
   );
 }
+console.log("invoke render Application");
 render(() => <Application />, root!);

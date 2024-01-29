@@ -1,13 +1,13 @@
 import { Application } from "@/domains/app";
 
+const ownerDocument = globalThis.document;
+
 export function connect(app: Application) {
-  const { router } = app;
-  const ownerDocument = globalThis.document;
   app.getComputedStyle = (el: HTMLElement) => {
     return window.getComputedStyle(el);
   };
   app.setTitle = (title: string) => {
-    document.title = `${title} - FamilyFlix 管理后台`;
+    document.title = title;
   };
   app.copy = (text: string) => {
     const textArea = document.createElement("textarea");
@@ -44,10 +44,10 @@ export function connect(app: Application) {
     // console.log("2");
   });
   window.addEventListener("popstate", (event) => {
-    console.log("[DOMAIN]Application connect popstate", event.state.from, event.state.to);
+    console.log("[DOMAIN]Application connect popstate", event.state?.from, event.state?.to);
     const { type } = event;
     const { pathname, href } = window.location;
-    app.emit(app.Events.PopState, { type, href, pathname: event.state.to });
+    app.emit(app.Events.PopState, { type, href, pathname: event.state?.to });
   });
   window.addEventListener("beforeunload", (event) => {
     // // 取消事件
@@ -101,72 +101,45 @@ export function connect(app: Application) {
     const { key } = event;
     app.keydown({ key });
   });
-  ownerDocument.addEventListener("click", (event) => {
-    // console.log('[DOMAIN]app/connect.web', event.target);
-    let target = event.target;
-    if (target instanceof Document) {
-      return;
-    }
-    if (target === null) {
-      return;
-    }
-    let matched = false;
-    while (target) {
-      const t = target as HTMLElement;
-      if (t.tagName === "A") {
-        matched = true;
-        break;
-      }
-      target = t.parentNode;
-    }
-    if (!matched) {
-      return;
-    }
-    const t = target as HTMLElement;
-    const href = t.getAttribute("href");
-    console.log("[CORE]app/connect - link a", href);
-    if (!href) {
-      return;
-    }
-    if (!href.startsWith("/")) {
-      return;
-    }
-    if (href.startsWith("http")) {
-      return;
-    }
-    if (t.getAttribute("target") === "_blank") {
-      return;
-    }
-    event.preventDefault();
-    app.emit(app.Events.ClickLink, { href, target: null });
-  });
-  router.back = () => {
-    window.history.back();
-  };
-  router.reload = () => {
-    window.location.reload();
-  };
-  router.onPushState(({ from, to, path }) => {
-    window.history.pushState(
-      {
-        from,
-        to,
-      },
-      "",
-      path
-    );
-  });
-  router.onReplaceState(({ from, path, pathname }) => {
-    // router.log("[Application ]- onReplaceState");
-    window.history.replaceState(
-      {
-        from,
-      },
-      "",
-      path
-    );
-  });
-
+  // ownerDocument.addEventListener("click", (event) => {
+  //   // console.log('[DOMAIN]app/connect.web', event.target);
+  //   let target = event.target;
+  //   if (target instanceof Document) {
+  //     return;
+  //   }
+  //   if (target === null) {
+  //     return;
+  //   }
+  //   let matched = false;
+  //   while (target) {
+  //     const t = target as HTMLElement;
+  //     if (t.tagName === "A") {
+  //       matched = true;
+  //       break;
+  //     }
+  //     target = t.parentNode;
+  //   }
+  //   if (!matched) {
+  //     return;
+  //   }
+  //   const t = target as HTMLElement;
+  //   const href = t.getAttribute("href");
+  //   console.log("[CORE]app/connect - link a", href);
+  //   if (!href) {
+  //     return;
+  //   }
+  //   if (!href.startsWith("/")) {
+  //     return;
+  //   }
+  //   if (href.startsWith("http")) {
+  //     return;
+  //   }
+  //   if (t.getAttribute("target") === "_blank") {
+  //     return;
+  //   }
+  //   event.preventDefault();
+  //   app.emit(app.Events.ClickLink, { href, target: null });
+  // });
   const originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
   app.disablePointer = () => {
     ownerDocument.body.style.pointerEvents = "none";

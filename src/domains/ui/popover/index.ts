@@ -109,9 +109,9 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Hidden);
   }
   unmount() {
-    super.unmount();
-    this.layer.unmount();
-    this.popper.unmount();
+    super.destroy();
+    this.layer.destroy();
+    this.popper.destroy();
     this.present.unmount();
   }
 

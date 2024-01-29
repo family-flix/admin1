@@ -8,7 +8,7 @@ import {
 } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponseWithCursor, MutableRecord, RequestedResource, Result } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { processMediaPrepareArchive } from "./utils";
 
 /** 获取季列表 */

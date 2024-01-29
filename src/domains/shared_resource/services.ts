@@ -1,6 +1,6 @@
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, RequestedResource } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { TVItem } from "@/services";
 
 /**

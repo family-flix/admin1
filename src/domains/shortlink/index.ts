@@ -1,5 +1,5 @@
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { ListResponse, RequestedResource, Result } from "@/types";
 
 export async function create_link(url: string) {

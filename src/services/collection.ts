@@ -1,7 +1,7 @@
 import { CollectionTypes } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 export function fetchCollectionList(params: FetchParams) {
   return request.post<

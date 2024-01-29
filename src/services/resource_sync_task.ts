@@ -1,6 +1,6 @@
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponseWithCursor, RequestedResource } from "@/types";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 
 /** 获取同步任务列表 */
 export function fetchSyncTaskList(body: FetchParams & { in_production: number; invalid: number; name: string }) {

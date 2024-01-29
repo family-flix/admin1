@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/utils/request";
+import { request } from "@/store/request";
 import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 
 import { TaskStatus, TaskTypes } from "./constants";

@@ -9,7 +9,6 @@ import { ButtonCore, ButtonInListCore, CheckboxCore, ImageInListCore, ScrollView
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus, fetchPersonList } from "@/domains/job";
-import { homeLayout, homeTaskProfilePage, refreshJobs } from "@/store";
 import { ViewComponent } from "@/types";
 import { cn } from "@/utils";
 
@@ -51,17 +50,16 @@ export const PersonListPage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      homeTaskProfilePage.query = {
-        id: task.id,
-      };
-      app.showView(homeTaskProfilePage);
+      // homeTaskProfilePage.query = {
+      //   id: task.id,
+      // };
+      // app.showView(homeTaskProfilePage);
       // homeLayout.showSubView(homeTaskProfilePage);
       // router.push(`/home/task/${task.id}`);
     },
   });
   const refreshBtn = new ButtonCore({
     onClick() {
-      refreshJobs();
       personList.refresh();
     },
   });

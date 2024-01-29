@@ -2,44 +2,24 @@
  * @file 管理后台首页(云盘列表)
  */
 import { createSignal, For, Show } from "solid-js";
-import {
-  RotateCcw,
-  HardDrive,
-  Search,
-  Send,
-  FileSearch,
-  Loader2,
-  Loader,
-  RefreshCcw,
-  AlertTriangle,
-} from "lucide-solid";
+import { Send, FileSearch, RefreshCcw, AlertTriangle } from "lucide-solid";
 
 import { fetchDashboard, fetchMediaRecentlyCreated, refreshDashboard } from "@/services/common";
+import { pushMessageToMembers } from "@/services";
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
-import { DriveCard } from "@/components/DriveCard";
-import { ImageCore, ImageInListCore } from "@/domains/ui/image";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
+import { ImageInListCore } from "@/domains/ui/image";
 import { RequestCore } from "@/domains/request";
 import { addAliyunDrive } from "@/domains/drive";
 import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
-import { code_get_drive_token, DriveTypes } from "@/constants";
-import { ViewComponent } from "@/types";
-import {
-  driveProfilePage,
-  homeDriveListPage,
-  homeIndexPage,
-  homeMovieListPage,
-  homeReportListPage,
-  homeSeasonListPage,
-  homeInvalidMediaListPage,
-} from "@/store";
-import { pushMessageToMembers } from "@/services";
 import { FilenameParserCore } from "@/components/FilenameParser";
 import { DynamicContent } from "@/components/DynamicContent";
 import { DynamicContentCore } from "@/domains/ui/dynamic-content";
+import { DriveTypes, ReportTypes } from "@/constants";
+import { ViewComponent } from "@/types";
 
-export const HomePage: ViewComponent = (props) => {
+export const HomeIndexPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
@@ -275,7 +255,8 @@ export const HomePage: ViewComponent = (props) => {
                 <div
                   class="w-[240px] cursor-pointer"
                   onClick={() => {
-                    app.showView(homeDriveListPage);
+                    app.push("/home/drive");
+                    // app.showView(homeDriveListPage);
                   }}
                 >
                   <div class="text-3xl">{dashboard()?.drive_count}</div>
@@ -291,7 +272,8 @@ export const HomePage: ViewComponent = (props) => {
                 <div
                   class="w-[240px] cursor-pointer"
                   onClick={() => {
-                    app.showView(homeSeasonListPage);
+                    app.push("/home/season");
+                    // app.showView(homeSeasonListPage);
                   }}
                 >
                   <div class="text-3xl">{dashboard()?.season_count}</div>
@@ -300,7 +282,8 @@ export const HomePage: ViewComponent = (props) => {
                 <div
                   class="w-[240px] cursor-pointer"
                   onClick={() => {
-                    app.showView(homeMovieListPage);
+                    app.push("/home/movie");
+                    // app.showView(homeMovieListPage);
                   }}
                 >
                   <div class="text-3xl">{dashboard()?.movie_count}</div>
@@ -317,7 +300,8 @@ export const HomePage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.showView(homeInvalidMediaListPage);
+                  app.push("/home/invalid_media");
+                  // app.showView(homeInvalidMediaListPage);
                 }}
               >
                 <div class="text-3xl">{dashboard()?.invalid_season_count}</div>
@@ -326,7 +310,8 @@ export const HomePage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.showView(homeInvalidMediaListPage);
+                  app.push("/home/resource");
+                  // app.showView(homeInvalidMediaListPage);
                 }}
               >
                 <div class="text-3xl">{dashboard()?.invalid_sync_task_count}</div>
@@ -335,7 +320,8 @@ export const HomePage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.showView(homeReportListPage);
+                  app.push("/home/report", { type: String(ReportTypes.Want) });
+                  // app.showView(homeReportListPage);
                 }}
               >
                 <div class="text-3xl">{dashboard()?.media_request_count}</div>
@@ -344,7 +330,8 @@ export const HomePage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.showView(homeReportListPage);
+                  app.push("/home/report");
+                  // app.showView(homeReportListPage);
                 }}
               >
                 <div class="text-3xl">{dashboard()?.report_count}</div>
@@ -356,14 +343,14 @@ export const HomePage: ViewComponent = (props) => {
             <h1 class="text-2xl">
               <div>今日新增剧集</div>
             </h1>
-            <div class="mt-4 h-[360px] p-4 rounded-md border bg-white">
+            <div class="mt-4 h-[240px] p-4 rounded-md border bg-white">
               <ListView class="" store={mediaListRecentlyCreated}>
-                <div class="space-y-2">
+                <div class="flex space-x-2">
                   <For each={mediaResponse().dataSource}>
                     {(media) => {
                       const { name, poster_path, text } = media;
                       return (
-                        <div class="flex items-center p-2">
+                        <div class="p-2">
                           <div class="mr-2">
                             <LazyImage class="w-[32px] h-[52px]" store={poster.bind(poster_path)} />
                           </div>

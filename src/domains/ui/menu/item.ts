@@ -173,7 +173,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   unmount() {
-    super.unmount();
+    super.destroy();
     if (this.menu) {
       this.menu.unmount();
     }
