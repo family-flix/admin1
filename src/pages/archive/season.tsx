@@ -66,6 +66,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
       });
     },
     onFailed(error) {
+      toResourceDriveBtn.setLoading(false);
       app.tip({
         text: ["移动失败", error.message],
       });

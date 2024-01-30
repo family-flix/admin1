@@ -4,7 +4,7 @@
 import dayjs from "dayjs";
 
 import { FetchParams } from "@/domains/list/typing";
-import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
+import { JSONObject, ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 import { DriveTypes, FileType, MediaTypes } from "@/constants";
 import { request } from "@/store/request";
 import { bytes_to_size } from "@/utils";
@@ -76,7 +76,7 @@ export function updateAliyunDrive(
 export async function fetchDriveList(params: FetchParams) {
   const { page, pageSize, ...restParams } = params;
   const resp = await request.post<
-    ListResponse<{
+    ListResponseWithCursor<{
       id: string;
       /** 云盘自定义名称 */
       name: string;
@@ -104,12 +104,12 @@ export async function fetchDriveList(params: FetchParams) {
   if (resp.error) {
     return Result.Err(resp.error);
   }
-  const { total, page_size, list, no_more } = resp.data;
+  const { total, page_size, list, next_marker } = resp.data;
   return Result.Ok({
+    next_marker,
     total,
     page,
     page_size,
-    no_more,
     list: list.map((item) => {
       const { id, name, avatar, drive_id, total_size, used_size, root_folder_id, vip = [] } = item;
       const valid_vip = vip
@@ -153,12 +153,12 @@ export async function fetchDriveInstanceList(params: FetchParams) {
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { total, page, page_size, no_more, list } = r.data;
+  const { total, page, page_size, next_marker, list } = r.data;
   return Result.Ok({
     total,
     page,
     page_size,
-    no_more,
+    next_marker,
     list: list.map((drive) => {
       return new DriveCore(drive);
     }),
