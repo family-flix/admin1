@@ -1101,8 +1101,8 @@ export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }
  */
 export async function fetchMemberList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const res = await request.get<
-    ListResponse<{
+  const res = await request.post<
+    ListResponseWithCursor<{
       id: string;
       remark: string;
       inviter: null | {
@@ -1849,23 +1849,24 @@ export function batchUploadSubtitles(values: {
 
 export function fetchSubtitleList(params: FetchParams) {
   return request.post<
-    ListResponse<{
+    ListResponseWithCursor<{
       id: string;
+      type: MediaTypes;
       name: string;
       poster_path: string;
-      season_text: string;
-      episodes: {
+      sources: {
         id: string;
-        episode_text: string;
+        name: string;
+        order: number;
         subtitles: {
           id: string;
-          file_id: string;
-          name: string;
+          type: number;
+          unique_id: string;
           language: string;
         }[];
       }[];
     }>
-  >("/api/admin/subtitle/list", params);
+  >("/api/v2/admin/subtitle/list", params);
 }
 export type SubtitleItem = RequestedResource<typeof fetchSubtitleList>["list"][number];
 

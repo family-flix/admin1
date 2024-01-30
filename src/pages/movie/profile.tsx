@@ -20,13 +20,13 @@ import { TMDBSearcherCore } from "@/domains/tmdb";
 import { RefCore } from "@/domains/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { appendAction } from "@/store/actions";
 import { createJob } from "@/store/job";
 import { MediaTypes } from "@/constants";
 
 export const MovieProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchMovieMediaProfile, {
     onFailed(error) {
@@ -123,7 +123,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       appendAction("deleteMovie", {
         movie_id: view.query.id,
       });
-      app.back();
+      history.back();
     },
     onFailed(error) {
       app.tip({
@@ -280,7 +280,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
           <div
             class="mb-2 cursor-pointer"
             onClick={() => {
-              app.back();
+              history.back();
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -360,7 +360,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
                                 class="p-1 cursor-pointer"
                                 title="播放"
                                 onClick={() => {
-                                  app.push(`/preview?id=${id}`);
+                                  history.push("root.preview", { id });
                                   // mediaPlayingPage.query = {
                                   //   id,
                                   // };

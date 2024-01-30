@@ -31,12 +31,15 @@ import { RouteViewCore } from "@/domains/route_view";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { Show } from "@/packages/ui/show";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { onJobsChange } from "@/store/job";
 import { cn, sleep } from "@/utils";
+import { pages } from "@/store/views";
+import { PageKeys } from "@/store/routes";
+import { HistoryCore } from "@/domains/history";
 
 export const HomeLayout: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const settingsRequest = new RequestCore(fetchSettings, {
     onLoading(loading) {
@@ -229,65 +232,74 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
-      url: "/home/index",
+      // url: "/home/index",
+      url: "root.home_layout.index" as PageKeys,
       // view: homeIndexPage,
     },
     {
       text: "电视剧",
       icon: <Tv class="w-6 h-6" />,
-      url: "/home/season",
+      // url: "/home/season",
+      url: "root.home_layout.season_list" as PageKeys,
       // view: homeSeasonListPage,
     },
     {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
-      url: "/home/movie",
+      // url: "/home/movie",
+      url: "root.home_layout.movie_list" as PageKeys,
       // view: homeMovieListPage,
     },
     {
       text: "解析结果",
       icon: <EyeOff class="w-6 h-6" />,
-      url: "/home/unknown_media/season",
+      // url: "/home/unknown_media/season",
+      url: "root.home_layout.parse_result_layout.season" as PageKeys,
       // view: homeUnknownTVPage,
     },
     {
       text: "待处理影视剧问题",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
-      url: "/home/invalid_media",
+      // url: "/home/invalid_media",
+      url: "root.home_layout.invalid_media_list" as PageKeys,
       // view: homeInvalidMediaListPage,
     },
     {
       text: "集合管理",
       icon: <Folder class="w-6 h-6" />,
-      url: "/home/collection",
+      // url: "/home/collection",
+      url: "root.home_layout.collection_list" as PageKeys,
       // view: collectionListPage,
     },
     {
       text: "字幕管理",
       icon: <Subtitles class="w-6 h-6" />,
-      url: "/home/subtitle",
+      // url: "/home/subtitle",
+      url: "root.home_layout.subtitles_list" as PageKeys,
       // view: homeSubtitleListPage,
     },
     {
       text: "同步任务",
       icon: <AlarmClock class="w-6 h-6" />,
       // view: syncTaskListPage,
-      url: "/home/sync_task",
+      url: "root.home_layout.resource_sync" as PageKeys,
     },
     {
       text: "任务",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
-      url: "/home/log",
+      // url: "/home/log",
       // view: homeTaskListPage,
+      url: "root.home_layout.job_list" as PageKeys,
     },
     {
       text: "问题反馈",
       icon: <CircuitBoard class="w-6 h-6" />,
       badge: false,
-      url: "/home/report",
+      // url: "/home/report",
       // view: homeReportListPage,
+      url: "root.home_layout.report_list" as PageKeys,
     },
     {
       text: "云盘文件搜索",
@@ -314,13 +326,13 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
       // view: homeMemberListPage,
-      url: "/home/member",
+      url: "root.home_layout.member_list" as PageKeys,
     },
     {
       text: "转存资源",
       icon: <FolderInput class="w-6 h-6" />,
       // view: homeTransferPage,
-      url: "/home/transfer",
+      url: "root.home_layout.transfer" as PageKeys,
     },
     // {
     //   text: "文件名解析",
@@ -355,15 +367,19 @@ export const HomeLayout: ViewComponent = (props) => {
     ],
   });
 
-  onMount(() => {
-    console.log("[PAGE]home/layout onMount");
-  });
+  const [curRouteName, setCurRouteName] = createSignal(history.$router.name);
 
+  // onMount(() => {
+  // console.log("[PAGE]home/layout onMount", history.$router.href);
+  // });
+  history.onHrefChange(({ name }) => {
+    setCurRouteName(name);
+  });
   onJobsChange((jobs) => {
     setMenus(
       menus().map((menu) => {
         const { url } = menu;
-        if (url === "home/log") {
+        if (url === "root.home_layout.job_list") {
           return {
             ...menu,
             badge: jobs.length !== 0,
@@ -387,9 +403,10 @@ export const HomeLayout: ViewComponent = (props) => {
                     <Menu
                       app={app}
                       icon={icon}
-                      // highlight={(() => {
-                      //   return curSubView() === view;
-                      // })()}
+                      history={history}
+                      highlight={(() => {
+                        return curRouteName() === url;
+                      })()}
                       url={url}
                       badge={badge}
                       onClick={onClick}
@@ -414,7 +431,8 @@ export const HomeLayout: ViewComponent = (props) => {
           <div class="relative w-full h-full">
             <For each={subViews()}>
               {(subView, i) => {
-                const PageContent = subView.component as ViewComponent;
+                const routeName = subView.name;
+                const PageContent = pages[routeName as Exclude<PageKeys, "root">];
                 return (
                   <KeepAliveRouteView
                     class={cn(
@@ -425,7 +443,7 @@ export const HomeLayout: ViewComponent = (props) => {
                     store={subView}
                     index={i()}
                   >
-                    <PageContent app={app} view={subView} />
+                    <PageContent app={app} history={history} view={subView} />
                   </KeepAliveRouteView>
                 );
               }}
@@ -473,8 +491,9 @@ export const HomeLayout: ViewComponent = (props) => {
 function Menu(
   props: {
     app: Application;
+    history: HistoryCore<PageKeys>;
     highlight?: boolean;
-    url?: string;
+    url?: PageKeys;
     icon: JSX.Element;
     badge?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
@@ -505,7 +524,7 @@ function Menu(
           if (!props.url) {
             return;
           }
-          props.app.push(props.url);
+          props.history.push(props.url);
           // props.app.showView(props.view);
         }}
       >

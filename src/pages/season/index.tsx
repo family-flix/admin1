@@ -54,12 +54,13 @@ import { DriveCore } from "@/domains/drive";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
-import { Result, ViewComponent } from "@/types";
+import { Result } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
 
 export const HomeSeasonListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const seasonList = new ListCore(new RequestCore(fetchSeasonMediaList), {
     onLoadingChange(loading) {
@@ -283,7 +284,7 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       //   id: record.id,
       // };
       // app.showView(homeTVProfilePage);
-      app.push("/home/season_profile", { id: record.id });
+      history.push("root.home_layout.season_profile", { id: record.id });
     },
   });
   const refreshSeasonProfilesRequest = new RequestCore(refreshSeasonProfiles, {
@@ -319,7 +320,7 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
   const gotoSeasonArchivePageBtn = new ButtonCore({
     onClick() {
       // app.showView(seasonArchivePage);
-      app.push("/archive");
+      history.push("root.archive");
     },
   });
   const moveToResourceDriveConfirmDialog = new DialogCore({
@@ -497,7 +498,9 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
                         cur_episode_count,
                         episode_count,
                       } = season;
-                      const url = `/home/season_profile?id=${id}`;
+                      const url = history.buildURLWithPrefix("root.home_layout.season_profile", {
+                        id,
+                      });
                       // const url = homeTVProfilePage.buildUrlWithPrefix({
                       //   id,
                       // });

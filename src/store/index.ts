@@ -9,10 +9,9 @@ import { NavigatorCore } from "@/domains/navigator";
 import { BizError } from "@/domains/error";
 import { RouteViewCore } from "@/domains/route_view";
 import { HistoryCore } from "@/domains/history";
-import { HttpClientCore } from "@/domains/http_client";
 import { Result } from "@/types";
 
-import { routes } from "./routes";
+import { PageKeys, routes } from "./routes";
 import { cache } from "./cache";
 import { user } from "./user";
 
@@ -20,23 +19,22 @@ NavigatorCore.prefix = "/admin";
 
 const router = new NavigatorCore();
 const view = new RouteViewCore({
-  key: "/",
+  name: "root",
+  pathname: "/",
   title: "ROOT",
-  component: "div",
   visible: true,
   parent: null,
 });
-const history = new HistoryCore({
+export const history = new HistoryCore<PageKeys>({
   view,
   router,
   routes,
   views: {
-    "/": view,
+    root: view,
   },
 });
 export const app = new Application({
   user: user,
-  history,
   async beforeReady() {
     if (!user.isLogin) {
       const r = await has_admin();
@@ -45,7 +43,7 @@ export const app = new Application({
       }
       const { existing } = r.data;
       if (!existing) {
-        // app.push(registerPage);
+        // history.push(registerPage);
         user.needRegister = true;
         return Result.Ok(null);
       }
@@ -65,12 +63,12 @@ user.onLogin((profile) => {
   // homeLayout.showSubView(homeIndexPage);
   // rootView.showSubView(homeLayout);
   // router.push("/home/index");
-  app.push("/home/index");
+  history.push("root.home_layout.index");
 });
 user.onLogout(() => {
   cache.clear("user");
   // app.showView(loginPage);
-  app.push("/login");
+  history.push("root.login");
 });
 user.onExpired(() => {
   cache.clear("user");
@@ -78,7 +76,7 @@ user.onExpired(() => {
     text: ["token 已过期，请重新登录"],
   });
   // app.showView(loginPage);
-  app.push("/login");
+  history.push("root.login");
 });
 
 ListCore.commonProcessor = <T>(

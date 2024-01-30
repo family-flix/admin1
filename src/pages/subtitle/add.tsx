@@ -25,7 +25,7 @@ import { RefCore } from "@/domains/cur";
 import { Select } from "@/components/ui/select";
 import { SubtitlePreview, SubtitleReaderCore } from "@/components/SubtitlePreview";
 import { MovieSelect, MovieSelectCore } from "@/components/MovieSelect";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { createJob } from "@/store/job";
 import { padding_zero } from "@/utils";
 

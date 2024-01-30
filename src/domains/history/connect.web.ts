@@ -2,7 +2,7 @@ import { HistoryCore } from "@/domains/history";
 
 const ownerDocument = globalThis.document;
 
-export function connect(history: HistoryCore) {
+export function connect(history: HistoryCore<any>) {
   const { $router: router } = history;
   ownerDocument.addEventListener("click", (event) => {
     // console.log('[DOMAIN]app/connect.web', event.target);
@@ -59,7 +59,7 @@ export function connect(history: HistoryCore) {
       path
     );
   });
-  router.onReplaceState(({ from, path, pathname }) => {
+  router.onReplaceState(({ from, path }) => {
     // router.log("[Application ]- onReplaceState");
     window.history.replaceState(
       {

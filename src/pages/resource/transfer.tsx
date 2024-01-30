@@ -9,7 +9,7 @@ import { Button, Input, ScrollView } from "@/components/ui";
 import { ButtonCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const SharedFilesTransferListPage: ViewComponent = (props) => {
   const { app } = props;
@@ -28,7 +28,13 @@ export const SharedFilesTransferListPage: ViewComponent = (props) => {
   });
   const searchBtn = new ButtonCore({
     onClick() {
-      list.search({ name: nameSearchInput.value });
+      const url = nameSearchInput.value;
+      const matched_share_id = url.match(/\/s\/([a-zA-Z0-9]{1,})$/);
+      if (!matched_share_id) {
+        app.tip({ text: ["不是合法阿里云盘链接"] });
+        return;
+      }
+      list.search({ name: url });
     },
   });
   const resetBtn = new ButtonCore({

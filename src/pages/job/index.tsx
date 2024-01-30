@@ -11,13 +11,13 @@ import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus } from "@/domains/job";
 import { refreshJobs } from "@/store/job";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
 import { TabHeader } from "@/components/ui/tab-header";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 
 export const LogListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const jobList = new ListCore(new RequestCore(fetchJobList), {});
   const pauseJob = new RequestCore(pause_job, {
@@ -54,7 +54,7 @@ export const LogListPage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      app.push("/home/log_profile", { id: task.id });
+      history.push("root.home_layout.job_profile", { id: task.id });
       // homeTaskProfilePage.query = {
       //   id: task.id,
       // };

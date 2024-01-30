@@ -7,7 +7,7 @@ import { InputCore, CheckboxCore, MenuCore, MenuItemCore, DropdownMenuCore, Sele
 import { TreeCore } from "@/domains/ui/tree";
 import * as TreePrimitive from "@/packages/ui/tree";
 import * as PopperPrimitive from "@/packages/ui/popper";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { RequestCore } from "@/domains/request";
 import { upload_file } from "@/services";
 import { Select } from "@/components/ui/select";

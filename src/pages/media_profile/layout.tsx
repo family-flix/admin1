@@ -9,12 +9,15 @@ import { RouteViewCore } from "@/domains/route_view";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { Show } from "@/packages/ui/show";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 // import { homeIndexPage, homeMovieListPage, homeSeasonListPage } from "@/store/views";
 import { cn, sleep } from "@/utils";
+import { pages } from "@/store/views";
+import { PageKeys } from "@/store/routes";
+import { HistoryCore } from "@/domains/history";
 
 export const MediaProfileHomeLayout: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
@@ -30,21 +33,21 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
-      url: "/media_profile/home/index",
+      url: "root.media_profile_layout.home" as PageKeys,
       // view: homeIndexPage,
     },
-    {
-      text: "电视剧",
-      icon: <Tv class="w-6 h-6" />,
-      url: "/media_profile/home/season",
-      // view: homeSeasonListPage,
-    },
-    {
-      text: "电影",
-      icon: <Film class="w-6 h-6" />,
-      url: "/media_profile/home/movie",
-      // view: homeMovieListPage,
-    },
+    // {
+    //   text: "电视剧",
+    //   icon: <Tv class="w-6 h-6" />,
+    //   url: "/media_profile/home/season",
+    //   // view: homeSeasonListPage,
+    // },
+    // {
+    //   text: "电影",
+    //   icon: <Film class="w-6 h-6" />,
+    //   url: "/media_profile/home/movie",
+    //   // view: homeMovieListPage,
+    // },
   ]);
 
   onMount(() => {
@@ -64,6 +67,7 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
                     <Menu
                       app={app}
                       icon={icon}
+                      history={history}
                       // highlight={(() => {
                       //   return curSubView() === view;
                       // })()}
@@ -81,7 +85,8 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
           <div class="relative w-full h-full">
             <For each={subViews()}>
               {(subView, i) => {
-                const PageContent = subView.component as ViewComponent;
+                const routeName = subView.name;
+                const PageContent = pages[routeName as Exclude<PageKeys, "root">];
                 return (
                   <KeepAliveRouteView
                     class={cn(
@@ -92,7 +97,7 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
                     store={subView}
                     index={i()}
                   >
-                    <PageContent app={app} view={subView} />
+                    <PageContent app={app} history={history} view={subView} />
                   </KeepAliveRouteView>
                 );
               }}
@@ -107,8 +112,9 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
 function Menu(
   props: {
     app: Application;
+    history: HistoryCore<PageKeys>;
     highlight?: boolean;
-    url?: string;
+    url?: PageKeys;
     icon: JSX.Element;
     badge?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
@@ -139,7 +145,7 @@ function Menu(
           if (!props.url) {
             return;
           }
-          props.app.push(props.url);
+          props.history.push(props.url);
           // props.app.showView(props.url);
         }}
       >

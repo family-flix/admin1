@@ -9,7 +9,7 @@ import { ButtonCore, ButtonInListCore, CheckboxCore, ImageInListCore, ScrollView
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus, fetchPersonList } from "@/domains/job";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
 
 export const PersonListPage: ViewComponent = (props) => {

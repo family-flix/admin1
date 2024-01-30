@@ -12,10 +12,10 @@ import { RequestCore } from "@/domains/request";
 import { FolderCard } from "@/components/FolderCard";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const SharedFilesTransferPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const sharedResource = new SharedResourceCore();
   const syncTaskCreateRequest = new RequestCore(createSyncTaskWithUrl, {
@@ -104,12 +104,12 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   const searchHistoryBtn = new ButtonCore({
     onClick() {
       // app.showView(sharedFilesHistoryPage);
-      app.push("/home/transfer/search");
+      history.push("root.home_layout.season_list");
     },
   });
   const transferHistoryBtn = new ButtonCore({
     onClick() {
-      app.push("/home/transfer/history");
+      history.push("root.home_layout.transfer_history_list");
       // app.showView(sharedFilesTransferListPage);
     },
   });

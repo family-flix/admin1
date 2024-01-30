@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance, CancelToken } from "axios";
 
 import { BaseDomain, Handler } from "@/domains/base";
 import { Application } from "@/domains/app";
@@ -58,7 +58,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   async get<T>(
     endpoint: string,
     query?: JSONObject,
-    config: Partial<{ headers: Record<string, string> }> = {}
+    extra: Partial<{ headers: Record<string, string>; token: CancelToken }> = {}
   ): Promise<Result<T>> {
     const client = this.axios;
     const user = this.user;
@@ -67,37 +67,9 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
       const h = this.getHost();
       const url = `${h}${endpoint}${query ? "?" + query_stringify(query) : ""}`;
       const resp = await client.get<{ code: number | string; msg: string; data: unknown | null }>(url, {
-        // cancelToken: source.token,
+        cancelToken: extra.token,
         headers: {
-          ...(config.headers || {}),
-          Authorization: app.$user.token,
-        },
-      });
-      const { code, msg, data } = resp.data;
-      if (code !== 0) {
-        return Result.Err(msg, code, data);
-      }
-      //       console.log(data);
-      return Result.Ok(data as T);
-    } catch (err) {
-      const { response, message } = err as AxiosError;
-      console.log("error", message);
-      return Result.Err(message);
-    }
-  }
-
-  async post<T>(
-    endpoint: string,
-    body?: JSONObject | FormData,
-    config: Partial<{ headers: Record<string, string> }> = {}
-  ): Promise<Result<T>> {
-    const client = this.axios;
-    const user = this.user;
-    const app = this.app;
-    try {
-      const resp = await client.post<{ code: number | string; msg: string; data: unknown | null }>(endpoint, body, {
-        headers: {
-          ...(config.headers || {}),
+          ...(extra.headers || {}),
           Authorization: app.$user.token,
         },
       });
@@ -108,10 +80,46 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
       return Result.Ok(data as T);
     } catch (err) {
       const error = err as AxiosError;
+      if (axios.isCancel(error)) {
+        return Result.Err("cancel", "CANCEL");
+      }
+      const { response, message } = error;
+      console.log("error", message);
+      return Result.Err(message);
+    }
+  }
+
+  async post<T>(
+    endpoint: string,
+    body?: JSONObject | FormData,
+    extra: Partial<{ headers: Record<string, string>; token: CancelToken }> = {}
+  ): Promise<Result<T>> {
+    const client = this.axios;
+    const user = this.user;
+    const app = this.app;
+    try {
+      const resp = await client.post<{ code: number | string; msg: string; data: unknown | null }>(endpoint, body, {
+        cancelToken: extra.token,
+        headers: {
+          ...(extra.headers || {}),
+          Authorization: app.$user.token,
+        },
+      });
+      const { code, msg, data } = resp.data;
+      if (code !== 0) {
+        return Result.Err(msg, code, data);
+      }
+      return Result.Ok(data as T);
+    } catch (err) {
+      const error = err as AxiosError;
+      if (axios.isCancel(error)) {
+        return Result.Err("cancel", "CANCEL");
+      }
       const { response, message } = error;
       return Result.Err(message);
     }
   }
+  cancel() {}
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);

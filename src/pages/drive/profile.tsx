@@ -35,14 +35,14 @@ import {
 import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { FileType, MediaTypes } from "@/constants";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
 import { buildRegexp } from "@/utils";
 
 export const DriveProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const filesRenameRequest = new RequestCore(renameFilesInDrive, {
     onSuccess(r) {
@@ -757,7 +757,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
             <div
               class="cursor-pointer"
               onClick={() => {
-                app.back();
+                history.back();
               }}
             >
               <ArrowLeft class="w-6 h-6" />

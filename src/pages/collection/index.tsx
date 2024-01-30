@@ -19,13 +19,13 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { driveList } from "@/store/drives";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { DriveCore } from "@/domains/drive";
 
 export const CollectionListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const collectionList = new ListCore(new RequestCore(fetchCollectionList), {
     onLoadingChange(loading) {
@@ -90,7 +90,7 @@ export const CollectionListPage: ViewComponent = (props) => {
       //   id: record.id,
       // };
       // app.showView(collectionEditPage);
-      app.push("/home/collection/edit", { id: record.id });
+      history.push("root.home_layout.collection_edit", { id: record.id });
     },
   });
   const deletingConfirmDialog = new DialogCore({
@@ -112,7 +112,7 @@ export const CollectionListPage: ViewComponent = (props) => {
   });
   const gotoCollectionCreatePage = new ButtonCore({
     onClick() {
-      app.push("/home/collection/create");
+      history.push("root.home_layout.collection_create");
       // app.showView(collectionCreatePage);
     },
   });

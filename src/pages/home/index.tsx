@@ -17,10 +17,10 @@ import { FilenameParserCore } from "@/components/FilenameParser";
 import { DynamicContent } from "@/components/DynamicContent";
 import { DynamicContentCore } from "@/domains/ui/dynamic-content";
 import { DriveTypes, ReportTypes } from "@/constants";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const HomeIndexPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
     search: {
@@ -255,7 +255,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 <div
                   class="w-[240px] cursor-pointer"
                   onClick={() => {
-                    app.push("/home/drive");
+                    history.push("root.home_layout.drive_list");
                     // app.showView(homeDriveListPage);
                   }}
                 >
@@ -272,7 +272,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 <div
                   class="w-[240px] cursor-pointer"
                   onClick={() => {
-                    app.push("/home/season");
+                    history.push("root.home_layout.season_list");
                     // app.showView(homeSeasonListPage);
                   }}
                 >
@@ -282,7 +282,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 <div
                   class="w-[240px] cursor-pointer"
                   onClick={() => {
-                    app.push("/home/movie");
+                    history.push("root.home_layout.movie_list");
                     // app.showView(homeMovieListPage);
                   }}
                 >
@@ -300,7 +300,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.push("/home/invalid_media");
+                  history.push("root.home_layout.invalid_media_list");
                   // app.showView(homeInvalidMediaListPage);
                 }}
               >
@@ -310,7 +310,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.push("/home/resource");
+                  history.push("root.home_layout.resource_sync");
                   // app.showView(homeInvalidMediaListPage);
                 }}
               >
@@ -320,7 +320,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.push("/home/report", { type: String(ReportTypes.Want) });
+                  history.push("root.home_layout.report_list", { type: String(ReportTypes.Want) });
                   // app.showView(homeReportListPage);
                 }}
               >
@@ -330,7 +330,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
               <div
                 class="w-[240px] cursor-pointer"
                 onClick={() => {
-                  app.push("/home/report");
+                  history.push("root.home_layout.report_list");
                   // app.showView(homeReportListPage);
                 }}
               >
@@ -341,29 +341,27 @@ export const HomeIndexPage: ViewComponent = (props) => {
           </div>
           <div class="mt-8">
             <h1 class="text-2xl">
-              <div>今日新增剧集</div>
+              <div>今日更新</div>
             </h1>
-            <div class="mt-4 h-[240px] p-4 rounded-md border bg-white">
-              <ListView class="" store={mediaListRecentlyCreated}>
-                <div class="flex space-x-2">
-                  <For each={mediaResponse().dataSource}>
-                    {(media) => {
-                      const { name, poster_path, text } = media;
-                      return (
-                        <div class="p-2">
-                          <div class="mr-2">
-                            <LazyImage class="w-[32px] h-[52px]" store={poster.bind(poster_path)} />
-                          </div>
-                          <div>
-                            <div>{name}</div>
-                            <div class="mt-2 text-sm">{text}</div>
-                          </div>
+            <div class="mt-4 p-4 min-h-[198px] rounded-md border bg-white  max-w-full overflow-x-auto">
+              <div class="flex space-x-4">
+                <For each={mediaResponse().dataSource}>
+                  {(media) => {
+                    const { name, poster_path, text } = media;
+                    return (
+                      <div class="p-2 w-[64px]">
+                        <div class="mr-2">
+                          <LazyImage class="w-[64px] h-[96px]" store={poster.bind(poster_path)} />
                         </div>
-                      );
-                    }}
-                  </For>
-                </div>
-              </ListView>
+                        <div>
+                          <div>{name}</div>
+                          <div class="max-w-full mt-2 text-sm overflow-hidden">{text}</div>
+                        </div>
+                      </div>
+                    );
+                  }}
+                </For>
+              </div>
             </div>
           </div>
           <div class="mt-8">

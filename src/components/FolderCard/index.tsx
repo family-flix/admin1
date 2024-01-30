@@ -29,8 +29,8 @@ export const FolderCard = (
 
   return (
     <div class="flex flex-col items-center">
-      <div class="flex items-center h-[80px]">
-        <LazyImage class="max-w-full max-h-full object-contain" store={img} />
+      <div class="flex items-center">
+        <LazyImage class="h-[80px] object-contain" store={img} />
       </div>
       <div title={name} class="mt-2 text-center break-all whitespace-pre-wrap truncate line-clamp-2">
         {name}

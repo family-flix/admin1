@@ -26,13 +26,13 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { driveList } from "@/store/drives";
 import { MediaErrorTypeOptions, MediaErrorTypes } from "@/constants";
 
 export const InvalidMediaListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const errorList = new ListCore(new RequestCore(fetchInvalidMediaList), {
     onLoadingChange(loading) {
@@ -198,7 +198,7 @@ export const InvalidMediaListPage: ViewComponent = (props) => {
   const poster = new ImageInListCore();
   const profileBtn = new ButtonInListCore<MediaErrorItem>({
     onClick(record) {
-      app.push("/home/movie_profile", { id: record.id });
+      history.push("root.home_layout.movie_profile", { id: record.id });
       // homeMovieProfilePage.query = {
       //   id: record.id,
       // };
@@ -350,7 +350,7 @@ export const InvalidMediaListPage: ViewComponent = (props) => {
                     if (type === MediaErrorTypes.Season) {
                       const { id, name, poster_path } = media;
                       // const url = homeTVProfilePage.buildUrlWithPrefix({ id });
-                      const url = `/home/season_profile?id=${id}`;
+                      const url = history.buildURLWithPrefix("root.home_layout.season_profile", { id });
                       return (
                         <div class="p-4 bg-white">
                           <div>{typeTextMap[type]}</div>
@@ -372,7 +372,7 @@ export const InvalidMediaListPage: ViewComponent = (props) => {
                     if (type === MediaErrorTypes.Movie) {
                       const { id, name, poster_path } = media;
                       // const url = homeMovieProfilePage.buildUrlWithPrefix({ id });
-                      const url = `/home/season_movie?id=${id}`;
+                      const url = history.buildURLWithPrefix("root.home_layout.movie_profile", { id });
                       return (
                         <div class="p-4 bg-white">
                           <div>{typeTextMap[type]}</div>

@@ -48,11 +48,12 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
 import { createJob } from "@/store/job";
-import { Result, ViewComponent } from "@/types";
+import { Result } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { FileType } from "@/constants";
 
 export const SyncTaskListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const syncTaskList = new ListCore(new RequestCore(fetchSyncTaskList), {
     onLoadingChange(loading) {
@@ -530,18 +531,13 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                     {(task) => {
                       const { id, url, resource_file_name, invalid, drive_file_name, season, drive } = task;
                       const name = `${resource_file_name} -> ${drive_file_name}`;
-                      // const driveURL = driveProfilePage.buildUrlWithPrefix(drive);
-                      const driveURL = `/home/drive_profile?id=${drive.id}`;
-                      // @todo
-                      const seasonURL = `/home/season_profile?id=${season?.tv_id}`;
-                      // const seasonURL = homeTVProfilePage.buildUrlWithPrefix(
-                      //   season
-                      //     ? {
-                      //         id: season.tv_id,
-                      //         season_id: season.id,
-                      //       }
-                      //     : {}
-                      // );
+                      const driveURL = history.buildURLWithPrefix("root.home_layout.drive_profile", { id: drive.id });
+                      const seasonURL = season
+                        ? history.buildURLWithPrefix("root.home_layout.season_profile", {
+                            id: season.tv_id,
+                            season_id: season.id,
+                          })
+                        : undefined;
                       return (
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">

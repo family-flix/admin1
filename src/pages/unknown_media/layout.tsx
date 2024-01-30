@@ -7,11 +7,13 @@ import { TabHeader } from "@/components/ui/tab-header";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { ScrollView, KeepAliveRouteView } from "@/components/ui";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
+import { pages } from "@/store/views";
+import { PageKeys } from "@/store/routes";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const scrollView = new ScrollViewCore({
     _name: "unknown_media/layout",
@@ -20,47 +22,38 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
     key: "id",
     options: [
       {
-        id: "/home/unknown_media/season",
+        id: "root.home_layout.parse_result_layout.season" as PageKeys,
         text: "电视剧",
       },
       {
-        id: "/home/unknown_media/episode",
+        id: "root.home_layout.parse_result_layout.episode" as PageKeys,
         text: "剧集",
       },
       {
-        id: "/home/unknown_media/movie",
+        id: "root.home_layout.parse_result_layout.movie" as PageKeys,
         text: "电影",
       },
     ],
     onChange(opt) {
-      app.push(opt.value as string);
+      history.push(opt.value as PageKeys);
     },
     onMounted() {
-      tab.selectById(view.key);
-      // if (view.curView === homeUnknownTVPage) {
-      //   tab.select(0);
-      // }
-      // if (view.curView === homeUnknownEpisodePage) {
-      //   tab.select(1);
-      // }
-      // if (view.curView === homeUnknownMoviePage) {
-      //   tab.select(2);
-      // }
+      tab.handleChangeById(view.name);
     },
   });
 
-  const [curSubView, setCurSubView] = createSignal(view.curView);
+  // const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
 
-  app.$history.onHrefChange((v) => {
+  history.onHrefChange((v) => {
     if (!tab.mounted) {
       return;
     }
-    tab.selectById(v.pathname);
+    tab.handleChangeById(v.name);
   });
-  view.onCurViewChange((nextCurView) => {
-    setCurSubView(nextCurView);
-  });
+  // view.onCurViewChange((nextCurView) => {
+  //   setCurSubView(nextCurView);
+  // });
   view.onSubViewsChange((nextSubViews) => {
     setSubViews(nextSubViews);
   });
@@ -86,7 +79,8 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
             >
               <For each={subViews()}>
                 {(subView, i) => {
-                  const PageContent = subView.component as ViewComponent;
+                  const routeName = subView.name;
+                  const PageContent = pages[routeName as Exclude<PageKeys, "root">];
                   return (
                     <KeepAliveRouteView
                       class={cn("relative w-full h-full")}
@@ -96,6 +90,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                     >
                       <PageContent
                         app={app}
+                        history={history}
                         parent={{
                           scrollView,
                         }}

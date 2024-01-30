@@ -95,6 +95,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   _name = "NavigatorCore";
   debug = false;
 
+  name = "root";
   /** 当前 pathname */
   pathname: string = "/";
   /** 当前路由的 query */

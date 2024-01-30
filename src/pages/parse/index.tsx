@@ -5,7 +5,7 @@ import { For, createSignal } from "solid-js";
 
 import { Button, Input } from "@/components/ui";
 import { FilenameParserCore } from "@/components/FilenameParser/store";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const VideoParsingPage: ViewComponent = (props) => {
   const { app, view } = props;

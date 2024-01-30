@@ -34,11 +34,11 @@ import { DriveCore } from "@/domains/drive";
 import { RefCore } from "@/domains/cur";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { MediaTypes } from "@/constants";
 
 export const SeasonArchivePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
   const mediaList = new ListCore(new RequestCore(fetchMediaListPrepareArchive), {
     pageSize: 1,
     onLoadingChange(loading) {
@@ -221,12 +221,11 @@ export const SeasonArchivePage: ViewComponent = (props) => {
         return;
       }
       const drive = toDriveRef.value;
-      // @todo
-      // const url = driveProfilePage.buildUrlWithPrefix({
-      //   id: drive.id,
-      //   name: drive.name,
-      // });
-      // window.open(url, "black");
+      const url = history.buildURLWithPrefix("root.home_layout.drive_profile", {
+        id: drive.id,
+        name: drive.name,
+      });
+      window.open(url, "black");
     },
   });
   const toDriveSelectBtn = new ButtonCore({
@@ -300,7 +299,7 @@ export const SeasonArchivePage: ViewComponent = (props) => {
             <div
               class="p-1 cursor-pointer"
               onClick={() => {
-                app.back();
+                history.back();
                 // app.showView(homeSeasonListPage);
               }}
             >

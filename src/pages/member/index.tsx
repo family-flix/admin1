@@ -22,11 +22,11 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { MultipleSelectionCore } from "@/domains/multiple";
 import { create_link } from "@/domains/shortlink";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
 
-export const MemberListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+export const HomeMemberListPage: ViewComponent = (props) => {
+  const { app, history, view } = props;
 
   const memberList = new ListCore(new RequestCore(fetchMemberList), {
     onLoadingChange(loading) {
@@ -100,7 +100,7 @@ export const MemberListPage: ViewComponent = (props) => {
   });
   const permissionBtn = new ButtonCore({
     onClick() {
-      app.push("/home/permission");
+      history.push("root.home_layout.permission");
       // app.showView(homePermissionListPage);
     },
   });
@@ -405,8 +405,7 @@ ${url}`;
                                         },
                                       ].map((config) => {
                                         const { prefix, qrcode } = config;
-                                        // @todo 怎么移除 window 平台相关变量？
-                                        const url = `${window.location.origin}${prefix}${id}`;
+                                        const url = `${history.$router.origin}${prefix}${id}`;
                                         return (
                                           <div class="flex">
                                             <Show when={qrcode}>

@@ -5,7 +5,6 @@ import { createSignal, JSX, onCleanup } from "solid-js";
 
 // import { PageLoading } from "@/components/PageLoading";
 import { RouteViewCore } from "@/domains/route_view";
-import { ViewComponentProps } from "@/types";
 
 export function KeepAliveRouteView(
   props: {

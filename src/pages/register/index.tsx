@@ -3,7 +3,7 @@
  */
 import { Button, Input } from "@/components/ui";
 import { InputCore, ButtonCore } from "@/domains/ui";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const RegisterPage: ViewComponent = (props) => {
   const { app } = props;

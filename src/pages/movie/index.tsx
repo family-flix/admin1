@@ -21,13 +21,13 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { DriveCore } from "@/domains/drive";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
 
 export const MovieListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
     onLoading(loading) {
@@ -147,7 +147,7 @@ export const MovieListPage: ViewComponent = (props) => {
       // };
       // app.showView(homeMovieProfilePage);
       // homeLayout.showSubView(homeMovieProfilePage);
-      app.push(`/home/movie_profile/${record.id}`);
+      history.push("root.home_layout.movie_profile", { id: record.id });
     },
   });
   const transferConfirmDialog = new DialogCore({

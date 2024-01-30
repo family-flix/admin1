@@ -31,11 +31,11 @@ import { ListCore } from "@/domains/list";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { createJob } from "@/store/job";
 import { appendAction } from "@/store/actions";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { bytes_to_size, cn } from "@/utils";
 
 export const SeasonProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
     onSuccess(v) {
@@ -117,7 +117,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
         id: view.query.season_id,
       });
       seasonDeletingConfirmDialog.hide();
-      app.back();
+      history.back();
     },
   });
   const seasonProfileChangeRequest = new RequestCore(setMediaProfile, {
@@ -316,7 +316,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
           <div
             class="mb-2 cursor-pointer"
             onClick={() => {
-              app.back();
+              history.back();
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -406,7 +406,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                                           //   id,
                                           // };
                                           // app.showView(mediaPlayingPage);
-                                          app.push("/preview", { id });
+                                          history.push("root.preview", { id });
                                         }}
                                       >
                                         <Play class="w-4 h-4" />
@@ -437,7 +437,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
                   <For each={profile()?.series}>
                     {(season) => {
                       const { id, name, poster_path, air_date } = season;
-                      const url = `/home/season_profile?id=${id}`;
+                      const url = history.buildURLWithPrefix("root.home_layout.season_profile", { id });
                       // const url = homeTVProfilePage.buildUrlWithPrefix({
                       //   id,
                       // });

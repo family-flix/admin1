@@ -7,7 +7,7 @@ import { SeasonSelect } from "@/components/SeasonSelect";
 import { SimpleSelect } from "@/components/ui/simple-select";
 import { ButtonCore, ImageInListCore } from "@/domains/ui";
 import { CollectionTypes } from "@/constants";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 import { CollectionFormCore } from "./core";
 

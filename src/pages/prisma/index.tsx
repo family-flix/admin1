@@ -6,7 +6,7 @@ import { For, createSignal } from "solid-js";
 import { Button, Textarea } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { ButtonCore, InputCore } from "@/domains/ui";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { request } from "@/store/request";
 
 function execPrismaCode(code: string) {

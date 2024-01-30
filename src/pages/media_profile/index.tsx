@@ -47,13 +47,14 @@ import { DriveCore } from "@/domains/drive";
 import { createJob } from "@/store/job";
 import { pendingActions, consumeAction } from "@/store/actions";
 import { driveList } from "@/store/drives";
-import { Result, ViewComponent } from "@/types";
+import { Result } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { MediaSourceOptions, MediaTypes, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";
 import { MediaProfileValues, MediaProfileValuesCore } from "@/components/MediaProfileValues";
 
 export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const seasonList = new ListCore(new RequestCore(fetchMediaProfileList), {
     onLoadingChange(loading) {
@@ -394,7 +395,7 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
   const gotoSeasonArchivePageBtn = new ButtonCore({
     onClick() {
       // app.showView(seasonArchivePage);
-      app.push("/archive");
+      history.push("root.archive");
     },
   });
   const moveToResourceDriveConfirmDialog = new DialogCore({
@@ -574,7 +575,7 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
                         origin_country,
                         episode_count,
                       } = season;
-                      const url = `/home/season_profile?id=${id}`;
+                      const url = history.buildURLWithPrefix("root.home_layout.season_profile", { id });
                       // const url = homeTVProfilePage.buildUrlWithPrefix({
                       //   id,
                       // });

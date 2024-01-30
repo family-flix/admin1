@@ -1,11 +1,12 @@
-// @ts-nocheck
 /**
  * @file API 请求
  */
 import { BaseDomain, Handler } from "@/domains/base";
 import { BizError } from "@/domains/error";
-import { Result, UnpackedResult, Unpacked, JSONValue } from "@/types";
+import { Result, UnpackedResult, Unpacked, Shift } from "@/types";
 import { sleep } from "@/utils";
+import { HttpClientCore } from "@/domains/http_client";
+import axios, { CancelToken, CancelTokenSource } from "axios";
 
 enum Events {
   BeforeRequest,
@@ -14,84 +15,98 @@ enum Events {
   Success,
   Failed,
   Completed,
+  Canceled,
   StateChange,
   ResponseChange,
 }
-type TheTypesOfEvents<Resp> = {
+type TheTypesOfEvents<T> = {
   [Events.LoadingChange]: boolean;
   [Events.BeforeRequest]: void;
   [Events.AfterRequest]: void;
-  [Events.Success]: Resp;
+  [Events.Success]: T;
   [Events.Failed]: BizError;
   [Events.Completed]: void;
-  [Events.StateChange]: RequestState<Resp>;
-  [Events.ResponseChange]: Resp | null;
+  [Events.Canceled]: void;
+  [Events.StateChange]: RequestState<T>;
+  [Events.ResponseChange]: T | null;
 };
-type RequestClient<T> = {
-  fetch: (params: {
-    hostname?: string;
-    method?: "GET" | "POST";
-    pathname: string;
-    query?: Record<string, unknown>;
-    body?: JSONValue;
-  }) => Promise<T>;
-  get: (params: { hostname?: string; pathname: string; query?: Record<string, unknown> }) => Promise<T>;
-  post: (params: { hostname?: string; pathname: string; body?: Record<string, unknown> }) => Promise<T>;
-};
-type RequestState<R> = {
+type RequestState<T> = {
   loading: boolean;
-  response: R | null;
+  error: BizError | null;
+  response: T | null;
 };
 type RequestProps<T> = {
-  client: RequestClient<T>;
-  payload: {
-    hostname: string;
-    pathname: string;
-    method?: "GET" | "POST";
-  };
+  client: HttpClientCore;
+  method: "GET" | "POST";
   delay?: null | number;
-  onSuccess: (v: T) => void;
-  onFailed: (error: BizError) => void;
-  onCompleted: () => void;
-  beforeRequest: () => void;
-  onLoading: (loading: boolean) => void;
+  defaultResponse?: T;
+  onSuccess?: (v: T) => void;
+  onFailed?: (error: BizError) => void;
+  onCompleted?: () => void;
+  onCanceled?: () => void;
+  beforeRequest?: () => void;
+  onLoading?: (loading: boolean) => void;
 };
 
 /**
  * 用于接口请求的核心类
  */
-export class RequestCore<Query extends Record<string, unknown>, T extends Record<string, unknown>> extends BaseDomain<
-  TheTypesOfEvents<T>
-> {
+export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   debug = false;
-  /** 用于请求的客户端 */
-  client: RequestProps<T>["client"];
-  payload: RequestProps<T>["payload"];
+
+  method: "GET" | "POST";
+  defaultResponse: T | null = null;
+
+  /** 原始 service 函数 */
+  private _service: string;
+  client: HttpClientCore;
   delay: null | number = 800;
   loading = false;
   /** 处于请求中的 promise */
-  pending: Promise<T> | null = null;
+  pending: Promise<Result<T>> | null = null;
   /** 调用 prepare 方法暂存的参数 */
-  args: Query = {};
+  // args: Parameters<T> | null = null;
   /** 请求的响应 */
   response: T | null = null;
+  /** 请求失败，保存错误信息 */
+  error: BizError | null = null;
+  source: CancelTokenSource;
 
   get state(): RequestState<T> {
     return {
       loading: this.loading,
+      error: this.error,
       response: this.response,
     };
   }
 
-  constructor(props: RequestProps<T>) {
+  constructor(url: string, props: RequestProps<T>) {
     super();
 
-    const { client, payload, delay, onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
+    this._service = url;
+    const {
+      client,
+      method = "POST",
+      delay,
+      defaultResponse,
+      onSuccess,
+      onFailed,
+      onCompleted,
+      onCanceled,
+      onLoading,
+      beforeRequest,
+    } = props;
     this.client = client;
-    this.payload = payload;
+    this.method = method;
     if (delay !== undefined) {
       this.delay = delay;
     }
+    if (defaultResponse) {
+      this.defaultResponse = defaultResponse;
+      this.response = defaultResponse;
+    }
+    const source = axios.CancelToken.source();
+    this.source = source;
     if (onSuccess) {
       this.onSuccess(onSuccess);
     }
@@ -100,6 +115,9 @@ export class RequestCore<Query extends Record<string, unknown>, T extends Record
     }
     if (onCompleted) {
       this.onCompleted(onCompleted);
+    }
+    if (onCanceled) {
+      this.onCanceled(onCanceled);
     }
     if (onLoading) {
       this.onLoadingChange(onLoading);
@@ -110,35 +128,64 @@ export class RequestCore<Query extends Record<string, unknown>, T extends Record
   }
   token?: unknown;
   /** 执行 service 函数 */
-  async run() {
+  async run(...args: Shift<Parameters<(typeof this.client)["get"]>>) {
     if (this.pending !== null) {
       const r = await this.pending;
+      this.loading = false;
       const d = r.data as T;
       this.pending = null;
       return Result.Ok(d);
     }
     // this.args = args;
+    this.loading = true;
+    this.response = this.defaultResponse;
+    this.error = null;
+    const source = axios.CancelToken.source();
+    this.source = source;
     this.emit(Events.LoadingChange, true);
+    console.log("this.emit(Events.StateChange", this.state);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.BeforeRequest);
-    const { hostname, pathname, method } = this.payload;
-    const pending = this.client.fetch(
-      {
-        hostname,
-        pathname,
-        method,
-      },
-      this.token
-    ) as ReturnType<T>;
-    this.pending = pending;
-    const [r] = await Promise.all([pending, this.delay === null ? null : sleep(this.delay)]);
+    // this.client.
+    const r2 = (() => {
+      if (this.method === "GET") {
+        const [query, extra = {}] = args;
+        return Result.Ok(
+          this.client.get(this._service, query, {
+            token: this.source.token,
+            ...extra,
+          })
+        ) as Result<Promise<Result<T>>>;
+      }
+      if (this.method === "POST") {
+        const [body, extra = {}] = args;
+        return Result.Ok(
+          this.client.post(this._service, body, {
+            token: this.source.token,
+            ...extra,
+          })
+        ) as Result<Promise<Result<T>>>;
+      }
+      return Result.Err(`未知的 method '${this.method}'`);
+    })();
+    if (r2.error) {
+      return Result.Err(r2.error.message);
+    }
+    this.pending = r2.data;
+    const [r] = await Promise.all([this.pending, this.delay === null ? null : sleep(this.delay)]);
+    this.loading = false;
     this.emit(Events.LoadingChange, false);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.Completed);
     this.pending = null;
-    // console.log("[DOMAIN]client - run", r.error);
     if (r.error) {
+      if (r.error.code === "CANCEL") {
+        this.emit(Events.Canceled);
+        return Result.Err(r.error);
+      }
+      this.error = r.error;
       this.emit(Events.Failed, r.error);
+      this.emit(Events.StateChange, { ...this.state });
       return Result.Err(r.error);
     }
     this.response = r.data;
@@ -150,13 +197,14 @@ export class RequestCore<Query extends Record<string, unknown>, T extends Record
   }
   /** 使用当前参数再请求一次 */
   reload() {
-    if (this.args === null) {
-      return;
-    }
-    this.run(...this.args);
+    // if (this.args === null) {
+    //   return;
+    // }
+    // this.run(...this.args);
   }
-  /** 取消当前请求 */
-  cancel() {}
+  cancel() {
+    this.source.cancel("主动取消");
+  }
   clear() {
     this.response = null;
     this.emit(Events.StateChange, { ...this.state });
@@ -171,33 +219,33 @@ export class RequestCore<Query extends Record<string, unknown>, T extends Record
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.ResponseChange, this.response);
   }
-  // setHandler(handler: H) {
-  //   this.response = handler();
-  // }
 
-  // onLoadingChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.LoadingChange]>) {
-  //   return this.on(Events.LoadingChange, handler);
-  // }
-  // beforeRequest(handler: Handler<TheTypesOfEvents<T>[Events.BeforeRequest]>) {
-  //   return this.on(Events.BeforeRequest, handler);
-  // }
-  // onSuccess(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Success]>) {
-  //   return this.on(Events.Success, handler);
-  // }
-  // onFailed(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Failed]>) {
-  //   return this.on(Events.Failed, handler);
-  // }
-  // /** 建议使用 onFailed */
-  // onError(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Failed]>) {
-  //   return this.on(Events.Failed, handler);
-  // }
-  // onCompleted(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Completed]>) {
-  //   return this.on(Events.Completed, handler);
-  // }
-  // onStateChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.StateChange]>) {
-  //   return this.on(Events.StateChange, handler);
-  // }
-  // onResponseChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.ResponseChange]>) {
-  //   return this.on(Events.ResponseChange, handler);
-  // }
+  onLoadingChange(handler: Handler<TheTypesOfEvents<T>[Events.LoadingChange]>) {
+    return this.on(Events.LoadingChange, handler);
+  }
+  beforeRequest(handler: Handler<TheTypesOfEvents<T>[Events.BeforeRequest]>) {
+    return this.on(Events.BeforeRequest, handler);
+  }
+  onSuccess(handler: Handler<TheTypesOfEvents<T>[Events.Success]>) {
+    return this.on(Events.Success, handler);
+  }
+  onFailed(handler: Handler<TheTypesOfEvents<T>[Events.Failed]>) {
+    return this.on(Events.Failed, handler);
+  }
+  onCanceled(handler: Handler<TheTypesOfEvents<T>[Events.Canceled]>) {
+    return this.on(Events.Canceled, handler);
+  }
+  /** 建议使用 onFailed */
+  onError(handler: Handler<TheTypesOfEvents<T>[Events.Failed]>) {
+    return this.on(Events.Failed, handler);
+  }
+  onCompleted(handler: Handler<TheTypesOfEvents<T>[Events.Completed]>) {
+    return this.on(Events.Completed, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
+  }
+  onResponseChange(handler: Handler<TheTypesOfEvents<T>[Events.ResponseChange]>) {
+    return this.on(Events.ResponseChange, handler);
+  }
 }

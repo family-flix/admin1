@@ -11,16 +11,16 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ReportTypes } from "@/constants";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { refreshJobs } from "@/store/job";
 import { cn } from "@/utils";
 
 export const HomeSubtitleListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const curSeasonRef = new RefCore<SubtitleItem>();
-  const curEpisodeRef = new RefCore<SubtitleItem["episodes"][number]>();
-  const curSubtitleRef = new RefCore<SubtitleItem["episodes"][number]["subtitles"][number]>();
+  const curEpisodeRef = new RefCore<SubtitleItem["sources"][number]>();
+  const curSubtitleRef = new RefCore<SubtitleItem["sources"][number]["subtitles"][number]>();
   const seasonList = new ListCore(new RequestCore(fetchSubtitleList), {});
   const subtitleDeletingRequest = new RequestCore(deleteSubtitle, {
     onLoading(loading) {
@@ -38,10 +38,10 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
         if (item.id !== curSeasonId) {
           return item;
         }
-        const { episodes } = item;
+        const { sources } = item;
         return {
           ...item,
-          episodes: episodes.map((episode) => {
+          episodes: sources.map((episode) => {
             if (episode.id !== curEpisodeId) {
               return episode;
             }
@@ -87,7 +87,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const gotoUploadBtn = new ButtonCore({
     onClick() {
       // app.showView(homeSubtitleAddingPage);
-      app.push("/home/subtitle/create");
+      history.push("root.home_layout.subtitles_create");
     },
   });
   //   const subtitleDeletingBtn = new ButtonCore({
@@ -152,27 +152,29 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={dataSource()}>
               {(season, i) => {
-                const { id, name, season_text, poster_path, episodes } = season;
+                const { id, name, poster_path, sources } = season;
                 return (
                   <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
                     <div class="flex flex-1">
                       <LazyImage class="w-[120px] object-cover" store={poster.bind(poster_path)} />
                       <div class="flex-1 ml-4 w-full">
                         <div class="text-xl">{name}</div>
-                        <div class="text-xl">{season_text}</div>
                         <div class="grid grid-cols-3 gap-2 mt-4 w-full">
-                          <For each={episodes}>
+                          <For each={sources}>
                             {(episode) => {
-                              const { id, episode_text, subtitles } = episode;
+                              const { id, name, order, subtitles } = episode;
                               return (
                                 <div>
-                                  <div>{episode_text}</div>
+                                  <div>
+                                    {order}、{name}
+                                  </div>
                                   <div>
                                     <For each={subtitles}>
                                       {(subtitle) => {
-                                        const { id, file_id, name, language } = subtitle;
+                                        const { id, unique_id, language } = subtitle;
                                         return (
                                           <div class="flex items-center space-x-2">
+                                            <div>{unique_id}</div>
                                             <div>{language}</div>
                                             <div
                                               onClick={() => {

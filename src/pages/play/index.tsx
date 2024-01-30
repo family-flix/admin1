@@ -8,10 +8,10 @@ import { fetchSourcePreviewInfo } from "@/services/parsed_media";
 import { Video } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { PlayerCore } from "@/domains/player";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const MediaPlayingPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const player = new PlayerCore({ app });
   const fileRequest = new RequestCore(fetchSourcePreviewInfo, {
@@ -120,7 +120,7 @@ export const MediaPlayingPage: ViewComponent = (props) => {
         <div
           class="z-10 absolute top-6 left-6 cursor-pointer"
           onClick={() => {
-            app.back();
+            history.back();
             // rootView.uncoverPrevView();
           }}
         >

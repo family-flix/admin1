@@ -411,7 +411,7 @@ export const DriveCard = (props: {
       refreshBtn.setLoading(false);
     },
   });
-  const avatarImage = new ImageCore({});
+  const avatarImage = new ImageCore({ src: drive.state.avatar });
 
   const [state, setState] = createSignal(drive.state);
   const [folderColumns, setFolderColumns] = createSignal(driveFileManage.folderColumns);
@@ -462,7 +462,9 @@ export const DriveCard = (props: {
             </DropdownMenu>
           </div>
           <div class="flex">
-            <LazyImage class="overflow-hidden w-16 h-16 mr-4 rounded" store={avatarImage} alt={state().name} />
+            <div class="mr-4 ">
+              <LazyImage class="overflow-hidden w-16 h-16 rounded" store={avatarImage} alt={state().name} />
+            </div>
             <div class="flex-1 w-0 pr-12">
               <div class="text-xl">{state().name}</div>
               <div class="text-sm text-slate-500">{state().drive_id}</div>

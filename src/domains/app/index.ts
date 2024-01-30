@@ -51,7 +51,6 @@ type TheTypesOfEvents = {
 
 type ApplicationProps = {
   user: UserCore;
-  history: HistoryCore;
   /**
    * 应用加载前的声明周期，只有返回 Result.Ok() 页面才会展示内容
    */
@@ -65,7 +64,6 @@ type ApplicationState = {
 export class Application extends BaseDomain<TheTypesOfEvents> {
   /** 用户 */
   $user: UserCore;
-  $history: HistoryCore;
 
   lifetimes: Pick<ApplicationProps, "beforeReady" | "onReady">;
 
@@ -92,10 +90,9 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
   constructor(props: ApplicationProps) {
     super();
 
-    const { user: user, history: history, beforeReady, onReady } = props;
+    const { user: user, beforeReady, onReady } = props;
 
     this.$user = user;
-    this.$history = history;
 
     this.lifetimes = {
       beforeReady,
@@ -135,15 +132,6 @@ export class Application extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
     // console.log("[]Application - before start");
     return Result.Ok(null);
-  }
-  push(...args: Parameters<HistoryCore["push"]>) {
-    return this.$history.push(...args);
-  }
-  replace(...args: Parameters<HistoryCore["replace"]>) {
-    return this.$history.replace(...args);
-  }
-  back(...args: Parameters<HistoryCore["back"]>) {
-    return this.$history.back(...args);
   }
 
   /** 手机震动 */

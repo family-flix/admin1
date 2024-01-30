@@ -10,10 +10,10 @@ import { ScrollViewCore, ButtonCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job, TaskStatus } from "@/domains/job";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const TaskProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const pauseBtn = new ButtonCore<JobProfile>({
     onClick() {
@@ -92,7 +92,7 @@ export const TaskProfilePage: ViewComponent = (props) => {
         <div
           class="mb-2 cursor-pointer"
           onClick={() => {
-            app.back();
+            history.back();
             // homeLayout.showPrevView({ destroy: true });
           }}
         >

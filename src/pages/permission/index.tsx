@@ -9,7 +9,7 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { Button, Dialog, Input, ListView } from "@/components/ui";
 import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const HomePermissionPage: ViewComponent = (props) => {
   const { app } = props;

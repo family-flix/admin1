@@ -31,11 +31,11 @@ import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ListCore } from "@/domains/list";
 import { appendAction } from "@/store/actions";
 import { createJob } from "@/store/job";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { bytes_to_size, cn } from "@/utils";
 
 export const HomeSeasonProfilePage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
     onSuccess(v) {
@@ -117,7 +117,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
         id: view.query.season_id,
       });
       seasonDeletingConfirmDialog.hide();
-      app.back();
+      history.back();
     },
   });
   const seasonProfileChangeRequest = new RequestCore(setMediaProfile, {
@@ -316,7 +316,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
           <div
             class="mb-2 cursor-pointer"
             onClick={() => {
-              app.back();
+              history.back();
             }}
           >
             <ArrowLeft class="w-6 h-6" />
@@ -402,7 +402,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                                         class="p-1 cursor-pointer"
                                         title="播放"
                                         onClick={() => {
-                                          app.push("/preview", { id });
+                                          history.push("root.preview", { id });
                                           // mediaPlayingPage.query = {
                                           //   id,
                                           // };

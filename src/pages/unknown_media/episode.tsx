@@ -26,7 +26,7 @@ import { TMDBSearcherCore } from "@/domains/tmdb";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { createJob } from "@/store/job";
 import { MediaTypes } from "@/constants";
 

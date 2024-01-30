@@ -14,7 +14,7 @@ import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { clear_expired_job_list } from "@/domains/job";
 import { MediaTypes, ReportTypes } from "@/constants";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { refreshJobs } from "@/store/job";
 import { cn } from "@/utils";
 import { fetchMovieMediaList } from "@/services/media";
@@ -37,7 +37,7 @@ function buildMsg(report: ReportItem) {
 }
 
 export const HomeReportListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const curReport = new RefCore<ReportItem>();
   const curMovie = new RefCore<MovieItem>();
@@ -337,7 +337,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
                           if (!media) {
                             return null;
                           }
-                          const url = '/';
+                          const url = history.buildURLWithPrefix("root.home_layout.movie_profile", { id: media.id });
                           // const url = homeMovieProfilePage.buildUrlWithPrefix({
                           //   id: media.id,
                           // });

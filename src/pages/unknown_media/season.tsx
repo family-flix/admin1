@@ -22,7 +22,7 @@ import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
 import { TMDBSearcherCore } from "@/domains/tmdb";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 import { MediaTypes } from "@/constants";
 
 export const UnknownSeasonListPage: ViewComponent = (props) => {

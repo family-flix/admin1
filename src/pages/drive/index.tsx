@@ -12,10 +12,10 @@ import { addAliyunDrive } from "@/domains/drive";
 import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
 import { code_get_drive_token, DriveTypes } from "@/constants";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 export const DriveListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, history, view } = props;
 
   const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
     search: {
@@ -177,7 +177,7 @@ export const DriveListPage: ViewComponent = (props) => {
                         //   avatar,
                         // };
                         // app.showView(driveProfilePage);
-                        app.push("/home/drive_profile", {
+                        history.push("root.home_layout.drive_profile", {
                           id: drive.id,
                           name,
                           avatar,

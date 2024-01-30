@@ -33,7 +33,14 @@ export function LazyImage(props: { store: ImageCore; alt?: string } & JSX.HTMLAt
   // });
 
   return (
-    <div ref={$img} class={cn(props.class, "flex items-center justify-center bg-slate-200")}>
+    <div
+      ref={$img}
+      classList={{
+        [props.class as string]: true,
+        "flex items-center justify-center": true,
+        "bg-slate-200": ![ImageStep.Loading, ImageStep.Loaded].includes(state().step),
+      }}
+    >
       <Switch>
         <Match when={state().step === ImageStep.Failed}>
           <ImageOff class="w-8 h-8 text-slate-500" />

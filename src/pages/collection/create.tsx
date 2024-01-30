@@ -9,7 +9,7 @@ import { MovieSelect } from "@/components/MovieSelect";
 import { SeasonSelect } from "@/components/SeasonSelect";
 import { SimpleSelect } from "@/components/ui/simple-select";
 import { ButtonCore, ImageInListCore } from "@/domains/ui";
-import { ViewComponent } from "@/types";
+import { ViewComponent } from "@/store/types";
 
 import { CollectionFormCore } from "./core";
 

@@ -5,14 +5,16 @@ import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
 import "@/store/request";
-import { app } from "@/store";
+import { app, history } from "@/store/index";
 import { initializeJobs } from "@/store/job";
 import { KeepAliveRouteView } from "@/components/ui";
 import { Toast } from "@/components/ui/toast";
 import { ToastCore } from "@/domains/ui/toast";
 import { connect as connectApplication } from "@/domains/app/connect.web";
 import { connect as connectHistory } from "@/domains/history/connect.web";
-import { ViewComponent } from "@/types";
+import { PageKeys } from "./store/routes";
+import { pages } from "./store/views";
+import { ViewComponent } from "@/store/types";
 import { sleep } from "@/utils";
 
 import "./style.css";
@@ -52,11 +54,11 @@ import "./style.css";
 //   app.showView(homeIndexPage, { back: true });
 // });
 connectApplication(app);
-connectHistory(app.$history);
+connectHistory(history);
 
 function Application() {
-  const view = app.$history.$view;
-  const router = app.$history.$router;
+  const view = history.$view;
+  const router = history.$router;
   const toast = new ToastCore();
 
   const [state, setState] = createSignal(app.state);
@@ -82,7 +84,7 @@ function Application() {
     console.log("[ROOT]rootView.onSubViewsChange", nextSubViews.length);
     setSubViews(nextSubViews);
   });
-  app.$history.onTopViewChange((view) => {
+  history.onTopViewChange((view) => {
     app.setTitle(`${view.title} - FamilyFlix 管理后台`);
   });
   app.onTip((msg) => {
@@ -99,7 +101,7 @@ function Application() {
   // });
   onMount(async () => {
     // await sleep(1000);
-    app.push("/home/index");
+    history.push("root.home_layout.index");
     // initializeJobs();
   });
   // console.log("[]Application - before start", window.history);
@@ -135,10 +137,11 @@ function Application() {
       <Show when={subViews().length !== 0}>
         <For each={subViews()}>
           {(subView, i) => {
-            const PageContent = subView.component as ViewComponent;
+            const routeName = subView.name;
+            const PageContent = pages[routeName as Exclude<PageKeys, "root">];
             return (
               <KeepAliveRouteView class="absolute inset-0 opacity-100 dark:bg-black" store={subView} index={i()}>
-                <PageContent app={app} view={subView} />
+                <PageContent app={app} history={history} view={subView} />
               </KeepAliveRouteView>
             );
           }}
