@@ -12,6 +12,7 @@ const config = defineConfig(({ mode }) => {
         name: "singleHMR",
         handleHotUpdate({ modules }) {
           modules.map((m) => {
+            // @ts-ignore
             m.importedModules = new Set();
             m.importers = new Set();
           });
