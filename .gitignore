@@ -13,6 +13,8 @@ dist-ssr
 dist-admin
 *.local
 
+mock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

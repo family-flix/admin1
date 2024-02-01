@@ -20,6 +20,9 @@ import {
   MessageCircle,
   AlarmClock,
   Folder,
+  Cherry,
+  Sparkles,
+  HeartCrack,
 } from "lucide-solid";
 
 import { fetchSettings, notify_test, pushMessageToMembers, updateSettings } from "@/services";
@@ -251,15 +254,15 @@ export const HomeLayout: ViewComponent = (props) => {
       // view: homeMovieListPage,
     },
     {
-      text: "解析结果",
-      icon: <EyeOff class="w-6 h-6" />,
+      text: "刮削结果",
+      icon: <Sparkles class="w-6 h-6" />,
       // url: "/home/unknown_media/season",
       url: "root.home_layout.parse_result_layout.season" as PageKeys,
       // view: homeUnknownTVPage,
     },
     {
-      text: "待处理影视剧问题",
-      icon: <Bot class="w-6 h-6" />,
+      text: "问题影视剧",
+      icon: <HeartCrack class="w-6 h-6" />,
       badge: false,
       // url: "/home/invalid_media",
       url: "root.home_layout.invalid_media_list" as PageKeys,

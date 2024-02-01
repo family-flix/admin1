@@ -513,7 +513,9 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
                                 <h2 class="text-2xl text-slate-800">
-                                  <a href={url}>{name}</a>
+                                  <a href={url} target="_blank">
+                                    {name}
+                                  </a>
                                 </h2>
                               </div>
                               <div class="mt-2 overflow-hidden text-ellipsis">

@@ -330,7 +330,7 @@ export const MovieListPage: ViewComponent = (props) => {
                   {(movie) => {
                     const { id, name, overview, poster_path, air_date, vote_average, origin_country, tips, persons } =
                       movie;
-                    const url = `/home/movie_profile?id=${id}`;
+                    const url = history.buildURLWithPrefix("root.home_layout.movie_profile", { id });
                     return (
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">
@@ -339,7 +339,9 @@ export const MovieListPage: ViewComponent = (props) => {
                           </div>
                           <div class="flex-1 w-0 p-4">
                             <h2 class="text-2xl text-slate-800">
-                              <a href={url}>{name}</a>
+                              <a href={url} target="_blank">
+                                {name}
+                              </a>
                             </h2>
                             <div class="mt-2 overflow-hidden text-ellipsis">
                               <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">

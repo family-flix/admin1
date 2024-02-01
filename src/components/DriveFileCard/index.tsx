@@ -89,12 +89,12 @@ export const DriveFileCard = (props: {
             <Show
               when={profile()?.media}
               fallback={
-                <div class="flex">
-                  <div class="mr-4">
-                    <div class="w-[120px] h-[180px]" />
-                  </div>
-                  <div>
-                    <Show when={profile()?.unknown_media}>
+                <Show when={profile()?.unknown_media}>
+                  <div class="flex">
+                    <div class="mr-4">
+                      <div class="w-[120px] h-[180px]" />
+                    </div>
+                    <div>
                       <div>{profile()?.unknown_media?.name}</div>
                       <div class="flex items-center">
                         <AlertCircle class="w-4 h-4 mr-1 text-red-800" />
@@ -102,9 +102,9 @@ export const DriveFileCard = (props: {
                       </div>
                       <div>{profile()?.unknown_media?.episode_text}</div>
                       <div>没有匹配到详情信息</div>
-                    </Show>
+                    </div>
                   </div>
-                </div>
+                </Show>
               }
             >
               <div class="flex">

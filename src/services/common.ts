@@ -95,6 +95,7 @@ export function fetchDashboard() {
     report_count: number;
     media_request_count: number;
     invalid_season_count: number;
+    invalid_movie_count: number;
     invalid_sync_task_count: number;
     updated_at: string;
   }>("/api/v2/admin/dashboard", {});
@@ -104,7 +105,7 @@ export function refreshDashboard() {
   return request.post("/api/v2/admin/dashboard/refresh", {});
 }
 
-export function fetchMediaRecentlyCreated(params: FetchParams) {
+export async function fetchMediaRecentlyCreated(params: FetchParams) {
   return request.post<
     ListResponseWithCursor<{
       id: string;

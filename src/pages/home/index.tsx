@@ -2,7 +2,7 @@
  * @file 管理后台首页(云盘列表)
  */
 import { createSignal, For, Show } from "solid-js";
-import { Send, FileSearch, RefreshCcw, AlertTriangle } from "lucide-solid";
+import { Send, FileSearch, RefreshCcw, AlertTriangle, Loader, Bird } from "lucide-solid";
 
 import { fetchDashboard, fetchMediaRecentlyCreated, refreshDashboard } from "@/services/common";
 import { pushMessageToMembers } from "@/services";
@@ -42,6 +42,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
       report_count: 0,
       media_request_count: 0,
       invalid_season_count: 0,
+      invalid_movie_count: 0,
       invalid_sync_task_count: 0,
       updated_at: null,
     },
@@ -208,6 +209,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
               <div
                 onClick={async () => {
                   refreshIcon.show(2);
+                  mediaListRecentlyCreated.refresh();
                   const r = await refreshRequest.run();
                   if (r.error) {
                     refreshIcon.show(3);
@@ -297,15 +299,29 @@ export const HomeIndexPage: ViewComponent = (props) => {
               <div class="text-lg">待处理问题</div>
             </div>
             <div class="flex items-center mt-4">
-              <div
-                class="w-[240px] cursor-pointer"
-                onClick={() => {
-                  history.push("root.home_layout.invalid_media_list");
-                  // app.showView(homeInvalidMediaListPage);
-                }}
-              >
-                <div class="text-3xl">{dashboard()?.invalid_season_count}</div>
-                <div class="text-slate-800">问题影视剧</div>
+              <div class="w-[240px]">
+                <span
+                  class="text-3xl cursor-pointer"
+                  onClick={() => {
+                    history.push("root.home_layout.invalid_media_list");
+                    // app.showView(homeInvalidMediaListPage);
+                  }}
+                >
+                  {dashboard()?.invalid_season_count}
+                </span>
+                <div class="text-slate-800">问题电视剧</div>
+              </div>
+              <div class="w-[240px]">
+                <div
+                  class="text-3xl cursor-pointer"
+                  onClick={() => {
+                    history.push("root.home_layout.invalid_media_list");
+                    // app.showView(homeInvalidMediaListPage);
+                  }}
+                >
+                  {dashboard()?.invalid_movie_count}
+                </div>
+                <div class="text-slate-800">问题电影</div>
               </div>
               <div
                 class="w-[240px] cursor-pointer"
@@ -343,24 +359,36 @@ export const HomeIndexPage: ViewComponent = (props) => {
             <h1 class="text-2xl">
               <div>今日更新</div>
             </h1>
-            <div class="mt-4 p-4 min-h-[198px] rounded-md border bg-white  max-w-full overflow-x-auto">
-              <div class="flex space-x-4">
-                <For each={mediaResponse().dataSource}>
-                  {(media) => {
-                    const { name, poster_path, text } = media;
-                    return (
-                      <div class="p-2 w-[64px]">
-                        <div class="mr-2">
-                          <LazyImage class="w-[64px] h-[96px]" store={poster.bind(poster_path)} />
+            <div class="relative mt-4 p-4 min-h-[270px] rounded-md border bg-white  max-w-full overflow-x-auto">
+              <Show when={mediaResponse().loading}>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <Loader class="w-12 h-12 text-slate-500 animate animate-spin" />
+                </div>
+              </Show>
+              <div class="flex flex-row space-x-4">
+                <Show
+                  when={!mediaResponse().empty}
+                  fallback={
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <Bird class="w-16 h-16 text-slate-500" />
+                    </div>
+                  }
+                >
+                  <For each={mediaResponse().dataSource}>
+                    {(media) => {
+                      const { name, poster_path, text } = media;
+                      return (
+                        <div class="w-[128px]">
+                          <LazyImage class="w-[128px]" store={poster.bind(poster_path)} />
+                          <div class="max-w-full">
+                            <div class="truncate">{name}</div>
+                            <div class="max-w-full truncate text-sm">{text}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div>{name}</div>
-                          <div class="max-w-full mt-2 text-sm overflow-hidden">{text}</div>
-                        </div>
-                      </div>
-                    );
-                  }}
-                </For>
+                      );
+                    }}
+                  </For>
+                </Show>
               </div>
             </div>
           </div>
