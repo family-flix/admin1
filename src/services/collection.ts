@@ -1,10 +1,10 @@
-import { CollectionTypes } from "@/constants";
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { request } from "@/store/request";
+import { CollectionTypes } from "@/constants";
 
 export function fetchCollectionList(params: FetchParams) {
-  return request.post<
+  return client.post<
     ListResponseWithCursor<{
       id: string;
       title: string;
@@ -29,7 +29,7 @@ export function createCollection(values: {
   medias: { id: string }[];
 }) {
   const { title, sort, desc, type = CollectionTypes.Manually, medias } = values;
-  return request.post("/api/v2/admin/collection/create", {
+  return client.post("/api/v2/admin/collection/create", {
     title,
     desc,
     sort,
@@ -51,7 +51,7 @@ export function createCollection(values: {
 }
 export async function fetchCollectionProfile(values: { collection_id: string }) {
   const { collection_id } = values;
-  const r = await request.post<{
+  const r = await client.post<{
     id: string;
     title: string;
     desc?: string;
@@ -89,7 +89,7 @@ export function editCollection(body: {
   medias: { id: string; tv_id?: string }[];
 }) {
   const { collection_id, title, desc, sort, type, medias } = body;
-  return request.post("/api/v2/admin/collection/edit", {
+  return client.post("/api/v2/admin/collection/edit", {
     id: collection_id,
     title,
     desc,
@@ -113,7 +113,7 @@ export function editCollection(body: {
 
 export function deleteCollection(body: { collection_id: string }) {
   const { collection_id } = body;
-  return request.post("/api/v2/admin/collection/delete", {
+  return client.post("/api/v2/admin/collection/delete", {
     id: collection_id,
   });
 }

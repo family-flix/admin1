@@ -1,16 +1,5 @@
 import { BizError } from "@/domains/error";
 
-export type PathnameKey = string;
-export type RouteConfig = {
-  /** 使用该值定位唯一 route/page */
-  name: string;
-  title: string;
-  pathname: PathnameKey;
-  parent: {
-    name: string;
-  };
-  // component: unknown;
-};
 export type Resp<T> = {
   data: T extends null ? null : T;
   error: T extends null ? BizError : null;

@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/store/request";
 import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 
 import { TaskStatus, TaskTypes } from "./constants";
@@ -10,7 +10,7 @@ import { TaskStatus, TaskTypes } from "./constants";
  * 获取当前用户所有异步任务
  */
 export async function fetchJobList(params: FetchParams) {
-  const res = await request.post<
+  const res = await client.post<
     ListResponse<{
       id: string;
       unique_id: string;
@@ -55,13 +55,13 @@ export async function fetchJobList(params: FetchParams) {
 export type JobItem = RequestedResource<typeof fetchJobList>["list"][0];
 
 export function clear_expired_job_list() {
-  return request.get("/api/admin/job/clear_expired");
+  return client.get("/api/admin/job/clear_expired");
 }
 /**
  * 查询索引任务详情
  */
 export async function fetch_job_profile(id: string) {
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     desc: string;
     type: TaskTypes;
@@ -113,7 +113,7 @@ export type JobProfile = RequestedResource<typeof fetch_job_profile>;
 /** 获取指定异步任务的日志列表 */
 export async function fetch_output_lines_of_job(body: { job_id: string; page: number; pageSize: number }) {
   const { job_id, page, pageSize } = body;
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       content: string;
@@ -146,7 +146,7 @@ export async function fetch_output_lines_of_job(body: { job_id: string; page: nu
  * 查询索引任务状态
  */
 export function fetch_job_status(id: string) {
-  return request.get<{ id: string; desc: string; type: TaskTypes; status: TaskStatus; error?: string }>(
+  return client.get<{ id: string; desc: string; type: TaskTypes; status: TaskStatus; error?: string }>(
     `/api/admin/job/status/${id}`
   );
 }
@@ -158,13 +158,13 @@ export function fetch_job_status(id: string) {
  * @returns
  */
 export function pause_job(id: string) {
-  return request.get<{ id: string }>(`/api/admin/job/pause/${id}`, {
+  return client.get<{ id: string }>(`/api/admin/job/pause/${id}`, {
     force: "1",
   });
 }
 
 export function fetchPersonList(params: FetchParams) {
-  return request.post<
+  return client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;

@@ -1,7 +1,8 @@
-import { MediaTypes } from "@/constants";
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
+import { request } from "@/domains/request_v2/utils";
 import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { request } from "@/store/request";
+import { MediaTypes } from "@/constants";
 
 /**
  * 搜索影视剧详情
@@ -12,7 +13,7 @@ export async function searchMediaProfile(
   params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaTypes;
@@ -88,24 +89,49 @@ export function fetchDashboard() {
     drive_used_size_count: number;
     drive_used_size_count_text: string;
     movie_count: number;
-    tv_count: number;
     season_count: number;
     episode_count: number;
     sync_task_count: number;
+    /** 今日新增文件 */
+    new_file_count_today: number;
+    /** 总提交问题数 */
     report_count: number;
+    /** 想看 数 */
     media_request_count: number;
     invalid_season_count: number;
     invalid_movie_count: number;
     invalid_sync_task_count: number;
-    updated_at: string;
+    unknown_media_count: number;
+    file_size_count_today: number;
+    updated_at: string | null;
   }>("/api/v2/admin/dashboard", {});
+// defaultResponse: {
+//       drive_count: 0,
+//       drive_total_size_count: 0,
+//       drive_total_size_count_text: "0",
+//       drive_used_size_count: 0,
+//       drive_used_size_count_text: "0",
+//       movie_count: 0,
+//       season_count: 0,
+//       episode_count: 0,
+//       sync_task_count: 0,
+//       report_count: 0,
+//       media_request_count: 0,
+//       invalid_season_count: 0,
+//       invalid_movie_count: 0,
+//       invalid_sync_task_count: 0,
+//       unknown_media_count: 0,
+//       new_file_count_today: 0,
+//       file_size_count_today: 0,
+//       updated_at: null,
+//     },
 }
 
 export function refreshDashboard() {
-  return request.post("/api/v2/admin/dashboard/refresh", {});
+  return client.post("/api/v2/admin/dashboard/refresh", {});
 }
 
-export async function fetchMediaRecentlyCreated(params: FetchParams) {
+export function fetchMediaRecentlyCreated(body: FetchParams) {
   return request.post<
     ListResponseWithCursor<{
       id: string;
@@ -115,5 +141,5 @@ export async function fetchMediaRecentlyCreated(params: FetchParams) {
       air_date: string;
       text: string;
     }>
-  >("/api/v2/admin/dashboard/added_media", params);
+  >("/api/v2/admin/dashboard/added_media", body);
 }

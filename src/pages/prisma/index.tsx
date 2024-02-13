@@ -3,14 +3,14 @@
  */
 import { For, createSignal } from "solid-js";
 
+import { client } from "@/store/request";
 import { Button, Textarea } from "@/components/ui";
 import { RequestCore } from "@/domains/request";
 import { ButtonCore, InputCore } from "@/domains/ui";
 import { ViewComponent } from "@/store/types";
-import { request } from "@/store/request";
 
 function execPrismaCode(code: string) {
-  return request.post<unknown[][]>("/api/admin/prisma_exec", { code });
+  return client.post<unknown[][]>("/api/admin/prisma_exec", { code });
 }
 
 export const PrismaExecPage: ViewComponent = (props) => {

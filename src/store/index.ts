@@ -9,15 +9,18 @@ import { NavigatorCore } from "@/domains/navigator";
 import { BizError } from "@/domains/error";
 import { RouteViewCore } from "@/domains/route_view";
 import { HistoryCore } from "@/domains/history";
+import { UserCore } from "@/domains/user";
 import { Result } from "@/types";
 
-import { PageKeys, routes } from "./routes";
-import { cache } from "./cache";
-import { user } from "./user";
+import { PageKeys, RouteConfig, routes } from "./routes";
+import { storage } from "./storage";
 
 NavigatorCore.prefix = "/admin";
 
-const router = new NavigatorCore();
+const user = new UserCore(storage.get("user"));
+const router = new NavigatorCore({
+  location: window.location,
+});
 const view = new RouteViewCore({
   name: "root",
   pathname: "/",
@@ -25,16 +28,16 @@ const view = new RouteViewCore({
   visible: true,
   parent: null,
 });
-export const history = new HistoryCore<PageKeys>({
+export const history = new HistoryCore<PageKeys, RouteConfig>({
   view,
   router,
   routes,
   views: {
     root: view,
-  },
+  } as Record<PageKeys, RouteViewCore>,
 });
 export const app = new Application({
-  user: user,
+  user,
   async beforeReady() {
     if (!user.isLogin) {
       const r = await has_admin();
@@ -45,9 +48,11 @@ export const app = new Application({
       if (!existing) {
         // history.push(registerPage);
         user.needRegister = true;
+        history.push("root.register");
         return Result.Ok(null);
       }
       // app.showView(loginPage);
+      history.push("root.login");
       return Result.Ok(null);
     }
     await app.$user.validate();
@@ -58,7 +63,7 @@ user.onTip((msg) => {
   app.tip(msg);
 });
 user.onLogin((profile) => {
-  cache.set("user", profile);
+  storage.set("user", profile);
   // app.showView(homeIndexPage);
   // homeLayout.showSubView(homeIndexPage);
   // rootView.showSubView(homeLayout);
@@ -66,12 +71,12 @@ user.onLogin((profile) => {
   history.push("root.home_layout.index");
 });
 user.onLogout(() => {
-  cache.clear("user");
+  storage.clear("user");
   // app.showView(loginPage);
   history.push("root.login");
 });
 user.onExpired(() => {
-  cache.clear("user");
+  storage.clear("user");
   app.tip({
     text: ["token 已过期，请重新登录"],
   });

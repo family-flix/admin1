@@ -25,24 +25,22 @@ import {
   HeartCrack,
 } from "lucide-solid";
 
-import { fetchSettings, notify_test, pushMessageToMembers, updateSettings } from "@/services";
+import { ViewComponent, ViewComponentProps } from "@/store/types";
+import { onJobsChange } from "@/store/job";
+import { PageKeys } from "@/store/routes";
+import { fetchSettings, notify_test, updateSettings } from "@/services";
+import { Show } from "@/packages/ui/show";
 import { Button, Dialog, DropdownMenu, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
 import { ButtonCore, DialogCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
-import { RouteViewCore } from "@/domains/route_view";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
-import { Show } from "@/packages/ui/show";
-import { ViewComponent } from "@/store/types";
-import { onJobsChange } from "@/store/job";
-import { cn, sleep } from "@/utils";
-import { pages } from "@/store/views";
-import { PageKeys } from "@/store/routes";
 import { HistoryCore } from "@/domains/history";
+import { cn, sleep } from "@/utils";
 
 export const HomeLayout: ViewComponent = (props) => {
-  const { app, history, view } = props;
+  const { app, history, client, storage, pages, view } = props;
 
   const settingsRequest = new RequestCore(fetchSettings, {
     onLoading(loading) {
@@ -375,7 +373,7 @@ export const HomeLayout: ViewComponent = (props) => {
   // onMount(() => {
   // console.log("[PAGE]home/layout onMount", history.$router.href);
   // });
-  history.onHrefChange(({ name }) => {
+  history.onRouteChange(({ name }) => {
     setCurRouteName(name);
   });
   onJobsChange((jobs) => {
@@ -446,7 +444,14 @@ export const HomeLayout: ViewComponent = (props) => {
                     store={subView}
                     index={i()}
                   >
-                    <PageContent app={app} history={history} view={subView} />
+                    <PageContent
+                      app={app}
+                      client={client}
+                      storage={storage}
+                      pages={pages}
+                      history={history}
+                      view={subView}
+                    />
                   </KeepAliveRouteView>
                 );
               }}
@@ -494,7 +499,7 @@ export const HomeLayout: ViewComponent = (props) => {
 function Menu(
   props: {
     app: Application;
-    history: HistoryCore<PageKeys>;
+    history: ViewComponentProps["history"];
     highlight?: boolean;
     url?: PageKeys;
     icon: JSX.Element;

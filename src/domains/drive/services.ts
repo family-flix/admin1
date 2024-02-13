@@ -3,10 +3,10 @@
  */
 import dayjs from "dayjs";
 
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { JSONObject, ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 import { DriveTypes, FileType, MediaTypes } from "@/constants";
-import { request } from "@/store/request";
 import { bytes_to_size } from "@/utils";
 
 import { DriveCore } from ".";
@@ -36,7 +36,7 @@ export async function addAliyunDrive(body: { type?: DriveTypes; payload: string 
   if (r.error) {
     return Result.Err(r.error);
   }
-  return request.post<{ id: string }>("/api/admin/drive/add", {
+  return client.post<{ id: string }>("/api/admin/drive/add", {
     type,
     payload: r.data,
   });
@@ -47,7 +47,7 @@ export async function addAliyunDrive(body: { type?: DriveTypes; payload: string 
  * @param {string} id 云盘 id
  */
 export function updateAliyunDriveRemark(id: string, body: { remark?: string }) {
-  return request.post<{ id: string }>(`/api/admin/drive/${id}/remark`, body);
+  return client.post<{ id: string }>(`/api/admin/drive/${id}/remark`, body);
 }
 
 /**
@@ -55,7 +55,7 @@ export function updateAliyunDriveRemark(id: string, body: { remark?: string }) {
  * @param {string} id 云盘 id
  */
 export function updateAliyunDriveVisible(id: string, body: { hide?: number }) {
-  return request.post<{ id: string }>(`/api/admin/drive/${id}/hide`, body);
+  return client.post<{ id: string }>(`/api/admin/drive/${id}/hide`, body);
 }
 
 /**
@@ -67,7 +67,7 @@ export function updateAliyunDrive(
   id: string,
   body: { remark?: string; hidden?: number; root_folder_id?: string; root_folder_name?: string }
 ) {
-  return request.post<{ id: string }>(`/api/admin/drive/${id}/update`, body);
+  return client.post<{ id: string }>(`/api/admin/drive/${id}/update`, body);
 }
 
 /**
@@ -75,7 +75,7 @@ export function updateAliyunDrive(
  */
 export async function fetchDriveList(params: FetchParams) {
   const { page, pageSize, ...restParams } = params;
-  const resp = await request.post<
+  const resp = await client.post<
     ListResponseWithCursor<{
       id: string;
       /** 云盘自定义名称 */
@@ -172,7 +172,7 @@ export async function fetchDriveInstanceList(params: FetchParams) {
  */
 export async function refreshDriveProfile(body: { drive_id: string }) {
   const { drive_id } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     name: string;
     user_name: string;
@@ -218,7 +218,7 @@ export async function analysisDrive(body: {
   target_folders?: { file_id: string; parent_paths?: string; name: string }[];
 }) {
   const { drive_id, target_folders } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/analysis", {
+  return client.post<{ job_id: string }>("/api/v2/admin/analysis", {
     drive_id,
     target_folders,
   });
@@ -235,7 +235,7 @@ export async function analysisSpecialFilesInDrive(body: {
   files: { file_id: string; type: FileType; name: string }[];
 }) {
   const { drive_id, files } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/analysis/files", {
+  return client.post<{ job_id: string }>("/api/v2/admin/analysis/files", {
     drive_id,
     files,
   });
@@ -248,7 +248,7 @@ export async function analysisSpecialFilesInDrive(body: {
  */
 export async function analysisNewFilesInDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/analysis/new_files", {
+  return client.post<{ job_id: string }>("/api/v2/admin/analysis/new_files", {
     drive_id,
   });
 }
@@ -260,7 +260,7 @@ export async function analysisNewFilesInDrive(body: { drive_id: string }) {
  */
 export async function matchParsedMediasInDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/parsed_media/match_profile", {
+  return client.post<{ job_id: string }>("/api/v2/admin/parsed_media/match_profile", {
     drive_id,
   });
 }
@@ -272,7 +272,7 @@ export async function matchParsedMediasInDrive(body: { drive_id: string }) {
  */
 export async function fetchDriveProfile(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get<{ id: string; root_folder_id: string }>(`/api/admin/drive/${drive_id}`);
+  return client.get<{ id: string; root_folder_id: string }>(`/api/admin/drive/${drive_id}`);
 }
 export type AliyunDriveProfile = RequestedResource<typeof fetchDriveProfile>;
 
@@ -283,7 +283,7 @@ export type AliyunDriveProfile = RequestedResource<typeof fetchDriveProfile>;
  */
 export function deleteDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get(`/api/admin/drive/delete/${drive_id}`);
+  return client.get(`/api/admin/drive/delete/${drive_id}`);
 }
 
 /**
@@ -293,7 +293,7 @@ export function deleteDrive(body: { drive_id: string }) {
  */
 export async function exportDriveInfo(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get<{
+  return client.get<{
     app_id: string;
     drive_id: string;
     device_id: string;
@@ -317,7 +317,7 @@ export async function exportDriveInfo(body: { drive_id: string }) {
  */
 export async function setDriveRootFolderId(body: { drive_id: string; root_folder_id: string }) {
   const { root_folder_id: root_folder_id, drive_id } = body;
-  return request.post<void>(`/api/admin/drive/root_folder/${drive_id}`, {
+  return client.post<void>(`/api/admin/drive/root_folder/${drive_id}`, {
     root_folder_id,
   });
 }
@@ -330,7 +330,7 @@ export async function setDriveRootFolderId(body: { drive_id: string; root_folder
  */
 export async function setAliyunDriveRefreshToken(values: { refresh_token: string; drive_id: string }) {
   const { refresh_token, drive_id } = values;
-  return request.post<void>(`/api/admin/drive/token/${drive_id}`, {
+  return client.post<void>(`/api/admin/drive/token/${drive_id}`, {
     refresh_token,
   });
 }
@@ -356,7 +356,7 @@ export async function fetchDriveFiles(
   } & FetchParams
 ) {
   const { drive_id, file_id, name, next_marker, page, pageSize = 24 } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     items: {
       file_id: string;
       name: string;
@@ -411,7 +411,7 @@ export async function fetchDriveFiles(
  */
 export async function addFolderInDrive(body: { drive_id: string; name: string; parent_file_id?: string }) {
   const { drive_id, name, parent_file_id = "root" } = body;
-  return request.post<{
+  return client.post<{
     file_id: string;
     name: string;
     parent_file_id: string;
@@ -428,7 +428,7 @@ export async function addFolderInDrive(body: { drive_id: string; name: string; p
  */
 export async function checkInDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get(`/api/admin/drive/check_in/${drive_id}`);
+  return client.get(`/api/admin/drive/check_in/${drive_id}`);
 }
 
 /**
@@ -438,7 +438,7 @@ export async function checkInDrive(body: { drive_id: string }) {
  */
 export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/drive/receive_rewards/${drive_id}`);
+  return client.get<{ job_id: string }>(`/api/admin/drive/receive_rewards/${drive_id}`);
 }
 
 /**
@@ -446,7 +446,7 @@ export async function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
  */
 export function deleteFile(body: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/file/${file_id}/delete?drive_id=${drive_id}`);
+  return client.get<{ job_id: string }>(`/api/admin/file/${file_id}/delete?drive_id=${drive_id}`);
 }
 
 /**
@@ -454,7 +454,7 @@ export function deleteFile(body: { drive_id: string; file_id: string }) {
  */
 export function renameFile(body: { parsed_media_source_id: string; name: string }) {
   const { parsed_media_source_id, name } = body;
-  return request.post<{ job_id: string }>(`/api/v2/admin/parsed_media_source/rename`, {
+  return client.post<{ job_id: string }>(`/api/v2/admin/parsed_media_source/rename`, {
     parsed_media_source_id,
     name,
   });
@@ -463,7 +463,7 @@ export function renameFile(body: { parsed_media_source_id: string; name: string 
 /** 用正则重命名多个文件 */
 export function renameChildFilesName(values: { drive_id: string; file_id: string; regexp: string; replace: string }) {
   const { drive_id, file_id, regexp, replace } = values;
-  return request.post<{ job_id: string }>(`/api/v2/aliyundrive/rename_files`, {
+  return client.post<{ job_id: string }>(`/api/v2/aliyundrive/rename_files`, {
     drive_id,
     file_id,
     regexp,
@@ -473,7 +473,7 @@ export function renameChildFilesName(values: { drive_id: string; file_id: string
 
 export function transferFileToAnotherDrive(values: { drive_id: string; file_id: string; target_drive_id: string }) {
   const { drive_id, target_drive_id, file_id } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/transfer?drive_id=${drive_id}`, {
+  return client.post<{ job_id: string }>(`/api/admin/file/${file_id}/transfer?drive_id=${drive_id}`, {
     from_drive_id: drive_id,
     target_drive_id,
   });
@@ -481,7 +481,7 @@ export function transferFileToAnotherDrive(values: { drive_id: string; file_id: 
 
 export function transferFileToResourceDrive(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/to_resource_drive?drive_id=${drive_id}`, {
+  return client.post<{ job_id: string }>(`/api/admin/file/${file_id}/to_resource_drive?drive_id=${drive_id}`, {
     from_drive_id: drive_id,
   });
 }
@@ -492,7 +492,7 @@ export function transferFileToResourceDrive(values: { drive_id: string; file_id:
  */
 export function fetchFileProfile(values: { file_id: string; drive_id: string }) {
   const { drive_id, file_id } = values;
-  return request.post<{
+  return client.post<{
     id: string;
     type: FileType;
     file_name: string;

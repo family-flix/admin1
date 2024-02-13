@@ -2,7 +2,7 @@ import { HistoryCore } from "@/domains/history";
 
 const ownerDocument = globalThis.document;
 
-export function connect(history: HistoryCore<any>) {
+export function connect(history: HistoryCore<any, any>) {
   const { $router: router } = history;
   ownerDocument.addEventListener("click", (event) => {
     // console.log('[DOMAIN]app/connect.web', event.target);
@@ -42,31 +42,5 @@ export function connect(history: HistoryCore<any>) {
     }
     event.preventDefault();
     history.handleClickLink({ href, target: null });
-  });
-  router.back = () => {
-    window.history.back();
-  };
-  router.reload = () => {
-    window.location.reload();
-  };
-  router.onPushState(({ from, to, path }) => {
-    window.history.pushState(
-      {
-        from,
-        to,
-      },
-      "",
-      path
-    );
-  });
-  router.onReplaceState(({ from, path }) => {
-    // router.log("[Application ]- onReplaceState");
-    window.history.replaceState(
-      {
-        from,
-      },
-      "",
-      path
-    );
   });
 }

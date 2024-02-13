@@ -31,12 +31,7 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
   _emitter = mitt<BaseDomainEvents<Events>>();
   listeners: (() => void)[] = [];
 
-  constructor(
-    params: Partial<{
-      _name: string;
-      debug: boolean;
-    }> = {}
-  ) {
+  constructor(params: Partial<{ _name: string; debug: boolean }> = {}) {
     const { _name, debug } = params;
     if (_name) {
       this._name = _name;
@@ -91,7 +86,6 @@ export class BaseDomain<Events extends Record<EventType, unknown>> {
     this._emitter.emit(event, value);
   }
   tip(content: { icon?: unknown; text: string[] }) {
-    console.log("log this in base domain", this);
     // @ts-ignore
     this._emitter.emit(BaseEvents.Tip, content);
     return content.text.join("\n");

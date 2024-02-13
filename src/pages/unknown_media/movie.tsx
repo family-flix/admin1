@@ -10,6 +10,7 @@ import {
   setParsedMediaProfile,
   setParsedSeasonMediaSourceProfile,
 } from "@/services/parsed_media";
+import { ViewComponent } from "@/store/types";
 import { Button, ListView, LazyImage, ScrollView, Input, Dialog, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import {
@@ -26,7 +27,6 @@ import { RequestCore } from "@/domains/request";
 import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
-import { ViewComponent } from "@/store/types";
 import { MediaTypes } from "@/constants";
 
 export const UnknownMovieListPage: ViewComponent = (props) => {
@@ -97,7 +97,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
   const checkbox = new CheckboxCore({
     onChange(checked) {
       list.search({
-        empty: checked ? 0 : 1,
+        empty: checked ? 1 : 0,
       });
     },
   });
@@ -245,7 +245,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
           <Button store={resetBtn}>重置</Button>
           <div class="flex items-center space-x-2">
             <Checkbox store={checkbox}></Checkbox>
-            <span>全部内容</span>
+            <span>待处理</span>
           </div>
         </div>
         <div class="flex items-center space-x-2 mt-4">

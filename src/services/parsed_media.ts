@@ -1,8 +1,8 @@
-import { MediaErrorTypes, MediaTypes } from "@/constants";
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
 import { ListResponseWithCursor, MutableRecord, RequestedResource, Result } from "@/types";
-import { request } from "@/store/request";
+import { MediaErrorTypes, MediaTypes } from "@/constants";
 
 /**
  * 获取无法识别的 tv
@@ -10,7 +10,7 @@ import { request } from "@/store/request";
 export async function fetchUnknownMediaList(params: FetchParams & { type?: MediaTypes }) {
   const { page, pageSize, type, ...rest } = params;
   console.log("[SERVICES]fetchUnknownMediaList", type);
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -69,7 +69,7 @@ export type UnknownSeasonMediaItem = RequestedResource<typeof fetchUnknownMediaL
  */
 export async function fetchUnknownMovieMediaList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -125,7 +125,7 @@ export type UnknownMovieMediaItem = RequestedResource<typeof fetchUnknownMovieMe
 
 export async function fetchParsedMediaSourceList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -178,7 +178,7 @@ export function setParsedMediaProfile(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { parsed_media_id, media_profile } = body;
-  return request.post<void>("/api/v2/admin/parsed_media/set_profile", {
+  return client.post<void>("/api/v2/admin/parsed_media/set_profile", {
     parsed_media_id,
     media_profile,
   });
@@ -190,7 +190,7 @@ export function setParsedMediaProfileInFileId(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { file_id, media_profile } = body;
-  return request.post<void>("/api/v2/admin/parsed_media/set_profile_in_file_id", {
+  return client.post<void>("/api/v2/admin/parsed_media/set_profile_in_file_id", {
     file_id,
     media_profile,
   });
@@ -203,7 +203,7 @@ export function setParsedSeasonMediaSourceProfile(body: {
   media_source_profile?: { id: string };
 }) {
   const { parsed_media_source_id, media_profile, media_source_profile } = body;
-  return request.post<void>("/api/v2/admin/parsed_media_source/set_profile", {
+  return client.post<void>("/api/v2/admin/parsed_media_source/set_profile", {
     parsed_media_source_id,
     media_profile,
     media_source_profile,
@@ -213,14 +213,14 @@ export function setParsedSeasonMediaSourceProfile(body: {
 /** 删除解析出的影视剧记录（不删除文件） */
 export function deleteParsedMediaSource(params: { parsed_media_source_id: string }) {
   const { parsed_media_source_id } = params;
-  return request.post("/api/v2/admin/parsed_media_source/delete", {
+  return client.post("/api/v2/admin/parsed_media_source/delete", {
     parsed_media_source_id,
   });
 }
 
 export async function fetchSourcePreviewInfo(body: { id: string }) {
   const { id } = body;
-  const r = await request.post<{
+  const r = await client.post<{
     url: string;
     thumbnail: string;
     type: EpisodeResolutionTypes;

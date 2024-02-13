@@ -13,7 +13,7 @@ export const FileSearcher = (props: { store: FileSearcherCore } & JSX.HTMLAttrib
   const { store } = props;
   const scrollView = new ScrollViewCore({
     onReachBottom() {
-      store.list.loadMore();
+      store.$list.loadMore();
     },
   });
   const [state, setState] = createSignal(store.state);
@@ -44,7 +44,7 @@ export const FileSearcher = (props: { store: FileSearcherCore } & JSX.HTMLAttrib
           </div>
         </div>
       </div>
-      <ListView store={store.list}>
+      <ListView store={store.$list}>
         <div class="relative">
           <ScrollView store={scrollView} class="relative max-h-[360px] overflow-y-auto p-2 space-y-2">
             <For each={dataSource()}>

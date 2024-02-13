@@ -4,8 +4,10 @@
 import { CancelToken } from "axios";
 import dayjs from "dayjs";
 
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/store/request";
+import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
+import { DriveTypes, MediaErrorTypes, MediaTypes, ReportTypeTexts, ReportTypes } from "@/constants";
 import {
   JSONObject,
   ListResponse,
@@ -16,8 +18,6 @@ import {
   Unpacked,
   UnpackedResult,
 } from "@/types";
-import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/domains/tv/constants";
-import { DriveTypes, MediaErrorTypes, MediaTypes, ReportTypeTexts, ReportTypes } from "@/constants";
 import { bytes_to_size, query_stringify } from "@/utils";
 
 /**
@@ -25,7 +25,7 @@ import { bytes_to_size, query_stringify } from "@/utils";
  */
 export async function fetch_tv_list(params: FetchParams & { name: string }) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -70,7 +70,7 @@ export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][number];
 /** 获取季列表 */
 export async function fetchInvalidTVList(params: FetchParams & Partial<{}>) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -108,7 +108,7 @@ export type InvalidTVItem = RequestedResource<typeof fetchInvalidTVList>["list"]
 
 export function deleteTV(values: { id: string }) {
   const { id } = values;
-  return request.get(`/api/admin/tv/${id}/delete`);
+  return client.get(`/api/admin/tv/${id}/delete`);
 }
 
 /** 获取季列表 */
@@ -121,7 +121,7 @@ export async function fetchSeasonList(
     }>
 ) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       tv_id: string;
@@ -428,7 +428,7 @@ export async function fetchSeasonPrepareArchiveList(
     }>
 ) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<ListResponse<SeasonPrepareArchiveItemResp>>("/api/admin/season/archive/list", {
+  const resp = await client.get<ListResponse<SeasonPrepareArchiveItemResp>>("/api/admin/season/archive/list", {
     ...rest,
     page,
     page_size: pageSize,
@@ -444,7 +444,7 @@ export async function fetchSeasonPrepareArchiveList(
 
 export async function fetchPartialSeasonPrepareArchive(values: { id: string }) {
   const { id } = values;
-  const r = await request.get<SeasonPrepareArchiveItemResp>(`/api/admin/season/archive/${id}/partial`);
+  const r = await client.get<SeasonPrepareArchiveItemResp>(`/api/admin/season/archive/${id}/partial`);
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -461,7 +461,7 @@ export async function fetchMoviePrepareArchiveList(
     }>
 ) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<ListResponse<MoviePrepareArchiveItemResp>>("/api/admin/movie/archive/list", {
+  const resp = await client.get<ListResponse<MoviePrepareArchiveItemResp>>("/api/admin/movie/archive/list", {
     ...rest,
     page,
     page_size: pageSize,
@@ -477,7 +477,7 @@ export async function fetchMoviePrepareArchiveList(
 
 export async function fetchPartialMoviePrepareArchive(values: { id: string }) {
   const { id } = values;
-  const r = await request.get<MoviePrepareArchiveItemResp>(`/api/admin/movie/archive/${id}/partial`);
+  const r = await client.get<MoviePrepareArchiveItemResp>(`/api/admin/movie/archive/${id}/partial`);
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -489,7 +489,7 @@ export async function fetchPartialMoviePrepareArchive(values: { id: string }) {
  */
 export async function fetchPartialTV(params: { tv_id: string }) {
   const { tv_id } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -522,7 +522,7 @@ export async function fetchPartialTV(params: { tv_id: string }) {
  */
 export async function fetchPartialSeason(params: { season_id: string }) {
   const { season_id } = params;
-  const resp = await request.get<{
+  const resp = await client.get<{
     id: string;
     // tv_id: string;
     name: string;
@@ -569,30 +569,30 @@ export function delete_tv(body: {
   include_file?: boolean;
 }) {
   const { tv_id, include_file } = body;
-  return request.get<void>(`/api/admin/tv/delete/${tv_id}`);
+  return client.get<void>(`/api/admin/tv/delete/${tv_id}`);
 }
 
 /** 刷新电视剧详情 */
 export function refreshSeasonProfile(body: { season_id: string }) {
   const { season_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/refresh_profile`, {});
+  return client.post<{ job_id: string }>(`/api/admin/season/${season_id}/refresh_profile`, {});
 }
 /** 改变电视剧详情 */
 export function changeSeasonProfile(body: { season_id: string; unique_id?: number }) {
   const { season_id, unique_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/set_profile`, {
+  return client.post<{ job_id: string }>(`/api/admin/season/${season_id}/set_profile`, {
     unique_id,
   });
 }
 /** 手动修改电视剧详情 */
 export function updateSeasonProfileManually(body: { season_id: string; title?: string; episode_count?: number }) {
   const { season_id, title, episode_count } = body;
-  return request.post<void>(`/api/admin/season/${season_id}/update`, { name: title, episode_count });
+  return client.post<void>(`/api/admin/season/${season_id}/update`, { name: title, episode_count });
 }
 /** 删除指定电视剧季 */
 export function deleteSeason(body: { season_id: string }) {
   const { season_id } = body;
-  return request.get<void>(`/api/admin/season/${season_id}/delete`);
+  return client.get<void>(`/api/admin/season/${season_id}/delete`);
 }
 
 /**
@@ -600,7 +600,7 @@ export function deleteSeason(body: { season_id: string }) {
  */
 export async function fetchMovieList(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -642,26 +642,26 @@ export type MovieItem = RequestedResource<typeof fetchMovieList>["list"][number]
 /** 刷新电影详情 */
 export function refreshMovieProfile(body: { movie_id: string }) {
   const { movie_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/refresh_profile`, {});
+  return client.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/refresh_profile`, {});
 }
 /** 改变电影详情 */
 export function changeMovieProfile(body: { movie_id: string; unique_id: number }) {
   const { movie_id, unique_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/set_profile`, {
+  return client.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/set_profile`, {
     unique_id,
   });
 }
 /** 手动更新电影详情 */
 export function updateMovieProfile(body: { movie_id: string; name: string }) {
   const { movie_id, name } = body;
-  return request.post(`/api/admin/movie/${movie_id}/update`, {
+  return client.post(`/api/admin/movie/${movie_id}/update`, {
     name,
   });
 }
 
 export function delete_movie(body: { movie_id: string }) {
   const { movie_id } = body;
-  return request.post(`/api/admin/movie/${movie_id}/delete`, {});
+  return client.post(`/api/admin/movie/${movie_id}/delete`, {});
 }
 
 /**
@@ -675,7 +675,7 @@ export async function fetchUnknownSeasonMediaList(
   }
 ) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -733,7 +733,7 @@ export async function fetchUnknownSeasonMediaList(
  */
 export async function fetchUnknownMovieMediaList(params: FetchParams & { type: MediaTypes }) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponse<{
       id: string;
       name: string;
@@ -779,13 +779,13 @@ export type UnknownSeasonMediaItem = RequestedResource<typeof fetchUnknownSeason
 
 /** 删除所有未识别电视剧 */
 export function deleteUnknownTVList() {
-  return request.get("/api/admin/unknown_tv/delete");
+  return client.get("/api/admin/unknown_tv/delete");
 }
 
 /** 删除指定未识别电视剧 */
 export function deleteUnknownTV(values: { parsed_tv_id: string }) {
   const { parsed_tv_id } = values;
-  return request.get(`/api/admin/unknown_tv/${parsed_tv_id}/delete`);
+  return client.get(`/api/admin/unknown_tv/${parsed_tv_id}/delete`);
 }
 
 /**
@@ -793,7 +793,7 @@ export function deleteUnknownTV(values: { parsed_tv_id: string }) {
  */
 export async function fetchUnknownSeasonList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -823,7 +823,7 @@ export type UnknownSeasonItem = RequestedResource<typeof fetchUnknownSeasonList>
 
 /** 删除所有未识别电视剧季 */
 export function delete_unknown_season_list() {
-  return request.get("/api/admin/unknown_season/delete");
+  return client.get("/api/admin/unknown_season/delete");
 }
 
 /**
@@ -831,7 +831,7 @@ export function delete_unknown_season_list() {
  */
 export async function fetch_unknown_movie_list(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -872,7 +872,7 @@ export type UnknownMovieItem = RequestedResource<typeof fetch_unknown_movie_list
 
 export async function fetch_unknown_episode_list(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -917,15 +917,15 @@ export type UnknownEpisodeItem = RequestedResource<typeof fetch_unknown_episode_
 
 export function delete_unknown_episode(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/unknown_episode/delete/${id}`, undefined);
+  return client.get(`/api/admin/unknown_episode/delete/${id}`, undefined);
 }
 export function delete_unknown_episode_list() {
-  return request.get(`/api/admin/unknown_episode/delete`);
+  return client.get(`/api/admin/unknown_episode/delete`);
 }
 
 /** 删除所有未识别电影 */
 export function delete_unknown_movie_list() {
-  return request.get("/api/admin/unknown_movie/delete");
+  return client.get("/api/admin/unknown_movie/delete");
 }
 /**
  * 删除指定未知电影
@@ -933,7 +933,7 @@ export function delete_unknown_movie_list() {
  */
 export function delete_unknown_movie(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/unknown_movie/delete/${id}`, undefined);
+  return client.get(`/api/admin/unknown_movie/delete/${id}`, undefined);
 }
 
 /**
@@ -943,7 +943,7 @@ export function delete_unknown_movie(body: { id: string }) {
  */
 export function update_unknown_season_number(body: { id: string; season_number: string }) {
   const { id, season_number } = body;
-  return request.post<void>(`/api/admin/unknown_season/update/${id}`, {
+  return client.post<void>(`/api/admin/unknown_season/update/${id}`, {
     season_number,
   });
 }
@@ -954,7 +954,7 @@ export function update_unknown_season_number(body: { id: string; season_number: 
  */
 export function fetch_unknown_tv_profile(body: { id: string }) {
   const { id } = body;
-  return request.get<{
+  return client.get<{
     id: string;
     name: string;
     file_id?: string;
@@ -980,7 +980,7 @@ export type UnknownTVProfile = RequestedResource<typeof fetch_unknown_tv_profile
  */
 export async function search_tv_in_tmdb(params: FetchParams & { keyword: string }) {
   const { keyword, page, pageSize, ...rest } = params;
-  return request.get<
+  return client.get<
     ListResponse<{
       id: number;
       name: string;
@@ -1003,7 +1003,7 @@ export type MatchedTVOfTMDB = RequestedResource<typeof search_tv_in_tmdb>["list"
  * 给指定未知 tv 绑定一个 tmdb 的搜索结果
  */
 export async function setProfileForUnknownMovie(id: string, body: { unique_id: number | string }) {
-  return request.post(`/api/admin/unknown_movie/${id}/set_profile`, body);
+  return client.post(`/api/admin/unknown_movie/${id}/set_profile`, body);
 }
 
 /**
@@ -1014,7 +1014,7 @@ export async function bind_profile_for_unknown_tv(
   profile: { source?: number; unique_id: string | number }
 ) {
   const { unique_id } = profile;
-  return request.post(`/api/admin/unknown_tv/${id}/set_profile`, {
+  return client.post(`/api/admin/unknown_tv/${id}/set_profile`, {
     unique_id,
   });
 }
@@ -1023,7 +1023,7 @@ export async function bind_profile_for_unknown_tv(
  * 修改未识别电视剧名称并索引
  */
 export async function modifyUnknownTVName(id: string, body: { name: string }) {
-  return request.post(`/api/admin/unknown_tv/${id}/update`, body);
+  return client.post(`/api/admin/unknown_tv/${id}/update`, body);
 }
 
 /**
@@ -1031,7 +1031,7 @@ export async function modifyUnknownTVName(id: string, body: { name: string }) {
  */
 export async function fetch_files_of_tv(body: { id: string; page: number; page_size: number }) {
   const { id, page, page_size } = body;
-  return request.get<
+  return client.get<
     ListResponse<{
       id: string;
       file_id: string;
@@ -1053,7 +1053,7 @@ export async function fetch_files_of_tv(body: { id: string; page: number; page_s
  */
 export async function fetch_file_profile_of_tv(body: { tv_id: string; id: string }) {
   const { tv_id, id } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     file_id: string;
     file_name: string;
@@ -1087,7 +1087,7 @@ export async function fetch_file_profile_of_tv(body: { tv_id: string; id: string
  */
 export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }) {
   const { tv_id, id } = body;
-  const r = await request.get<null>(`/api/admin/tv/${tv_id}/parsed_tv/delete/${id}`);
+  const r = await client.get<null>(`/api/admin/tv/${tv_id}/parsed_tv/delete/${id}`);
   if (r.error) {
     return Result.Err(r.error);
   }
@@ -1101,7 +1101,7 @@ export async function delete_parsed_tv_of_tv(body: { tv_id: string; id: string }
  */
 export async function fetchMemberList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const res = await request.post<
+  const res = await client.post<
     ListResponseWithCursor<{
       id: string;
       remark: string;
@@ -1137,7 +1137,7 @@ export type MemberItem = RequestedResource<typeof fetchMemberList>["list"][0];
  * @returns
  */
 export function add_member(body: { remark: string }) {
-  return request.post<{ id: string }>("/api/admin/member/add", body);
+  return client.post<{ id: string }>("/api/admin/member/add", body);
 }
 
 /**
@@ -1146,7 +1146,7 @@ export function add_member(body: { remark: string }) {
  * @returns
  */
 export function create_member_auth_link(body: { id: string }) {
-  return request.post<{ id: string }>("/api/admin/member/token/add", body);
+  return client.post<{ id: string }>("/api/admin/member/token/add", body);
 }
 
 /**
@@ -1162,7 +1162,7 @@ export async function fetch_aliyun_drive_files(body: {
   page_size?: number;
 }) {
   const { drive_id, file_id, name, next_marker, page_size = 24 } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     items: {
       file_id: string;
       name: string;
@@ -1184,7 +1184,7 @@ export async function fetch_aliyun_drive_files(body: {
 
 export async function fetch_shared_files(body: { url: string; file_id: string; next_marker: string }) {
   const { url, file_id, next_marker } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     items: {
       file_id: string;
       name: string;
@@ -1205,7 +1205,7 @@ export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["ite
  */
 export async function fetch_drive_files(body: { drive_id: string; file_id: string; name: string }) {
   const { drive_id, file_id, name } = body;
-  return request.get(`/api/admin/aliyun/files/${file_id}`, { name, drive_id });
+  return client.get(`/api/admin/aliyun/files/${file_id}`, { name, drive_id });
 }
 
 /**
@@ -1219,7 +1219,7 @@ export async function patch_added_files(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.get("/api/admin/shared_file/diff", body);
+  return client.get("/api/admin/shared_file/diff", body);
 }
 
 /**
@@ -1228,7 +1228,7 @@ export async function patch_added_files(body: {
  * @returns
  */
 export function find_folders_has_same_name(body: { name: string }) {
-  return request.get<{ name: string; file_id: string }>("/api/admin/shared_file/find_folder_has_same_name", body);
+  return client.get<{ name: string; file_id: string }>("/api/admin/shared_file/find_folder_has_same_name", body);
 }
 export type FolderItem = RequestedResource<typeof find_folders_has_same_name>;
 
@@ -1248,7 +1248,7 @@ export async function build_link_between_shared_files_with_folder(body: {
   target_file_name?: string;
   target_file_id?: string;
 }) {
-  return request.post("/api/admin/shared_file/link", body);
+  return client.post("/api/admin/shared_file/link", body);
 }
 
 /**
@@ -1258,7 +1258,7 @@ export async function check_has_same_name_tv(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.post<null | TVItem>("/api/admin/shared_file/check_same_name", body);
+  return client.post<null | TVItem>("/api/admin/shared_file/check_same_name", body);
 }
 
 /**
@@ -1266,7 +1266,7 @@ export async function check_has_same_name_tv(body: {
  */
 export function fetch_folder_can_add_sync_task(body: { page: number; page_size: number; name?: string[] }) {
   const { page, page_size, name } = body;
-  return request.post<
+  return client.post<
     ListResponse<{
       id: string;
       url: string;
@@ -1288,21 +1288,21 @@ export type FolderCanAddingSyncTaskItem = RequestedResource<typeof fetch_folder_
  */
 export function runSyncTask(body: { id: string }) {
   const { id } = body;
-  return request.get<{ job_id: string }>(`/api/admin/sync_task/${id}/run`);
+  return client.get<{ job_id: string }>(`/api/admin/sync_task/${id}/run`);
 }
 
 /**
  * 更新所有电视剧详情
  */
 export function refreshSeasonProfiles() {
-  return request.get<{ job_id: string }>("/api/admin/season/refresh_profile");
+  return client.get<{ job_id: string }>("/api/admin/season/refresh_profile");
 }
 
 /**
  * 更新所有电影详情
  */
 export function refreshMovieProfiles() {
-  return request.get<{ job_id: string }>("/api/admin/movie/refresh_profile");
+  return client.get<{ job_id: string }>("/api/admin/movie/refresh_profile");
 }
 
 /**
@@ -1310,7 +1310,7 @@ export function refreshMovieProfiles() {
  */
 export function transferSeasonToAnotherDrive(body: { season_id: string; target_drive_id: string }) {
   const { season_id, target_drive_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/transfer`, {
+  return client.post<{ job_id: string }>(`/api/admin/season/${season_id}/transfer`, {
     target_drive_id,
   });
 }
@@ -1320,7 +1320,7 @@ export function transferSeasonToAnotherDrive(body: { season_id: string; target_d
  */
 export function transferMovieToAnotherDrive(body: { movie_id: string; target_drive_id: string }) {
   const { movie_id, target_drive_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/transfer`, {
+  return client.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/transfer`, {
     target_drive_id,
   });
 }
@@ -1330,7 +1330,7 @@ export function transferMovieToAnotherDrive(body: { movie_id: string; target_dri
  */
 export function moveSeasonToResourceDrive(body: { season_id: string }) {
   const { season_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/season/${season_id}/to_resource_drive`, {});
+  return client.post<{ job_id: string }>(`/api/admin/season/${season_id}/to_resource_drive`, {});
 }
 
 /**
@@ -1338,7 +1338,7 @@ export function moveSeasonToResourceDrive(body: { season_id: string }) {
  */
 export function moveMovieToResourceDrive(body: { movie_id: string }) {
   const { movie_id } = body;
-  return request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/to_resource_drive`, {});
+  return client.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/to_resource_drive`, {});
 }
 
 /**
@@ -1347,7 +1347,7 @@ export function moveMovieToResourceDrive(body: { movie_id: string }) {
  */
 export function delete_member(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/member/delete/${id}`);
+  return client.get(`/api/admin/member/delete/${id}`);
 }
 
 export function updateMemberPermission(values: { member_id: string; permissions: string[] }) {
@@ -1355,24 +1355,24 @@ export function updateMemberPermission(values: { member_id: string; permissions:
   const body = {
     permissions,
   };
-  return request.post(`/api/admin/member/${member_id}/permission/update`, body);
+  return client.post(`/api/admin/member/${member_id}/permission/update`, body);
 }
 
 /**
  * 是否已经有管理员
  */
 export function has_admin() {
-  return request.get<{ existing: boolean }>(`/api/admin/user/existing`);
+  return client.get<{ existing: boolean }>(`/api/admin/user/existing`);
 }
 
 export function delete_aliyun_file(body: { file_id: string }) {
   const { file_id } = body;
-  return request.get(`/api/admin/aliyun/delete/${file_id}`);
+  return client.get(`/api/admin/aliyun/delete/${file_id}`);
 }
 
 export async function fetchSeasonProfile(body: { season_id: string }) {
   const { season_id } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     name: string;
     overview: string;
@@ -1431,7 +1431,7 @@ export type SeasonInTVProfile = RequestedResource<typeof fetchSeasonProfile>["se
 
 export async function deleteEpisode(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/admin/episode/${id}/delete`);
+  return client.get(`/api/admin/episode/${id}/delete`);
 }
 
 /**
@@ -1441,7 +1441,7 @@ export async function deleteEpisode(body: { id: string }) {
  */
 export function fetchEpisodesOfSeason(body: { tv_id: string; season_id: string } & FetchParams) {
   const { tv_id, season_id, ...rest } = body;
-  return request.get<
+  return client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -1468,7 +1468,7 @@ export type EpisodeItemInSeason = RequestedResource<typeof fetchEpisodesOfSeason
 
 export async function fetchSourcePreviewInfo(body: { id: string }) {
   const { id } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     url: string;
     thumbnail: string;
     type: EpisodeResolutionTypes;
@@ -1510,7 +1510,7 @@ export async function fetchSourcePreviewInfo(body: { id: string }) {
 }
 
 export async function fetchReportList(params: FetchParams) {
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       type: ReportTypes;
@@ -1560,11 +1560,11 @@ export type ReportItem = RequestedResource<typeof fetchReportList>["list"][numbe
 
 export function fetchReportProfile(params: { report_id: string }) {
   const { report_id } = params;
-  return request.get(`/api/admin/report/${report_id}`);
+  return client.get(`/api/admin/report/${report_id}`);
 }
 
 export async function fetch_shared_files_histories(body: FetchParams) {
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       url: string;
@@ -1589,7 +1589,7 @@ export async function fetch_shared_files_histories(body: FetchParams) {
 export type SharedFileHistoryItem = RequestedResource<typeof fetch_shared_files_histories>["list"][0];
 
 export async function fetch_shared_files_transfer_list(body: FetchParams) {
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       url: string;
@@ -1615,7 +1615,7 @@ export type SharedFileTransferItem = RequestedResource<typeof fetch_shared_files
 
 export async function fetchMovieProfile(body: { movie_id: string }) {
   const { movie_id } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     name: string;
     overview: string;
@@ -1652,7 +1652,7 @@ export async function fetchMovieProfile(body: { movie_id: string }) {
 export type MovieProfile = RequestedResource<typeof fetchMovieProfile>;
 
 export function upload_file(body: FormData) {
-  return request.post("/api/admin/upload", body);
+  return client.post("/api/admin/upload", body);
 }
 
 export function upload_subtitle_for_episode(params: {
@@ -1677,19 +1677,19 @@ export function upload_subtitle_for_episode(params: {
     season_text,
     episode_text,
   });
-  return request.post(`/api/admin/episode/subtitle/add?${search}`, body);
+  return client.post(`/api/admin/episode/subtitle/add?${search}`, body);
 }
 
 export function upload_subtitle_for_movie(params: { movie_id: string; drive_id: string; lang: string; file: File }) {
   const { movie_id, drive_id, lang, file } = params;
   const body = new FormData();
   body.append("file", file);
-  return request.post(`/api/admin/movie/${movie_id}/subtitle/add?drive_id=${drive_id}&lang=${lang}`, body);
+  return client.post(`/api/admin/movie/${movie_id}/subtitle/add?drive_id=${drive_id}&lang=${lang}`, body);
 }
 
 export function notify_test(values: { text: string; token: string }) {
   const { text, token } = values;
-  return request.post(`/api/admin/notify/test`, { text, token });
+  return client.post(`/api/admin/notify/test`, { text, token });
 }
 
 type UserSettings = {
@@ -1709,7 +1709,7 @@ type UserSettings = {
  * 获取用户配置
  */
 export function fetchSettings() {
-  return request.get<UserSettings>("/api/admin/settings");
+  return client.get<UserSettings>("/api/admin/settings");
 }
 
 /**
@@ -1717,7 +1717,7 @@ export function fetchSettings() {
  */
 export function updateSettings(values: Partial<UserSettings>) {
   const { push_deer_token, extra_filename_rules, ignore_files_when_sync, max_size_when_sync } = values;
-  return request.post(`/api/admin/settings/update`, {
+  return client.post(`/api/admin/settings/update`, {
     push_deer_token,
     extra_filename_rules,
     ignore_files_when_sync,
@@ -1726,19 +1726,19 @@ export function updateSettings(values: Partial<UserSettings>) {
 }
 
 export function pushMessageToMembers(values: { content: string }) {
-  return request.post("/api/admin/notify", values);
+  return client.post("/api/admin/notify", values);
 }
 
 /**
  * 更新用户配置
  */
 export function deleteExpiredSourceFiles() {
-  return request.post(`/api/admin/settings/expired_file/delete`, {});
+  return client.post(`/api/admin/settings/expired_file/delete`, {});
 }
 
 export function sync_folder(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
-  return request.get<{ job_id: string }>(`/api/admin/file/${file_id}/sync`, { drive_id });
+  return client.get<{ job_id: string }>(`/api/admin/file/${file_id}/sync`, { drive_id });
 }
 
 type AnswerPayload = Partial<{
@@ -1751,7 +1751,7 @@ export function replyReport(
   } & AnswerPayload
 ) {
   const { report_id, content, media_id } = values;
-  return request.post(`/api/v2/admin/report/reply`, {
+  return client.post(`/api/v2/admin/report/reply`, {
     id: report_id,
     content,
     media_id,
@@ -1763,7 +1763,7 @@ export function replyReport(
  */
 export async function fetchPermissionList(params: FetchParams) {
   const { pageSize, ...restParams } = params;
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       code: string;
       desc: string;
@@ -1793,7 +1793,7 @@ export function addPermission(values: { desc: string }) {
   const body = {
     desc,
   };
-  return request.post("/api/admin/permission/add", body);
+  return client.post("/api/admin/permission/add", body);
 }
 
 /**
@@ -1801,7 +1801,7 @@ export function addPermission(values: { desc: string }) {
  */
 export function validateSubtitleFiles(values: { filenames: string[] }) {
   const { filenames } = values;
-  return request.post<
+  return client.post<
     {
       filename: string;
       season_text: string;
@@ -1844,11 +1844,11 @@ export function batchUploadSubtitles(values: {
       body.append("payloads", JSON.stringify(restPayload));
     }
   }
-  return request.post<{ job_id: string }>("/api/v2/admin/subtitle/batch_create", body);
+  return client.post<{ job_id: string }>("/api/v2/admin/subtitle/batch_create", body);
 }
 
 export function fetchSubtitleList(params: FetchParams) {
-  return request.post<
+  return client.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaTypes;
@@ -1904,12 +1904,14 @@ export type SubtitleItem = RequestedResource<typeof fetchSubtitleList>["list"][n
 
 export function deleteSubtitle(values: { subtitle_id: string }) {
   const { subtitle_id } = values;
-  return request.get(`/api/admin/subtitle/${subtitle_id}/delete`);
+  return client.post("/api/v2/admin/subtitle/delete", {
+    subtitle_id,
+  });
 }
 
 /** 获取同步任务列表 */
 export function fetchSyncTaskList(params: FetchParams & { in_production: number; invalid: number; name: string }) {
-  return request.get<
+  return client.get<
     ListResponse<{
       id: string;
       resource_file_id: string;
@@ -1944,7 +1946,7 @@ export function overrideResourceForSyncTask(values: {
   resource_file_name?: string;
 }) {
   const { id, url, resource_file_id, resource_file_name } = values;
-  return request.post<{}>(`/api/admin/sync_task/${id}/override_resource`, {
+  return client.post<{}>(`/api/admin/sync_task/${id}/override_resource`, {
     url,
     resource_file_id,
     resource_file_name,
@@ -1953,7 +1955,7 @@ export function overrideResourceForSyncTask(values: {
 
 /** 获取同步任务列表 */
 export function fetchPartialSyncTask(params: { id: string }) {
-  return request.get<{
+  return client.get<{
     id: string;
     resource_file_id: string;
     resource_file_name: string;
@@ -1991,7 +1993,7 @@ export function createSyncTaskWithUrl(body: {
   drive_id?: string;
 }) {
   const { url, resource_file_id, resource_file_name, drive_file_id, drive_file_name, drive_id } = body;
-  return request.post<{}>(`/api/admin/sync_task/create`, {
+  return client.post<{}>(`/api/admin/sync_task/create`, {
     url,
     resource_file_id,
     resource_file_name,
@@ -2004,7 +2006,7 @@ export function createSyncTaskWithUrl(body: {
 /** 获取同步任务列表 */
 export function updateSyncTask(params: { id: string; season_id: string }) {
   const { id, season_id } = params;
-  return request.get<{
+  return client.get<{
     id: string;
     resource_file_id: string;
     resource_file_name: string;
@@ -2027,33 +2029,33 @@ export function updateSyncTask(params: { id: string; season_id: string }) {
  * 执行所有电视剧同步任务
  */
 export function runSyncTaskList() {
-  return request.get<{ job_id: string }>("/api/admin/sync_task/run");
+  return client.get<{ job_id: string }>("/api/admin/sync_task/run");
 }
 
 /** 标记同步任务已完结 */
 export function completeSyncTask(params: { id: string }) {
   const { id } = params;
-  return request.get<{}>(`/api/admin/sync_task/${id}/complete`, {});
+  return client.get<{}>(`/api/admin/sync_task/${id}/complete`, {});
 }
 
 /** 删除同步任务 */
 export function deleteSyncTask(params: { id: string }) {
   const { id } = params;
-  return request.get<{}>(`/api/admin/sync_task/${id}/delete`, {});
+  return client.get<{}>(`/api/admin/sync_task/${id}/delete`, {});
 }
 
 export function deleteSourceFile(params: { id: string }) {
   const { id } = params;
-  return request.get(`/api/admin/source/${id}/delete`);
+  return client.get(`/api/admin/source/${id}/delete`);
 }
 /** 删除指定云盘下所有解析结果文件 */
 export function deleteSourceFiles(params: { drive_id: string; season_id: string }) {
   const { drive_id, season_id } = params;
-  return request.get(`/api/admin/source/delete`, { drive_id, season_id });
+  return client.get(`/api/admin/source/delete`, { drive_id, season_id });
 }
 
 export function fetchCollectionList(params: FetchParams) {
-  return request.post<
+  return client.post<
     ListResponse<{
       id: string;
       title: string;
@@ -2076,7 +2078,7 @@ export function createCollection(values: {
   medias: { id: string; tv_id?: string }[];
 }) {
   const { title, sort, desc, medias } = values;
-  return request.post("/api/admin/collection/create", {
+  return client.post("/api/admin/collection/create", {
     title,
     desc,
     sort,
@@ -2085,7 +2087,7 @@ export function createCollection(values: {
 }
 export function fetchCollectionProfile(values: { id: string }) {
   const { id } = values;
-  return request.post<{
+  return client.post<{
     id: string;
     title: string;
     desc?: string;
@@ -2106,7 +2108,7 @@ export function editCollection(values: {
   medias: { id: string; tv_id?: string }[];
 }) {
   const { id, title, desc, sort, medias } = values;
-  return request.post(`/api/admin/collection/${id}/edit`, {
+  return client.post(`/api/admin/collection/${id}/edit`, {
     title,
     desc,
     sort,
@@ -2116,12 +2118,12 @@ export function editCollection(values: {
 
 export function deleteCollection(values: { id: string }) {
   const { id } = values;
-  return request.post(`/api/admin/collection/${id}/delete`, {});
+  return client.post(`/api/admin/collection/${id}/delete`, {});
 }
 
 export function setParsedTVSeasonProfile(values: { file_id: string; source?: number; unique_id: number | string }) {
   const { file_id, source, unique_id } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_season_profile`, {
+  return client.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_season_profile`, {
     source,
     unique_id,
   });
@@ -2135,7 +2137,7 @@ export function setFileEpisodeProfile(values: {
   episode_number: number;
 }) {
   const { file_id, source, unique_id, season_number, episode_number } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_episode_profile`, {
+  return client.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_episode_profile`, {
     source,
     unique_id,
     season_number,
@@ -2145,7 +2147,7 @@ export function setFileEpisodeProfile(values: {
 
 export function setFileMovieProfile(values: { file_id: string; source?: number; unique_id: number | string }) {
   const { file_id, source, unique_id } = values;
-  return request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_movie_profile`, {
+  return client.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_movie_profile`, {
     source,
     unique_id,
   });
@@ -2240,7 +2242,7 @@ type MovieError = {
 };
 
 export async function fetchInvalidMediaList(params: FetchParams) {
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaErrorTypes;
@@ -2394,20 +2396,20 @@ export type MediaErrorItem = RequestedResource<typeof fetchInvalidMediaList>["li
 
 /** 删除剧集详情 */
 export function deleteTVProfileInMediaError(values: { id: string; profile_id: string }) {
-  return request.post<null | {}>("/api/admin/media_error/tv_profile/delete", values);
+  return client.post<null | {}>("/api/admin/media_error/tv_profile/delete", values);
 }
 
 /** 删除季详情 */
 export function deleteSeasonProfileInMediaError(values: { id: string; profile_id: string }) {
-  return request.post<null | {}>("/api/admin/media_error/season_profile/delete", values);
+  return client.post<null | {}>("/api/admin/media_error/season_profile/delete", values);
 }
 
 /** 删除剧集详情 */
 export function deleteEpisodeProfileInMediaError(values: { id: string; profile_id: string }) {
-  return request.post<null | {}>("/api/admin/media_error/episode_profile/delete", values);
+  return client.post<null | {}>("/api/admin/media_error/episode_profile/delete", values);
 }
 
 /** 删除电影详情 */
 export function deleteMovieProfileInMediaError(values: { id: string; profile_id: string }) {
-  return request.post<null | {}>("/api/admin/media_error/movie_profile/delete", values);
+  return client.post<null | {}>("/api/admin/media_error/movie_profile/delete", values);
 }

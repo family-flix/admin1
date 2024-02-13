@@ -1,13 +1,14 @@
 import { BaseDomain, Handler } from "@/domains/base";
 import { RouteViewCore } from "@/domains/route_view";
 import { NavigatorCore } from "@/domains/navigator";
-import { PathnameKey, RouteConfig } from "@/types";
 import { query_stringify } from "@/utils";
 
 enum Events {
   TopViewChange,
-  HrefChange,
+  RouteChange,
   ClickLink,
+  Back,
+  Forward,
   StateChange,
 }
 type TheTypesOfEvents = {
@@ -16,20 +17,28 @@ type TheTypesOfEvents = {
     href: string;
     target: string | null;
   };
-  [Events.HrefChange]: {
+  [Events.Back]: void;
+  [Events.Forward]: void;
+  [Events.RouteChange]: {
+    view: RouteViewCore;
     name: string;
     href: string;
     pathname: string;
     query: Record<string, string>;
+    reason: "back" | "forward" | "push" | "replace";
+    /** 调用方希望忽略这次 route change */
+    ignore?: boolean;
   };
   [Events.StateChange]: HistoryCoreState;
 };
 
-type HistoryCoreProps = {
+type HistoryCoreProps<K extends string, R extends Record<string, any>> = {
   view: RouteViewCore;
   router: NavigatorCore;
-  routes: Record<PathnameKey, RouteConfig>;
-  views: Record<PathnameKey, RouteViewCore>;
+  routes: Record<K, R>;
+  views: Record<K, RouteViewCore>;
+  /** 是否采用虚拟路由（不改变浏览器历史） */
+  virtual?: boolean;
 };
 type HistoryCoreState = {
   href: string;
@@ -43,11 +52,13 @@ type HistoryCoreState = {
   cursor: number;
 };
 
-export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> {
+export class HistoryCore<K extends string, R extends Record<string, any>> extends BaseDomain<TheTypesOfEvents> {
+  virtual = false;
+
   /** 路由配置 */
-  routes: Record<string, RouteConfig>;
+  routes: Record<K, R>;
   /** 加载的所有视图 */
-  views: Record<string, RouteViewCore> = {};
+  views: Record<string, RouteViewCore>;
   /** 按顺序依次 push 的视图 */
   stacks: RouteViewCore[] = [];
   /** 栈指针 */
@@ -76,25 +87,20 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
     };
   }
 
-  constructor(props: Partial<{ _name: string }> & HistoryCoreProps) {
+  constructor(props: Partial<{ _name: string }> & HistoryCoreProps<K, R>) {
     super(props);
 
-    const { view, router, routes, views = {} } = props;
+    const { virtual = false, view, router, routes, views } = props;
 
     this.$view = view;
     this.$router = router;
     this.routes = routes;
     this.views = views;
+    this.virtual = virtual;
   }
 
-  // 详情页，如果在详情页，跳转到其他页，再回来，是希望能正确返回
-  // 但是，如果在已经有一个详情页的情况下，再跳转到一个 href 不相同的详情页，是要将之前的销毁
-  // 也不对，如果从 详情(数据A) 跳转 详情(数据B)，这时候从 详情(B) 返回，应该还能正确返回 详情(A)
-  // 所以，究竟在什么时候，才需要销毁 详情(A)？
-  // 其实都不应该销毁？因为你要支持返回到上一个，肯定不能销毁，那这样，如果进入过 n 个详情页，这 n 个都要保留？
-  // 如果返回了，这时候可以销毁，其他时候都不销毁？
-  // 所以还有 replace 的区别，replace 时，要销毁当前的，
-  push(name: K, query: Record<string, string> = {}) {
+  push(name: K, query: Record<string, string> = {}, options: Partial<{ ignore: boolean }> = {}) {
+    const { ignore } = options;
     const uniqueKey = [name, query_stringify(query)].filter(Boolean).join("?");
     if (uniqueKey === this.$router.href) {
       console.log("[DOMAIN]history/index - push target url is", uniqueKey, "and cur href is", this.$router.href);
@@ -120,13 +126,16 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
       this.stacks = this.stacks.slice(0, this.cursor + 1).concat(view);
       this.cursor += 1;
       view.parent.showView(view);
-      this.emit(Events.HrefChange, {
+      this.emit(Events.RouteChange, {
+        reason: "push",
+        view,
         name,
-        href: uniqueKey,
+        href: view.href,
         pathname: view.pathname,
         query: view.query,
+        ignore,
       });
-      this.emit(Events.TopViewChange, view);
+      // this.emit(Events.TopViewChange, view);
       this.emit(Events.StateChange, { ...this.state });
       return;
     }
@@ -138,7 +147,7 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
       return m;
     })();
     if (!route) {
-      console.log("[DOMAIN]history/index - push 2. no matched route", name);
+      console.log("[DOMAIN]history/index - push 2. no matched route", uniqueKey);
       return null;
     }
     const created = new RouteViewCore({
@@ -168,17 +177,20 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
     this.stacks = this.stacks.slice(0, this.cursor + 1).concat(created);
     this.cursor += 1;
     created.parent.showView(created);
-    this.emit(Events.TopViewChange, created);
-    this.emit(Events.HrefChange, {
+    this.emit(Events.RouteChange, {
+      reason: "push",
+      view: created,
       name,
-      href: uniqueKey,
+      href: created.href,
       pathname: created.pathname,
       query: created.query,
+      ignore,
     });
+    // this.emit(Events.TopViewChange, created);
     this.emit(Events.StateChange, { ...this.state });
   }
-  replace(pathname: K, query: Record<string, string> = {}) {
-    const uniqueKey = [pathname, query_stringify(query)].filter(Boolean).join("?");
+  replace(name: K, query: Record<string, string> = {}) {
+    const uniqueKey = [name, query_stringify(query)].filter(Boolean).join("?");
     if (uniqueKey === this.$router.href) {
       console.log("[DOMAIN]history/index - replace target url is", uniqueKey, "and cur href is", this.$router.href);
       return;
@@ -200,18 +212,20 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
       this.stacks[this.stacks.length - 1] = view;
       // this.cursor = uniqueKey;
       view.parent.showView(view);
-      this.emit(Events.HrefChange, {
+      this.emit(Events.RouteChange, {
+        reason: "replace",
+        view,
         name: view.name,
-        href: uniqueKey,
+        href: view.href,
         pathname: view.pathname,
         query: view.query,
       });
-      this.emit(Events.TopViewChange, view);
+      // this.emit(Events.TopViewChange, view);
       this.emit(Events.StateChange, { ...this.state });
       return;
     }
     const route = (() => {
-      const m = this.routes[pathname];
+      const m = this.routes[name];
       if (!m) {
         return null;
       }
@@ -244,23 +258,25 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
     }
     this.stacks[this.stacks.length - 1] = created;
     created.parent.showView(created);
-    this.emit(Events.HrefChange, {
+    this.emit(Events.RouteChange, {
+      reason: "replace",
+      view: created,
       name: created.name,
-      href: uniqueKey,
+      href: created.href,
       pathname: created.pathname,
       query: created.query,
     });
-    this.emit(Events.TopViewChange, created);
+    // this.emit(Events.TopViewChange, created);
     this.emit(Events.StateChange, { ...this.state });
   }
   back() {
     const targetCursor = this.cursor - 1;
     const viewPrepareShow = this.stacks[targetCursor];
     // console.log("[DOMAIN]history - back", this.cursor, targetCursor, viewPrepareShow.title);
-    const href = viewPrepareShow.href;
     if (!viewPrepareShow) {
       return;
     }
+    const href = viewPrepareShow.href;
     if (!viewPrepareShow.parent) {
       return;
     }
@@ -275,25 +291,63 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
       });
     }
     viewPrepareShow.parent.showView(viewPrepareShow);
-    this.emit(Events.HrefChange, {
+    this.emit(Events.RouteChange, {
+      reason: "back",
+      view: viewPrepareShow,
       name: viewPrepareShow.name,
-      href: href,
+      href: viewPrepareShow.href,
       pathname: viewPrepareShow.pathname,
       query: viewPrepareShow.query,
     });
-    this.emit(Events.TopViewChange, viewPrepareShow);
+    this.emit(Events.Back);
     this.emit(Events.StateChange, { ...this.state });
+  }
+  forward() {
+    const targetCursor = this.cursor + 1;
+    const viewPrepareShow = this.stacks[targetCursor];
+    if (!viewPrepareShow) {
+      return;
+    }
+    if (!viewPrepareShow.parent) {
+      return;
+    }
+    const href = viewPrepareShow.href;
+    this.$router.href = href;
+    this.$router.name = viewPrepareShow.name;
+    this.cursor = targetCursor;
+    const viewsAfter = this.stacks.slice(targetCursor + 1);
+    for (let i = 0; i < viewsAfter.length; i += 1) {
+      const v = viewsAfter[i];
+      v.parent?.removeView(v, () => {
+        delete this.views[v.href];
+      });
+    }
+    viewPrepareShow.parent.showView(viewPrepareShow);
+    this.emit(Events.RouteChange, {
+      reason: "forward",
+      view: viewPrepareShow,
+      name: viewPrepareShow.name,
+      href: viewPrepareShow.href,
+      pathname: viewPrepareShow.pathname,
+      query: viewPrepareShow.query,
+    });
+    // this.emit(Events.TopViewChange, viewPrepareShow);
+    this.emit(Events.Forward);
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  reload() {
+    // 销毁再初始化？
   }
   ensureParent(view: RouteViewCore) {
     const { name } = view;
     if (view.parent) {
-      if (view.parent.name === "root") {
+      if (view.parent.pathname === "/") {
         return;
       }
       this.ensureParent(view.parent);
       return;
     }
-    const route = this.routes[name];
+    const route = this.routes[name as K];
     if (!route) {
       return;
     }
@@ -306,7 +360,7 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
       this.ensureParent(this.views[parent.name]);
       return;
     }
-    const parent_route = this.routes[parent.name];
+    const parent_route = this.routes[parent.name as K];
     if (!parent_route) {
       return null;
     }
@@ -330,7 +384,7 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
     })();
     if (!route) {
       console.log("[DOMAIN]history/index - push 2. no matched route", name);
-      return this.routes["root.notfound"]!.pathname as string;
+      return this.routes["root.notfound" as K]!.pathname as string;
     }
     const created = new RouteViewCore({
       name: route.name,
@@ -351,7 +405,7 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
     })();
     if (!route) {
       console.log("[DOMAIN]history/index - push 2. no matched route", name);
-      return this.routes["root.notfound"]!.pathname as string;
+      return this.routes["root.notfound" as K]!.pathname as string;
     }
     const created = new RouteViewCore({
       name: route.name,
@@ -362,14 +416,22 @@ export class HistoryCore<K extends string> extends BaseDomain<TheTypesOfEvents> 
     });
     return created.buildUrlWithPrefix(query);
   }
-
-  handleClickLink(params: { href: string; target: null | string }) {}
+  handleClickLink(params: { href: string; target: null | string }) {
+    const { href, target } = params;
+    this.emit(Events.ClickLink, { href, target });
+  }
 
   onTopViewChange(handler: Handler<TheTypesOfEvents[Events.TopViewChange]>) {
     return this.on(Events.TopViewChange, handler);
   }
-  onHrefChange(handler: Handler<TheTypesOfEvents[Events.HrefChange]>) {
-    return this.on(Events.HrefChange, handler);
+  onRouteChange(handler: Handler<TheTypesOfEvents[Events.RouteChange]>) {
+    return this.on(Events.RouteChange, handler);
+  }
+  onBack(handler: Handler<TheTypesOfEvents[Events.Back]>) {
+    return this.on(Events.Back, handler);
+  }
+  onForward(handler: Handler<TheTypesOfEvents[Events.Forward]>) {
+    return this.on(Events.Forward, handler);
   }
   onClickLink(handler: Handler<TheTypesOfEvents[Events.ClickLink]>) {
     return this.on(Events.ClickLink, handler);

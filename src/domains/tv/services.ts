@@ -1,6 +1,6 @@
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, RequestedResource, Result, Unpacked, UnpackedResult } from "@/types";
-import { request } from "@/store/request";
 import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils";
 
 import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";
@@ -10,7 +10,7 @@ import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants"
  */
 export async function fetch_tv_list(params: FetchParams & { name: string }) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -48,7 +48,7 @@ export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][0];
 export async function fetch_tv_and_cur_episode(params: { tv_id: string }) {
   // console.log("[]fetch_tv_profile params", params);
   const { tv_id } = params;
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     name: string;
     overview: string;
@@ -191,7 +191,7 @@ export type TVEpisodeProfile = UnpackedResult<
 export async function fetch_episode_profile(params: { id: string; type?: EpisodeResolutionTypes }) {
   // console.log("[]fetch_episode_profile", params);
   const { id } = params;
-  const res = await request.get<{
+  const res = await client.get<{
     id: string;
     name: string;
     // parent_file_id: string;
@@ -258,7 +258,7 @@ export type MediaSourceProfile = UnpackedResult<Unpacked<ReturnType<typeof fetch
  */
 export async function fetch_episodes_of_season(params: { tv_id: string; season_id: string } & FetchParams) {
   const { tv_id, season_id, page, pageSize } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     ListResponse<{
       id: string;
       name: string;
@@ -305,7 +305,7 @@ export async function fetch_episodes_of_season(params: { tv_id: string; season_i
 export async function fetch_episode_play_url(params: { tv_id: string; season: string; episode: string }) {
   console.log("[]fetch_episode_play_url params", params);
   const { tv_id, season, episode } = params;
-  const resp = await request.get<
+  const resp = await client.get<
     {
       type: string;
       url: string;
@@ -330,7 +330,7 @@ export async function update_play_history(params: {
   file_id: string;
 }) {
   const { tv_id, episode_id, current_time, duration, file_id } = params;
-  return request.post<null>("/api/history/update", {
+  return client.post<null>("/api/history/update", {
     tv_id,
     episode_id,
     current_time,
@@ -344,7 +344,7 @@ export async function update_play_history(params: {
  */
 export async function fetch_play_history_of_tv(params: { tv_id: string }) {
   const { tv_id } = params;
-  const r = await request.get<{
+  const r = await client.get<{
     id: string;
     tv_id: string;
     episode_id: string;
@@ -371,7 +371,7 @@ export type TVPlayHistory = RequestedResource<typeof fetch_play_history_of_tv>;
  */
 export function hidden_tv(body: { id: string }) {
   const { id } = body;
-  return request.get(`/api/tv/hidden/${id}`);
+  return client.get(`/api/tv/hidden/${id}`);
 }
 
 /**
@@ -381,7 +381,7 @@ export function hidden_tv(body: { id: string }) {
  */
 export async function fetch_play_histories(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.get<
+  const r = await client.get<
     ListResponse<{
       id: string;
       /** 电视剧名称 */

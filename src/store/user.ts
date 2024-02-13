@@ -1,5 +1,5 @@
 import { UserCore } from "@/domains/user";
 
-import { cache } from "./cache";
+import { storage } from "./storage";
 
-export const user = new UserCore(cache.get("user"));
+export const user = new UserCore(storage.get("user"));

@@ -1,45 +1,10 @@
+import { FileItem, searchDriveFiles } from "@/services/drive";
 import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
 import { BaseDomain, Handler } from "@/domains/base";
-import { FetchParams, Response } from "@/domains/list/typing";
+import { Response } from "@/domains/list/typing";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { request } from "@/store/request";
-import { JSONObject, ListResponse, RequestedResource, Result } from "@/types";
-
-async function searchDriveFiles(params: FetchParams & { name: string }) {
-  const r = await request.get<
-    ListResponse<{
-      id: string;
-      file_id: string;
-      drive: {
-        id: string;
-        name: string;
-      };
-      parent_paths: string;
-      name: string;
-      type: number;
-    }>
-  >("/api/admin/file/search", params);
-  if (r.error) {
-    return Result.Err(r.error);
-  }
-  return Result.Ok({
-    ...r.data,
-    list: r.data.list.map((file) => {
-      const { id, file_id, name, parent_paths, type, drive } = file;
-      return {
-        id,
-        file_id,
-        name,
-        file_name: name,
-        parent_paths,
-        type,
-        drive,
-      };
-    }),
-  });
-}
-type FileItem = RequestedResource<typeof searchDriveFiles>["list"][number];
+import { JSONObject } from "@/types";
 
 enum Events {
   Ok,
@@ -69,8 +34,8 @@ type FileSearcherDialogProps = {
 };
 
 export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
-  dialog = new DialogCore();
-  list = new ListCore(new RequestCore(searchDriveFiles));
+  $dialog = new DialogCore();
+  $list = new ListCore(new RequestCore(searchDriveFiles));
   form = {
     input: new InputCore({
       defaultValue: "",
@@ -84,7 +49,7 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
   get state(): FileSearcherDialogState {
     return {
       value: null,
-      list: this.list.response,
+      list: this.$list.response,
       showFooter: true,
     };
   }
@@ -93,20 +58,20 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
     super(options);
 
     const { search, footer = true, onCancel } = options;
-    this.dialog = new DialogCore({
+    this.$dialog = new DialogCore({
       title: "搜索云盘文件",
       footer,
       onCancel,
     });
     if (search) {
-      this.list.setParams((prev) => {
+      this.$list.setParams((prev) => {
         return {
           ...prev,
           ...search,
         };
       });
     }
-    this.list.onLoadingChange((loading) => {
+    this.$list.onLoadingChange((loading) => {
       this.form.btn.setLoading(loading);
       this.form.reset.setLoading(loading);
     });
@@ -121,27 +86,27 @@ export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
         });
         return;
       }
-      this.list.search({ name });
+      this.$list.search({ name });
     });
     this.form.reset.onClick(() => {
-      this.list.reset();
+      this.$list.reset();
     });
-    this.okBtn = this.dialog.okBtn;
-    this.cancelBtn = this.dialog.cancelBtn;
-    this.list.onStateChange((nextState) => {
+    this.okBtn = this.$dialog.okBtn;
+    this.cancelBtn = this.$dialog.cancelBtn;
+    this.$list.onStateChange((nextState) => {
       this.state.list = nextState;
       this.emit(Events.StateChange, { ...this.state });
     });
   }
 
   show() {
-    this.dialog.show();
+    this.$dialog.show();
   }
   hide() {
-    this.dialog.hide();
+    this.$dialog.hide();
   }
   refresh() {
-    this.list.refresh();
+    this.$list.refresh();
   }
   input(name: string) {
     this.form.input.setValue(name);

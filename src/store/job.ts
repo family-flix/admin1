@@ -6,7 +6,7 @@ import mitt, { Handler } from "mitt";
 import { JobCore } from "@/domains/job";
 import { TaskStatus } from "@/domains/job/constants";
 
-import { cache } from "./cache";
+import { storage } from "./storage";
 
 enum Events {
   JobsChange,
@@ -18,7 +18,7 @@ const jobs: JobCore[] = [];
 const emitter = mitt<TheTypesOfEvents>();
 
 export async function refreshJobs() {
-  const jobs = cache.get<string[]>("jobs", []).filter(Boolean);
+  const jobs = storage.get("jobs").filter(Boolean);
   if (jobs.length === 0) {
     emitter.emit(Events.JobsChange, []);
     return;
@@ -36,7 +36,7 @@ export async function refreshJobs() {
   }
 }
 export async function initializeJobs() {
-  const jobs = cache.get<string[]>("jobs", []).filter(Boolean);
+  const jobs = storage.get("jobs").filter(Boolean);
   if (jobs.length === 0) {
     emitter.emit(Events.JobsChange, []);
     return;
@@ -68,10 +68,10 @@ export function appendJob(job: JobCore) {
     emitter.emit(Events.JobsChange, nextJobs);
     unlisten();
   });
-  const prevJobs = cache.get<string[]>("jobs", []).filter(Boolean);
+  const prevJobs = storage.get("jobs").filter(Boolean);
   if (job.id && !prevJobs.includes(job.id)) {
     prevJobs.push(job.id);
-    cache.set("jobs", prevJobs);
+    storage.set("jobs", prevJobs);
   }
   jobs.push(job);
   emitter.emit(Events.JobsChange, jobs);
@@ -79,10 +79,10 @@ export function appendJob(job: JobCore) {
 
 /** 从异步任务队列中移除指定任务 */
 export function removeJob(job: JobCore) {
-  const prevJobs = cache.get<string[]>("jobs", []);
+  const prevJobs = storage.get("jobs");
   const nextJobs = prevJobs.filter((j) => j !== job.id);
   if (prevJobs.includes(job.id)) {
-    cache.set("jobs", nextJobs);
+    storage.set("jobs", nextJobs);
   }
   if (!jobs.includes(job)) {
     return;

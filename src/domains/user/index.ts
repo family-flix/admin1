@@ -57,15 +57,15 @@ export class UserCore extends BaseDomain<TheTypesOfEvents> {
 
   static Events = Events;
 
-  constructor(options: Partial<{ _name: string }> & UserProps) {
-    super(options);
+  constructor(props: Partial<{ _name: string }> & UserProps) {
+    super(props);
 
-    if (!options) {
+    if (!props) {
       this.isLogin === false;
       return;
     }
-    const { id, username, avatar, token } = options;
-    // console.log("initialize", options);
+    const { id, username, avatar, token } = props;
+    console.log("[DOMAIN]user/index - initialize", props);
     this.id = id;
     this.username = username;
     this.avatar = avatar;

@@ -1,5 +1,5 @@
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/store/request";
 import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
 import { MediaTypes } from "@/constants";
 
@@ -10,7 +10,7 @@ import { MediaTypes } from "@/constants";
  */
 export async function searchMediaInTMDB(params: FetchParams & { keyword: string; type: "tv" | "movie" }) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: number;
       type: MediaTypes;
@@ -76,7 +76,7 @@ export type TheTVInTMDB = RequestedResource<typeof searchMediaInTMDB>["list"][0]
 
 export async function fetchTVProfileInTMDB(params: { unique_id: string }) {
   const { unique_id } = params;
-  return request.post<{
+  return client.post<{
     adult: boolean;
     backdrop_path: string;
     created_by: {
@@ -166,7 +166,7 @@ export type TheTVProfileInTMDB = RequestedResource<typeof fetchTVProfileInTMDB>;
 
 export async function fetchSeasonProfileInTMDB(params: { unique_id: string; season_number: number }) {
   const { unique_id, season_number } = params;
-  return request.post<{
+  return client.post<{
     air_date: string;
     episodes: {
       air_date: string;

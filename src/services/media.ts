@@ -1,3 +1,4 @@
+import { client } from "@/store/request";
 import {
   MediaErrorTypes,
   MediaOriginCountries,
@@ -8,13 +9,13 @@ import {
 } from "@/constants";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponseWithCursor, MutableRecord, RequestedResource, Result } from "@/types";
-import { request } from "@/store/request";
+
 import { processMediaPrepareArchive } from "./utils";
 
 /** 获取季列表 */
 export async function fetchSeasonMediaList(params: FetchParams & Partial<{ name: string }>) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -52,7 +53,7 @@ export type SeasonMediaItem = RequestedResource<typeof fetchSeasonMediaList>["li
 
 export async function fetchSeasonMediaProfile(body: { season_id: string }) {
   const { season_id } = body;
-  const r = await request.post<{
+  const r = await client.post<{
     id: string;
     name: string;
     overview: string;
@@ -124,7 +125,7 @@ export type MediaSourceItem = RequestedResource<typeof fetchSeasonMediaProfile>[
  */
 export async function fetchMovieMediaList(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
-  const resp = await request.post<
+  const resp = await client.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -176,7 +177,7 @@ export type MovieMediaItem = RequestedResource<typeof fetchMovieMediaList>["list
  */
 export async function fetchMovieMediaProfile(body: { movie_id: string }) {
   const { movie_id } = body;
-  const r = await request.post<{
+  const r = await client.post<{
     id: string;
     name: string;
     overview: string;
@@ -222,7 +223,7 @@ export type MovieProfile = RequestedResource<typeof fetchMovieMediaProfile>;
  */
 export async function fetchPartialSeasonMedia(params: { media_id: string }) {
   const { media_id } = params;
-  const r = await request.post<{
+  const r = await client.post<{
     id: string;
     name: string;
     original_name: string;
@@ -247,7 +248,7 @@ export async function fetchPartialSeasonMedia(params: { media_id: string }) {
 /** 刷新电影详情 */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", {
+  return client.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", {
     media_id,
   });
 }
@@ -257,7 +258,7 @@ export function changeMovieProfile(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { movie_id, media_profile } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/media/set_profile", {
+  return client.post<{ job_id: string }>("/api/v2/admin/media/set_profile", {
     media_id: movie_id,
     media_profile,
   });
@@ -299,14 +300,11 @@ export type MediaPrepareArchiveItemResp = {
 /** 获取可以归档的季列表 */
 export async function fetchMediaListPrepareArchive(params: FetchParams & Partial<{ name: string; drive_ids: string }>) {
   const { page, pageSize, ...rest } = params;
-  const r = await request.post<ListResponseWithCursor<MediaPrepareArchiveItemResp>>(
-    "/api/v2/admin/media/archive/list",
-    {
-      ...rest,
-      page,
-      page_size: pageSize,
-    }
-  );
+  const r = await client.post<ListResponseWithCursor<MediaPrepareArchiveItemResp>>("/api/v2/admin/media/archive/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -318,7 +316,7 @@ export async function fetchMediaListPrepareArchive(params: FetchParams & Partial
 export type MediaPrepareArchiveItem = RequestedResource<typeof fetchMediaListPrepareArchive>["list"][number];
 export async function fetchPartialMediaPrepareArchive(body: { media_id: string }) {
   const { media_id } = body;
-  const r = await request.post<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
+  const r = await client.post<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
     media_id,
   });
   if (r.error) {
@@ -329,7 +327,7 @@ export async function fetchPartialMediaPrepareArchive(body: { media_id: string }
 /** 删除电视剧/电影 */
 export function deleteMedia(body: { media_id: string }) {
   const { media_id } = body;
-  return request.post("/api/v2/admin/media/delete", {
+  return client.post("/api/v2/admin/media/delete", {
     media_id,
   });
 }
@@ -340,7 +338,7 @@ export function setMediaProfile(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { media_id, media_profile } = body;
-  return request.post<void>(`/api/v2/admin/media/set_profile`, {
+  return client.post<void>(`/api/v2/admin/media/set_profile`, {
     media_id,
     media_profile,
   });
@@ -372,7 +370,7 @@ type MovieError = {
 };
 
 export async function fetchInvalidMediaList(body: FetchParams) {
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaErrorTypes;
@@ -410,7 +408,7 @@ export type MediaErrorItem = RequestedResource<typeof fetchInvalidMediaList>["li
  */
 export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_id: string }) {
   const { media_id, to_drive_id } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/media/transfer", {
+  return client.post<{ job_id: string }>("/api/v2/admin/media/transfer", {
     media_id,
     to_drive_id,
   });
@@ -421,7 +419,7 @@ export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_i
  */
 export function transferMediaToResourceDrive(body: { media_id: string }) {
   const { media_id } = body;
-  return request.post<{ job_id: string }>("/api/v2/admin/media/to_resource_drive", {
+  return client.post<{ job_id: string }>("/api/v2/admin/media/to_resource_drive", {
     media_id,
   });
 }

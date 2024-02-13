@@ -2,6 +2,7 @@ import axios from "axios";
 import { For, JSX, onMount } from "solid-js";
 import { MoreVertical } from "lucide-solid";
 
+import { client } from "@/store/request";
 import { Input } from "@/components/ui";
 import { InputCore, CheckboxCore, MenuCore, MenuItemCore, DropdownMenuCore, SelectCore } from "@/domains/ui";
 import { TreeCore } from "@/domains/ui/tree";
@@ -13,7 +14,6 @@ import { upload_file } from "@/services";
 import { Select } from "@/components/ui/select";
 import { SelectItemCore } from "@/domains/ui/select/item";
 import { PopperCore } from "@/domains/ui/popper";
-import { request } from "@/store/request";
 
 export const TestPage: ViewComponent = (props) => {
   const { app } = props;
@@ -88,20 +88,20 @@ export const TestPage: ViewComponent = (props) => {
     side: "right",
     align: "end",
   });
-  request.get("/api/ping");
-  request.get("/api/ping1");
-  request.get("/api/ping2");
-  request.get("/api/ping3");
-  request.get("/api/ping4");
-  request.get("/api/ping5");
-  request.get("/api/ping6");
-  request.get("/api/ping7");
-  request.get("/api/ping8");
-  request.get("/api/ping9");
-  request.get("/api/ping10");
-  request.get("/api/ping11");
-  request.get("/api/ping12");
-  request.get("/api/ping13");
+  client.get("/api/ping");
+  client.get("/api/ping1");
+  client.get("/api/ping2");
+  client.get("/api/ping3");
+  client.get("/api/ping4");
+  client.get("/api/ping5");
+  client.get("/api/ping6");
+  client.get("/api/ping7");
+  client.get("/api/ping8");
+  client.get("/api/ping9");
+  client.get("/api/ping10");
+  client.get("/api/ping11");
+  client.get("/api/ping12");
+  client.get("/api/ping13");
 
   return (
     <div class="p-4 bg-white">

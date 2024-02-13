@@ -4,20 +4,17 @@
 import { For, JSX, createSignal, onMount } from "solid-js";
 import { Film, Users, FolderInput, Home, Tv } from "lucide-solid";
 
+import { ViewComponent, ViewComponentProps } from "@/store/types";
+import { PageKeys } from "@/store/routes";
 import { KeepAliveRouteView } from "@/components/ui";
-import { RouteViewCore } from "@/domains/route_view";
-import { RequestCore } from "@/domains/request";
+import { HistoryCore } from "@/domains/history";
 import { Application } from "@/domains/app";
 import { Show } from "@/packages/ui/show";
-import { ViewComponent } from "@/store/types";
 // import { homeIndexPage, homeMovieListPage, homeSeasonListPage } from "@/store/views";
 import { cn, sleep } from "@/utils";
-import { pages } from "@/store/views";
-import { PageKeys } from "@/store/routes";
-import { HistoryCore } from "@/domains/history";
 
 export const MediaProfileHomeLayout: ViewComponent = (props) => {
-  const { app, history, view } = props;
+  const { app, history, client, storage, pages, view } = props;
 
   const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
@@ -97,7 +94,14 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
                     store={subView}
                     index={i()}
                   >
-                    <PageContent app={app} history={history} view={subView} />
+                    <PageContent
+                      app={app}
+                      history={history}
+                      client={client}
+                      storage={storage}
+                      pages={pages}
+                      view={subView}
+                    />
                   </KeepAliveRouteView>
                 );
               }}
@@ -112,7 +116,7 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
 function Menu(
   props: {
     app: Application;
-    history: HistoryCore<PageKeys>;
+    history: ViewComponentProps["history"];
     highlight?: boolean;
     url?: PageKeys;
     icon: JSX.Element;

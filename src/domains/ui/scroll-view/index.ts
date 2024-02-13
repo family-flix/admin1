@@ -375,7 +375,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     return this.on(Events.Scroll, handler);
   }
   onReachBottom(handler: Handler<TheTypesOfEvents[Events.ReachBottom]>) {
-    console.log("register onReachBottom", this._name);
+    // console.log("register onReachBottom", this._name);
     return this.on(Events.ReachBottom, handler);
   }
   onPullToRefresh(handler: Handler<TheTypesOfEvents[Events.PullToRefresh]>) {

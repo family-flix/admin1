@@ -1,9 +1,8 @@
-import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/store/request";
-import { ListResponse, RequestedResource, Result } from "@/types";
+import { client } from "@/store/request";
+import { Result } from "@/types";
 
 export async function create_link(url: string) {
-  const res = await request.post<{
+  const res = await client.post<{
     url: string;
   }>("/api/admin/short_link", {
     url,

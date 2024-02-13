@@ -3,17 +3,16 @@
  */
 import { createSignal, For, onMount, Show } from "solid-js";
 
+import { PageKeys } from "@/store/routes";
+import { ViewComponent } from "@/store/types";
 import { TabHeader } from "@/components/ui/tab-header";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { ButtonCore, ScrollViewCore } from "@/domains/ui";
 import { ScrollView, KeepAliveRouteView } from "@/components/ui";
-import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
-import { pages } from "@/store/views";
-import { PageKeys } from "@/store/routes";
 
 export const UnknownMediaLayout: ViewComponent = (props) => {
-  const { app, history, view } = props;
+  const { app, history, pages, client, storage, view } = props;
 
   const scrollView = new ScrollViewCore({
     _name: "unknown_media/layout",
@@ -45,7 +44,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
   // const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
 
-  history.onHrefChange((v) => {
+  history.onRouteChange((v) => {
     if (!tab.mounted) {
       return;
     }
@@ -91,10 +90,14 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                       <PageContent
                         app={app}
                         history={history}
+                        client={client}
+                        storage={storage}
+                        pages={pages}
                         parent={{
+                          view,
                           scrollView,
                         }}
-                        view={view}
+                        view={subView}
                       />
                     </KeepAliveRouteView>
                   );

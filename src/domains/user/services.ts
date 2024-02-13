@@ -1,5 +1,5 @@
+import { client } from "@/store/request";
 import { Result } from "@/types";
-import { request } from "@/store/request";
 
 /**
  * 用户登录
@@ -7,7 +7,7 @@ import { request } from "@/store/request";
  * @returns
  */
 export async function login(body: { email: string; password: string }) {
-  return request.post<{
+  return client.post<{
     id: string;
     username: string;
     // name: string;
@@ -25,7 +25,7 @@ export async function login(body: { email: string; password: string }) {
  * @returns
  */
 export async function register(body: { email: string; password: string }) {
-  return request.post<{
+  return client.post<{
     id: string;
     username: string;
     // name: string;
@@ -38,11 +38,11 @@ export async function register(body: { email: string; password: string }) {
 }
 
 export async function logout(body: { email: string; password: string }) {
-  return await request.post("/api/admin/user/logout", body);
+  return await client.post("/api/admin/user/logout", body);
 }
 
 export async function get_token() {
-  return await request.post("/api/token", {});
+  return await client.post("/api/token", {});
 }
 
 /**
@@ -50,14 +50,14 @@ export async function get_token() {
  * @returns
  */
 export async function fetch_user_profile() {
-  return request.get("/api/admin/user/profile");
+  return client.get("/api/admin/user/profile");
 }
 
 /**
  * 成员通过授权链接访问首页时，验证该链接是否有效
  */
 export async function validate(token: string) {
-  const r = await request.post<{ token: string }>("/api/admin/user/validate", { token });
+  const r = await client.post<{ token: string }>("/api/admin/user/validate", { token });
   if (r.error) {
     return Result.Err(r.error);
   }

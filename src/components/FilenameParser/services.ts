@@ -1,12 +1,12 @@
 import { RequestedResource } from "@/types";
-import { request } from "@/store/request";
+import { client } from "@/store/request";
 
 /**
  * 解析文件名
  */
 export function parseVideoFilename(body: { name: string; keys?: string[] }) {
   const { name, keys } = body;
-  return request.post<{
+  return client.post<{
     name: string;
     original_name: string;
     season: string;

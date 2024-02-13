@@ -7,7 +7,7 @@ export function FileSearchDialog(props: { store: FileSearcherCore }) {
   const { store } = props;
 
   return (
-    <Dialog store={store.dialog}>
+    <Dialog store={store.$dialog}>
       <div class="w-[520px]">
         <FileSearcher store={store} />
       </div>

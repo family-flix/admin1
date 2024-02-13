@@ -4,6 +4,8 @@
 import { For, JSX, createSignal } from "solid-js";
 import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { refreshJobs } from "@/store/job";
 import { SubtitleItem, deleteSubtitle, fetchSubtitleList } from "@/services";
 import { Button, Skeleton, ScrollView, ListView, LazyImage, Dialog } from "@/components/ui";
 import { ButtonCore, DialogCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
@@ -11,8 +13,6 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { ReportTypes } from "@/constants";
-import { ViewComponent } from "@/store/types";
-import { refreshJobs } from "@/store/job";
 import { cn } from "@/utils";
 
 export const HomeSubtitleListPage: ViewComponent = (props) => {
@@ -206,8 +206,10 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
         </ListView>
       </ScrollView>
       <Dialog store={subtitleDeletingConfirmDialog}>
-        <div>该操作会同步删除字幕文件</div>
-        <div>请确认后删除</div>
+        <div class="w-[520px]">
+          <div>该操作会同步删除字幕文件</div>
+          <div>请确认后删除</div>
+        </div>
       </Dialog>
     </>
   );

@@ -4,18 +4,21 @@
 import { createSignal, For, Show } from "solid-js";
 import { Send, FileSearch, RefreshCcw, AlertTriangle, Loader, Bird } from "lucide-solid";
 
+import { client } from "@/store/request";
 import { fetchDashboard, fetchMediaRecentlyCreated, refreshDashboard } from "@/services/common";
 import { pushMessageToMembers } from "@/services";
-import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
+import { Button, Dialog, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { ImageInListCore } from "@/domains/ui/image";
 import { RequestCore } from "@/domains/request";
 import { addAliyunDrive } from "@/domains/drive";
 import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
+import { ListCoreV2 } from "@/domains/list/v2";
 import { FilenameParserCore } from "@/components/FilenameParser";
 import { DynamicContent } from "@/components/DynamicContent";
 import { DynamicContentCore } from "@/domains/ui/dynamic-content";
+import { RequestCoreV2 } from "@/domains/request_v2";
 import { DriveTypes, ReportTypes } from "@/constants";
 import { ViewComponent } from "@/store/types";
 
@@ -27,27 +30,16 @@ export const HomeIndexPage: ViewComponent = (props) => {
       hidden: 0,
     },
   });
-  const dashboardRequest = new RequestCore(fetchDashboard, {
-    defaultResponse: {
-      drive_count: 0,
-      drive_total_size_count: 0,
-      drive_total_size_count_text: "0",
-      drive_used_size_count: 0,
-      drive_used_size_count_text: "0",
-      movie_count: 0,
-      tv_count: 0,
-      season_count: 0,
-      episode_count: 0,
-      sync_task_count: 0,
-      report_count: 0,
-      media_request_count: 0,
-      invalid_season_count: 0,
-      invalid_movie_count: 0,
-      invalid_sync_task_count: 0,
-      updated_at: null,
-    },
+  const dashboardRequest = new RequestCoreV2({
+    fetch: fetchDashboard,
+    client,
   });
-  const mediaListRecentlyCreated = new ListCore(new RequestCore(fetchMediaRecentlyCreated));
+  const mediaListRecentlyCreated = new ListCoreV2(
+    new RequestCoreV2({
+      fetch: fetchMediaRecentlyCreated,
+      client,
+    })
+  );
   const pushRequest = new RequestCore(pushMessageToMembers, {
     onLoading(loading) {
       pushDialog.okBtn.setLoading(loading);
@@ -179,9 +171,6 @@ export const HomeIndexPage: ViewComponent = (props) => {
   driveList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
-  // driveList.onStateChange((nextState) => {
-  //   setDriveResponse(nextState);
-  // });
   mediaListRecentlyCreated.onStateChange((v) => {
     setMediaResponse(v);
   });
@@ -241,7 +230,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
         </div>
         <div class="mt-8">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-8 p-4 rounded-md border bg-white">
+            <div class="col-span-6 p-4 rounded-md border bg-white">
               <div>
                 <div class="text-lg">云盘信息</div>
               </div>
@@ -266,7 +255,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 </div>
               </div>
             </div>
-            <div class="col-span-4 p-4 rounded-md border bg-white">
+            <div class="col-span-6 p-4 rounded-md border bg-white">
               <div>
                 <div class="text-lg">媒体信息</div>
               </div>
@@ -290,6 +279,16 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 >
                   <div class="text-3xl">{dashboard()?.movie_count}</div>
                   <div class="text-slate-800">电影</div>
+                </div>
+                <div
+                  class="w-[240px] cursor-pointer"
+                  onClick={() => {
+                    history.push("root.home_layout.movie_list");
+                    // app.showView(homeMovieListPage);
+                  }}
+                >
+                  <div class="text-3xl">{dashboard()?.unknown_media_count}</div>
+                  <div class="text-slate-800">待处理解析</div>
                 </div>
               </div>
             </div>
@@ -379,7 +378,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
                       const { name, poster_path, text } = media;
                       return (
                         <div class="w-[128px]">
-                          <LazyImage class="w-[128px]" store={poster.bind(poster_path)} />
+                          <LazyImage class="w-[128px] h-[192px]" store={poster.bind(poster_path)} />
                           <div class="max-w-full">
                             <div class="truncate">{name}</div>
                             <div class="max-w-full truncate text-sm">{text}</div>

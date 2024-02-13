@@ -1,7 +1,7 @@
+import { TVItem } from "@/services";
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, RequestedResource } from "@/types";
-import { request } from "@/store/request";
-import { TVItem } from "@/services";
 
 /**
  * 开始对分享的文件进行分析
@@ -19,7 +19,7 @@ export async function check_has_same_name_tv(body: {
   /** 检查是否有新增文件的文件夹名称 */
   file_name: string;
 }) {
-  return request.post<null | TVItem>("/api/admin/shared_file/check_same_name", body);
+  return client.post<null | TVItem>("/api/admin/shared_file/check_same_name", body);
 }
 
 /**
@@ -37,7 +37,7 @@ export async function build_link_between_shared_files_with_folder(body: {
   /** 要建立关联的云盘内文件夹id */
   target_file_id?: string;
 }) {
-  return request.post("/api/admin/shared_file/link", body);
+  return client.post("/api/admin/shared_file/link", body);
 }
 
 /**
@@ -45,7 +45,7 @@ export async function build_link_between_shared_files_with_folder(body: {
  */
 export async function fetch_shared_files(body: { url: string; code?: string; file_id: string; next_marker: string }) {
   const { url, code, file_id, next_marker } = body;
-  const r = await request.get<{
+  const r = await client.get<{
     items: {
       file_id: string;
       name: string;
@@ -66,7 +66,7 @@ export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["ite
  */
 export async function search_shared_files(body: { url: string; code?: string; keyword: string }) {
   const { url, code, keyword } = body;
-  const r = await request.post<{
+  const r = await client.post<{
     items: {
       file_id: string;
       name: string;
@@ -100,11 +100,11 @@ export async function save_shared_files(body: {
   /** 转存到指定云盘的哪个文件夹，默认是根目录 */
   target_folder_id?: string;
 }) {
-  return request.post<{ job_id: string }>("/api/v2/admin/resource/transfer", body);
+  return client.post<{ job_id: string }>("/api/v2/admin/resource/transfer", body);
 }
 
 export function fetch_shared_file_save_list(body: FetchParams) {
-  return request.get<
+  return client.get<
     ListResponse<{
       id: string;
       url: string;

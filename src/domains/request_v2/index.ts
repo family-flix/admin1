@@ -1,12 +1,15 @@
 /**
  * @file API 请求
  */
+import axios, { CancelToken, CancelTokenSource } from "axios";
+
 import { BaseDomain, Handler } from "@/domains/base";
 import { BizError } from "@/domains/error";
+import { HttpClientCore } from "@/domains/http_client";
 import { Result, UnpackedResult, Unpacked, Shift } from "@/types";
 import { sleep } from "@/utils";
-import { HttpClientCore } from "@/domains/http_client";
-import axios, { CancelToken, CancelTokenSource } from "axios";
+
+import { RequestPayload, UnpackedRequestPayload } from "./utils";
 
 enum Events {
   BeforeRequest,
@@ -35,12 +38,13 @@ type RequestState<T> = {
   error: BizError | null;
   response: T | null;
 };
-type RequestProps<T> = {
+type RequestProps = {
   client: HttpClientCore;
-  method: "GET" | "POST";
   delay?: null | number;
-  defaultResponse?: T;
-  onSuccess?: (v: T) => void;
+  defaultResponse?: RequestResponse<any>;
+  fetch: (...args: any) => RequestPayload<any>;
+  process?: (v: any) => Result<any>;
+  onSuccess?: (v: RequestResponse<any>) => void;
   onFailed?: (error: BizError) => void;
   onCompleted?: () => void;
   onCanceled?: () => void;
@@ -48,31 +52,42 @@ type RequestProps<T> = {
   onLoading?: (loading: boolean) => void;
 };
 
+// type Arg = { fetch: (...args: any[]) => any; process?: (v: ReturnType<Arg["fetch"]>) => any };
+type RequestResponse<
+  A extends { fetch: (...args: any[]) => RequestPayload<any>; process?: (v: ReturnType<A["fetch"]>) => Result<any> }
+> = A extends {
+  fetch: (...args: any[]) => any;
+  // v 的类型必须是 any，否则有问题
+  process: (v: any) => any;
+}
+  ? UnpackedResult<ReturnType<A["process"]>>
+  : UnpackedRequestPayload<ReturnType<A["fetch"]>>;
+
 /**
  * 用于接口请求的核心类
  */
-export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
+export class RequestCoreV2<T extends RequestProps> extends BaseDomain<TheTypesOfEvents<any>> {
   debug = false;
 
-  method: "GET" | "POST";
-  defaultResponse: T | null = null;
+  defaultResponse: RequestResponse<T> | null = null;
 
   /** 原始 service 函数 */
-  private _service: string;
+  service: T["fetch"];
+  process: T["process"];
   client: HttpClientCore;
   delay: null | number = 800;
   loading = false;
   /** 处于请求中的 promise */
-  pending: Promise<Result<T>> | null = null;
+  pending: Promise<RequestResponse<T>> | null = null;
   /** 调用 prepare 方法暂存的参数 */
   // args: Parameters<T> | null = null;
   /** 请求的响应 */
-  response: T | null = null;
+  response: RequestResponse<T> | null = null;
   /** 请求失败，保存错误信息 */
   error: BizError | null = null;
   source: CancelTokenSource;
 
-  get state(): RequestState<T> {
+  get state(): RequestState<RequestResponse<T>> {
     return {
       loading: this.loading,
       error: this.error,
@@ -80,15 +95,15 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     };
   }
 
-  constructor(url: string, props: RequestProps<T>) {
+  constructor(props: T) {
     super();
 
-    this._service = url;
     const {
       client,
-      method = "POST",
       delay,
       defaultResponse,
+      fetch,
+      process,
       onSuccess,
       onFailed,
       onCompleted,
@@ -96,8 +111,10 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
       onLoading,
       beforeRequest,
     } = props;
+    this.service = fetch;
+    this.process = process;
     this.client = client;
-    this.method = method;
+    // this.method = method;
     if (delay !== undefined) {
       this.delay = delay;
     }
@@ -128,11 +145,11 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   token?: unknown;
   /** 执行 service 函数 */
-  async run(...args: Shift<Parameters<(typeof this.client)["get"]>>) {
+  async run(...args: Parameters<T["fetch"]>) {
     if (this.pending !== null) {
       const r = await this.pending;
       this.loading = false;
-      const d = r.data as T;
+      const d = r.data as RequestResponse<T>;
       this.pending = null;
       return Result.Ok(d);
     }
@@ -143,30 +160,33 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     const source = axios.CancelToken.source();
     this.source = source;
     this.emit(Events.LoadingChange, true);
-    console.log("this.emit(Events.StateChange", this.state);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.BeforeRequest);
-    // this.client.
     const r2 = (() => {
-      if (this.method === "GET") {
-        const [query, extra = {}] = args;
-        return Result.Ok(
-          this.client.get(this._service, query, {
-            token: this.source.token,
-            ...extra,
-          })
-        ) as Result<Promise<Result<T>>>;
+      const { url, method, query, body } = this.service(...(args as unknown as any[]));
+      if (method === "GET") {
+        // const [query, extra = {}] = args;
+        const r = this.client.get(url, query, {
+          token: this.source.token,
+          // ...extra,
+        });
+        // if (this.process) {
+        //   return Result.Ok(this.process(r)) as Result<Promise<RequestResponse<T>>>;
+        // }
+        return Result.Ok(r) as Result<Promise<RequestResponse<T>>>;
       }
-      if (this.method === "POST") {
-        const [body, extra = {}] = args;
-        return Result.Ok(
-          this.client.post(this._service, body, {
-            token: this.source.token,
-            ...extra,
-          })
-        ) as Result<Promise<Result<T>>>;
+      if (method === "POST") {
+        // const [body, extra = {}] = args;
+        const r = this.client.post(url, body, {
+          token: this.source.token,
+          // ...extra,
+        });
+        // if (this.process) {
+        //   return Result.Ok(this.process(r)) as Result<Promise<RequestResponse<T>>>;
+        // }
+        return Result.Ok(r) as Result<Promise<RequestResponse<T>>>;
       }
-      return Result.Err(`未知的 method '${this.method}'`);
+      return Result.Err(`未知的 method '${method}'`);
     })();
     if (r2.error) {
       return Result.Err(r2.error.message);
@@ -174,22 +194,23 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.pending = r2.data;
     const [r] = await Promise.all([this.pending, this.delay === null ? null : sleep(this.delay)]);
     this.loading = false;
+    const resp = this.process ? (this.process(r) as RequestResponse<T>) : r;
     this.emit(Events.LoadingChange, false);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.Completed);
     this.pending = null;
-    if (r.error) {
-      if (r.error.code === "CANCEL") {
+    if (resp.error) {
+      if (resp.error.code === "CANCEL") {
         this.emit(Events.Canceled);
-        return Result.Err(r.error);
+        return Result.Err(resp.error);
       }
-      this.error = r.error;
-      this.emit(Events.Failed, r.error);
+      this.error = resp.error;
+      this.emit(Events.Failed, resp.error);
       this.emit(Events.StateChange, { ...this.state });
       return Result.Err(r.error);
     }
-    this.response = r.data;
-    const d = r.data as T;
+    this.response = resp.data;
+    const d = resp.data as RequestResponse<T>;
     this.emit(Events.Success, d);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.ResponseChange, this.response);
@@ -210,7 +231,7 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.ResponseChange, this.response);
   }
-  modifyResponse(fn: (resp: T) => T) {
+  modifyResponse(fn: (resp: RequestResponse<T>) => RequestResponse<T>) {
     if (this.response === null) {
       return;
     }
@@ -220,32 +241,68 @@ export class RequestCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     this.emit(Events.ResponseChange, this.response);
   }
 
-  onLoadingChange(handler: Handler<TheTypesOfEvents<T>[Events.LoadingChange]>) {
+  onLoadingChange(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.LoadingChange]>) {
     return this.on(Events.LoadingChange, handler);
   }
-  beforeRequest(handler: Handler<TheTypesOfEvents<T>[Events.BeforeRequest]>) {
+  beforeRequest(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.BeforeRequest]>) {
     return this.on(Events.BeforeRequest, handler);
   }
-  onSuccess(handler: Handler<TheTypesOfEvents<T>[Events.Success]>) {
+  onSuccess(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.Success]>) {
     return this.on(Events.Success, handler);
   }
-  onFailed(handler: Handler<TheTypesOfEvents<T>[Events.Failed]>) {
+  onFailed(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.Failed]>) {
     return this.on(Events.Failed, handler);
   }
-  onCanceled(handler: Handler<TheTypesOfEvents<T>[Events.Canceled]>) {
+  onCanceled(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.Canceled]>) {
     return this.on(Events.Canceled, handler);
   }
   /** 建议使用 onFailed */
-  onError(handler: Handler<TheTypesOfEvents<T>[Events.Failed]>) {
+  onError(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.Failed]>) {
     return this.on(Events.Failed, handler);
   }
-  onCompleted(handler: Handler<TheTypesOfEvents<T>[Events.Completed]>) {
+  onCompleted(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.Completed]>) {
     return this.on(Events.Completed, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
+  onStateChange(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);
   }
-  onResponseChange(handler: Handler<TheTypesOfEvents<T>[Events.ResponseChange]>) {
+  onResponseChange(handler: Handler<TheTypesOfEvents<RequestResponse<T>>[Events.ResponseChange]>) {
     return this.on(Events.ResponseChange, handler);
   }
 }
+
+// type FakeResult<A extends { fetch: (...args: any[]) => any; process?: (v: ReturnType<Arg["fetch"]>) => any }> =
+//   A extends {
+//     fetch: (...args: any[]) => any;
+//     process: (v: ReturnType<Arg["fetch"]>) => any;
+//   }
+//     ? ReturnType<A["process"]>
+//     : ReturnType<A["fetch"]>;
+// type Arg = { fetch: (...args: any[]) => any; process?: (v: ReturnType<Arg["fetch"]>) => any };
+
+// function run<A extends Arg>(arg: A): FakeResult<A> {
+//   const { fetch, process } = arg;
+//   const data = fetch();
+//   return process ? process(data) : data;
+// }
+
+// // 使用示例
+// const result1 = run({
+//   fetch: () => {
+//     return { name: "Alice" };
+//   },
+// });
+// // 这里 TypeScript 应该能正确推断出 result1 的类型是 { name: string }
+
+// function f() {
+//   return { name: "Alice" };
+// }
+// const result2 = run({
+//   fetch: f,
+//   process(value: ReturnType<typeof f>) {
+//     return { username: value.name.toLowerCase() };
+//   },
+// });
+
+// // TypeScript 会正确推断出 result2 的类型是 { username: string }
+// console.log(result2.username); // "alice"

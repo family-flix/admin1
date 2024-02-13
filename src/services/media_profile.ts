@@ -1,7 +1,7 @@
-import { MediaTypes } from "@/constants";
+import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { request } from "@/store/request";
+import { MediaTypes } from "@/constants";
 
 // export async function fetchMediaProfileList(params: FetchParams & Partial<{ keyword: string; type: MediaTypes }>) {
 //   const { keyword, page, pageSize, type, ...rest } = params;
@@ -81,7 +81,7 @@ export async function fetchMediaProfileList(
   params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaTypes;
@@ -169,7 +169,7 @@ export type MediaProfileItem = RequestedResource<typeof fetchMediaProfileList>["
 
 export async function fetchPartialMediaProfile(body: { id: string }) {
   const { id } = body;
-  const r = await request.post<{
+  const r = await client.post<{
     id: string;
     type: MediaTypes;
     name: string;
@@ -243,14 +243,14 @@ export async function fetchPartialMediaProfile(body: { id: string }) {
 }
 
 export function deleteMediaProfile(body: { id: string }) {
-  return request.post<ListResponse<void>>(`/api/v2/media_profile/delete`, {
+  return client.post<ListResponse<void>>(`/api/v2/media_profile/delete`, {
     media_profile_id: body.id,
   });
 }
 
 export function editMediaProfile(body: { id: string; name?: string; source_count?: number }) {
   const { id, name, source_count } = body;
-  return request.post<ListResponse<void>>(`/api/v2/media_profile/edit`, {
+  return client.post<ListResponse<void>>(`/api/v2/media_profile/edit`, {
     id,
     name,
     source_count,
@@ -259,7 +259,7 @@ export function editMediaProfile(body: { id: string; name?: string; source_count
 
 export async function prepareSeasonList(params: { series_id: string }) {
   const { series_id } = params;
-  const r = await request.post<
+  const r = await client.post<
     ListResponseWithCursor<{
       id: string | number;
       type: MediaTypes;
@@ -290,7 +290,7 @@ export async function prepareSeasonList(params: { series_id: string }) {
 
 export async function prepareEpisodeList(params: { media_id: string | number }) {
   const { media_id } = params;
-  return request.post<
+  return client.post<
     ListResponse<{
       id: string | number;
       type: MediaTypes;
@@ -313,7 +313,7 @@ export async function prepareEpisodeList(params: { media_id: string | number }) 
  */
 export async function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: string; type?: MediaTypes }) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  return request.post<
+  return client.post<
     ListResponse<{
       id: string | number;
       type: MediaTypes;
@@ -336,5 +336,5 @@ export type TheMediaInTMDB = RequestedResource<typeof searchMediaInTMDB>["list"]
 /** 刷新电视剧详情 */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
-  return request.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });
+  return client.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });
 }

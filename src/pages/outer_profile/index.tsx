@@ -1,6 +1,6 @@
 import { For, createSignal } from "solid-js";
 
-import { request } from "@/store/request";
+import { client } from "@/store/request";
 
 type SeasonProfileResult = {
   id: string;
@@ -69,7 +69,7 @@ export const OuterMediaProfilePage = () => {
                 onClick={async () => {
                   setValues(null);
                   setCurSeason(null);
-                  const r = await request.post<{
+                  const r = await client.post<{
                     type: "season" | "movie";
                     platform: string;
                     name: string;
@@ -98,7 +98,7 @@ export const OuterMediaProfilePage = () => {
                       await (async () => {
                         const season = seasons[i];
                         const { id } = season;
-                        const r = await request.post<SeasonProfileResult>(`/api/v2/common/season_profile`, {
+                        const r = await client.post<SeasonProfileResult>(`/api/v2/common/season_profile`, {
                           id,
                           platform,
                         });
