@@ -176,8 +176,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   async analysisSpecialFolders(options: { target_folders: AliyunDriveFile[] }) {
     const { target_folders } = options;
     if (this.state.loading) {
-      this.tip({ text: ["索引正在进行中"] });
-      return Result.Ok(null);
+      return Result.Err("索引正在进行中");
     }
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
@@ -192,13 +191,11 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
         };
       }),
     });
+    this.state.loading = false;
     if (r.error) {
-      this.state.loading = false;
       this.emit(Events.StateChange, { ...this.state });
-      this.tip({ text: ["索引失败", r.error.message] });
       return Result.Err(r.error);
     }
-    this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });
     const { job_id } = r.data;
     return Result.Ok({ job_id });
   }
@@ -316,10 +313,11 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     // this.emit(Events.StateChange, { ...this.state });
   }
   /** 设置云盘索引根目录 */
-  async setRootFolder(file_id: string) {
+  async setRootFolder(file: { file_id: string; name: string }) {
     const r = await setDriveRootFolderId({
-      root_folder_id: file_id,
       drive_id: this.id,
+      root_folder_id: file.file_id,
+      root_folder_name: file.name,
     });
     // this.values.root_folder_id = null ?? undefined;
     if (r.error) {

@@ -26,17 +26,17 @@ async function parseJSONStr<T extends JSONObject>(json: string) {
 }
 
 /**
- * 新增阿里云盘
+ * 新增云盘
  * @param {object} body 提交体
  * @param {string} body.payload 从阿里云盘页面通过脚本生成的云盘信息 json 字符串
  */
-export async function addAliyunDrive(body: { type?: DriveTypes; payload: string }) {
-  const { type = 0, payload } = body;
+export async function addDrive(body: { type?: DriveTypes; payload: string }) {
+  const { type = DriveTypes.AliyunBackupDrive, payload } = body;
   const r = await parseJSONStr(payload);
   if (r.error) {
     return Result.Err(r.error);
   }
-  return client.post<{ id: string }>("/api/admin/drive/add", {
+  return client.post<{ id: string }>("/api/v2/admin/drive/add", {
     type,
     payload: r.data,
   });
@@ -315,10 +315,18 @@ export async function exportDriveInfo(body: { drive_id: string }) {
  * @param {string} body.drive_id 云盘 id
  * @param {string} body.root_folder_id 云盘根目录id
  */
-export async function setDriveRootFolderId(body: { drive_id: string; root_folder_id: string }) {
-  const { root_folder_id: root_folder_id, drive_id } = body;
-  return client.post<void>(`/api/admin/drive/root_folder/${drive_id}`, {
-    root_folder_id,
+export async function setDriveRootFolderId(body: {
+  drive_id: string;
+  root_folder_id: string;
+  root_folder_name: string;
+}) {
+  const { root_folder_id, root_folder_name, drive_id } = body;
+  return client.post<void>("/api/v2/drive/update", {
+    drive_id,
+    payload: {
+      root_folder_id,
+      root_folder_name,
+    },
   });
 }
 

@@ -2,6 +2,7 @@ import { client } from "@/store/request";
 import { FetchParams } from "@/domains/list/typing";
 import { FileType, MediaTypes } from "@/constants";
 import { ListResponse, RequestedResource, Result } from "@/types";
+import { request } from "@/domains/request_v2/utils";
 
 /**
  * 获取指定云盘内文件夹列表
@@ -202,3 +203,11 @@ export async function searchDriveFiles() {
   });
 }
 export type FileItem = RequestedResource<typeof searchDriveFiles>["list"][number];
+
+export function getFileDownloadURL(values: { file_id: string; drive_id: string }) {
+  const { file_id, drive_id } = values;
+  return request.post<{ url: string }>("/api/v2/drive/file/download", {
+    file_id,
+    drive_id,
+  });
+}

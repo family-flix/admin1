@@ -16,11 +16,11 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
+
   store.onStateChange((nextState) => {
+    // console.log("[COMPONENT]ui/dropdown-menu - store.onStateChange", nextState.items.length);
     setState(nextState);
   });
-
-  const items = () => state().items;
 
   return (
     <DropdownMenuPrimitive.Root store={store}>
@@ -37,7 +37,7 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
           )}
           store={store}
         >
-          <For each={items()}>
+          <For each={state().items}>
             {(item) => {
               return (
                 <Show

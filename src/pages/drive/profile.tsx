@@ -2,13 +2,15 @@
  * @file 云盘详情页面
  */
 import { For, Show, createSignal, onMount } from "solid-js";
-import { ArrowLeft, Binary, ChevronRight, FolderInput, Search, Trash } from "lucide-solid";
+import { ArrowLeft, Binary, ChevronRight, Download, FolderInput, Search, Trash } from "lucide-solid";
 
 import {
   renameFilesInDrive,
   fetchDriveFiles,
   transferFileToAnotherDrive,
   transferFileToResourceDrive,
+  fetchFileProfile,
+  getFileDownloadURL,
 } from "@/services/drive";
 import { setFileEpisodeProfile } from "@/services";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
@@ -39,10 +41,12 @@ import { ViewComponent } from "@/store/types";
 import { FileType, MediaTypes } from "@/constants";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
+import { downloadFile } from "@/utils/download";
 import { buildRegexp } from "@/utils";
+import { RequestCoreV2 } from "@/domains/request_v2";
 
 export const DriveProfilePage: ViewComponent = (props) => {
-  const { app, history, view } = props;
+  const { app, history, client, view } = props;
 
   const filesRenameRequest = new RequestCore(renameFilesInDrive, {
     onSuccess(r) {
@@ -647,6 +651,38 @@ export const DriveProfilePage: ViewComponent = (props) => {
     side: "right",
     align: "start",
   });
+  const moveToOtherDriveItem = new MenuItemCore({
+    _name: "transfer_to",
+    label: "移动到",
+    icon: <FolderInput class="w-4 h-4" />,
+    menu: driveSubMenu,
+  });
+  const downloadItem = new MenuItemCore({
+    label: "下载",
+    icon: <Download class="w-4 h-4" />,
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要归档的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      app.tip({
+        text: ["开始下载"],
+      });
+      const request = new RequestCoreV2({ fetch: getFileDownloadURL, client });
+      const r = await request.run({ file_id: file.file_id, drive_id: view.query.id });
+      if (r.error) {
+        app.tip({
+          text: [r.error.message],
+        });
+        return;
+      }
+      downloadFile(r.data.url, file.name);
+      fileMenu.hide();
+    },
+  });
   const fileMenu = new DropdownMenuCore({
     side: "right",
     align: "start",
@@ -655,15 +691,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
       analysisItem,
       nameModifyItem,
       childNamesModifyItem,
-      new MenuItemCore({
-        _name: "transfer_to",
-        label: "移动到",
-        icon: <FolderInput class="w-4 h-4" />,
-        menu: driveSubMenu,
-      }),
+      downloadItem,
+      moveToOtherDriveItem,
       toResourceDriveItem,
-      // setEpisodeProfileItem,
-      // setMovieProfileItem,
       folderDeletingItem,
     ],
     onHidden() {
@@ -821,6 +851,26 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                 event.preventDefault();
                                 const { x, y } = event;
                                 driveFileManage.virtualSelect(folder, [columnIndex(), fileIndex]);
+                                if (type === FileType.Folder) {
+                                  fileMenu.setItems([
+                                    profileItem,
+                                    analysisItem,
+                                    nameModifyItem,
+                                    childNamesModifyItem,
+                                    folderDeletingItem,
+                                  ]);
+                                }
+                                if (type === FileType.File) {
+                                  fileMenu.setItems([
+                                    profileItem,
+                                    analysisItem,
+                                    nameModifyItem,
+                                    downloadItem,
+                                    moveToOtherDriveItem,
+                                    toResourceDriveItem,
+                                    folderDeletingItem,
+                                  ]);
+                                }
                                 fileMenu.toggle({
                                   x,
                                   y,
@@ -970,6 +1020,26 @@ export const DriveProfilePage: ViewComponent = (props) => {
                         curFile.select(folder);
                         driveFileManage.virtualSelect(folder, [0, fileIndex]);
                         const { x, y } = event;
+                        if (type === FileType.Folder) {
+                          fileMenu.setItems([
+                            profileItem,
+                            analysisItem,
+                            nameModifyItem,
+                            childNamesModifyItem,
+                            folderDeletingItem,
+                          ]);
+                        }
+                        if (type === FileType.File) {
+                          fileMenu.setItems([
+                            profileItem,
+                            analysisItem,
+                            nameModifyItem,
+                            downloadItem,
+                            moveToOtherDriveItem,
+                            toResourceDriveItem,
+                            folderDeletingItem,
+                          ]);
+                        }
                         fileMenu.toggle({
                           x,
                           y,

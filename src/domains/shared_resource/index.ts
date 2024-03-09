@@ -9,10 +9,10 @@ import { sleep } from "@/utils";
 import {
   build_link_between_shared_files_with_folder,
   check_has_same_name_tv,
-  fetch_shared_files,
+  fetch_resource_files,
   AliyunFolderItem,
   save_shared_files,
-  search_shared_files,
+  search_resource_files,
 } from "./services";
 
 enum Events {
@@ -123,7 +123,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.loading = true;
     this.emit(Events.LoadingChange, this.loading);
     const [r] = await Promise.all([
-      fetch_shared_files({
+      fetch_resource_files({
         url: this.url,
         code: this.code,
         file_id,
@@ -205,7 +205,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
       const msg = this.tip({ text: ["请先指定分享链接"] });
       return Result.Err(msg);
     }
-    const r = await search_shared_files({
+    const r = await search_resource_files({
       url: this.url,
       code: this.code,
       keyword,

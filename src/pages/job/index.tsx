@@ -94,7 +94,7 @@ export const LogListPage: ViewComponent = (props) => {
     ],
     onChange(opt) {
       jobList.search({
-        status: Number(opt.value),
+        status: Number(opt.id),
       });
     },
   });

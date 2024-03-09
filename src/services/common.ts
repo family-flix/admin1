@@ -82,7 +82,7 @@ export async function searchMediaProfile(
 export type MediaProfileItem = RequestedResource<typeof searchMediaProfile>["list"][0];
 
 export function fetchDashboard() {
-  return request.post<{
+  const r = request.post<{
     drive_count: number;
     drive_total_size_count: number;
     drive_total_size_count_text: string;
@@ -105,27 +105,28 @@ export function fetchDashboard() {
     file_size_count_today: number;
     updated_at: string | null;
   }>("/api/v2/admin/dashboard", {});
-// defaultResponse: {
-//       drive_count: 0,
-//       drive_total_size_count: 0,
-//       drive_total_size_count_text: "0",
-//       drive_used_size_count: 0,
-//       drive_used_size_count_text: "0",
-//       movie_count: 0,
-//       season_count: 0,
-//       episode_count: 0,
-//       sync_task_count: 0,
-//       report_count: 0,
-//       media_request_count: 0,
-//       invalid_season_count: 0,
-//       invalid_movie_count: 0,
-//       invalid_sync_task_count: 0,
-//       unknown_media_count: 0,
-//       new_file_count_today: 0,
-//       file_size_count_today: 0,
-//       updated_at: null,
-//     },
+  return r;
 }
+export const fetchDashboardDefaultResponse = {
+  drive_count: 0,
+  drive_total_size_count: 0,
+  drive_total_size_count_text: "0",
+  drive_used_size_count: 0,
+  drive_used_size_count_text: "0",
+  movie_count: 0,
+  season_count: 0,
+  episode_count: 0,
+  sync_task_count: 0,
+  report_count: 0,
+  media_request_count: 0,
+  invalid_season_count: 0,
+  invalid_movie_count: 0,
+  invalid_sync_task_count: 0,
+  unknown_media_count: 0,
+  new_file_count_today: 0,
+  file_size_count_today: 0,
+  updated_at: null,
+};
 
 export function refreshDashboard() {
   return client.post("/api/v2/admin/dashboard/refresh", {});

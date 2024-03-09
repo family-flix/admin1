@@ -30,7 +30,7 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
     ],
     onChange(value) {
       store.search({
-        type: value.value as string,
+        type: value.id as string,
       });
     },
   });

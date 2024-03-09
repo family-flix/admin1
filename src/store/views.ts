@@ -35,7 +35,6 @@ import { SeasonArchivePage } from "@/pages/archive/season";
 import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
 import { InvalidMediaListPage } from "@/pages/media_error";
-import { PrismaExecPage } from "@/pages/prisma";
 import { OuterMediaProfilePage } from "@/pages/outer_profile";
 import { MediaProfileHomeLayout } from "@/pages/media_profile/layout";
 import { SeasonMediaProfileManagePage } from "@/pages/media_profile";

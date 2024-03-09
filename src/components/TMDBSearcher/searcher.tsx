@@ -39,7 +39,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         movie: MediaTypes.Movie,
       };
       store.search({
-        type: map[value.value as string],
+        type: map[value.id],
       });
     },
   });

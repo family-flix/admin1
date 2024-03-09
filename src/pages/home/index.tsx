@@ -5,13 +5,18 @@ import { createSignal, For, Show } from "solid-js";
 import { Send, FileSearch, RefreshCcw, AlertTriangle, Loader, Bird } from "lucide-solid";
 
 import { client } from "@/store/request";
-import { fetchDashboard, fetchMediaRecentlyCreated, refreshDashboard } from "@/services/common";
+import {
+  fetchDashboard,
+  fetchDashboardDefaultResponse,
+  fetchMediaRecentlyCreated,
+  refreshDashboard,
+} from "@/services/common";
 import { pushMessageToMembers } from "@/services";
 import { Button, Dialog, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { ImageInListCore } from "@/domains/ui/image";
 import { RequestCore } from "@/domains/request";
-import { addAliyunDrive } from "@/domains/drive";
+import { addDrive } from "@/domains/drive";
 import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
 import { ListCoreV2 } from "@/domains/list/v2";
@@ -32,6 +37,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
   });
   const dashboardRequest = new RequestCoreV2({
     fetch: fetchDashboard,
+    defaultResponse: fetchDashboardDefaultResponse,
     client,
   });
   const mediaListRecentlyCreated = new ListCoreV2(
@@ -51,7 +57,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
       pushDialog.hide();
     },
   });
-  const driveCreateRequest = new RequestCore(addAliyunDrive, {
+  const driveCreateRequest = new RequestCore(addDrive, {
     onLoading(loading) {
       driveCreateDialog.okBtn.setLoading(loading);
     },
@@ -175,6 +181,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
     setMediaResponse(v);
   });
   dashboardRequest.onResponseChange((v) => {
+    console.log(v);
     setDashboard(v);
   });
   filenameParser.onStateChange((nextState) => {
@@ -361,6 +368,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
             <div class="relative mt-4 p-4 min-h-[270px] rounded-md border bg-white  max-w-full overflow-x-auto">
               <Show when={mediaResponse().loading}>
                 <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="absolute inset-0 bg-white opacity-50" />
                   <Loader class="w-12 h-12 text-slate-500 animate animate-spin" />
                 </div>
               </Show>
@@ -368,8 +376,9 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 <Show
                   when={!mediaResponse().empty}
                   fallback={
-                    <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
                       <Bird class="w-16 h-16 text-slate-500" />
+                      <div class="mt-2">暂无记录</div>
                     </div>
                   }
                 >

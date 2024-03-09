@@ -1,18 +1,20 @@
 /**
  * @file 管理后台/云盘列表
  */
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Switch } from "solid-js";
 import { RotateCcw, HardDrive, Search } from "lucide-solid";
 
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { addAliyunDrive } from "@/domains/drive";
+import { addDrive } from "@/domains/drive";
 import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
 import { code_get_drive_token, DriveTypes } from "@/constants";
 import { ViewComponent } from "@/store/types";
+import { TabHeaderCore } from "@/domains/ui/tab-header";
+import { TabHeader } from "@/components/ui/tab-header";
 
 export const DriveListPage: ViewComponent = (props) => {
   const { app, history, view } = props;
@@ -22,7 +24,7 @@ export const DriveListPage: ViewComponent = (props) => {
       hidden: 0,
     },
   });
-  const driveCreateRequest = new RequestCore(addAliyunDrive, {
+  const driveCreateRequest = new RequestCore(addDrive, {
     onLoading(loading) {
       driveCreateDialog.okBtn.setLoading(loading);
     },
@@ -36,14 +38,42 @@ export const DriveListPage: ViewComponent = (props) => {
       app.tip({ text: ["添加云盘失败", error.message] });
     },
   });
+  const driveTabs = new TabHeaderCore({
+    key: "id",
+    options: [
+      {
+        id: DriveTypes.AliyunBackupDrive,
+        text: "阿里云盘",
+      },
+      {
+        id: DriveTypes.Cloud189Drive,
+        text: "天翼云盘",
+      },
+      {
+        id: DriveTypes.QuarkDrive,
+        text: "夸克",
+      },
+      {
+        id: DriveTypes.XunleiDrive,
+        text: "迅雷",
+      },
+      {
+        id: DriveTypes.LocalFolder,
+        text: "文件夹",
+      },
+    ],
+    onMounted() {
+      driveTabs.selectById(DriveTypes.AliyunBackupDrive);
+    },
+  });
   const driveCreateDialog = new DialogCore({
-    title: "新增阿里云盘",
+    title: "新增云盘",
     onOk() {
       if (!driveTokenInput.value) {
         app.tip({ text: ["请输入云盘信息"] });
         return;
       }
-      driveCreateRequest.run({ type: DriveTypes.AliyunBackupDrive, payload: driveTokenInput.value });
+      driveCreateRequest.run({ type: driveTabs.selectedTabId, payload: driveTokenInput.value });
     },
   });
   const driveCreateBtn = new ButtonCore({
@@ -98,7 +128,11 @@ export const DriveListPage: ViewComponent = (props) => {
   });
 
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  const [tabId, setTabId] = createSignal(driveTabs.selectedTabId);
 
+  driveTabs.onChange((event) => {
+    setTabId(event.id);
+  });
   driveList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
@@ -192,30 +226,63 @@ export const DriveListPage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <Dialog store={driveCreateDialog}>
-        <div class="w-[520px] p-4">
-          <p>1、在网页端登录阿里云盘</p>
-          <p
-            onClick={() => {
-              app.copy(code_get_drive_token);
-              app.tip({ text: ["复制成功"] });
-            }}
-          >
-            2、点击复制下面代码
-          </p>
-          <div
-            class="mt-2 border rounded-sm bg-gray-200"
-            onClick={() => {
-              app.copy(code_get_drive_token);
-              app.tip({ text: ["复制成功"] });
-            }}
-          >
-            <div class="relative p-2">
-              <div class="overflow-y-auto h-[120px] break-all whitespace-pre-wrap">{code_get_drive_token}</div>
-            </div>
-          </div>
-          <p>3、回到已登录的阿里云盘页面，在浏览器「地址栏」手动输入 `javascript:`</p>
-          <p>4、紧接着粘贴复制的代码并回车</p>
-          <p>5、将得到的代码粘贴到下方输入框，点击确认即可</p>
+        <div class="w-[520px]">
+          <TabHeader store={driveTabs} />
+          {(() => {
+            if (tabId() === DriveTypes.AliyunBackupDrive) {
+              return (
+                <div class="p-4">
+                  <p>1、在网页端登录阿里云盘</p>
+                  <p
+                    onClick={() => {
+                      app.copy(code_get_drive_token);
+                      app.tip({ text: ["复制成功"] });
+                    }}
+                  >
+                    2、点击复制下面代码
+                  </p>
+                  <div
+                    class="mt-2 border rounded-sm bg-gray-200"
+                    onClick={() => {
+                      app.copy(code_get_drive_token);
+                      app.tip({ text: ["复制成功"] });
+                    }}
+                  >
+                    <div class="relative p-2">
+                      <div class="overflow-y-auto h-[120px] break-all whitespace-pre-wrap">{code_get_drive_token}</div>
+                    </div>
+                  </div>
+                  <p>3、回到已登录的阿里云盘页面，在浏览器「地址栏」手动输入 `javascript:`</p>
+                  <p>4、紧接着粘贴复制的代码并回车</p>
+                  <p>5、将得到的代码粘贴到下方输入框，点击确认即可</p>
+                </div>
+              );
+            }
+            if (tabId() === DriveTypes.Cloud189Drive) {
+              return (
+                <div class="p-4">
+                  <p>1、准备天翼云盘账户名、密码。账户名即手机号；如果没有密码请先设置密码</p>
+                  <p>2、构造 {`{"account": "", "pwd": ""}`}格式数据并粘贴到下方输入框，点击确认即可</p>
+                </div>
+              );
+            }
+            if (tabId() === DriveTypes.QuarkDrive) {
+              return (
+                <div class="p-4">
+                  <p>1、在网页端登录夸克云盘</p>
+                  <p>2、构造 {`{"id": "","token": ""}`}格式数据并粘贴到下方输入框，点击确认即可</p>
+                </div>
+              );
+            }
+            if (tabId() === DriveTypes.LocalFolder) {
+              return (
+                <div class="p-4">
+                  <p>1、获取存放视频文件的文件夹「绝对路径」</p>
+                  <p>2、构造 {`{"dir": ""}`}格式数据并粘贴到下方输入框，点击确认即可</p>
+                </div>
+              );
+            }
+          })()}
         </div>
         <Textarea store={driveTokenInput} />
       </Dialog>

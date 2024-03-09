@@ -34,7 +34,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
       },
     ],
     onChange(opt) {
-      history.push(opt.value as PageKeys);
+      history.push(opt.id);
     },
     onMounted() {
       tab.handleChangeById(view.name);

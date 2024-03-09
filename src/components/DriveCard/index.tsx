@@ -41,7 +41,7 @@ import {
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
-import { DriveCore, addAliyunDrive, updateAliyunDrive } from "@/domains/drive";
+import { DriveCore, addDrive, updateAliyunDrive } from "@/domains/drive";
 import { AliyunDriveFilesCore } from "@/domains/drive/files";
 import { BizError } from "@/domains/error";
 import { DriveTypes, FileType } from "@/constants";
@@ -55,7 +55,7 @@ export const DriveCard = (props: {
 }) => {
   const { app, store: drive, onClick, onRefresh } = props;
 
-  const createResourceDriveRequest = new RequestCore(addAliyunDrive, {
+  const createResourceDriveRequest = new RequestCore(addDrive, {
     onSuccess() {
       app.tip({
         text: ["资源盘创建成功"],
@@ -113,7 +113,7 @@ export const DriveCard = (props: {
         return;
       }
       foldersModal.okBtn.setLoading(true);
-      const r = await drive.setRootFolder(driveFileManage.selectedFolder.file_id);
+      const r = await drive.setRootFolder(driveFileManage.selectedFolder);
       foldersModal.okBtn.setLoading(false);
       driveFileManage.clear();
       if (r.error) {
@@ -151,7 +151,7 @@ export const DriveCard = (props: {
         app.tip({ text: ["新增文件夹失败", r.error.message] });
         return;
       }
-      const r2 = await drive.setRootFolder(r.data.file_id);
+      const r2 = await drive.setRootFolder(r.data);
       createFolderModal.okBtn.setLoading(false);
       if (r2.error) {
         app.tip({ text: ["设置索引目录失败", r2.error.message] });
@@ -466,7 +466,7 @@ export const DriveCard = (props: {
               <LazyImage class="overflow-hidden w-16 h-16 rounded" store={avatarImage} alt={state().name} />
             </div>
             <div class="flex-1 w-0 pr-12">
-              <div class="text-xl">{state().name}</div>
+              <div class="text-xl truncate">{state().name}</div>
               <div class="text-sm text-slate-500">{state().drive_id}</div>
               <Progress class="mt-2" store={progress} />
               <div class="mt-2">

@@ -18,6 +18,8 @@ import {
   Trash,
 } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { createJob } from "@/store/job";
 import {
   SyncTaskItem,
   fetchSyncTaskList,
@@ -41,15 +43,12 @@ import {
   CheckboxCore,
   PresenceCore,
   ImageInListCore,
-  ImageCore,
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
-import { createJob } from "@/store/job";
 import { Result } from "@/types";
-import { ViewComponent } from "@/store/types";
 import { FileType } from "@/constants";
 
 export const SyncTaskListPage: ViewComponent = (props) => {

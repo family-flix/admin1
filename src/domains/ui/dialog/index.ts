@@ -4,7 +4,6 @@
 import { BaseDomain, Handler } from "@/domains/base";
 import { PresenceCore } from "@/domains/ui/presence";
 import { ButtonCore } from "@/domains/ui/button";
-import { sleep } from "@/utils";
 
 enum Events {
   BeforeShow,

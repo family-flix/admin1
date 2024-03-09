@@ -180,12 +180,17 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
   const bindEpisodeDialog = new DialogCore({
     onOk() {
       if (!curEpisode.value) {
-        app.tip({ text: ["请先选择未识别的电影"] });
+        app.tip({ text: ["请先选择设置的剧集"] });
         return;
       }
       const mediaProfile = mediaSearch.cur;
+      const sourceProfile = mediaSearch.curEpisode;
       if (!mediaProfile) {
         app.tip({ text: ["请先选择详情"] });
+        return;
+      }
+      if (!sourceProfile) {
+        app.tip({ text: ["请先选择剧集详情"] });
         return;
       }
       const { id } = curEpisode.value;
@@ -195,6 +200,9 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
           id: String(mediaProfile.id),
           type: mediaProfile.type,
           name: mediaProfile.name,
+        },
+        media_source_profile: {
+          id: String(sourceProfile.id),
         },
       });
     },

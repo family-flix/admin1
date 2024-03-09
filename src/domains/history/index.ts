@@ -147,7 +147,7 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
       return m;
     })();
     if (!route) {
-      console.log("[DOMAIN]history/index - push 2. no matched route", uniqueKey);
+      console.log("[DOMAIN]history/index - push 2. no matched route", uniqueKey, name, query);
       return null;
     }
     const created = new RouteViewCore({

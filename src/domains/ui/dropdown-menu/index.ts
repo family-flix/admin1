@@ -22,14 +22,18 @@ type DropdownMenuState = {
   disabled: boolean;
 };
 export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
+  open = false;
+  disabled = false;
+
+  get state(): DropdownMenuState {
+    return {
+      items: this.items,
+      open: this.open,
+      disabled: this.disabled,
+    };
+  }
+
   menu: MenuCore;
-
-  state: DropdownMenuState = {
-    items: [],
-    open: false,
-    disabled: false,
-  };
-
   subs: MenuCore[] = [];
   items: MenuItemCore[] = [];
 
@@ -41,7 +45,7 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     super(props);
 
     const { _name, side, align, items = [], onHidden } = props;
-    this.state.items = items;
+    this.items = items;
     this.menu = new MenuCore({ side, align, items, _name: _name ? `${_name}__menu` : "menu-in-dropdown" });
     this.menu.onHide(() => {
       this.menu.reset();
@@ -109,12 +113,10 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   setItems(items: MenuItemCore[]) {
-    // this.state.items = items;
-    // this.items = items;
-    // this.listenItems(items);
-    // this.emit(Events.StateChange, {
-    //   ...this.state,
-    // });
+    this.items = items;
+    this.emit(Events.StateChange, {
+      ...this.state,
+    });
   }
   toggle(position?: Partial<{ x: number; y: number }>) {
     if (position) {

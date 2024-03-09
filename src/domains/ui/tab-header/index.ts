@@ -7,29 +7,34 @@ enum Events {
   Mounted,
   Change,
 }
-type TheTypesOfEvents<T> = {
+type TheTypesOfEvents<T extends { key: any; options: { id: any; text: string }[] }> = {
   [Events.StateChange]: TabHeaderState<T>;
   [Events.Scroll]: { left: number };
   [Events.LinePositionChange]: { left: number };
   [Events.Mounted]: void;
-  [Events.Change]: { index: number; value: unknown };
+  [Events.Change]: T["options"][number] & { index: number };
 };
-type TabHeaderState<T> = {
-  tabs: T[];
-  current: number;
+type TabHeaderState<T extends { key: any; options: { id: any; text: string }[] }> = {
+  tabs: T["options"];
+  current: number | null;
+  left: number | null;
   curId: string | null;
 };
-type TabHeaderProps<T extends { id: string; text: string }> = {
-  key: string;
-  options: T[];
+type TabHeaderProps<T extends { key: any; options: { id: any; text: string }[] }> = {
+  key?: T["key"];
+  options: T["options"];
   targetLeftWhenSelected?: number;
-  onChange?: (opt: { index: number; value: unknown }) => void;
+  onChange?: (value: T["options"][number] & { index: number }) => void;
   onMounted?: () => void;
 };
 
-export class TabHeaderCore<T extends { id: string; text: string }> extends BaseDomain<TheTypesOfEvents<T>> {
-  key = "id";
-  tabs: T[] = [];
+export class TabHeaderCore<
+  T extends { key: any; options: { id: any; text: string; [x: string]: any }[] }
+> extends BaseDomain<TheTypesOfEvents<T>> {
+  key: T["key"];
+  tabs: T["options"] = [];
+  count = 0;
+  mounted = false;
   extra: Record<
     string,
     {
@@ -38,8 +43,8 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       left: number;
     }
   > = {};
-  mounted = false;
-  current: number = 0;
+  current: number | null = null;
+  left: number | null = null;
   /** 父容器宽高等信息 */
   container = {
     width: 0,
@@ -47,9 +52,12 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
     scrollLeft: 0,
   };
   /** 当 checkbox 选中时，希望它距离父容器 left 距离。如小于 1，则视为百分比，如 0.5 即中间位置 */
-  targetLeftWhenSelected = 0;
+  targetLeftWhenSelected: null | number = null;
 
   get selectedTabId() {
+    if (this.current === null) {
+      return null;
+    }
     const matched = this.tabs[this.current];
     if (!matched) {
       if (this.tabs.length) {
@@ -60,6 +68,9 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
     return matched.id ?? null;
   }
   get selectedTab() {
+    if (this.current === null) {
+      return null;
+    }
     return this.tabs[this.current];
   }
   get state(): TabHeaderState<T> {
@@ -67,12 +78,10 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       tabs: this.tabs,
       curId: this.selectedTabId,
       current: this.current,
+      left: this.targetLeftWhenSelected,
     };
   }
 
-  /**
-   * @param {{targetLeftWhenSelected: number}} props
-   */
   constructor(props: Partial<{ _name: string }> & TabHeaderProps<T>) {
     super(props);
 
@@ -87,49 +96,58 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       this.onMounted(onMounted);
     }
   }
-  setTabs(options: T[]) {
+  setTabs(options: T["options"]) {
     if (options.length === 0) {
       return;
     }
-    this.tabs = options.map((o) => {
-      return {
-        ...o,
+    this.tabs = options;
+    for (let i = 0; i < options.length; i += 1) {
+      const { id } = options[i];
+      this.extra[id] = {
         left: 0,
         width: 0,
         height: 0,
       };
-    });
+    }
   }
   select(index: number) {
     this.current = index;
-    const matchedTab = this.tabs[index];
+    const matchedTab = this.tabs[index] as unknown as T["options"][number];
     if (!matchedTab) {
       return;
     }
     const left = this.calcLineLeft(this.current);
+    // console.log("[DOMAIN]tab-header - select", index, left);
     if (left !== null) {
+      this.left = left;
       this.changeLinePosition(left);
     }
-    this.emit(Events.Change, {
-      index,
-      value: matchedTab.id,
-    });
+    this.emit(Events.Change, { ...matchedTab, index });
+    this.emit(Events.StateChange, { ...this.state });
   }
-  selectById(id: string) {
+  selectById(id: T["options"][number]["id"], options: Partial<{ ignore: boolean }> = {}) {
+    const { ignore } = options;
     const matchedIndex = this.tabs.findIndex((t) => t.id === id);
     if (matchedIndex === -1) {
       return;
     }
+    const matched = this.tabs[matchedIndex];
+    if (!matched) {
+      return;
+    }
     this.current = matchedIndex;
-    console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab);
     const left = this.calcLineLeft(this.current);
+    console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab, left);
     if (left !== null) {
       this.changeLinePosition(left);
     }
-    this.emit(Events.Change, {
-      index: matchedIndex,
-      value: this.selectedTab.id,
-    });
+    this.emit(Events.StateChange, { ...this.state });
+    if (!ignore) {
+      this.emit(Events.Change, {
+        ...matched,
+        index: matchedIndex,
+      });
+    }
   }
   handleChangeById(id: string) {
     const matchedIndex = this.tabs.findIndex((t) => t.id === id);
@@ -137,8 +155,9 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       return;
     }
     this.current = matchedIndex;
-    console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab);
+    // console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab);
     const left = this.calcLineLeft(this.current);
+    // console.log("[DOMAIN]tab-header/index handleChangeById", this.current, this.selectedTab, left);
     if (left !== null) {
       this.changeLinePosition(left);
     }
@@ -158,16 +177,22 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       return;
     }
     this.extra[matchedTab.id] = info;
-    if (Object.keys(this.extra).length === this.tabs.length) {
-      const left = this.calcLineLeft(this.current);
-      if (left !== null) {
-        this.changeLinePosition(left);
-      }
-      this.mounted = true;
-      this.emit(Events.Mounted);
+    // console.log("[DOMAIN]ui/tab-headers", index, Object.keys(this.extra).length, this.tabs.length);
+    if (Object.keys(this.extra).length !== this.tabs.length) {
+      return;
     }
+    // if (this.current === null) {
+    //   return;
+    // }
+    const left = this.calcLineLeft(index);
+    if (left !== null) {
+      this.changeLinePosition(left);
+    }
+    this.mounted = true;
+    this.emit(Events.Mounted);
   }
   changeLinePosition(left: number) {
+    console.log("[DOMAIN]ui/tab-headers - changeLinePosition", left);
     this.emit(Events.LinePositionChange, { left });
   }
   updateTabClientById(id: string, info: { width: number; height: number; left: number }) {
@@ -184,32 +209,40 @@ export class TabHeaderCore<T extends { id: string; text: string }> extends BaseD
       ...this.container,
       ...info,
     };
+    // this.emit(Events.Mounted);
   }
   calcScrollLeft(curTab: TabHeaderCore<T>["selectedTab"]) {
-    // const { width, left } = this.container;
-    console.log("[]calcScrollLeft", this.container, curTab);
-    // const theTabMiddle = curTab.left + curTab.width / 2;
-    // const realTargetPosition = (() => {
-    //   if (this.targetLeftWhenSelected <= 1) {
-    //     return this.targetLeftWhenSelected * width;
-    //   }
-    //   return this.targetLeftWhenSelected;
-    // })();
-    // if (theTabMiddle <= realTargetPosition) {
-    //   this.container.scrollLeft = 0;
-    //   this.emit(Events.Scroll, {
-    //     left: 0,
-    //   });
-    //   return;
-    // }
-    // const theLeftNeedScroll = theTabMiddle - left - realTargetPosition;
-    // this.container.scrollLeft = theLeftNeedScroll;
-    // // @todo 需要移动的距离太小了，就忽略
-    // // @todo 当移动的 tab 偏右侧，已经没有可以移动的空间了，也忽略
+    const { width, left } = this.container;
+    // console.log("[]calcScrollLeft", this.container, curTab);
+    if (curTab === null) {
+      return;
+    }
+    const client = this.extra[curTab.id];
+    const theTabMiddle = client.left + client.width / 2;
+    const realTargetPosition = (() => {
+      if (this.targetLeftWhenSelected === null) {
+        return 0;
+      }
+      if (this.targetLeftWhenSelected <= 1) {
+        return this.targetLeftWhenSelected * width;
+      }
+      return this.targetLeftWhenSelected;
+    })();
+    if (theTabMiddle <= realTargetPosition) {
+      this.container.scrollLeft = 0;
+      this.emit(Events.Scroll, {
+        left: 0,
+      });
+      return;
+    }
+    const theLeftNeedScroll = theTabMiddle - left - realTargetPosition;
+    this.container.scrollLeft = theLeftNeedScroll;
+    // @todo 需要移动的距离太小了，就忽略
+    // @todo 当移动的 tab 偏右侧，已经没有可以移动的空间了，也忽略
     // console.log("[]calcScrollLeft - need move", theLeftNeedScroll);
-    // this.emit(Events.Scroll, {
-    //   left: theLeftNeedScroll,
-    // });
+    this.emit(Events.Scroll, {
+      left: theLeftNeedScroll,
+    });
   }
 
   onScroll(handler: Handler<TheTypesOfEvents<T>[Events.Scroll]>) {
