@@ -19,23 +19,22 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
 
   const sharedResource = new SharedResourceCore();
   const syncTaskCreateRequest = new RequestCore(createSyncTaskWithUrl, {
-    beforeRequest() {
-      syncTaskMenu.disable();
-    },
     onSuccess() {
       app.tip({ text: ["新增同步任务成功"] });
-      dropdownMenu.hide();
     },
     onFailed(error) {
       app.tip({ text: ["新增同步任务失败", error.message] });
       if (error.code === 20001) {
+        // ...
       }
-    },
-    onCompleted() {
-      syncTaskMenu.enable();
     },
   });
   const driveSubMenu = new MenuCore({
+    _name: "menus-of-drives",
+    side: "right",
+    align: "start",
+  });
+  const taskCreateSubMenu = new MenuCore({
     _name: "menus-of-drives",
     side: "right",
     align: "start",
@@ -71,7 +70,11 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
         icon: <FolderInput class="w-4 h-4" />,
         menu: driveSubMenu,
       }),
-      syncTaskMenu,
+      new MenuItemCore({
+        label: "建立同步任务",
+        menu: taskCreateSubMenu,
+        onClick() {},
+      }),
     ],
   });
   const sharedFileUrlInput = new InputCore({
@@ -142,6 +145,37 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
                 },
               });
             }
+            item.enable();
+            dropdownMenu.hide();
+          },
+        });
+        return item;
+      })
+    );
+    taskCreateSubMenu.setItems(
+      nextResponse.dataSource.map((drive) => {
+        const { name } = drive;
+        const item = new MenuItemCore({
+          label: name,
+          async onClick() {
+            if (!sharedResource.url) {
+              app.tip({
+                text: ["请先查询分享资源"],
+              });
+              return;
+            }
+            item.disable();
+            const payload: Parameters<typeof createSyncTaskWithUrl>[0] = {
+              url: sharedResource.url,
+              pwd: sharedResource.code,
+              drive_id: drive.id,
+            };
+            const resource_folder = sharedResource.selectedFolder;
+            if (resource_folder) {
+              payload.resource_file_id = resource_folder.file_id;
+              payload.resource_file_name = resource_folder.name;
+            }
+            await syncTaskCreateRequest.run(payload);
             item.enable();
             dropdownMenu.hide();
           },

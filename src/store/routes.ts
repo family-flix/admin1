@@ -169,6 +169,11 @@ const configure = {
           },
         },
       },
+      mteam: {
+        title: "馒头PT",
+        pathname: "/mteam",
+        children: {},
+      },
       login: {
         title: "管理员登录",
         pathname: "/login",

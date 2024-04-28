@@ -12,7 +12,6 @@ import {
   setMediaProfile,
 } from "@/services/media";
 import { deleteParsedMediaSource } from "@/services/parsed_media";
-import { upload_subtitle_for_movie } from "@/services";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
@@ -51,25 +50,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
     },
   });
   const filenameParseRequest = new RequestCore(parseVideoFilename, {
-    onLoading(loading) {
-      subtitleUploadDialog.okBtn.setLoading(loading);
-    },
-  });
-  const uploadRequest = new RequestCore(upload_subtitle_for_movie, {
-    onLoading(loading) {
-      subtitleUploadDialog.okBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({
-        text: ["字幕上传成功"],
-      });
-      subtitleUploadDialog.hide();
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["字幕上传失败", error.message],
-      });
-    },
+    onLoading(loading) {},
   });
   const sourceDeletingRequest = new RequestCore(deleteParsedMediaSource, {
     onSuccess() {
@@ -187,29 +168,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
     },
   });
   const poster = new ImageCore({});
-  const subtitleUploadBtn = new ButtonCore({
-    onClick() {
-      subtitleUploadDialog.show();
-    },
-  });
-  const subtitleUploadDialog = new DialogCore({
-    title: "上传字幕",
-    onOk() {
-      if (!subtitleRef.value) {
-        app.tip({
-          text: ["请先上传字幕文件"],
-        });
-        return;
-      }
-      const { drive_id, lang, file } = subtitleRef.value;
-      uploadRequest.run({
-        movie_id: view.query.id,
-        drive_id,
-        lang,
-        file,
-      });
-    },
-  });
   const profileRefreshBtn = new ButtonCore({
     onClick() {
       app.tip({
@@ -340,9 +298,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
                   <Button store={movieDeletingBtn} variant="subtle">
                     删除
                   </Button>
-                  <Button store={subtitleUploadBtn} variant="subtle">
-                    上传字幕
-                  </Button>
                 </div>
                 <div class="mt-8 text-2xl">可播放源</div>
                 <div class="mt-4 space-y-2">
@@ -403,11 +358,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
           <div>确认删除吗？</div>
           <div>该操作不删除视频文件</div>
           <div>请仅在需要重新索引关联的文件时进行删除操作</div>
-        </div>
-      </Dialog>
-      <Dialog store={subtitleUploadDialog}>
-        <div class="w-[520px]">
-          <Input store={subtitleUploadInput} />
         </div>
       </Dialog>
     </>

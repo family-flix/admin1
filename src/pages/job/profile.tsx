@@ -4,7 +4,7 @@
 import { Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Calendar } from "lucide-solid";
 
-import { Button, ScrollView, Skeleton, ListView } from "@/components/ui";
+import { Button, ScrollView, Skeleton } from "@/components/ui";
 import { Article } from "@/components/Article";
 import { ScrollViewCore, ButtonCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
@@ -60,11 +60,7 @@ export const LogProfilePage: ViewComponent = (props) => {
       request.reload();
     },
   });
-  const scrollView = new ScrollViewCore({
-    // onReachBottom() {
-    //   logList.loadMore();
-    // },
-  });
+  const scrollView = new ScrollViewCore({});
 
   const [profile, setProfile] = createSignal(request.response);
   const [logResponse, setLogResponse] = createSignal(logList.response);

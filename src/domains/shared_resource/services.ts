@@ -25,20 +25,6 @@ export async function check_has_same_name_tv(body: {
 /**
  * 将分享文件夹和云盘内的文件夹建立关联关系，用于后续更新
  */
-export async function build_link_between_shared_files_with_folder(body: {
-  /** 分享链接 */
-  url: string;
-  /** 分享文件夹 id */
-  file_id: string;
-  /** 分享文件夹名称 */
-  file_name: string;
-  /** 要建立关联的云盘内文件夹名称 */
-  target_file_name?: string;
-  /** 要建立关联的云盘内文件夹id */
-  target_file_id?: string;
-}) {
-  return client.post("/api/admin/shared_file/link", body);
-}
 
 /**
  * 根据分享链接获取文件夹列表（支持分页）

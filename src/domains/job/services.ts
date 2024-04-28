@@ -21,7 +21,7 @@ export async function fetchJobList(params: FetchParams) {
       error?: string;
       created: string;
     }>
-  >(`/api/admin/job/list`, params);
+  >(`/api/v2/admin/task/list`, params);
   if (res.error) {
     return Result.Err(res.error);
   }
@@ -54,14 +54,11 @@ export async function fetchJobList(params: FetchParams) {
 }
 export type JobItem = RequestedResource<typeof fetchJobList>["list"][0];
 
-export function clear_expired_job_list() {
-  return client.get("/api/admin/job/clear_expired");
-}
 /**
  * 查询索引任务详情
  */
 export async function fetch_job_profile(id: string) {
-  const r = await client.get<{
+  const r = await client.post<{
     id: string;
     desc: string;
     type: TaskTypes;
@@ -70,7 +67,7 @@ export async function fetch_job_profile(id: string) {
     // more_line: boolean;
     created: string;
     content: string;
-  }>(`/api/admin/job/${id}`);
+  }>("/api/v2/admin/task/profile", { id });
   if (r.error) {
     return Result.Err(r.error);
   }
@@ -110,7 +107,10 @@ export async function fetch_job_profile(id: string) {
 }
 export type JobProfile = RequestedResource<typeof fetch_job_profile>;
 
-/** 获取指定异步任务的日志列表 */
+/**
+ * 获取指定异步任务的日志列表
+ * 这个接口不会真正调用
+ */
 export async function fetch_output_lines_of_job(body: { job_id: string; page: number; pageSize: number }) {
   const { job_id, page, pageSize } = body;
   const r = await client.get<
@@ -119,7 +119,7 @@ export async function fetch_output_lines_of_job(body: { job_id: string; page: nu
       content: string;
       created: string;
     }>
-  >(`/api/admin/job/${job_id}/logs`, {
+  >(`/api/v2/admin/task/logs`, {
     page,
     page_size: pageSize,
   });
@@ -146,8 +146,9 @@ export async function fetch_output_lines_of_job(body: { job_id: string; page: nu
  * 查询索引任务状态
  */
 export function fetch_job_status(id: string) {
-  return client.get<{ id: string; desc: string; type: TaskTypes; status: TaskStatus; error?: string }>(
-    `/api/admin/job/status/${id}`
+  return client.post<{ id: string; desc: string; type: TaskTypes; status: TaskStatus; error?: string }>(
+    "/api/v2/admin/task/status",
+    { id }
   );
 }
 // export type JobItem = RequestedResource<typeof fetch_job_status>;
@@ -158,7 +159,8 @@ export function fetch_job_status(id: string) {
  * @returns
  */
 export function pause_job(id: string) {
-  return client.get<{ id: string }>(`/api/admin/job/pause/${id}`, {
+  return client.post<{ id: string }>(`/api/v2/admin/task/pause`, {
+    id,
     force: "1",
   });
 }

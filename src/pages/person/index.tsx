@@ -8,7 +8,7 @@ import { Button, Skeleton, ScrollView, ListView, Checkbox, LazyImage } from "@/c
 import { ButtonCore, ButtonInListCore, CheckboxCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { JobItem, clear_expired_job_list, fetchJobList, pause_job, TaskStatus, fetchPersonList } from "@/domains/job";
+import { JobItem, pause_job, TaskStatus, fetchPersonList } from "@/domains/job";
 import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
 
@@ -26,21 +26,6 @@ export const PersonListPage: ViewComponent = (props) => {
     onSuccess: () => {
       app.tip({ text: ["中止任务成功"] });
       personList.refresh();
-    },
-  });
-  const jobDeletingRequest = new RequestCore(clear_expired_job_list, {
-    onLoading(loading) {
-      jobDeletingBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({
-        text: ["清除成功"],
-      });
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["清除失败", error.message],
-      });
     },
   });
   const pauseJobBtn = new ButtonInListCore<JobItem>({
@@ -66,11 +51,6 @@ export const PersonListPage: ViewComponent = (props) => {
   const runningCheckbox = new CheckboxCore({
     onChange(checked) {
       personList.search({});
-    },
-  });
-  const jobDeletingBtn = new ButtonCore({
-    onClick() {
-      jobDeletingRequest.run();
     },
   });
   const scrollView = new ScrollViewCore();

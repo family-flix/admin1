@@ -14,6 +14,7 @@ import {
   Send,
   SlidersHorizontal,
   Smile,
+  Trash,
 } from "lucide-solid";
 
 import {
@@ -21,6 +22,7 @@ import {
   transferMediaToAnotherDrive,
   fetchSeasonMediaList,
   fetchPartialSeasonMedia,
+  deleteMedia,
 } from "@/services/media";
 import { moveSeasonToResourceDrive, refreshSeasonProfiles, refreshSeasonProfile } from "@/services";
 import {
@@ -98,7 +100,7 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
     },
   });
   const partialSeasonRequest = new RequestCore(fetchPartialSeasonMedia);
-
+  const mediaDeleteRequest = new RequestCore(deleteMedia);
   const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
     onLoading(loading) {
       transferConfirmDialog.okBtn.setLoading(loading);
@@ -280,11 +282,40 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
   // });
   const profileBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
-      // homeTVProfilePage.query = {
-      //   id: record.id,
-      // };
-      // app.showView(homeTVProfilePage);
       history.push("root.home_layout.season_profile", { id: record.id });
+    },
+  });
+  const deleteConfirmDialog = new DialogCore({
+    async onOk() {
+      const media = seasonRef.value;
+      if (!media) {
+        app.tip({
+          text: ["请选择要删除的电视剧"],
+        });
+        return;
+      }
+      deleteConfirmDialog.okBtn.setLoading(true);
+      const r = await mediaDeleteRequest.run({ media_id: media.id });
+      deleteConfirmDialog.okBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["删除失败", r.error.message],
+        });
+        return;
+      }
+      app.tip({
+        text: ["删除成功"],
+      });
+      deleteConfirmDialog.hide();
+      seasonList.deleteItem((item) => {
+        return item.id === media.id;
+      });
+    },
+  });
+  const mediaDeleteBtn = new ButtonInListCore<SeasonMediaItem>({
+    onClick(record) {
+      seasonRef.select(record);
+      deleteConfirmDialog.show();
     },
   });
   const refreshSeasonProfilesRequest = new RequestCore(refreshSeasonProfiles, {
@@ -579,6 +610,13 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
                                 >
                                   详情
                                 </Button>
+                                <Button
+                                  store={mediaDeleteBtn.bind(season)}
+                                  variant="subtle"
+                                  icon={<Trash class="w-4 h-4" />}
+                                >
+                                  删除
+                                </Button>
                                 <Show when={cur_episode_count === episode_count}>
                                   <Button
                                     store={transferBtn.bind(season)}
@@ -644,6 +682,11 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       <Dialog store={moveToResourceDriveConfirmDialog}>
         <div class="w-[520px]">
           <div>将电视剧移动到资源盘后才能公开分享</div>
+        </div>
+      </Dialog>
+      <Dialog store={deleteConfirmDialog}>
+        <div class="w-[520px]">
+          <div>确认删除吗？</div>
         </div>
       </Dialog>
       <Popover

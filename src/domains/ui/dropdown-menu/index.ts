@@ -136,6 +136,7 @@ export class DropdownMenuCore extends BaseDomain<TheTypesOfEvents> {
     this.menu.toggle();
   }
   hide() {
+    console.log('[DOMAIN/ui]dropdown-menu/index - hide');
     this.menu.hide();
   }
   unmount() {

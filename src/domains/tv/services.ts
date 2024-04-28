@@ -6,42 +6,6 @@ import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num }
 import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";
 
 /**
- * 获取电视剧列表
- */
-export async function fetch_tv_list(params: FetchParams & { name: string }) {
-  const { page, pageSize, ...rest } = params;
-  const resp = await client.get<
-    ListResponse<{
-      id: string;
-      name: string;
-      original_name: string;
-      overview: string;
-      poster_path: string;
-      backdrop_path: string;
-      first_air_date: string;
-    }>
-  >("/api/tv/list", {
-    ...rest,
-    page,
-    page_size: pageSize,
-  });
-  if (resp.error) {
-    return Result.Err(resp.error);
-  }
-  return Result.Ok({
-    ...resp.data,
-    list: resp.data.list.map((tv) => {
-      const { ...rest } = tv;
-      return {
-        ...rest,
-        // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
-      };
-    }),
-  });
-}
-export type TVItem = RequestedResource<typeof fetch_tv_list>["list"][0];
-
-/**
  * 获取电视剧及包含的剧集详情
  * @param params
  */

@@ -12,7 +12,6 @@ import { ButtonCore, ButtonInListCore, DialogCore, ImageInListCore, InputCore, S
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { clear_expired_job_list } from "@/domains/job";
 import { MediaTypes, ReportTypes } from "@/constants";
 import { ViewComponent } from "@/store/types";
 import { refreshJobs } from "@/store/job";
@@ -42,21 +41,6 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const curReport = new RefCore<ReportItem>();
   const curMovie = new RefCore<MovieItem>();
   const reportList = new ListCore(new RequestCore(fetchReportList), {});
-  const reportDeletingRequest = new RequestCore(clear_expired_job_list, {
-    onLoading(loading) {
-      reportDeletingBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({
-        text: ["清除成功"],
-      });
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["清除失败", error.message],
-      });
-    },
-  });
   const replyRequest = new RequestCore(replyReport, {});
   const commentDialog = new DialogCore({
     title: "回复",
@@ -249,11 +233,6 @@ export const HomeReportListPage: ViewComponent = (props) => {
     onClick() {
       refreshJobs();
       reportList.refresh();
-    },
-  });
-  const reportDeletingBtn = new ButtonCore({
-    onClick() {
-      reportDeletingRequest.run();
     },
   });
   const scrollView = new ScrollViewCore();

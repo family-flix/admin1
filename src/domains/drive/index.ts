@@ -2,10 +2,11 @@
  * @file 云盘实例
  * 包含所有云盘相关的操作、数据
  */
+import { deleteDrive } from "@/services/drive";
 import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
-import { Result } from "@/types";
-import { FileType } from "@/constants";
+import { Result } from "@/types/index";
+import { FileType } from "@/constants/index";
 
 import {
   analysisDrive,
@@ -18,7 +19,6 @@ import {
   addFolderInDrive,
   checkInDrive,
   analysisNewFilesInDrive,
-  deleteDrive,
   matchParsedMediasInDrive,
   receiveCheckInRewardOfDrive,
   analysisSpecialFilesInDrive,
@@ -131,8 +131,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   ) {
     const { target_folders, quickly = false } = options;
     if (this.state.loading) {
-      this.tip({ text: ["索引正在进行中"] });
-      return Result.Ok(null);
+      return Result.Err("索引正在进行中");
     }
     this.state.loading = true;
     this.emit(Events.StateChange, { ...this.state });
@@ -162,7 +161,6 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     if (r.error) {
       this.state.loading = false;
       this.emit(Events.StateChange, { ...this.state });
-      this.tip({ text: ["索引失败", r.error.message] });
       return Result.Err(r.error);
     }
     this.tip({ text: ["开始索引，请等待一段时间后刷新查看"] });

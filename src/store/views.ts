@@ -42,6 +42,7 @@ import { SeasonMediaProfileManagePage } from "@/pages/media_profile";
 import { ViewComponent } from "@/store/types";
 
 import { PageKeys } from "./routes";
+import { MTeamPage } from "@/pages/mteam";
 
 export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout": HomeLayout,
@@ -74,6 +75,7 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.subtitles_create": HomeSubtitleUploadPage,
   "root.media_profile_layout": MediaProfileHomeLayout,
   "root.media_profile_layout.home": SeasonMediaProfileManagePage,
+  "root.mteam": MTeamPage,
   "root.archive": SeasonArchivePage,
   "root.preview": MediaPlayingPage,
   "root.login": LoginPage,

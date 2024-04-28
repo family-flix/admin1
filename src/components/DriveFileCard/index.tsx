@@ -43,9 +43,12 @@ export const DriveFileCard = (props: {
     return [...file.parent_paths.map((p) => p.name)].filter(Boolean);
   };
   const size = () => {
-    const file = state();
+    const file = profile();
     if (!file) {
       return null;
+    }
+    if (!file.size) {
+      return;
     }
     return bytes_to_size(file.size);
   };
@@ -77,7 +80,7 @@ export const DriveFileCard = (props: {
                 <>
                   {p}
                   <Show when={i !== filepath().length - 1}>
-                    <span class="mx-4 text-slate-500">/</span>
+                    <span class="text-slate-500">/</span>
                   </Show>
                 </>
               );

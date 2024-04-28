@@ -48,6 +48,7 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.present = new PresenceCore();
     this.layer = new DismissableLayerCore();
     this.layer.onDismiss(() => {
+      console.log("[DOMAIN/ui]popover/index - onDismiss");
       this.hide();
     });
   }
@@ -60,6 +61,7 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   toggle() {
+    console.log("[DOMAIN/ui]popover/index - toggle");
     const { visible } = this;
     if (visible) {
       this.hide();
@@ -101,6 +103,7 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Show);
   }
   hide() {
+    console.log("[DOMAIN/ui]popover/index - hide");
     if (this.visible === false) {
       return;
     }

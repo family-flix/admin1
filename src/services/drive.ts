@@ -211,3 +211,15 @@ export function getFileDownloadURL(values: { file_id: string; drive_id: string }
     drive_id,
   });
 }
+
+/**
+ * 删除指定云盘
+ * @param {object} body
+ * @param {string} body.drive_id 云盘 id
+ */
+export function deleteDrive(body: { drive_id: string }) {
+  const { drive_id } = body;
+  return client.post("/api/v2/admin/drive/delete", {
+    drive_id,
+  });
+}

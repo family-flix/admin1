@@ -39,15 +39,17 @@ export type SyncTaskItem = RequestedResource<typeof fetchSyncTaskList>["list"][n
  */
 export function createSyncTaskWithUrl(body: {
   url: string;
+  pwd?: string;
   resource_file_id?: string;
   resource_file_name?: string;
   drive_file_id?: string;
   drive_file_name?: string;
   drive_id?: string;
 }) {
-  const { url, resource_file_id, resource_file_name, drive_file_id, drive_file_name, drive_id } = body;
+  const { url, pwd, resource_file_id, resource_file_name, drive_file_id, drive_file_name, drive_id } = body;
   return client.post<{}>(`/api/v2/admin/sync_task/create`, {
     url,
+    pwd,
     resource_file_id,
     resource_file_name,
     drive_file_id,

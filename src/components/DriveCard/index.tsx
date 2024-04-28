@@ -243,7 +243,9 @@ export const DriveCard = (props: {
     onClick() {
       dropdown.hide();
       foldersModal.show();
-      driveFileManage.appendColumn({ file_id: "root", name: "文件" });
+      if (!driveFileManage.initialized) {
+        driveFileManage.appendColumn({ file_id: "root", name: "文件" });
+      }
     },
   });
   const analysisQuicklyItem = new MenuItemCore({
@@ -387,6 +389,9 @@ export const DriveCard = (props: {
       }
       const r = await drive.startAnalysis();
       if (r.error) {
+        app.tip({
+          text: ["索引失败", r.error.message],
+        });
         return;
       }
       createJob({

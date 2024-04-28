@@ -1,4 +1,4 @@
-import { ImageCore } from ".";
+import { ImageCore } from "./index";
 
 export function connect($img: HTMLDivElement, store: ImageCore) {
   const io = new IntersectionObserver(

@@ -114,6 +114,7 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
+    console.log('[DOMAIN/ui]presence/index - hide');
     // console.log(...this.log("hide"));
     // this.calc(false);
     this.open = false;

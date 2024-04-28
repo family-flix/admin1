@@ -85,7 +85,8 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.LeaveMenu);
     });
     this.layer.onDismiss(() => {
-      // console.log("[]MenuCore - this.layer.onDismiss", this.items);
+      // console.log("[DOMAIN/ui]menu/index - hide");
+      console.log("[]MenuCore - this.layer.onDismiss");
       this.hide();
     });
     this.presence.onHidden(() => {
@@ -124,6 +125,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     // this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
+    console.log("[DOMAIN/ui]menu/index - hide");
     // this.log("hide");
     this.presence.hide();
     this.emit(Events.Hidden);

@@ -306,9 +306,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
         target_folders: [file],
       });
       driveFileManage.clearVirtualSelected();
-      app.tip({
-        text: ["开始索引"],
-      });
       analysisItem.enable();
       if (r.error) {
         app.tip({

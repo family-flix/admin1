@@ -7,7 +7,6 @@ import { Result } from "@/types";
 import { sleep } from "@/utils";
 
 import {
-  build_link_between_shared_files_with_folder,
   check_has_same_name_tv,
   fetch_resource_files,
   AliyunFolderItem,
@@ -217,40 +216,6 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.files = r.data.items;
     this.next_marker = "";
     this.emit(Events.StateChange, { ...this.state });
-  }
-  bindSelectedFolderInDrive() {
-    if (this.selectedFolder === null) {
-      const msg = this.tip({ text: ["请先选择要关联的文件夹"] });
-      return Result.Err(msg);
-    }
-    this.bindFolderInDrive(this.selectedFolder);
-    return Result.Ok(null);
-  }
-  /**
-   * 将分享文件夹和云盘内同名文件夹进行关联
-   */
-  async bindFolderInDrive(file: { file_id: string; name: string; type?: "file" | "folder" }) {
-    const { file_id, name, type } = file;
-    if (!this.url) {
-      this.tip({ text: ["请先输入分享链接"] });
-      return;
-    }
-    if (type === "file") {
-      this.tip({ text: ["只有文件夹能进行关联"] });
-      return;
-    }
-    const r = await build_link_between_shared_files_with_folder({
-      url: this.url,
-      file_id,
-      file_name: name,
-    });
-    if (r.error) {
-      this.emit(Events.Tip, r.error.message);
-      return;
-    }
-    this.tip({
-      text: ["关联成功"],
-    });
   }
   findTheTVHasSameNameWithSelectedFolder() {
     if (this.selectedFolder === null) {

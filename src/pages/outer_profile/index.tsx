@@ -270,12 +270,6 @@ export const OuterMediaProfilePage = () => {
                         <button
                           onClick={async () => {
                             console.log(JSON.stringify(curSeason, null, 2));
-                            // const r = await fetch("/api/v1/create_season", {
-                            //   body: JSON.stringify(curSeason),
-                            //   method: "POST",
-                            // });
-                            // const r1 = await r.json();
-                            // console.log(r1);
                           }}
                         >
                           打印

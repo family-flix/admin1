@@ -112,14 +112,19 @@ const PopoverContentImpl = (
     setState(nextState);
   });
 
+  // return (
+  //   <FocusScope>
+  //     <DismissableLayer store={store.layer}>
+  //       <PopperPrimitive.Content store={store.popper} class={props.class} data-state={state().open ? "open" : "closed"}>
+  //         {props.children}
+  //       </PopperPrimitive.Content>
+  //     </DismissableLayer>
+  //   </FocusScope>
+  // );
   return (
-    <FocusScope>
-      <DismissableLayer store={store.layer}>
-        <PopperPrimitive.Content store={store.popper} class={props.class} data-state={state().open ? "open" : "closed"}>
-          {props.children}
-        </PopperPrimitive.Content>
-      </DismissableLayer>
-    </FocusScope>
+    <PopperPrimitive.Content store={store.popper} class={props.class} data-state={state().open ? "open" : "closed"}>
+      {props.children}
+    </PopperPrimitive.Content>
   );
 };
 

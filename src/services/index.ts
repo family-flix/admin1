@@ -1116,7 +1116,7 @@ export async function fetchMemberList(params: FetchParams) {
         used: boolean;
       }[];
     }>
-  >("/api/admin/member/list", {
+  >("/api/v2/admin/member/list", {
     ...rest,
     page,
     page_size: pageSize,
@@ -1137,7 +1137,7 @@ export type MemberItem = RequestedResource<typeof fetchMemberList>["list"][0];
  * @returns
  */
 export function add_member(body: { remark: string }) {
-  return client.post<{ id: string }>("/api/admin/member/add", body);
+  return client.post<{ id: string }>("/api/v2/admin/member/add", body);
 }
 
 /**
@@ -1146,7 +1146,7 @@ export function add_member(body: { remark: string }) {
  * @returns
  */
 export function create_member_auth_link(body: { id: string }) {
-  return client.post<{ id: string }>("/api/admin/member/token/add", body);
+  return client.post<{ id: string }>("/api/v2/admin/member/add_token", body);
 }
 
 /**
@@ -1199,14 +1199,6 @@ export async function fetch_shared_files(body: { url: string; file_id: string; n
   return r;
 }
 export type AliyunFolderItem = RequestedResource<typeof fetch_shared_files>["items"][0];
-
-/**
- * 获取云盘文件临平
- */
-export async function fetch_drive_files(body: { drive_id: string; file_id: string; name: string }) {
-  const { drive_id, file_id, name } = body;
-  return client.get(`/api/admin/aliyun/files/${file_id}`, { name, drive_id });
-}
 
 /**
  * 执行一次同步任务（将分享资源新增的视频文件转存到云盘目标文件夹中）
@@ -1347,15 +1339,15 @@ export function moveMovieToResourceDrive(body: { movie_id: string }) {
  */
 export function delete_member(body: { id: string }) {
   const { id } = body;
-  return client.get(`/api/admin/member/delete/${id}`);
+  return client.post("/api/v2/admin/member/delete", { id });
 }
 
 export function updateMemberPermission(values: { member_id: string; permissions: string[] }) {
   const { member_id, permissions } = values;
-  const body = {
+  return client.post(`/api/v2/admin/member/update_permission`, {
+    member_id,
     permissions,
-  };
-  return client.post(`/api/admin/member/${member_id}/permission/update`, body);
+  });
 }
 
 /**
@@ -1363,11 +1355,6 @@ export function updateMemberPermission(values: { member_id: string; permissions:
  */
 export function has_admin() {
   return client.get<{ existing: boolean }>(`/api/admin/user/existing`);
-}
-
-export function delete_aliyun_file(body: { file_id: string }) {
-  const { file_id } = body;
-  return client.get(`/api/admin/aliyun/delete/${file_id}`);
 }
 
 export async function fetchSeasonProfile(body: { season_id: string }) {
@@ -1655,38 +1642,6 @@ export function upload_file(body: FormData) {
   return client.post("/api/admin/upload", body);
 }
 
-export function upload_subtitle_for_episode(params: {
-  tv_id: string;
-  season_text: string;
-  episode_text: string;
-  lang: string;
-  drive_id: string;
-  file: File;
-}) {
-  const { tv_id, drive_id, lang, season_text, episode_text, file } = params;
-  const body = new FormData();
-  body.append("file", file);
-  body.append("drive", drive_id);
-  body.append("lang", lang);
-  body.append("season_text", season_text);
-  body.append("episode_text", episode_text);
-  const search = query_stringify({
-    tv_id,
-    drive_id,
-    lang,
-    season_text,
-    episode_text,
-  });
-  return client.post(`/api/admin/episode/subtitle/add?${search}`, body);
-}
-
-export function upload_subtitle_for_movie(params: { movie_id: string; drive_id: string; lang: string; file: File }) {
-  const { movie_id, drive_id, lang, file } = params;
-  const body = new FormData();
-  body.append("file", file);
-  return client.post(`/api/admin/movie/${movie_id}/subtitle/add?drive_id=${drive_id}&lang=${lang}`, body);
-}
-
 export function notify_test(values: { text: string; token: string }) {
   const { text, token } = values;
   return client.post(`/api/admin/notify/test`, { text, token });
@@ -1827,22 +1782,17 @@ export function batchUploadSubtitles(values: {
   const body = new FormData();
   body.append("media_id", media_id);
   body.append("type", String(type));
-  if (type === MediaTypes.Season) {
-    for (const payload of files) {
-      const { file, ...restPayload } = payload;
-      const { episode_id } = restPayload;
-      if (payload.file && episode_id) {
-        body.append(episode_id, payload.file);
-      }
-      body.append("payloads", JSON.stringify(restPayload));
+  for (const data of files) {
+    const { file, filename, language } = data;
+    body.append("files", file);
+    const payload: { filename: string; language: string; episode_id?: string } = {
+      filename,
+      language,
+    };
+    if (type === MediaTypes.Season && data.episode_id) {
+      payload.episode_id = data.episode_id;
     }
-  }
-  if (type === MediaTypes.Movie) {
-    for (const payload of files) {
-      const { file, ...restPayload } = payload;
-      body.append("files", file);
-      body.append("payloads", JSON.stringify(restPayload));
-    }
+    body.append("payloads", JSON.stringify(payload));
   }
   return client.post<{ job_id: string }>("/api/v2/admin/subtitle/batch_create", body);
 }
@@ -2052,73 +2002,6 @@ export function deleteSourceFile(params: { id: string }) {
 export function deleteSourceFiles(params: { drive_id: string; season_id: string }) {
   const { drive_id, season_id } = params;
   return client.get(`/api/admin/source/delete`, { drive_id, season_id });
-}
-
-export function fetchCollectionList(params: FetchParams) {
-  return client.post<
-    ListResponse<{
-      id: string;
-      title: string;
-      desc?: string;
-      medias: {
-        id: string;
-        type: number;
-        name: string;
-        poster_path: string;
-      }[];
-    }>
-  >("/api/admin/collection/list", params);
-}
-export type CollectionItem = RequestedResource<typeof fetchCollectionList>["list"][number];
-
-export function createCollection(values: {
-  title: string;
-  sort: number;
-  desc?: string;
-  medias: { id: string; tv_id?: string }[];
-}) {
-  const { title, sort, desc, medias } = values;
-  return client.post("/api/admin/collection/create", {
-    title,
-    desc,
-    sort,
-    medias,
-  });
-}
-export function fetchCollectionProfile(values: { id: string }) {
-  const { id } = values;
-  return client.post<{
-    id: string;
-    title: string;
-    desc?: string;
-    sort?: number;
-    medias: {
-      id: string;
-      type: number;
-      name: string;
-      poster_path: string;
-    }[];
-  }>(`/api/admin/collection/${id}`, {});
-}
-export function editCollection(values: {
-  id: string;
-  title: string;
-  desc?: string;
-  sort?: number;
-  medias: { id: string; tv_id?: string }[];
-}) {
-  const { id, title, desc, sort, medias } = values;
-  return client.post(`/api/admin/collection/${id}/edit`, {
-    title,
-    desc,
-    sort,
-    medias,
-  });
-}
-
-export function deleteCollection(values: { id: string }) {
-  const { id } = values;
-  return client.post(`/api/admin/collection/${id}/delete`, {});
 }
 
 export function setParsedTVSeasonProfile(values: { file_id: string; source?: number; unique_id: number | string }) {
