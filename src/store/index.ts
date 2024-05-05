@@ -52,7 +52,8 @@ export const app = new Application({
         return Result.Ok(null);
       }
       // app.showView(loginPage);
-      history.push("root.login");
+      // @todo 如果目标是 /login，就不用 check is login
+      // history.push("root.login");
       return Result.Ok(null);
     }
     await app.$user.validate();

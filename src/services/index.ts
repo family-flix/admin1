@@ -1137,7 +1137,7 @@ export type MemberItem = RequestedResource<typeof fetchMemberList>["list"][0];
  * @returns
  */
 export function add_member(body: { remark: string }) {
-  return client.post<{ id: string }>("/api/v2/admin/member/add", body);
+  return client.post<{ id: string; account: { id: string; pwd: string } }>("/api/v2/admin/member/add", body);
 }
 
 /**
@@ -1337,7 +1337,7 @@ export function moveMovieToResourceDrive(body: { movie_id: string }) {
  * 删除指定成员
  * @returns
  */
-export function delete_member(body: { id: string }) {
+export function deleteMember(body: { id: string }) {
   const { id } = body;
   return client.post("/api/v2/admin/member/delete", { id });
 }

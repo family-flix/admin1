@@ -176,7 +176,8 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   // }
   start() {
     const { pathname } = this._pending;
-    this.setPathname(pathname);
+    const cleanPathname = pathname.replace(NavigatorCore.prefix!, "");
+    this.setPathname(cleanPathname);
     this.histories = [
       {
         pathname,
@@ -188,6 +189,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.prevPathname = p;
   }
   private setPathname(p: string) {
+    console.log("set pathname", p);
     this.pathname = p;
   }
   /** 调用该方法来「改变地址」 */

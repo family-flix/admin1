@@ -169,11 +169,6 @@ const configure = {
           },
         },
       },
-      mteam: {
-        title: "馒头PT",
-        pathname: "/mteam",
-        children: {},
-      },
       login: {
         title: "管理员登录",
         pathname: "/login",
@@ -269,6 +264,8 @@ export const routesWithPathname: Record<PathnameKey, RouteConfig> = configs
       ...b,
     };
   }, {});
+// @ts-ignore
+window.__routes_with_pathname__ = routesWithPathname;
 
 type PageKeysType<T extends OriginalRouteConfigure, K = keyof T> = K extends keyof T & (string | number)
   ? `${K}` | (T[K] extends object ? `${K}.${PageKeysType<T[K]["children"]>}` : never)

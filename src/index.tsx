@@ -114,8 +114,8 @@ function Application() {
       Authorization: app.$user.token,
     });
     const { pathname, query } = history.$router;
-    console.log("[ROOT]onMount", pathname, app.$user);
     const route = routesWithPathname[pathname];
+    console.log("[ROOT]onMount", pathname, route, app.$user);
     if (!route) {
       history.push("root.home_layout.index");
       return;

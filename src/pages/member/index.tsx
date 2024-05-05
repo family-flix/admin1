@@ -4,15 +4,16 @@
 import { createSignal, For, Show } from "solid-js";
 import { Check, Edit2, Gem, Lock, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
 import {
   add_member,
   create_member_auth_link,
-  delete_member,
+  deleteMember,
   fetchMemberList,
   fetchPermissionList,
   MemberItem,
   updateMemberPermission,
-} from "@/services";
+} from "@/services/index";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
 import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { Qrcode } from "@/components/Qrcode";
@@ -22,16 +23,22 @@ import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { MultipleSelectionCore } from "@/domains/multiple";
 import { create_link } from "@/domains/shortlink";
-import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
+import { RequestCoreV2 } from "@/domains/request_v2";
+import { fetchMemberAccounts } from "@/services/member";
 
 export const HomeMemberListPage: ViewComponent = (props) => {
-  const { app, history, view } = props;
+  const { app, history, client, view } = props;
 
   const memberList = new ListCore(new RequestCore(fetchMemberList), {
     onLoadingChange(loading) {
       refreshBtn.setLoading(loading);
     },
+  });
+  const memberAccountsRequest = new RequestCoreV2({
+    fetch: fetchMemberAccounts,
+    defaultResponse: {},
+    client,
   });
   const memberPermissionUpdateRequest = new RequestCore(updateMemberPermission, {
     onLoading(loading) {
@@ -64,7 +71,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       memberList.refresh();
     },
   });
-  const addMember = new RequestCore(add_member, {
+  const addMemberRequest = new RequestCore(add_member, {
     onLoading(loading) {
       addMemberDialog.okBtn.setLoading(loading);
       addMemberDialog.cancelBtn.setLoading(loading);
@@ -72,10 +79,19 @@ export const HomeMemberListPage: ViewComponent = (props) => {
     onFailed(error) {
       app.tip({ text: ["新增成员失败", error.message] });
     },
-    onSuccess() {
+    onSuccess(r) {
       addMemberDialog.hide();
       remarkInput.clear();
       memberList.refresh();
+      memberAccountsDialog.show();
+      setText(`https://media.funzm.com/mobile/home/index
+
+邮箱
+${r.account.id}
+
+密码
+${r.account.pwd}
+`);
     },
   });
   const memberRef = new RefCore<MemberItem>();
@@ -86,7 +102,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
         app.tip({ text: ["请先输入成员备注"] });
         return;
       }
-      addMember.run({
+      addMemberRequest.run({
         remark: remarkInput.value,
       });
     },
@@ -137,6 +153,12 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       app.tip({ text: ["敬请期待"] });
     },
   });
+  const accountBtn = new ButtonInListCore<MemberItem>({
+    onClick(member) {
+      memberAccountsRequest.run({ id: member.id });
+      memberAccountsDialog.show();
+    },
+  });
   const linkBtn = new ButtonInListCore<MemberItem>({
     onClick(member) {
       memberRef.select(member);
@@ -175,7 +197,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       confirmDeleteMemberDialog.show();
     },
   });
-  const deleteMember = new RequestCore(delete_member, {
+  const deleteMemberRequest = new RequestCore(deleteMember, {
     onLoading(loading) {
       confirmDeleteMemberDialog.okBtn.setLoading(loading);
     },
@@ -188,6 +210,21 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       app.tip({ text: ["删除成员失败", error.message] });
     },
   });
+  const memberAccountsDialog = new DialogCore({
+    title: "账号",
+    footer: false,
+    onOk() {
+      const selectedMember = memberSelect.value;
+      if (selectedMember === null) {
+        app.tip({ text: ["请先选择要删除的成员"] });
+        return;
+      }
+      deleteMemberRequest.run({ id: selectedMember.id });
+    },
+    onCancel() {
+      confirmDeleteMemberDialog.hide();
+    },
+  });
   const confirmDeleteMemberDialog = new DialogCore({
     title: "删除成员",
     onOk() {
@@ -196,7 +233,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择要删除的成员"] });
         return;
       }
-      deleteMember.run({ id: selectedMember.id });
+      deleteMemberRequest.run({ id: selectedMember.id });
     },
     onCancel() {
       confirmDeleteMemberDialog.hide();
@@ -254,6 +291,8 @@ ${url}`;
   const [response, setResponse] = createSignal(memberList.response);
   const [permissionResponse, setPermissionResponse] = createSignal(permissionList.response);
   const [selectedPermissions, setSelectedPermissions] = createSignal(permissionMultipleSelect.values);
+  // const [memberAccounts, setMemberAccounts] = createSignal(memberAccountsRequest.response);
+  const [text, setText] = createSignal("");
 
   permissionList.onStateChange((nextState) => {
     setPermissionResponse(nextState);
@@ -265,6 +304,9 @@ ${url}`;
   permissionMultipleSelect.onStateChange((nextState) => {
     setSelectedPermissions(nextState);
   });
+  // memberAccountsRequest.onStateChange((v) => {
+  //   setMemberAccounts(v);
+  // });
   scrollView.onReachBottom(() => {
     memberList.loadMore();
   });
@@ -350,6 +392,9 @@ ${url}`;
                           <div class="space-x-2">
                             <Button variant="subtle" icon={<Gem class="w-4 h-4" />} store={profileBtn.bind(member)}>
                               详情
+                            </Button>
+                            <Button variant="subtle" icon={<Gem class="w-4 h-4" />} store={accountBtn.bind(member)}>
+                              账号
                             </Button>
                             {/* <Button
                             variant="subtle"
@@ -476,6 +521,21 @@ ${url}`;
               }}
             </For>
           </ListView>
+        </div>
+      </Dialog>
+      <Dialog store={memberAccountsDialog}>
+        <div class="w-[520px]">
+          <pre
+            class="p-2 w-bg-0 rounded-md"
+            onClick={() => {
+              app.copy(text());
+              app.tip({
+                text: ["复制成功"],
+              });
+            }}
+          >
+            {text()}
+          </pre>
         </div>
       </Dialog>
       <Dialog store={seasonSelect.dialog}>

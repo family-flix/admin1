@@ -205,12 +205,6 @@ export const DriveListPage: ViewComponent = (props) => {
                         driveList.refresh();
                       }}
                       onClick={() => {
-                        // driveProfilePage.query = {
-                        //   id: drive.id,
-                        //   name,
-                        //   avatar,
-                        // };
-                        // app.showView(driveProfilePage);
                         history.push("root.home_layout.drive_profile", {
                           id: drive.id,
                           name,
