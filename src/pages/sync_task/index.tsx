@@ -18,7 +18,7 @@ import {
   Trash,
 } from "lucide-solid";
 
-import { ViewComponent } from "@/store/types";
+import { ViewComponent, ViewComponentProps } from "@/store/types";
 import { createJob } from "@/store/job";
 import {
   SyncTaskItem,
@@ -48,8 +48,20 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { SharedResourceCore } from "@/domains/shared_resource";
-import { Result } from "@/types";
-import { FileType } from "@/constants";
+import { Result } from "@/types/index";
+import { FileType } from "@/constants/index";
+
+function Page(props: ViewComponentProps) {
+  const $pwd = new InputCore({
+    defaultValue: "",
+    placeholder: "",
+  });
+  return {
+    ui: {
+      $pwd,
+    },
+  };
+}
 
 export const SyncTaskListPage: ViewComponent = (props) => {
   const { app, history, view } = props;
@@ -194,6 +206,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       syncTaskOverrideRequest.run({
         id: taskRef.value.id,
         url: resourceUrlInput.value,
+        pwd: $page.ui.$pwd.value,
       });
     },
   });
@@ -426,6 +439,7 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   });
   const poster = new ImageInListCore({});
   const folderImg = new ImageInListCore({});
+  const $page = Page(props);
 
   const [syncTaskListState, setSyncTaskListState] = createSignal(syncTaskList.response);
   const [resourceState, setResponseState] = createSignal(sharedResource.state);
@@ -779,13 +793,12 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       </Dialog> */}
       <Dialog store={syncTaskOverrideDialog}>
         <div class="w-[680px] min-h-[360px]">
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-9">
-              <Input store={resourceUrlInput} />
-            </div>
-            <div class="col-span-3 grid">
-              <Button store={resourceFetchBtn}>获取</Button>
-            </div>
+          <div class="flex items-center space-x-2 mt-4">
+            <Input store={resourceUrlInput} />
+            <Input store={$page.ui.$pwd} />
+            <Button size="default" variant="default" icon={<Send class="w-4 h-4" />} store={resourceFetchBtn}>
+              获取
+            </Button>
           </div>
           <div class="mt-4">
             <div class="">

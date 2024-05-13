@@ -6,8 +6,8 @@ import { Check, Edit2, Gem, Lock, RotateCcw, Search, ShieldClose, UserPlus, User
 
 import { ViewComponent } from "@/store/types";
 import {
-  add_member,
-  create_member_auth_link,
+  createMember,
+  createMemberAuthToken,
   deleteMember,
   fetchMemberList,
   fetchPermissionList,
@@ -49,6 +49,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
         text: ["权限更新成功"],
       });
       permissionDialog.hide();
+      permissionMultipleSelect.clear();
     },
     onFailed(error) {
       app.tip({
@@ -60,7 +61,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
     },
   });
   const memberSelect = new RefCore<MemberItem>();
-  const generateToken = new RequestCore(create_member_auth_link, {
+  const generateToken = new RequestCore(createMemberAuthToken, {
     onLoading(loading) {
       generateTokenBtn.setLoading(loading);
     },
@@ -71,7 +72,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       memberList.refresh();
     },
   });
-  const addMemberRequest = new RequestCore(add_member, {
+  const addMemberRequest = new RequestCore(createMember, {
     onLoading(loading) {
       addMemberDialog.okBtn.setLoading(loading);
       addMemberDialog.cancelBtn.setLoading(loading);
@@ -132,7 +133,7 @@ ${r.account.pwd}
   });
   const nameSearchInput = new InputCore({
     defaultValue: "",
-    placeholder: "请输入名称搜索",
+    placeholder: "请输入名称或邮箱搜索",
     onEnter() {
       searchBtn.click();
     },
@@ -302,6 +303,7 @@ ${url}`;
     setResponse(nextState);
   });
   permissionMultipleSelect.onStateChange((nextState) => {
+    console.log("permissionMultipleSelect.onStateChange", nextState);
     setSelectedPermissions(nextState);
   });
   // memberAccountsRequest.onStateChange((v) => {
@@ -371,21 +373,24 @@ ${url}`;
               <div class="space-y-8">
                 <For each={response().dataSource}>
                   {(member) => {
-                    const { inviter, remark, tokens } = member;
+                    const { inviter, remark, email, tokens } = member;
                     return (
                       <div class="card rounded-sm bg-white p-4">
                         <div class="flex items-center">
                           <div class="flex items-center justify-center w-12 h-12 bg-slate-300 rounded-full mr-2">
                             <div class="text-3xl text-slate-500">{remark.slice(0, 1).toUpperCase()}</div>
                           </div>
-                          <div class="flex text-2xl">
-                            <Show when={inviter}>
-                              <div class="flex items-center text-gray-600">
-                                <div>{inviter?.remark}</div>
-                                <div class="mx-2">/</div>
-                              </div>
-                            </Show>
-                            <p class="">{remark}</p>
+                          <div>
+                            <div class="flex text-2xl">
+                              <Show when={inviter}>
+                                <div class="flex items-center text-gray-600">
+                                  <div>{inviter?.remark}</div>
+                                  <div class="mx-2">/</div>
+                                </div>
+                              </Show>
+                              <p class="">{remark}</p>
+                            </div>
+                            <Show when={email}>{email}</Show>
                           </div>
                         </div>
                         <div class="mt-4">

@@ -1105,6 +1105,7 @@ export async function fetchMemberList(params: FetchParams) {
     ListResponseWithCursor<{
       id: string;
       remark: string;
+      email: string | null;
       inviter: null | {
         id: string;
         remark: string;
@@ -1136,7 +1137,7 @@ export type MemberItem = RequestedResource<typeof fetchMemberList>["list"][0];
  * @param body
  * @returns
  */
-export function add_member(body: { remark: string }) {
+export function createMember(body: { remark: string }) {
   return client.post<{ id: string; account: { id: string; pwd: string } }>("/api/v2/admin/member/add", body);
 }
 
@@ -1145,7 +1146,7 @@ export function add_member(body: { remark: string }) {
  * @param body
  * @returns
  */
-export function create_member_auth_link(body: { id: string }) {
+export function createMemberAuthToken(body: { id: string }) {
   return client.post<{ id: string }>("/api/v2/admin/member/add_token", body);
 }
 
@@ -1658,25 +1659,38 @@ type UserSettings = {
   extra_filename_rules: string;
   ignore_files_when_sync: string;
   max_size_when_sync: number;
+  /** 开放注册 */
+  can_register?: boolean;
+  /** 无需邀请码 */
+  no_need_invitation_code?: boolean;
 };
 
 /**
  * 获取用户配置
  */
 export function fetchSettings() {
-  return client.get<UserSettings>("/api/admin/settings");
+  return client.post<UserSettings>("/api/v2/admin/settings/profile", {});
 }
 
 /**
  * 更新用户配置
  */
 export function updateSettings(values: Partial<UserSettings>) {
-  const { push_deer_token, extra_filename_rules, ignore_files_when_sync, max_size_when_sync } = values;
-  return client.post(`/api/admin/settings/update`, {
+  const {
     push_deer_token,
     extra_filename_rules,
     ignore_files_when_sync,
     max_size_when_sync,
+    can_register,
+    no_need_invitation_code,
+  } = values;
+  return client.post("/api/v2/admin/settings/update", {
+    push_deer_token,
+    extra_filename_rules,
+    ignore_files_when_sync,
+    max_size_when_sync,
+    can_register,
+    no_need_invitation_code,
   });
 }
 
@@ -1718,7 +1732,7 @@ export function replyReport(
  */
 export async function fetchPermissionList(params: FetchParams) {
   const { pageSize, ...restParams } = params;
-  const r = await client.get<
+  const r = await client.post<
     ListResponse<{
       code: string;
       desc: string;

@@ -26,7 +26,7 @@ import { CollectionCreatePage } from "@/pages/collection/create";
 import { HomeMemberListPage } from "@/pages/member";
 import { VideoParsingPage } from "@/pages/parse";
 import { HomeReportListPage } from "@/pages/report";
-import { HomePermissionPage } from "@/pages/permission";
+import { PermissionManagePage } from "@/pages/permission";
 import { HomeSubtitleUploadPage } from "@/pages/subtitle/add";
 import { HomeSubtitleListPage } from "@/pages/subtitle";
 import { SharedFilesHistoryPage } from "@/pages/resource/list";
@@ -53,8 +53,8 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.movie_list": MovieListPage,
   "root.home_layout.movie_profile": MovieProfilePage,
   "root.home_layout.invalid_media_list": InvalidMediaListPage,
-  "root.home_layout.permission": PersonListPage,
-  "root.home_layout.person_list": HomePermissionPage,
+  "root.home_layout.permission": PermissionManagePage,
+  "root.home_layout.person_list": PersonListPage,
   "root.home_layout.parse_result_layout": UnknownMediaLayout,
   "root.home_layout.parse_result_layout.movie": UnknownMovieListPage,
   "root.home_layout.parse_result_layout.season": UnknownSeasonListPage,

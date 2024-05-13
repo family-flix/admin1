@@ -142,13 +142,15 @@ export function deleteSyncTask(params: { id: string }) {
 export function overrideResourceForSyncTask(values: {
   id: string;
   url: string;
+  pwd?: string;
   resource_file_id?: string;
   resource_file_name?: string;
 }) {
-  const { id, url, resource_file_id, resource_file_name } = values;
+  const { id, url, pwd, resource_file_id, resource_file_name } = values;
   return client.post<{}>("/api/v2/admin/sync_task/override", {
     id,
     url,
+    pwd,
     resource_file_id,
     resource_file_name,
   });

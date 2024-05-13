@@ -172,7 +172,7 @@ export async function fetchDriveInstanceList(params: FetchParams) {
  */
 export async function refreshDriveProfile(body: { drive_id: string }) {
   const { drive_id } = body;
-  const r = await client.get<{
+  const r = await client.post<{
     id: string;
     name: string;
     user_name: string;
@@ -180,7 +180,9 @@ export async function refreshDriveProfile(body: { drive_id: string }) {
     avatar: string;
     used_size: number;
     total_size: number;
-  }>(`/api/admin/drive/refresh/${drive_id}`);
+  }>("/api/v2/admin/drive/refresh", {
+    id: drive_id,
+  });
   if (r.error) {
     return Result.Err(r.error);
   }

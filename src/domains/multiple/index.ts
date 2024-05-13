@@ -52,7 +52,7 @@ export class MultipleSelectionCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   clear() {
     this.values = [];
-    this.emit(Events.StateChange);
+    this.emit(Events.StateChange, [...this.values]);
   }
 
   onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {

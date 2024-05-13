@@ -7,20 +7,16 @@ import {
   Users,
   FolderInput,
   Home,
-  EyeOff,
   Bot,
   Flame,
   LogOut,
   Settings,
   Tv,
-  FileSearch,
   File,
   CircuitBoard,
   Subtitles,
-  MessageCircle,
   AlarmClock,
   Folder,
-  Cherry,
   Sparkles,
   HeartCrack,
 } from "lucide-solid";
@@ -30,14 +26,26 @@ import { onJobsChange } from "@/store/job";
 import { PageKeys } from "@/store/routes";
 import { fetchSettings, notify_test, updateSettings } from "@/services";
 import { Show } from "@/packages/ui/show";
-import { Button, Dialog, DropdownMenu, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
+import { Button, Checkbox, Dialog, DropdownMenu, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
 import { FileSearchDialog, FileSearcherCore } from "@/components/FileSearcher";
-import { ButtonCore, DialogCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
+import {
+  ButtonCore,
+  CheckboxCore,
+  DialogCore,
+  DropdownMenuCore,
+  InputCore,
+  MenuCore,
+  MenuItemCore,
+} from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { Application } from "@/domains/app";
 import { HistoryCore } from "@/domains/history";
-import { cn, sleep } from "@/utils";
+import { cn, sleep } from "@/utils/index";
+
+function Page(props: ViewComponentProps) {
+  const { app, history, client, storage, pages, view } = props;
+}
 
 export const HomeLayout: ViewComponent = (props) => {
   const { app, history, client, storage, pages, view } = props;
@@ -47,10 +55,22 @@ export const HomeLayout: ViewComponent = (props) => {
       settingsBtn.setLoading(loading);
     },
     onSuccess(v) {
-      const { push_deer_token = "", extra_filename_rules = "", ignore_files_when_sync = "" } = v;
+      const {
+        push_deer_token = "",
+        extra_filename_rules = "",
+        ignore_files_when_sync = "",
+        can_register,
+        no_need_invitation_code,
+      } = v;
       notify1TokenInput.setValue(push_deer_token);
       filenameParseRuleInput.setValue(extra_filename_rules);
       ignoreFilesRuleInput.setValue(ignore_files_when_sync);
+      if (can_register) {
+        $canRegisterCheckbox.check();
+      }
+      if (no_need_invitation_code) {
+        $noNeedCode.check();
+      }
     },
     onFailed(error) {
       app.tip({
@@ -108,10 +128,14 @@ export const HomeLayout: ViewComponent = (props) => {
       const notify1Token = notify1TokenInput.value?.trim();
       const ignoreFilesRule = ignoreFilesRuleInput.value?.trim();
       const filenameParse = filenameParseRuleInput.value?.trim();
+      const canRegister = $canRegisterCheckbox.checked;
+      const noNeedCode = $noNeedCode.checked;
       const values = {
         ignore_files_when_sync: ignoreFilesRule,
         push_deer_token: notify1TokenInput.value?.trim(),
         extra_filename_rules: filenameParseRuleInput.value?.trim(),
+        can_register: canRegister,
+        no_need_invitation_code: noNeedCode,
       };
       if (notify1Token) {
         values.push_deer_token = notify1Token;
@@ -212,135 +236,6 @@ export const HomeLayout: ViewComponent = (props) => {
     },
   });
   const expiredDeletingBtn = new ButtonCore({});
-
-  const [curSubView, setCurSubView] = createSignal(view.curView);
-  const [subViews, setSubViews] = createSignal(view.subViews);
-
-  view.onSubViewsChange((nextSubViews) => {
-    setSubViews(nextSubViews);
-  });
-  view.onCurViewChange((nextCurView) => {
-    setCurSubView(nextCurView);
-  });
-  tmdbDialog.onTip((msg) => {
-    app.tip(msg);
-  });
-  fileSearchDialog.onTip((msg) => {
-    app.tip(msg);
-  });
-
-  const [menus, setMenus] = createSignal([
-    {
-      text: "首页",
-      icon: <Home class="w-6 h-6" />,
-      // url: "/home/index",
-      url: "root.home_layout.index" as PageKeys,
-      // view: homeIndexPage,
-    },
-    {
-      text: "电视剧",
-      icon: <Tv class="w-6 h-6" />,
-      // url: "/home/season",
-      url: "root.home_layout.season_list" as PageKeys,
-      // view: homeSeasonListPage,
-    },
-    {
-      text: "电影",
-      icon: <Film class="w-6 h-6" />,
-      // url: "/home/movie",
-      url: "root.home_layout.movie_list" as PageKeys,
-      // view: homeMovieListPage,
-    },
-    {
-      text: "刮削结果",
-      icon: <Sparkles class="w-6 h-6" />,
-      // url: "/home/unknown_media/season",
-      url: "root.home_layout.parse_result_layout.season" as PageKeys,
-      // view: homeUnknownTVPage,
-    },
-    {
-      text: "问题影视剧",
-      icon: <HeartCrack class="w-6 h-6" />,
-      badge: false,
-      // url: "/home/invalid_media",
-      url: "root.home_layout.invalid_media_list" as PageKeys,
-      // view: homeInvalidMediaListPage,
-    },
-    {
-      text: "集合管理",
-      icon: <Folder class="w-6 h-6" />,
-      // url: "/home/collection",
-      url: "root.home_layout.collection_list" as PageKeys,
-      // view: collectionListPage,
-    },
-    {
-      text: "字幕管理",
-      icon: <Subtitles class="w-6 h-6" />,
-      // url: "/home/subtitle",
-      url: "root.home_layout.subtitles_list" as PageKeys,
-      // view: homeSubtitleListPage,
-    },
-    {
-      text: "同步任务",
-      icon: <AlarmClock class="w-6 h-6" />,
-      // view: syncTaskListPage,
-      url: "root.home_layout.resource_sync" as PageKeys,
-    },
-    {
-      text: "任务",
-      icon: <Bot class="w-6 h-6" />,
-      badge: false,
-      // url: "/home/log",
-      // view: homeTaskListPage,
-      url: "root.home_layout.job_list" as PageKeys,
-    },
-    {
-      text: "问题反馈",
-      icon: <CircuitBoard class="w-6 h-6" />,
-      badge: false,
-      // url: "/home/report",
-      // view: homeReportListPage,
-      url: "root.home_layout.report_list" as PageKeys,
-    },
-    {
-      text: "云盘文件搜索",
-      icon: <File class="w-6 h-6" />,
-      onClick() {
-        fileSearchDialog.show();
-      },
-    },
-    {
-      text: "TMDB 数据库",
-      icon: <Flame class="w-6 h-6" />,
-      onClick() {
-        tmdbDialog.show();
-      },
-    },
-    // {
-    //   text: "群发消息",
-    //   icon: <MessageCircle class="w-6 h-6" />,
-    //   onClick() {
-    //     pushDialog.show();
-    //   },
-    // },
-    {
-      text: "成员",
-      icon: <Users class="w-6 h-6" />,
-      // view: homeMemberListPage,
-      url: "root.home_layout.member_list" as PageKeys,
-    },
-    {
-      text: "转存资源",
-      icon: <FolderInput class="w-6 h-6" />,
-      // view: homeTransferPage,
-      url: "root.home_layout.transfer" as PageKeys,
-    },
-    // {
-    //   text: "文件名解析",
-    //   icon: <FileSearch class="w-6 h-6" />,
-    //   view: homeFilenameParsingPage,
-    // },
-  ]);
   const userDropdown = new DropdownMenuCore({
     align: "start",
     side: "bottom",
@@ -367,7 +262,127 @@ export const HomeLayout: ViewComponent = (props) => {
       }),
     ],
   });
+  const $canRegisterCheckbox = new CheckboxCore();
+  const $noNeedCode = new CheckboxCore();
 
+  const [curSubView, setCurSubView] = createSignal(view.curView);
+  const [subViews, setSubViews] = createSignal(view.subViews);
+
+  view.onSubViewsChange((nextSubViews) => {
+    setSubViews(nextSubViews);
+  });
+  view.onCurViewChange((nextCurView) => {
+    setCurSubView(nextCurView);
+  });
+  tmdbDialog.onTip((msg) => {
+    app.tip(msg);
+  });
+  fileSearchDialog.onTip((msg) => {
+    app.tip(msg);
+  });
+
+  const [menus, setMenus] = createSignal<
+    { text: string; icon: JSX.Element; badge?: boolean; url?: PageKeys; onClick?: () => void }[]
+  >([
+    {
+      text: "首页",
+      icon: <Home class="w-6 h-6" />,
+      // url: "/home/index",
+      url: "root.home_layout.index",
+      // view: homeIndexPage,
+    },
+    {
+      text: "电视剧",
+      icon: <Tv class="w-6 h-6" />,
+      // url: "/home/season",
+      url: "root.home_layout.season_list",
+      // view: homeSeasonListPage,
+    },
+    {
+      text: "电影",
+      icon: <Film class="w-6 h-6" />,
+      // url: "/home/movie",
+      url: "root.home_layout.movie_list",
+      // view: homeMovieListPage,
+    },
+    {
+      text: "刮削结果",
+      icon: <Sparkles class="w-6 h-6" />,
+      // url: "/home/unknown_media/season",
+      url: "root.home_layout.parse_result_layout.season",
+      // view: homeUnknownTVPage,
+    },
+    {
+      text: "问题影视剧",
+      icon: <HeartCrack class="w-6 h-6" />,
+      badge: false,
+      // url: "/home/invalid_media",
+      url: "root.home_layout.invalid_media_list",
+      // view: homeInvalidMediaListPage,
+    },
+    {
+      text: "集合管理",
+      icon: <Folder class="w-6 h-6" />,
+      // url: "/home/collection",
+      url: "root.home_layout.collection_list",
+      // view: collectionListPage,
+    },
+    {
+      text: "字幕管理",
+      icon: <Subtitles class="w-6 h-6" />,
+      // url: "/home/subtitle",
+      url: "root.home_layout.subtitles_list",
+      // view: homeSubtitleListPage,
+    },
+    {
+      text: "同步任务",
+      icon: <AlarmClock class="w-6 h-6" />,
+      // view: syncTaskListPage,
+      url: "root.home_layout.resource_sync",
+    },
+    {
+      text: "任务",
+      icon: <Bot class="w-6 h-6" />,
+      badge: false,
+      // url: "/home/log",
+      // view: homeTaskListPage,
+      url: "root.home_layout.job_list",
+    },
+    {
+      text: "问题反馈",
+      icon: <CircuitBoard class="w-6 h-6" />,
+      badge: false,
+      // url: "/home/report",
+      // view: homeReportListPage,
+      url: "root.home_layout.report_list",
+    },
+    {
+      text: "云盘文件搜索",
+      icon: <File class="w-6 h-6" />,
+      onClick() {
+        fileSearchDialog.show();
+      },
+    },
+    {
+      text: "TMDB 数据库",
+      icon: <Flame class="w-6 h-6" />,
+      onClick() {
+        tmdbDialog.show();
+      },
+    },
+    {
+      text: "成员",
+      icon: <Users class="w-6 h-6" />,
+      // view: homeMemberListPage,
+      url: "root.home_layout.member_list",
+    },
+    {
+      text: "转存资源",
+      icon: <FolderInput class="w-6 h-6" />,
+      // view: homeTransferPage,
+      url: "root.home_layout.transfer",
+    },
+  ]);
   const [curRouteName, setCurRouteName] = createSignal(history.$router.name);
 
   // onMount(() => {
@@ -485,6 +500,13 @@ export const HomeLayout: ViewComponent = (props) => {
           <div class="mt-4">
             <div>转存忽略规则</div>
             <Textarea store={ignoreFilesRuleInput} />
+          </div>
+          <div class="mt-4">
+            <div>注册</div>
+            <Checkbox store={$canRegisterCheckbox} />
+            开放注册
+            <Checkbox store={$noNeedCode} />
+            无需邀请码
           </div>
           {/* <div class="mt-4">
             <div>其他</div>

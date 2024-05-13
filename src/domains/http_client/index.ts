@@ -71,7 +71,7 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
   }
   async post<T>(
     endpoint: string,
-    body?: JSONObject | FormData,
+    body: JSONObject | FormData = {},
     extra: Partial<{ headers: Record<string, string>; token: unknown }> = {}
   ): Promise<Result<T>> {
     //     const client = this.axios;

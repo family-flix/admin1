@@ -4,14 +4,14 @@
 import { For, Show, createSignal } from "solid-js";
 import { Lock, RotateCcw } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
 import { addPermission, fetchPermissionList } from "@/services";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { Button, Dialog, Input, ListView } from "@/components/ui";
 import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
-import { ViewComponent } from "@/store/types";
 
-export const HomePermissionPage: ViewComponent = (props) => {
+export const PermissionManagePage: ViewComponent = (props) => {
   const { app } = props;
 
   const addPermissionRequest = new RequestCore(addPermission, {
@@ -52,6 +52,7 @@ export const HomePermissionPage: ViewComponent = (props) => {
       addPermissionRequest.run({
         desc: permissionInput.value,
       });
+      list.refresh();
     },
   });
 
