@@ -7,7 +7,7 @@ import { MediaErrorTypes, MediaTypes } from "@/constants";
 /**
  * 获取无法识别的 tv
  */
-export async function fetchUnknownMediaList(params: FetchParams & { type?: MediaTypes }) {
+export async function fetchUnknownMediaList(params: FetchParams & { name?: string; empty?: 0 | 1; type?: MediaTypes }) {
   const { page, pageSize, type, ...rest } = params;
   console.log("[SERVICES]fetchUnknownMediaList", type);
   const r = await client.post<

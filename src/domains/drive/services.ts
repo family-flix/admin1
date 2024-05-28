@@ -244,6 +244,23 @@ export async function analysisSpecialFilesInDrive(body: {
 }
 
 /**
+ * 文件洗码
+ * @param {object} body
+ * @param {string} body.drive_id 要索引的云盘 id
+ * @param {string} [body.target_folder] 要索引的云盘内指定文件夹 id
+ */
+export async function changeDriveFileHash(body: {
+  drive_id: string;
+  file: { file_id: string; type: FileType; name: string };
+}) {
+  const { drive_id, file } = body;
+  return client.post<{ job_id: string }>("/api/v2/drive/file/change_hash", {
+    file_id: file.file_id,
+    drive_id,
+  });
+}
+
+/**
  * 索引指定云盘新增的文件/文件夹
  * @param {object} body
  * @param {string} body.drive_id 要索引的云盘 id

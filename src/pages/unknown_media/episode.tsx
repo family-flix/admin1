@@ -241,13 +241,19 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
         });
         return;
       }
-      setMediaSourceProfileRequest.run({
-        parsed_media_source_id: id,
-        media_profile: {
-          id: String(mediaProfile.id),
-          type: mediaProfile.type,
-          name: mediaProfile.name,
-        },
+      if (mediaProfile.type === MediaTypes.Movie) {
+        setMediaSourceProfileRequest.run({
+          parsed_media_source_id: id,
+          media_profile: {
+            id: String(mediaProfile.id),
+            type: mediaProfile.type,
+            name: mediaProfile.name,
+          },
+        });
+        return;
+      }
+      app.tip({
+        text: ["异常的 media profile type"],
       });
     },
   });

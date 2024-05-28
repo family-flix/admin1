@@ -4,11 +4,12 @@
 import { createSignal, For, Show } from "solid-js";
 import { Check, Edit2, Gem, Lock, RotateCcw, Search, ShieldClose, UserPlus, UserX } from "lucide-solid";
 
-import { ViewComponent } from "@/store/types";
+import { ViewComponent, ViewComponentProps } from "@/store/types";
 import {
   createMember,
   createMemberAuthToken,
   deleteMember,
+  fetchMemberHistoryList,
   fetchMemberList,
   fetchPermissionList,
   MemberItem,
@@ -27,12 +28,12 @@ import { cn } from "@/utils";
 import { RequestCoreV2 } from "@/domains/request_v2";
 import { fetchMemberAccounts } from "@/services/member";
 
-export const HomeMemberListPage: ViewComponent = (props) => {
-  const { app, history, client, view } = props;
+function Page(props: ViewComponentProps) {
+  const { app, client, storage, history } = props;
 
-  const memberList = new ListCore(new RequestCore(fetchMemberList), {
+  const $memberList = new ListCore(new RequestCore(fetchMemberList), {
     onLoadingChange(loading) {
-      refreshBtn.setLoading(loading);
+      $refreshBtn.setLoading(loading);
     },
   });
   const memberAccountsRequest = new RequestCoreV2({
@@ -42,14 +43,14 @@ export const HomeMemberListPage: ViewComponent = (props) => {
   });
   const memberPermissionUpdateRequest = new RequestCore(updateMemberPermission, {
     onLoading(loading) {
-      permissionDialog.okBtn.setLoading(loading);
+      $permissionDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({
         text: ["权限更新成功"],
       });
-      permissionDialog.hide();
-      permissionMultipleSelect.clear();
+      $permissionDialog.hide();
+      $permissionMultipleSelect.clear();
     },
     onFailed(error) {
       app.tip({
@@ -57,7 +58,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       });
     },
     onCompleted() {
-      permissionMultipleSelect.clear();
+      $permissionMultipleSelect.clear();
     },
   });
   const memberSelect = new RefCore<MemberItem>();
@@ -69,101 +70,104 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       app.tip({ text: ["生成 token 失败", error.message] });
     },
     onSuccess() {
-      memberList.refresh();
+      $memberList.refresh();
     },
   });
   const addMemberRequest = new RequestCore(createMember, {
     onLoading(loading) {
-      addMemberDialog.okBtn.setLoading(loading);
-      addMemberDialog.cancelBtn.setLoading(loading);
+      $addMemberDialog.okBtn.setLoading(loading);
+      $addMemberDialog.cancelBtn.setLoading(loading);
     },
     onFailed(error) {
       app.tip({ text: ["新增成员失败", error.message] });
     },
     onSuccess(r) {
-      addMemberDialog.hide();
-      remarkInput.clear();
-      memberList.refresh();
-      memberAccountsDialog.show();
-      setText(`https://media.funzm.com/mobile/home/index
+      $addMemberDialog.hide();
+      $remarkInput.clear();
+      $memberList.refresh();
+      $memberAccountsDialog.show();
+      const text = `https://media.funzm.com/mobile/home/index
 
 邮箱
 ${r.account.id}
 
 密码
 ${r.account.pwd}
-`);
+`;
+      // setText();
     },
   });
+  const $historyList = new ListCore(new RequestCore(fetchMemberHistoryList));
   const memberRef = new RefCore<MemberItem>();
-  const addMemberDialog = new DialogCore({
+  const $addMemberDialog = new DialogCore({
     title: "新增成员",
     onOk() {
-      if (!remarkInput.value) {
+      if (!$remarkInput.value) {
         app.tip({ text: ["请先输入成员备注"] });
         return;
       }
       addMemberRequest.run({
-        remark: remarkInput.value,
+        remark: $remarkInput.value,
       });
     },
   });
-  const remarkInput = new InputCore({
+  const $remarkInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入备注",
     onEnter() {
-      addMemberDialog.okBtn.click();
+      $addMemberDialog.okBtn.click();
     },
   });
-  const permissionBtn = new ButtonCore({
+  const $permissionBtn = new ButtonCore({
     onClick() {
       history.push("root.home_layout.permission");
       // app.showView(homePermissionListPage);
     },
   });
-  const addMemberBtn = new ButtonCore({
+  const $addMemberBtn = new ButtonCore({
     onClick() {
-      addMemberDialog.show();
+      $addMemberDialog.show();
     },
   });
-  const refreshBtn = new ButtonCore({
+  const $refreshBtn = new ButtonCore({
     onClick() {
-      memberList.refresh();
+      $memberList.refresh();
     },
   });
-  const nameSearchInput = new InputCore({
+  const $nameInput = new InputCore({
     defaultValue: "",
     placeholder: "请输入名称或邮箱搜索",
     onEnter() {
-      searchBtn.click();
+      $searchBtn.click();
     },
   });
-  const searchBtn = new ButtonCore({
+  const $searchBtn = new ButtonCore({
     onClick() {
-      memberList.search({ name: nameSearchInput.value });
+      $memberList.search({ name: $nameInput.value });
     },
   });
-  const resetBtn = new ButtonCore({
+  const $resetBtn = new ButtonCore({
     onClick() {
-      memberList.reset();
-      nameSearchInput.clear();
+      $memberList.reset();
+      $nameInput.clear();
     },
   });
-  const profileBtn = new ButtonInListCore<MemberItem>({
+  const $profile = new ButtonInListCore<MemberItem>({
     onClick(member) {
-      app.tip({ text: ["敬请期待"] });
+      $historyList.init({ member_id: member.id });
+      $historyDialog.show();
     },
   });
-  const accountBtn = new ButtonInListCore<MemberItem>({
+  const $account = new ButtonInListCore<MemberItem>({
     onClick(member) {
       memberAccountsRequest.run({ id: member.id });
-      memberAccountsDialog.show();
+      $memberAccountsDialog.show();
     },
   });
-  const linkBtn = new ButtonInListCore<MemberItem>({
+  const $link = new ButtonInListCore<MemberItem>({
     onClick(member) {
       memberRef.select(member);
-      seasonSelect.dialog.show();
+      $seasonSelect.dialog.show();
     },
   });
   const generateTokenBtn = new ButtonInListCore<MemberItem>({
@@ -175,43 +179,43 @@ ${r.account.pwd}
       generateToken.run({ id: member.id });
     },
   });
-  const banMemberBtn = new ButtonInListCore<MemberItem>({
+  const $ban = new ButtonInListCore<MemberItem>({
     onClick(member) {
       app.tip({ text: ["敬请期待"] });
     },
   });
-  const updateMemberBtn = new ButtonInListCore<MemberItem>({
+  const $update = new ButtonInListCore<MemberItem>({
     onClick(member) {
       memberRef.select(member);
-      permissionList.init();
-      permissionDialog.show();
+      $permissionList.init();
+      $permissionDialog.show();
     },
   });
-  const deleteMemberBtn = new ButtonInListCore<MemberItem>({
+  const $delete = new ButtonInListCore<MemberItem>({
     onClick(member) {
       console.log("[]click", member);
       if (member === null) {
         return;
       }
       memberSelect.select(member);
-      confirmDeleteMemberDialog.setTitle(`删除成员 '${member.remark}'`);
-      confirmDeleteMemberDialog.show();
+      $confirmDeleteMemberDialog.setTitle(`删除成员 '${member.remark}'`);
+      $confirmDeleteMemberDialog.show();
     },
   });
   const deleteMemberRequest = new RequestCore(deleteMember, {
     onLoading(loading) {
-      confirmDeleteMemberDialog.okBtn.setLoading(loading);
+      $confirmDeleteMemberDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({ text: ["删除成员成功"] });
-      confirmDeleteMemberDialog.hide();
-      memberList.refresh();
+      $confirmDeleteMemberDialog.hide();
+      $memberList.refresh();
     },
     onFailed(error) {
       app.tip({ text: ["删除成员失败", error.message] });
     },
   });
-  const memberAccountsDialog = new DialogCore({
+  const $memberAccountsDialog = new DialogCore({
     title: "账号",
     footer: false,
     onOk() {
@@ -223,10 +227,10 @@ ${r.account.pwd}
       deleteMemberRequest.run({ id: selectedMember.id });
     },
     onCancel() {
-      confirmDeleteMemberDialog.hide();
+      $confirmDeleteMemberDialog.hide();
     },
   });
-  const confirmDeleteMemberDialog = new DialogCore({
+  const $confirmDeleteMemberDialog = new DialogCore({
     title: "删除成员",
     onOk() {
       const selectedMember = memberSelect.value;
@@ -237,16 +241,16 @@ ${r.account.pwd}
       deleteMemberRequest.run({ id: selectedMember.id });
     },
     onCancel() {
-      confirmDeleteMemberDialog.hide();
+      $confirmDeleteMemberDialog.hide();
     },
   });
-  const seasonSelect = new TVSeasonSelectCore({
+  const $seasonSelect = new TVSeasonSelectCore({
     async onOk() {
       const member = memberRef.value;
       if (!member) {
         return;
       }
-      if (!seasonSelect.value) {
+      if (!$seasonSelect.value) {
         return;
       }
       const { tokens } = member;
@@ -254,7 +258,7 @@ ${r.account.pwd}
       if (!token) {
         return;
       }
-      const { name, id } = seasonSelect.value;
+      const { name, id } = $seasonSelect.value;
       const originalURL = `${window.location.origin}/mobile/tv_play?id=${id}&season_id=${id}&rate=1.5&hide_menu=1&token=${token.id}`;
       const shotURLRes = await create_link(originalURL);
       if (shotURLRes.error) {
@@ -267,12 +271,16 @@ ${url}`;
       app.tip({
         text: ["已复制到剪贴板"],
       });
-      seasonSelect.dialog.hide();
+      $seasonSelect.dialog.hide();
     },
   });
-  const scrollView = new ScrollViewCore();
-  const permissionList = new ListCore(new RequestCore(fetchPermissionList));
-  const permissionDialog = new DialogCore({
+  const $scroll = new ScrollViewCore({
+    onReachBottom() {
+      $memberList.loadMore();
+    },
+  });
+  const $permissionList = new ListCore(new RequestCore(fetchPermissionList));
+  const $permissionDialog = new DialogCore({
     title: "权限配置",
     onOk() {
       if (!memberRef.value) {
@@ -283,66 +291,92 @@ ${url}`;
       }
       memberPermissionUpdateRequest.run({
         member_id: memberRef.value.id,
-        permissions: permissionMultipleSelect.values.map((p) => p.code),
+        permissions: $permissionMultipleSelect.values.map((p) => p.code),
       });
     },
   });
-  const permissionMultipleSelect = new MultipleSelectionCore<{ code: string }>({});
+  const $permissionMultipleSelect = new MultipleSelectionCore<{ code: string }>({});
+  const $historyDialog = new DialogCore({
+    title: "播放历史",
+    footer: false,
+  });
 
-  const [response, setResponse] = createSignal(memberList.response);
-  const [permissionResponse, setPermissionResponse] = createSignal(permissionList.response);
-  const [selectedPermissions, setSelectedPermissions] = createSignal(permissionMultipleSelect.values);
+  return {
+    $memberList,
+    $permissionList,
+    $permissionMultipleSelect,
+    $historyList,
+    ui: {
+      $scroll,
+      $refreshBtn,
+      $addMemberBtn,
+      $permissionBtn,
+      $nameInput,
+      $searchBtn,
+      $resetBtn,
+      $profile,
+      $link,
+      $account,
+      $update,
+      $ban,
+      $delete,
+      $seasonSelect,
+      $memberAccountsDialog,
+      $permissionDialog,
+      $addMemberDialog,
+      $remarkInput,
+      $confirmDeleteMemberDialog,
+      $historyDialog,
+    },
+  };
+}
+
+export const HomeMemberListPage: ViewComponent = (props) => {
+  const { app, history, client, view } = props;
+
+  const $page = Page(props);
+
+  const [response, setResponse] = createSignal($page.$memberList.response);
+  const [historyResponse, setHistoryResponse] = createSignal($page.$historyList.response);
+  const [permissionResponse, setPermissionResponse] = createSignal($page.$permissionList.response);
+  const [selectedPermissions, setSelectedPermissions] = createSignal($page.$permissionMultipleSelect.values);
   // const [memberAccounts, setMemberAccounts] = createSignal(memberAccountsRequest.response);
   const [text, setText] = createSignal("");
 
-  permissionList.onStateChange((nextState) => {
-    setPermissionResponse(nextState);
-  });
-  memberList.onStateChange((nextState) => {
-    // console.log("list ", nextState);
-    setResponse(nextState);
-  });
-  permissionMultipleSelect.onStateChange((nextState) => {
-    console.log("permissionMultipleSelect.onStateChange", nextState);
-    setSelectedPermissions(nextState);
-  });
-  // memberAccountsRequest.onStateChange((v) => {
-  //   setMemberAccounts(v);
-  // });
-  scrollView.onReachBottom(() => {
-    memberList.loadMore();
-  });
-
-  memberList.init();
+  $page.$permissionList.onStateChange((v) => setPermissionResponse(v));
+  $page.$memberList.onStateChange((v) => setResponse(v));
+  $page.$historyList.onStateChange((v) => setHistoryResponse(v));
+  $page.$permissionMultipleSelect.onStateChange((v) => setSelectedPermissions(v));
+  $page.$memberList.init();
 
   return (
     <>
-      <ScrollView store={scrollView} class="h-screen p-8">
+      <ScrollView store={$page.ui.$scroll} class="h-screen p-8">
         <h1 class="text-2xl">成员列表</h1>
         <div class="mt-8">
           <div class="space-x-2">
-            <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
+            <Button icon={<RotateCcw class="w-4 h-4" />} store={$page.ui.$refreshBtn}>
               刷新
             </Button>
-            <Button store={addMemberBtn} icon={<UserPlus class="w-4 h-4" />}>
+            <Button store={$page.ui.$addMemberBtn} icon={<UserPlus class="w-4 h-4" />}>
               新增成员
             </Button>
-            <Button store={permissionBtn} icon={<Lock class="w-4 h-4" />}>
+            <Button store={$page.ui.$permissionBtn} icon={<Lock class="w-4 h-4" />}>
               权限
             </Button>
           </div>
           <div class="flex items-center space-x-2 mt-4">
-            <Input class="" store={nameSearchInput} />
-            <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+            <Input class="" store={$page.ui.$nameInput} />
+            <Button class="" icon={<Search class="w-4 h-4" />} store={$page.ui.$searchBtn}>
               搜索
             </Button>
-            <Button class="" store={resetBtn}>
+            <Button class="" store={$page.ui.$resetBtn}>
               重置
             </Button>
           </div>
           <div class="mt-4">
             <ListView
-              store={memberList}
+              store={$page.$memberList}
               skeleton={
                 <div class="space-y-8">
                   <div class="card rounded-sm bg-white p-4">
@@ -395,10 +429,18 @@ ${url}`;
                         </div>
                         <div class="mt-4">
                           <div class="space-x-2">
-                            <Button variant="subtle" icon={<Gem class="w-4 h-4" />} store={profileBtn.bind(member)}>
+                            <Button
+                              variant="subtle"
+                              icon={<Gem class="w-4 h-4" />}
+                              store={$page.ui.$profile.bind(member)}
+                            >
                               详情
                             </Button>
-                            <Button variant="subtle" icon={<Gem class="w-4 h-4" />} store={accountBtn.bind(member)}>
+                            <Button
+                              variant="subtle"
+                              icon={<Gem class="w-4 h-4" />}
+                              store={$page.ui.$account.bind(member)}
+                            >
                               账号
                             </Button>
                             {/* <Button
@@ -411,28 +453,28 @@ ${url}`;
                             <Button
                               variant="subtle"
                               icon={<ShieldClose class="w-4 h-4" />}
-                              store={linkBtn.bind(member)}
+                              store={$page.ui.$link.bind(member)}
                             >
                               复制影片链接
                             </Button>
                             <Button
                               variant="subtle"
                               icon={<ShieldClose class="w-4 h-4" />}
-                              store={banMemberBtn.bind(member)}
+                              store={$page.ui.$ban.bind(member)}
                             >
                               禁用该成员
                             </Button>
                             <Button
                               variant="subtle"
                               icon={<Edit2 class="w-4 h-4" />}
-                              store={updateMemberBtn.bind(member)}
+                              store={$page.ui.$update.bind(member)}
                             >
                               修改信息
                             </Button>
                             <Button
                               variant="subtle"
                               icon={<UserX class="w-4 h-4" />}
-                              store={deleteMemberBtn.bind(member)}
+                              store={$page.ui.$delete.bind(member)}
                             >
                               删除
                             </Button>
@@ -490,19 +532,19 @@ ${url}`;
           </div>
         </div>
       </ScrollView>
-      <Dialog title="新增成员" store={addMemberDialog}>
+      <Dialog title="新增成员" store={$page.ui.$addMemberDialog}>
         <div class="w-[520px]">
-          <Input store={remarkInput} />
+          <Input store={$page.ui.$remarkInput} />
         </div>
       </Dialog>
-      <Dialog title="删除成员" store={confirmDeleteMemberDialog}>
+      <Dialog title="删除成员" store={$page.ui.$confirmDeleteMemberDialog}>
         <div class="w-[520px]">
           <div>确认删除该成员吗？</div>
         </div>
       </Dialog>
-      <Dialog store={permissionDialog}>
+      <Dialog store={$page.ui.$permissionDialog}>
         <div class="w-[520px]">
-          <ListView store={permissionList} class="space-y-8">
+          <ListView store={$page.$permissionList} class="space-y-8">
             <For each={permissionResponse().dataSource}>
               {(permission) => {
                 const { code, desc } = permission;
@@ -510,7 +552,7 @@ ${url}`;
                   <div
                     class="flex items-center space-x-2 px-8 py-4"
                     onClick={() => {
-                      permissionMultipleSelect.toggle(permission);
+                      $page.$permissionMultipleSelect.toggle(permission);
                     }}
                   >
                     <div
@@ -528,7 +570,7 @@ ${url}`;
           </ListView>
         </div>
       </Dialog>
-      <Dialog store={memberAccountsDialog}>
+      <Dialog store={$page.ui.$memberAccountsDialog}>
         <div class="w-[520px]">
           <pre
             class="p-2 w-bg-0 rounded-md"
@@ -543,9 +585,29 @@ ${url}`;
           </pre>
         </div>
       </Dialog>
-      <Dialog store={seasonSelect.dialog}>
+      <Dialog store={$page.ui.$historyDialog}>
+        <div class="w-[520px] h-[360px] overflow-y-auto">
+          <ListView store={$page.$historyList}>
+            <div class="space-y-2">
+              <For each={historyResponse().dataSource}>
+                {(history) => {
+                  const { name, source, updated } = history;
+                  return (
+                    <div>
+                      <div class="text-lg">{name}</div>
+                      {/* <div>{source}</div> */}
+                      <div class="text-sm">{updated}</div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </ListView>
+        </div>
+      </Dialog>
+      <Dialog store={$page.ui.$seasonSelect.dialog}>
         <div class="w-[520px]">
-          <SeasonSelect store={seasonSelect} />
+          <SeasonSelect store={$page.ui.$seasonSelect} />
         </div>
       </Dialog>
     </>

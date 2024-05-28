@@ -22,6 +22,7 @@ import {
   matchParsedMediasInDrive,
   receiveCheckInRewardOfDrive,
   analysisSpecialFilesInDrive,
+  changeDriveFileHash,
 } from "./services";
 import { AliyunDriveFile } from "./types";
 
@@ -201,6 +202,19 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     this.state.loading = false;
     this.tip({ text: ["索引完成"] });
     this.emit(Events.StateChange, { ...this.state });
+  }
+  async changeFileHash(options: { file: AliyunDriveFile }) {
+    const { file } = options;
+    const r = await changeDriveFileHash({
+      drive_id: this.id,
+      file,
+    });
+    if (r.error) {
+      this.emit(Events.StateChange, { ...this.state });
+      return Result.Err(r.error);
+    }
+    const { job_id } = r.data;
+    return Result.Ok({ job_id });
   }
   /** 搜索云盘内解析得到的影视剧 */
   async matchMediaFilesProfile() {

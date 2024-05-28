@@ -214,6 +214,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   async deleteFile(options: {
     file: {
       file_id: string;
+      name: string;
     };
     position: [number, number];
     onLoading?: (loading: boolean) => void;
@@ -254,6 +255,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     return folderDeletingRequest.run({
       drive_id: this.id,
       file_id: file.file_id,
+      file_name: file.name,
     });
   }
   rename(options: {

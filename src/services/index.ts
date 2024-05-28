@@ -2310,3 +2310,19 @@ export function deleteEpisodeProfileInMediaError(values: { id: string; profile_i
 export function deleteMovieProfileInMediaError(values: { id: string; profile_id: string }) {
   return client.post<null | {}>("/api/admin/media_error/movie_profile/delete", values);
 }
+
+/** 获取播放记录列表 */
+export function fetchMemberHistoryList(values: { member_id: string }) {
+  return client.post<
+    ListResponseWithCursor<{
+      id: string;
+      current_time: number;
+      duration: number;
+      name: string;
+      poster_path: string;
+      type: number;
+      source: string;
+      updated: string;
+    }>
+  >("/api/v2/admin/member/histories", values);
+}

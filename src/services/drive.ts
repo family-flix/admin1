@@ -143,11 +143,12 @@ export function renameFileInDrive(body: { drive_id: string; file_id: string; nam
 /**
  * 删除指定云盘的文件
  */
-export function deleteFileInDrive(body: { drive_id: string; file_id: string }) {
-  const { drive_id, file_id } = body;
+export function deleteFileInDrive(body: { drive_id: string; file_id: string; file_name: string }) {
+  const { drive_id, file_id, file_name } = body;
   return client.post<{ job_id: string }>("/api/v2/drive/file/delete", {
     drive_id,
     file_id,
+    file_name,
   });
 }
 

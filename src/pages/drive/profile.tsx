@@ -325,6 +325,39 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
+  const changeHashItem = new MenuItemCore({
+    label: "洗码",
+    async onClick() {
+      if (!driveFileManage.virtualSelectedFolder) {
+        app.tip({
+          text: ["请先选择要索引的文件"],
+        });
+        return;
+      }
+      const [file] = driveFileManage.virtualSelectedFolder;
+      changeHashItem.disable();
+      const r = await drive.changeFileHash({
+        file,
+      });
+      driveFileManage.clearVirtualSelected();
+      changeHashItem.enable();
+      if (r.error) {
+        app.tip({
+          text: ["洗码失败", r.error.message],
+        });
+        return;
+      }
+      fileMenu.hide();
+      createJob({
+        job_id: r.data.job_id,
+        onFinish() {
+          app.tip({
+            text: ["洗码完成"],
+          });
+        },
+      });
+    },
+  });
   const nameModifyItem = new MenuItemCore({
     label: "修改名称",
     async onClick() {
@@ -688,6 +721,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       analysisItem,
       nameModifyItem,
       childNamesModifyItem,
+      changeHashItem,
       downloadItem,
       moveToOtherDriveItem,
       toResourceDriveItem,
@@ -861,6 +895,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
                                   fileMenu.setItems([
                                     profileItem,
                                     analysisItem,
+                                    changeHashItem,
                                     nameModifyItem,
                                     downloadItem,
                                     moveToOtherDriveItem,
@@ -1030,6 +1065,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
                           fileMenu.setItems([
                             profileItem,
                             analysisItem,
+                            changeHashItem,
                             nameModifyItem,
                             downloadItem,
                             moveToOtherDriveItem,
