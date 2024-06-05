@@ -1,47 +1,66 @@
-import debounce from "lodash/fp/debounce";
+import { debounce } from "@/utils/lodash/debounce";
 
 import { BaseDomain, Handler } from "@/domains/base";
 
 enum Events {
   StateChange,
 }
-type TheTypesOfEvents = {
-  [Events.StateChange]: StorageCoreState;
+type TheTypesOfEvents<T> = {
+  [Events.StateChange]: StorageCoreState<T>;
 };
 
 type StorageCoreProps<T> = {
   key: string;
   values: T;
+  defaultValues: T;
   client: {
     setItem: (key: string, value: string) => void;
     getItem: (key: string) => void;
   };
 };
-type StorageCoreState = {};
+type StorageCoreState<T> = {
+  values: T;
+};
 
-export class StorageCore<T extends Record<string, unknown>> extends BaseDomain<TheTypesOfEvents> {
+export class StorageCore<T extends Record<string, unknown>> extends BaseDomain<TheTypesOfEvents<T>> {
   key: string;
   values: T;
+  defaultValues: T;
   client: StorageCoreProps<T>["client"];
+
+  get state() {
+    return {
+      values: this.values,
+    };
+  }
 
   constructor(props: Partial<{ _name: string }> & StorageCoreProps<T>) {
     super(props);
 
-    const { key, client, values } = props;
+    const { key, client, defaultValues, values } = props;
     this.key = key;
     this.values = values;
+    this.values = {
+      ...defaultValues,
+      ...values,
+    };
+    this.defaultValues = defaultValues;
     this.client = client;
-
   }
 
-  get<K extends keyof T>(key: K, defaultValue?: T) {
+  get<K extends keyof T>(key: K, defaultValue?: T[K]) {
     const v = this.values[key];
-    if (v === undefined && defaultValue) {
-      return defaultValue[key] as T[K];
+    // console.log("[DOMAIN]storage/index - get", key, v, this.values);
+    if (v === undefined) {
+      if (defaultValue) {
+        // @ts-ignore
+        return defaultValue[key] as T[K];
+      }
+      throw new Error("the default value no existing");
     }
     return v as T[K];
   }
-  set = debounce(100, <K extends keyof T>(key: K, values: unknown) => {
+  set = debounce(100, <K extends keyof T>(key: K, values: T[K]) => {
     // console.log("cache set", key, values);
     const nextValues = {
       ...this.values,
@@ -49,11 +68,25 @@ export class StorageCore<T extends Record<string, unknown>> extends BaseDomain<T
     };
     this.values = nextValues;
     this.client.setItem(this.key, JSON.stringify(this.values));
+    this.emit(Events.StateChange, { ...this.state });
   }) as (key: keyof T, value: unknown) => void;
-
-  merge = <K extends keyof T>(key: K, values: unknown) => {
-    console.log("[]merge", key, values);
+  merge = <K extends keyof T>(
+    key: K,
+    values: Partial<T[K]>,
+    extra: Partial<{ reverse: boolean; limit: number }> = {}
+  ) => {
+    // console.log("[]merge", key, values);
     const prevValues = this.get(key) || {};
+    if (Array.isArray(prevValues)) {
+      let nextValues = extra.reverse
+        ? [...(values as unknown as Array<unknown>), ...prevValues]
+        : [...prevValues, ...(values as unknown as Array<unknown>)];
+      if (extra.limit) {
+        nextValues = nextValues.slice(0, extra.limit);
+      }
+      this.set(key, nextValues);
+      return nextValues;
+    }
     if (typeof prevValues === "object" && typeof values === "object") {
       const nextValues = {
         ...prevValues,
@@ -70,15 +103,15 @@ export class StorageCore<T extends Record<string, unknown>> extends BaseDomain<T
     if (v === undefined) {
       return null;
     }
-    const nextValues = {
+    this.values = {
       ...this.values,
+      [key]: this.defaultValues[key],
     };
-    delete nextValues[key];
-    this.values = { ...nextValues };
     this.client.setItem(this.key, JSON.stringify(this.values));
+    this.emit(Events.StateChange, { ...this.state });
   }
 
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);
   }
 }

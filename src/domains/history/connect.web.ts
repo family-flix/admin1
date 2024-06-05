@@ -2,8 +2,10 @@ import { HistoryCore } from "@/domains/history";
 
 const ownerDocument = globalThis.document;
 
-export function connect(history: HistoryCore<any, any>) {
-  const { $router: router } = history;
+export function connect(history: HistoryCore<string, any>) {
+  history.reload = () => {
+    window.location.reload();
+  };
   ownerDocument.addEventListener("click", (event) => {
     // console.log('[DOMAIN]app/connect.web', event.target);
     let target = event.target;
@@ -27,7 +29,7 @@ export function connect(history: HistoryCore<any, any>) {
     }
     const t = target as HTMLElement;
     const href = t.getAttribute("href");
-    console.log("[CORE]app/connect - link a", href);
+    console.log("[DOMAIN]history/connect.web - link a", href);
     if (!href) {
       return;
     }
@@ -42,5 +44,11 @@ export function connect(history: HistoryCore<any, any>) {
     }
     event.preventDefault();
     history.handleClickLink({ href, target: null });
+  });
+  window.addEventListener("popstate", (event) => {
+    console.log("[DOMAIN]history/connect - window.addEventListener('popstate'", event.state?.from, event.state?.to);
+    const { type } = event;
+    const { pathname, href } = window.location;
+    history.$router.handlePopState({ type, href, pathname: event.state?.to });
   });
 }

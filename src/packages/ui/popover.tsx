@@ -122,7 +122,7 @@ const PopoverContentImpl = (
   //   </FocusScope>
   // );
   return (
-    <PopperPrimitive.Content store={store.popper} class={props.class} data-state={state().open ? "open" : "closed"}>
+    <PopperPrimitive.Content store={store.popper} class={props.class} data-state={state().visible ? "open" : "closed"}>
       {props.children}
     </PopperPrimitive.Content>
   );

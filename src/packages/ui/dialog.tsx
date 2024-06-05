@@ -9,56 +9,18 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/utils";
 
 import { Portal as PortalPrimitive } from "./portal";
-import { Show } from "./show";
-
-export function Dialog(
-  props: {
-    store: DialogCore;
-  } & JSX.HTMLAttributes<HTMLElement>
-) {
-  const { store } = props;
-
-  const [state, setState] = createSignal(store.state);
-
-  store.onStateChange((nextState) => {
-    setState(nextState);
-  });
-
-  const title = () => state().title;
-  const footer = () => state().footer;
-
-  return (
-    <Root store={store}>
-      <Portal store={store}>
-        <Overlay store={store} />
-        <Content store={store}>
-          <Header>
-            <Title>{title()}</Title>
-          </Header>
-          {props.children}
-          <Show when={!!footer()}>
-            <Footer>
-              <div class="space-x-2">
-                <Cancel store={store}>取消</Cancel>
-                <Submit store={store}>确认</Submit>
-              </div>
-            </Footer>
-          </Show>
-        </Content>
-      </Portal>
-    </Root>
-  );
-}
 
 const Root = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLElement>) => {
   return props.children;
 };
 
-const Portal = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLElement>) => {
-  const { store } = props;
+const Portal = (
+  props: { store: DialogCore; enterClassName?: string; exitClassName?: string } & JSX.HTMLAttributes<HTMLElement>
+) => {
+  const { store, enterClassName, exitClassName } = props;
 
   return (
-    <Presence store={store.present}>
+    <Presence store={store.present} enterClassName={enterClassName} exitClassName={exitClassName}>
       <PortalPrimitive>
         <div class={props.class}>{props.children}</div>
       </PortalPrimitive>
@@ -66,45 +28,45 @@ const Portal = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLElement>) 
   );
 };
 
-const Overlay = (props: { store: DialogCore } & JSX.HTMLAttributes<HTMLDivElement>) => {
-  const { store } = props;
-
-  const [state, setState] = createSignal(store.state);
-
-  store.onStateChange((nextState) => {
-    setState(nextState);
-  });
+const Overlay = (
+  props: { store: DialogCore; enterClassName?: string; exitClassName?: string } & JSX.HTMLAttributes<HTMLDivElement>
+) => {
+  const { store, enterClassName, exitClassName } = props;
 
   return (
-    <div
-      data-state={getState(state().open)}
+    <Presence
+      store={store.present}
       class={cn(props.class)}
+      enterClassName={enterClassName}
+      exitClassName={exitClassName}
       onClick={() => {
         if (!store.closeable) {
           return;
         }
         store.hide();
       }}
-    />
+    ></Presence>
   );
 };
 
 const Content = (
   props: {
     store: DialogCore;
+    enterClassName?: string;
+    exitClassName?: string;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store } = props;
-  const [state, setState] = createSignal(store.state);
-
-  store.onStateChange((nextState) => {
-    setState(nextState);
-  });
+  const { store, enterClassName, exitClassName } = props;
 
   return (
-    <div class={cn(props.class)} data-state={getState(state().open)}>
+    <Presence
+      store={store.present}
+      class={cn(props.class)}
+      enterClassName={enterClassName}
+      exitClassName={exitClassName}
+    >
       {props.children}
-    </div>
+    </Presence>
   );
 };
 

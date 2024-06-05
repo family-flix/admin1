@@ -18,63 +18,30 @@ export const Toast = (props: { store: ToastCore }) => {
   const texts = () => state().texts;
 
   return (
-    <Root store={store}>
-      <Portal store={store}>
-        <Content store={store}>
+    <ToastPrimitive.Root store={store}>
+      <ToastPrimitive.Portal store={store}>
+        {/* <ToastPrimitive.Overlay
+          store={store}
+          class={cn("fixed inset-0 z-100 bg-black/50 backdrop-blur-sm transition-all duration-200")}
+          enterClassName="animate-in fade-in"
+          exitClassName="animate-out fade-out"
+        /> */}
+        <ToastPrimitive.Content
+          store={store}
+          class={cn(
+            "grid gap-4 rounded-b-lg bg-black text-white p-6 duration-200 sm:max-w-lg sm:rounded-lg",
+            "dark:bg-slate-900"
+          )}
+          enterClassName="animate-in fade-in-90 sm:zoom-in-90"
+          exitClassName="animate-out fade-out"
+        >
           <For each={texts()}>
             {(text) => {
               return <div class="text-center">{text}</div>;
             }}
           </For>
-        </Content>
-      </Portal>
-    </Root>
+        </ToastPrimitive.Content>
+      </ToastPrimitive.Portal>
+    </ToastPrimitive.Root>
   );
 };
-
-const Root = (props: { store: ToastCore } & JSX.HTMLAttributes<HTMLElement>) => {
-  const { store } = props;
-  return <ToastPrimitive.Root store={store}>{props.children}</ToastPrimitive.Root>;
-};
-
-const Portal = (props: { store: ToastCore } & JSX.HTMLAttributes<HTMLDivElement>) => {
-  const { store } = props;
-
-  return <ToastPrimitive.Portal store={store}>{props.children}</ToastPrimitive.Portal>;
-};
-
-const Overlay = (props: { store: ToastCore } & JSX.HTMLAttributes<HTMLDivElement>) => {
-  const { store } = props;
-
-  return (
-    <ToastPrimitive.Overlay
-      store={store}
-      class={cn(
-        "fixed inset-0 z-100 bg-black/50 backdrop-blur-sm transition-all duration-100",
-        "data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out",
-        props.class
-      )}
-    />
-  );
-};
-
-const Content = (props: { store: ToastCore; children: JSX.Element }) => {
-  const { store } = props;
-
-  return (
-    <ToastPrimitive.Content
-      store={store}
-      class={cn(
-        "grid gap-4 rounded-b-lg bg-black text-white p-6 sm:max-w-lg sm:rounded-lg",
-        "dark:bg-slate-900",
-        "animate-in sm:zoom-in-90",
-        "data-[state=open]:fade-in-90",
-        "data-[state=closed]:animate-out data-[state=closed]:fade-out"
-      )}
-    >
-      {props.children}
-    </ToastPrimitive.Content>
-  );
-};
-
-export { Root, Portal, Overlay, Content };

@@ -7,11 +7,11 @@ import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-soli
 import { fetchFileProfile } from "@/services/drive";
 import { LazyImage } from "@/components/ui";
 import { RefCore } from "@/domains/cur";
-import { AliyunDriveFile, DriveCore } from "@/domains/drive";
+import { AliyunDriveFile, DriveCore } from "@/biz/drive";
 import { RequestCore } from "@/domains/request";
-import { bytes_to_size, is_video_file } from "@/utils";
-import { MediaTypes } from "@/constants";
 import { ImageCore } from "@/domains/ui";
+import { bytes_to_size, is_video_file } from "@/utils/index";
+import { MediaTypes } from "@/constants/index";
 
 export const DriveFileCard = (props: {
   store: RefCore<AliyunDriveFile>;

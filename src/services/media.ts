@@ -1,21 +1,22 @@
-import { client } from "@/store/request";
+import { media_request } from "@/biz/requests/index";
+import { FetchParams } from "@/domains/list/typing";
+import { Result } from "@/domains/result/index";
+import { TmpRequestResp } from "@/domains/request/utils";
 import {
   MediaErrorTypes,
   MediaOriginCountries,
   MediaTypes,
-  MovieGenres,
   MovieMediaOriginCountryTextMap,
   SeasonMediaOriginCountryTextMap,
-} from "@/constants";
-import { FetchParams } from "@/domains/list/typing";
-import { ListResponseWithCursor, MutableRecord, RequestedResource, Result } from "@/types";
+} from "@/constants/index";
+import { ListResponseWithCursor, RequestedResource, Unpacked } from "@/types/index";
 
 import { processMediaPrepareArchive } from "./utils";
 
 /** 获取季列表 */
-export async function fetchSeasonMediaList(params: FetchParams & Partial<{ name: string }>) {
+export function fetchSeasonMediaList(params: FetchParams & Partial<{ name: string }>) {
   const { page, pageSize, ...rest } = params;
-  const r = await client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -35,25 +36,12 @@ export async function fetchSeasonMediaList(params: FetchParams & Partial<{ name:
     page,
     page_size: pageSize,
   });
-  if (r.error) {
-    return Result.Err(r.error.message);
-  }
-  return Result.Ok({
-    ...r.data,
-    list: r.data.list.map((tv) => {
-      const { ...rest } = tv;
-      return {
-        ...rest,
-        // updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
-      };
-    }),
-  });
 }
-export type SeasonMediaItem = RequestedResource<typeof fetchSeasonMediaList>["list"][number];
+export type SeasonMediaItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchSeasonMediaList>>>["list"][number];
 
-export async function fetchSeasonMediaProfile(body: { season_id: string }) {
+export function fetchSeasonMediaProfile(body: { season_id: string }) {
   const { season_id } = body;
-  const r = await client.post<{
+  return media_request.post<{
     id: string;
     name: string;
     overview: string;
@@ -96,6 +84,10 @@ export async function fetchSeasonMediaProfile(body: { season_id: string }) {
   }>("/api/v2/admin/season/profile", {
     season_id,
   });
+}
+export type SeasonMediaProfile = RequestedResource<typeof fetchSeasonMediaProfileProcess>;
+export type MediaSourceItem = RequestedResource<typeof fetchSeasonMediaProfileProcess>["episodes"][number];
+export function fetchSeasonMediaProfileProcess(r: TmpRequestResp<typeof fetchSeasonMediaProfile>) {
   if (r.error) {
     return Result.Err(r.error);
   }
@@ -117,15 +109,13 @@ export async function fetchSeasonMediaProfile(body: { season_id: string }) {
     episodes,
   });
 }
-export type SeasonMediaProfile = RequestedResource<typeof fetchSeasonMediaProfile>;
-export type MediaSourceItem = RequestedResource<typeof fetchSeasonMediaProfile>["episodes"][number];
 
 /**
  * 获取电影列表
  */
-export async function fetchMovieMediaList(params: FetchParams & { name: string; duplicated: number }) {
+export function fetchMovieMediaList(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
-  const resp = await client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       name: string;
@@ -150,12 +140,15 @@ export async function fetchMovieMediaList(params: FetchParams & { name: string; 
     page,
     page_size: pageSize,
   });
-  if (resp.error) {
-    return resp;
+}
+export type MovieMediaItem = RequestedResource<typeof fetchMovieMediaListProcess>["list"][number];
+export function fetchMovieMediaListProcess(r: TmpRequestResp<typeof fetchMovieMediaList>) {
+  if (r.error) {
+    return r;
   }
   return Result.Ok({
-    ...resp.data,
-    list: resp.data.list.map((movie) => {
+    ...r.data,
+    list: r.data.list.map((movie) => {
       const { persons = [], genres, origin_country, ...rest } = movie;
       return {
         ...rest,
@@ -170,14 +163,13 @@ export async function fetchMovieMediaList(params: FetchParams & { name: string; 
     }),
   });
 }
-export type MovieMediaItem = RequestedResource<typeof fetchMovieMediaList>["list"][number];
 
 /**
  * 获取电影详情
  */
-export async function fetchMovieMediaProfile(body: { movie_id: string }) {
+export function fetchMovieMediaProfile(body: { movie_id: string }) {
   const { movie_id } = body;
-  const r = await client.post<{
+  return media_request.post<{
     id: string;
     name: string;
     overview: string;
@@ -199,12 +191,12 @@ export async function fetchMovieMediaProfile(body: { movie_id: string }) {
   }>("/api/v2/admin/movie/profile", {
     media_id: movie_id,
   });
+}
+export type MovieProfile = RequestedResource<typeof fetchMovieMediaProfileProcess>;
+export function fetchMovieMediaProfileProcess(r: TmpRequestResp<typeof fetchMovieMediaProfile>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
-  // const source_size_count = r.data.sources.reduce((count, cur) => {
-  //   return count + cur.size;
-  // }, 0);
   const { id, name, overview, poster_path, backdrop_path, air_date, sources } = r.data;
   return Result.Ok({
     id,
@@ -216,14 +208,13 @@ export async function fetchMovieMediaProfile(body: { movie_id: string }) {
     sources,
   });
 }
-export type MovieProfile = RequestedResource<typeof fetchMovieMediaProfile>;
 
 /*
  * 获取电视剧部分详情
  */
-export async function fetchPartialSeasonMedia(params: { media_id: string }) {
+export function fetchPartialSeasonMedia(params: { media_id: string }) {
   const { media_id } = params;
-  const r = await client.post<{
+  return media_request.post<{
     id: string;
     name: string;
     original_name: string;
@@ -236,19 +227,15 @@ export async function fetchPartialSeasonMedia(params: { media_id: string }) {
     origin_country: string[];
     genres: { value: string; label: string }[];
     tips: string[];
-  }>(`/api/v2/admin/season/partial`, {
+  }>("/api/v2/admin/season/partial", {
     media_id,
   });
-  if (r.error) {
-    return Result.Err(r.error.message);
-  }
-  return Result.Ok(r.data);
 }
 
 /** 刷新电影详情 */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
-  return client.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", {
+  return media_request.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", {
     media_id,
   });
 }
@@ -258,7 +245,7 @@ export function changeMovieProfile(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { movie_id, media_profile } = body;
-  return client.post<{ job_id: string }>("/api/v2/admin/media/set_profile", {
+  return media_request.post<{ job_id: string }>("/api/v2/admin/media/set_profile", {
     media_id: movie_id,
     media_profile,
   });
@@ -298,27 +285,33 @@ export type MediaPrepareArchiveItemResp = {
   }[];
 };
 /** 获取可以归档的季列表 */
-export async function fetchMediaListPrepareArchive(params: FetchParams & Partial<{ name: string; drive_ids: string }>) {
+export function fetchMediaListPrepareArchive(params: FetchParams & Partial<{ name: string; drive_ids: string }>) {
   const { page, pageSize, ...rest } = params;
-  const r = await client.post<ListResponseWithCursor<MediaPrepareArchiveItemResp>>("/api/v2/admin/media/archive/list", {
+  return media_request.post<ListResponseWithCursor<MediaPrepareArchiveItemResp>>("/api/v2/admin/media/archive/list", {
     ...rest,
     page,
     page_size: pageSize,
   });
+}
+export function fetchMediaListPrepareArchiveProcess(r: TmpRequestResp<typeof fetchMediaListPrepareArchive>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
   return Result.Ok({
     ...r.data,
-    list: r.data.list.map(processMediaPrepareArchive),
+    list: r.data.list.map((item) => {
+      return processMediaPrepareArchive(item);
+    }),
   });
 }
-export type MediaPrepareArchiveItem = RequestedResource<typeof fetchMediaListPrepareArchive>["list"][number];
-export async function fetchPartialMediaPrepareArchive(body: { media_id: string }) {
+export type MediaPrepareArchiveItem = RequestedResource<typeof fetchMediaListPrepareArchiveProcess>["list"][number];
+export function fetchPartialMediaPrepareArchive(body: { media_id: string }) {
   const { media_id } = body;
-  const r = await client.post<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
+  return media_request.post<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
     media_id,
   });
+}
+export function fetchPartialMediaPrepareArchiveProcess(r: TmpRequestResp<typeof fetchPartialMediaPrepareArchive>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -327,7 +320,7 @@ export async function fetchPartialMediaPrepareArchive(body: { media_id: string }
 /** 删除电视剧/电影 */
 export function deleteMedia(body: { media_id: string }) {
   const { media_id } = body;
-  return client.post("/api/v2/admin/media/delete", {
+  return media_request.post("/api/v2/admin/media/delete", {
     media_id,
   });
 }
@@ -338,7 +331,7 @@ export function setMediaProfile(body: {
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
   const { media_id, media_profile } = body;
-  return client.post<void>(`/api/v2/admin/media/set_profile`, {
+  return media_request.post<void>(`/api/v2/admin/media/set_profile`, {
     media_id,
     media_profile,
   });
@@ -369,8 +362,8 @@ type MovieError = {
   texts: string[];
 };
 
-export async function fetchInvalidMediaList(body: FetchParams) {
-  const r = await client.post<
+export function fetchInvalidMediaList(body: FetchParams) {
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaErrorTypes;
@@ -383,32 +376,15 @@ export async function fetchInvalidMediaList(body: FetchParams) {
       tips: string[];
     }>
   >("/api/v2/admin/media/invalid", body);
-  if (r.error) {
-    return Result.Err(r.error.message);
-  }
-  const { next_marker, total, list } = r.data;
-  return Result.Ok({
-    total,
-    next_marker,
-    list: list.map((tip) => {
-      const { id, type, media, tips } = tip;
-      return {
-        id,
-        type,
-        media,
-        tips,
-      };
-    }),
-  });
 }
-export type MediaErrorItem = RequestedResource<typeof fetchInvalidMediaList>["list"][number];
+export type MediaErrorItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchInvalidMediaList>>>["list"][number];
 
 /**
  * 转存指定季到指定云盘
  */
 export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_id: string }) {
   const { media_id, to_drive_id } = body;
-  return client.post<{ job_id: string }>("/api/v2/admin/media/transfer", {
+  return media_request.post<{ job_id: string }>("/api/v2/admin/media/transfer", {
     media_id,
     to_drive_id,
   });
@@ -419,7 +395,44 @@ export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_i
  */
 export function transferMediaToResourceDrive(body: { media_id: string }) {
   const { media_id } = body;
-  return client.post<{ job_id: string }>("/api/v2/admin/media/to_resource_drive", {
+  return media_request.post<{ job_id: string }>("/api/v2/admin/media/to_resource_drive", {
     media_id,
   });
 }
+
+/**
+ * 获取指定电视剧、指定季下的剧集，支持分页
+ * @param body
+ * @returns
+ */
+export function fetchEpisodesOfSeason(body: { media_id: string } & FetchParams) {
+  const { media_id, page, pageSize, next_marker } = body;
+  return media_request.post<
+    ListResponseWithCursor<{
+      id: string;
+      name: string;
+      overview: string;
+      episode_number: string;
+      first_air_date: string;
+      runtime: number;
+      sources: {
+        id: string;
+        file_id: string;
+        file_name: string;
+        parent_paths: string;
+        size: number;
+        drive: {
+          id: string;
+          name: string;
+          avatar: string;
+        };
+      }[];
+    }>
+  >("/api/v2/admin/media_source/list", {
+    media_id,
+    page,
+    next_marker,
+    page_size: pageSize,
+  });
+}
+export type EpisodeItemInSeason = NonNullable<Unpacked<TmpRequestResp<typeof fetchEpisodesOfSeason>>>["list"][number];

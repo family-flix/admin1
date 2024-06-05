@@ -4,17 +4,19 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
-import { MediaSourceItem, SeasonMediaProfile, fetchSeasonMediaProfile, setMediaProfile } from "@/services/media";
-import { deleteParsedMediaSource } from "@/services/parsed_media";
 import {
-  fetchEpisodesOfSeason,
+  MediaSourceItem,
+  SeasonMediaProfile,
   EpisodeItemInSeason,
-  deleteSeason,
-  SeasonInTVProfile,
-  refreshSeasonProfile,
-} from "@/services";
+  fetchSeasonMediaProfile,
+  fetchSeasonMediaProfileProcess,
+  fetchEpisodesOfSeason,
+  setMediaProfile,
+} from "@/services/media";
+import { deleteParsedMediaSource } from "@/services/parsed_media";
+import { deleteSeason, SeasonInTVProfile, refreshSeasonProfile } from "@/services";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
-import { TMDBSearcherDialog, TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import {
   MenuItemCore,
   ContextMenuCore,
@@ -28,7 +30,7 @@ import {
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
-import { TMDBSearcherCore } from "@/domains/tmdb";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import { createJob } from "@/store/job";
 import { appendAction } from "@/store/actions";
 import { ViewComponent } from "@/store/types";
@@ -38,6 +40,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
+    process: fetchSeasonMediaProfileProcess,
     onSuccess(v) {
       poster.setURL(v.poster_path);
       setProfile(v);
@@ -95,8 +98,7 @@ export const SeasonProfilePage: ViewComponent = (props) => {
   });
   const curEpisodeList = new ListCore(new RequestCore(fetchEpisodesOfSeason), {
     search: {
-      tv_id: view.query.id,
-      season_id: view.query.season_id,
+      media_id: view.query.id,
     },
   });
   const seasonDeletingRequest = new RequestCore(deleteSeason, {

@@ -7,7 +7,7 @@ import { ChevronRight, Folder, FolderInput, MoreHorizontal, Send } from "lucide-
 import { createSyncTaskWithUrl } from "@/services/resource_sync_task";
 import { Button, DropdownMenu, Input } from "@/components/ui";
 import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
-import { SharedResourceCore } from "@/domains/shared_resource";
+import { SharedResourceCore } from "@/biz/shared_resource";
 import { RequestCore } from "@/domains/request";
 import { FolderCard } from "@/components/FolderCard";
 import { createJob } from "@/store/job";

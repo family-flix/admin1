@@ -1,63 +1,51 @@
 /**
  * @file ???
  */
-import { createSignal, JSX, onCleanup } from "solid-js";
+import { createSignal, JSX, onCleanup, onMount } from "solid-js";
 
-// import { PageLoading } from "@/components/PageLoading";
 import { RouteViewCore } from "@/domains/route_view";
+import { cn } from "@/utils/index";
 
 export function KeepAliveRouteView(
   props: {
     store: RouteViewCore;
     index: number;
-    /** 当隐藏时，是否立刻消失，而不等待动画 */
-    immediately?: boolean;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) {
-  const { store, index, immediately = false } = props;
+  const { store, index } = props;
 
-  const [state, setState] = createSignal(store.state);
-  // const loading = <PageLoading class="w-full h-full" />;
-  // const [pageContent, setPageContent] = createSignal(loading);
+  const [state, setState] = createSignal(store.$presence.state);
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
+  // store.onStateChange((v) => setState(v));
+  store.$presence.onStateChange((v) => setState(v));
+  store.ready();
+  onMount(() => {
+    if (store.mounted) {
+      return;
+    }
+    store.setShow();
   });
-  // (async () => {
-  //   if (typeof view.component === "function") {
-  //     if (view.loaded) {
-  //       return;
-  //     }
-  //     const PageView = await view.component();
-  //     setPageContent(<PageView app={app} view={view} />);
-  //     view.setLoaded();
-  //     return;
-  //   }
-  //   setPageContent(view.component as JSX.Element);
-  // })();
   onCleanup(() => {
-    store.setUnload();
-    // setPageContent(loading);
+    store.setUnmounted();
+    store.destroy();
   });
 
   // const className = cn(mounted() ? "block" : "hidden", props.class);
 
   return (
     <div
-      class={props.class}
+      class={cn(
+        props.class,
+        state().enter ? `animate-in ${store.animation.in}` : "",
+        state().exit ? `animate-out ${store.animation.out}` : ""
+      )}
       style={{
-        display: (() => {
-          if (immediately) {
-            if (state().visible) {
-              return "block";
-            }
-            return "none";
-          }
-          return state().mounted ? "block" : "none";
-        })(),
         "z-index": index,
+        display: state().visible ? "block" : "none",
       }}
       data-state={state().visible ? "open" : "closed"}
+      data-title={store.title}
+      data-href={store.href}
     >
       {props.children}
     </div>

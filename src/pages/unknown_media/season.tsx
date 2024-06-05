@@ -4,10 +4,17 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { Brush, CheckCircle, RotateCcw, Search, Trash } from "lucide-solid";
 
-import { UnknownSeasonMediaItem, fetchUnknownMediaList, setParsedMediaProfile } from "@/services/parsed_media";
-import { deleteUnknownTV } from "@/services";
+import { ViewComponent } from "@/store/types";
+import {
+  UnknownSeasonMediaItem,
+  fetchUnknownMediaList,
+  fetchUnknownMediaListProcess,
+  setParsedMediaProfile,
+} from "@/services/parsed_media";
+import { deleteUnknownTV } from "@/services/index";
 import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import {
   ButtonCore,
   ButtonInListCore,
@@ -21,14 +28,12 @@ import {
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
-import { TMDBSearcherCore } from "@/domains/tmdb";
-import { ViewComponent } from "@/store/types";
-import { MediaTypes } from "@/constants";
+import { MediaTypes } from "@/constants/index";
 
 export const UnknownSeasonListPage: ViewComponent = (props) => {
   const { app, view, parent } = props;
 
-  const list = new ListCore(new RequestCore(fetchUnknownMediaList), {
+  const list = new ListCore(new RequestCore(fetchUnknownMediaList, { process: fetchUnknownMediaListProcess }), {
     pageSize: 50,
     search: {
       type: MediaTypes.Season,
@@ -187,9 +192,7 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
   seasonRef.onStateChange((nextState) => {
     setCur(nextState);
   });
-  view.onShow(() => {
-    list.init();
-  });
+  list.init();
 
   return (
     <>

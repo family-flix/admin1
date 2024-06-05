@@ -2,22 +2,41 @@
  * @file 应用实例，也可以看作启动入口，优先会执行这里的代码
  * 应该在这里进行一些初始化操作、全局状态或变量的声明
  */
-import { has_admin } from "@/services";
-import { ListCore } from "@/domains/list";
-import { Application } from "@/domains/app";
-import { NavigatorCore } from "@/domains/navigator";
-import { BizError } from "@/domains/error";
+import { hasAdmin } from "@/services/index";
+import { media_request } from "@/biz/requests";
+import { ListCore } from "@/domains/list/index";
+import { Application } from "@/domains/app/index";
+import { NavigatorCore } from "@/domains/navigator/index";
+import { BizError } from "@/domains/error/index";
 import { RouteViewCore } from "@/domains/route_view";
-import { HistoryCore } from "@/domains/history";
-import { UserCore } from "@/domains/user";
-import { Result } from "@/types";
+import { RouteConfig } from "@/domains/route_view/utils";
+import { HistoryCore } from "@/domains/history/index";
+import { UserCore } from "@/biz/user/index";
+import { RequestCore, onCreate } from "@/domains/request/index";
+import { Result } from "@/domains/result/index";
 
-import { PageKeys, RouteConfig, routes } from "./routes";
+import { PageKeys, routes } from "./routes";
+import { client } from "./request";
 import { storage } from "./storage";
 
-NavigatorCore.prefix = "/admin";
+onCreate((ins) => {
+  ins.onFailed((e) => {
+    app.tip({
+      text: [e.message],
+    });
+  });
+  if (!ins.client) {
+    ins.client = client;
+  }
+});
+NavigatorCore.prefix = import.meta.env.BASE_URL;
 
-const user = new UserCore(storage.get("user"));
+class ExtendsUser extends UserCore {
+  say() {
+    console.log(`My name is ${this.username}`);
+  }
+}
+const user = new ExtendsUser(storage.get("user"), client);
 const router = new NavigatorCore({
   location: window.location,
 });
@@ -28,7 +47,8 @@ const view = new RouteViewCore({
   visible: true,
   parent: null,
 });
-export const history = new HistoryCore<PageKeys, RouteConfig>({
+view.isRoot = true;
+export const history = new HistoryCore<PageKeys, RouteConfig<PageKeys>>({
   view,
   router,
   routes,
@@ -38,9 +58,10 @@ export const history = new HistoryCore<PageKeys, RouteConfig>({
 });
 export const app = new Application({
   user,
+  storage,
   async beforeReady() {
     if (!user.isLogin) {
-      const r = await has_admin();
+      const r = await new RequestCore(hasAdmin).run();
       if (r.error) {
         return Result.Ok(null);
       }
@@ -65,15 +86,10 @@ user.onTip((msg) => {
 });
 user.onLogin((profile) => {
   storage.set("user", profile);
-  // app.showView(homeIndexPage);
-  // homeLayout.showSubView(homeIndexPage);
-  // rootView.showSubView(homeLayout);
-  // router.push("/home/index");
   history.push("root.home_layout.index");
 });
 user.onLogout(() => {
   storage.clear("user");
-  // app.showView(loginPage);
   history.push("root.login");
 });
 user.onExpired(() => {
@@ -81,7 +97,6 @@ user.onExpired(() => {
   app.tip({
     text: ["token 已过期，请重新登录"],
   });
-  // app.showView(loginPage);
   history.push("root.login");
 });
 

@@ -37,25 +37,21 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
       history.push(opt.id);
     },
     onMounted() {
-      tab.handleChangeById(view.name);
+      console.log("before tab.handleChangeById(view.name)", view.name, view.curView?.name);
+      tab.handleChangeById(view.curView?.name || view.name);
     },
   });
 
-  // const [curSubView, setCurSubView] = createSignal(view.curView);
   const [subViews, setSubViews] = createSignal(view.subViews);
 
   history.onRouteChange((v) => {
+    console.log("before tab.handleChangeById(v.name);", tab.mounted, v.name);
     if (!tab.mounted) {
       return;
     }
     tab.handleChangeById(v.name);
   });
-  // view.onCurViewChange((nextCurView) => {
-  //   setCurSubView(nextCurView);
-  // });
-  view.onSubViewsChange((nextSubViews) => {
-    setSubViews(nextSubViews);
-  });
+  view.onSubViewsChange((v) => setSubViews(v));
 
   return (
     <ScrollView store={scrollView} class="flex flex-col box-border h-screen">
@@ -81,12 +77,7 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
                   const routeName = subView.name;
                   const PageContent = pages[routeName as Exclude<PageKeys, "root">];
                   return (
-                    <KeepAliveRouteView
-                      class={cn("relative w-full h-full")}
-                      store={subView}
-                      immediately={true}
-                      index={i()}
-                    >
+                    <KeepAliveRouteView class={cn("relative w-full h-full")} store={subView} index={i()}>
                       <PageContent
                         app={app}
                         history={history}

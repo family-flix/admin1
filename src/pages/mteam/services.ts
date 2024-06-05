@@ -1,10 +1,12 @@
+import { media_request } from "@/biz/requests/index";
 import { FetchParams } from "@/domains/list/typing";
-import { TmpRequestResp, request } from "@/domains/request_v2/utils";
-import { ListResponse, RequestedResource, Result } from "@/types";
-import { bytes_to_size } from "@/utils";
+import { TmpRequestResp } from "@/domains/request/utils";
+import { Result } from "@/domains/result/index";
+import { ListResponse, RequestedResource } from "@/types/index";
+import { bytes_to_size } from "@/utils/index";
 
-export function search_media_in_mteam(values: FetchParams & { keyword: string }) {
-  return request.post<
+export function searchTorrentInMTeam(values: FetchParams & { keyword: string }) {
+  return media_request.post<
     ListResponse<{
       id: string;
       createdDate: string;
@@ -65,7 +67,7 @@ export function search_media_in_mteam(values: FetchParams & { keyword: string })
   >("/api/mteam/search", values);
 }
 
-export function search_media_in_mteam_process(r: TmpRequestResp<typeof search_media_in_mteam>) {
+export function searchTorrentInMTeamProcess(r: TmpRequestResp<typeof searchTorrentInMTeam>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -86,8 +88,8 @@ export function search_media_in_mteam_process(r: TmpRequestResp<typeof search_me
   });
 }
 
-export type MTeamMediaItem = RequestedResource<typeof search_media_in_mteam_process>["list"][number];
+export type MTeamMediaItem = RequestedResource<typeof searchTorrentInMTeamProcess>["list"][number];
 
 export function downloadMTeamMedia(values: { id: string }) {
-  return request.post<void>("/api/mteam/download", values);
+  return media_request.post<void>("/api/mteam/download", values);
 }

@@ -82,9 +82,6 @@ type NavigatorState = {
   search: string;
   location: string;
 };
-type NavigatorProps = {
-  location: RouteLocation;
-};
 
 export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
   static prefix: string | null = null;
@@ -101,7 +98,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     };
   }
 
-  _name = "NavigatorCore";
+  unique_id = "NavigatorCore";
   debug = false;
 
   name = "root";
@@ -144,13 +141,14 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     };
   }
 
-  constructor(props: Partial<{ _name: string }> & NavigatorProps) {
-    super(props);
-
-    const { pathname, href, search, origin } = props.location;
+  /** 启动路由监听 */
+  async prepare(location: RouteLocation) {
+    // console.log("[DOMAIN]router - start");
+    const { pathname, href, search, origin } = location;
     const cleanPathname = pathname.replace(NavigatorCore.prefix!, "");
     this.setPathname(cleanPathname);
     this.origin = origin;
+    this.location = location;
     // this.pathname = pathname;
     const query = buildQuery(href);
     this.query = query;
@@ -160,24 +158,9 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
       type: "initialize",
     };
   }
-
-  // async prepare(location: RouteLocation) {
-  //   const { pathname, href, search, origin } = location;
-  //   const cleanPathname = pathname.replace(NavigatorCore.prefix!, "");
-  //   this.setPathname(cleanPathname);
-  //   this.origin = origin;
-  //   const query = buildQuery(href);
-  //   this.query = query;
-  //   this._pending = {
-  //     pathname: cleanPathname,
-  //     search,
-  //     type: "initialize",
-  //   };
-  // }
   start() {
     const { pathname } = this._pending;
-    const cleanPathname = pathname.replace(NavigatorCore.prefix!, "");
-    this.setPathname(cleanPathname);
+    this.setPathname(pathname);
     this.histories = [
       {
         pathname,
@@ -189,7 +172,6 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.prevPathname = p;
   }
   private setPathname(p: string) {
-    console.log("set pathname", p);
     this.pathname = p;
   }
   /** 调用该方法来「改变地址」 */

@@ -5,18 +5,25 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
-import { MovieItem, ReportItem, fetchReportList, fetchMovieList, replyReport } from "@/services";
+import { ViewComponent } from "@/store/types";
+import { refreshJobs } from "@/store/job";
+import {
+  MovieItem,
+  ReportItem,
+  fetchReportList,
+  fetchMovieList,
+  replyReport,
+  fetchReportListProcess,
+} from "@/services/index";
+import { fetchMovieMediaList, fetchMovieMediaListProcess } from "@/services/media";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
-import { RequestCore } from "@/domains/request";
-import { ListCore } from "@/domains/list";
-import { MediaTypes, ReportTypes } from "@/constants";
-import { ViewComponent } from "@/store/types";
-import { refreshJobs } from "@/store/job";
-import { cn } from "@/utils";
-import { fetchMovieMediaList } from "@/services/media";
+import { RefCore } from "@/domains/cur/index";
+import { RequestCore } from "@/domains/request/index";
+import { ListCore } from "@/domains/list/index";
+import { MediaTypes, ReportTypes } from "@/constants/index";
+import { cn } from "@/utils/index";
 
 function buildMsg(report: ReportItem) {
   const { type, data, member, media, media_source } = report;
@@ -40,7 +47,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
 
   const curReport = new RefCore<ReportItem>();
   const curMovie = new RefCore<MovieItem>();
-  const reportList = new ListCore(new RequestCore(fetchReportList), {});
+  const reportList = new ListCore(new RequestCore(fetchReportList, { process: fetchReportListProcess }), {});
   const replyRequest = new RequestCore(replyReport, {});
   const commentDialog = new DialogCore({
     title: "回复",
@@ -155,7 +162,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
     },
   });
 
-  const movieList = new ListCore(new RequestCore(fetchMovieMediaList), {
+  const movieList = new ListCore(new RequestCore(fetchMovieMediaList, { process: fetchMovieMediaListProcess }), {
     onLoadingChange(loading) {
       movieSearchBtn.setLoading(loading);
     },
@@ -242,18 +249,12 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const [movieListResponse, setMovieListResponse] = createSignal(movieList.response);
   const [curMovieState, setCurMovieState] = createSignal(curMovie.value);
 
-  movieList.onStateChange((nextState) => {
-    setMovieListResponse(nextState);
-  });
-  curMovie.onStateChange((nextState) => {
-    setCurMovieState(nextState);
-  });
+  movieList.onStateChange((v) => setMovieListResponse(v));
+  curMovie.onStateChange((v) => setCurMovieState(v));
   reportList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
-  reportList.onStateChange((nextState) => {
-    setResponse(nextState);
-  });
+  reportList.onStateChange((v) => setResponse(v));
   scrollView.onReachBottom(() => {
     reportList.loadMore();
   });

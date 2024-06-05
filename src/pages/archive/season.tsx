@@ -18,7 +18,9 @@ import {
 import {
   MediaPrepareArchiveItem,
   fetchMediaListPrepareArchive,
+  fetchMediaListPrepareArchiveProcess,
   fetchPartialMediaPrepareArchive,
+  fetchPartialMediaPrepareArchiveProcess,
   transferMediaToAnotherDrive,
   transferMediaToResourceDrive,
 } from "@/services/media";
@@ -30,7 +32,7 @@ import { DriveSelect } from "@/components/DriveSelect/dialog";
 import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { DriveCore } from "@/domains/drive";
+import { DriveCore } from "@/biz/drive";
 import { RefCore } from "@/domains/cur";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
@@ -39,14 +41,19 @@ import { MediaTypes } from "@/constants";
 
 export const SeasonArchivePage: ViewComponent = (props) => {
   const { app, history, view } = props;
-  const mediaList = new ListCore(new RequestCore(fetchMediaListPrepareArchive), {
-    pageSize: 1,
-    onLoadingChange(loading) {
-      nameSearchInput.setLoading(loading);
-      searchBtn.setLoading(loading);
-    },
+  const mediaList = new ListCore(
+    new RequestCore(fetchMediaListPrepareArchive, { process: fetchMediaListPrepareArchiveProcess }),
+    {
+      pageSize: 1,
+      onLoadingChange(loading) {
+        nameSearchInput.setLoading(loading);
+        searchBtn.setLoading(loading);
+      },
+    }
+  );
+  const refreshPartialSeasonRequest = new RequestCore(fetchPartialMediaPrepareArchive, {
+    process: fetchPartialMediaPrepareArchiveProcess,
   });
-  const refreshPartialSeasonRequest = new RequestCore(fetchPartialMediaPrepareArchive);
   const moveToResourceDriveRequest = new RequestCore(transferMediaToResourceDrive, {
     onSuccess(r) {
       createJob({

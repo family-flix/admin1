@@ -30,7 +30,7 @@ function cl(
 ) {
   const result = utils.getNumbResult(num);
   if (!result) {
-    return num;
+    return String(num);
   }
   const { ch = "", ch_u = "", ch_f = "", ch_d = "." } = options;
   // 零

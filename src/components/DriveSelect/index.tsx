@@ -1,6 +1,6 @@
 import { BaseDomain, Handler } from "@/domains/base";
 import { RefCore } from "@/domains/cur";
-import { DriveCore } from "@/domains/drive";
+import { DriveCore } from "@/biz/drive";
 
 enum Events {
   StateChange,

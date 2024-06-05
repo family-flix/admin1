@@ -2,47 +2,20 @@
  * @file 演职人员列表
  */
 import { For, JSX, Show, createSignal } from "solid-js";
-import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
+import { RotateCw } from "lucide-solid";
 
 import { Button, Skeleton, ScrollView, ListView, Checkbox, LazyImage } from "@/components/ui";
-import { ButtonCore, ButtonInListCore, CheckboxCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/request";
-import { ListCore } from "@/domains/list";
-import { JobItem, pause_job, TaskStatus, fetchPersonList } from "@/domains/job";
+import { ButtonCore, CheckboxCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
+import { RequestCore } from "@/domains/request/index";
+import { ListCore } from "@/domains/list/index";
+import { fetchPersonList } from "@/biz/job/index";
 import { ViewComponent } from "@/store/types";
-import { cn } from "@/utils";
+import { cn } from "@/utils/index";
 
 export const PersonListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
   const personList = new ListCore(new RequestCore(fetchPersonList), {});
-  const pauseJob = new RequestCore(pause_job, {
-    onLoading(loading) {
-      pauseJobBtn.setLoading(loading);
-    },
-    onFailed: (err) => {
-      app.tip({ text: ["中止任务失败", err.message] });
-    },
-    onSuccess: () => {
-      app.tip({ text: ["中止任务成功"] });
-      personList.refresh();
-    },
-  });
-  const pauseJobBtn = new ButtonInListCore<JobItem>({
-    onClick(task) {
-      pauseJob.run(task.id);
-    },
-  });
-  const profileBtn = new ButtonInListCore<JobItem>({
-    onClick(task) {
-      // homeTaskProfilePage.query = {
-      //   id: task.id,
-      // };
-      // app.showView(homeTaskProfilePage);
-      // homeLayout.showSubView(homeTaskProfilePage);
-      // router.push(`/home/task/${task.id}`);
-    },
-  });
   const refreshBtn = new ButtonCore({
     onClick() {
       personList.refresh();

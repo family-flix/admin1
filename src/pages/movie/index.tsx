@@ -4,7 +4,12 @@
 import { createSignal, For, Show } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, Info, LocateIcon, MapPin, RotateCw, Search, Star } from "lucide-solid";
 
-import { MovieMediaItem, fetchMovieMediaList, transferMediaToAnotherDrive } from "@/services/media";
+import {
+  MovieMediaItem,
+  fetchMovieMediaList,
+  fetchMovieMediaListProcess,
+  transferMediaToAnotherDrive,
+} from "@/services/media";
 import { moveMovieToResourceDrive, refreshMovieProfiles, transferMovieToAnotherDrive } from "@/services";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Dialog } from "@/components/ui";
 import {
@@ -20,7 +25,7 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { DriveCore } from "@/domains/drive";
+import { DriveCore } from "@/biz/drive";
 import { ViewComponent } from "@/store/types";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { createJob } from "@/store/job";
@@ -81,7 +86,7 @@ export const MovieListPage: ViewComponent = (props) => {
       });
     },
   });
-  const movieList = new ListCore(new RequestCore(fetchMovieMediaList), {
+  const movieList = new ListCore(new RequestCore(fetchMovieMediaList, { process: fetchMovieMediaListProcess }), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);

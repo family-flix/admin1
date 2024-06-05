@@ -4,23 +4,31 @@
 import { Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Calendar } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
 import { Button, ScrollView, Skeleton, ListView } from "@/components/ui";
 import { Article } from "@/components/Article";
 import { ScrollViewCore, ButtonCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
-import { JobProfile, fetch_job_profile, fetch_output_lines_of_job, pause_job, TaskStatus } from "@/domains/job";
+import {
+  JobProfile,
+  fetchJobProfile,
+  fetchOutputLinesOfJob,
+  pauseJob,
+  TaskStatus,
+  fetchJobProfileProcess,
+  fetchOutputLinesOfJobProcess,
+} from "@/biz/job";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/store/types";
 
 export const TaskProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const pauseBtn = new ButtonCore<JobProfile>({
     onClick() {
-      pauseJob.run(view.query.id);
+      $pauseJob.run(view.query.id);
     },
   });
-  const pauseJob = new RequestCore(pause_job, {
+  const $pauseJob = new RequestCore(pauseJob, {
     onLoading(loading) {
       pauseBtn.setLoading(loading);
     },
@@ -36,12 +44,14 @@ export const TaskProfilePage: ViewComponent = (props) => {
     },
   });
   const logList = new ListCore(
-    new RequestCore(fetch_output_lines_of_job, {
+    new RequestCore(fetchOutputLinesOfJob, {
+      process: fetchOutputLinesOfJobProcess,
       delay: null,
     }),
     { pageSize: 100 }
   );
-  const request = new RequestCore(fetch_job_profile, {
+  const request = new RequestCore(fetchJobProfile, {
+    process: fetchJobProfileProcess,
     onLoading(loading) {
       refreshBtn.setLoading(loading);
     },

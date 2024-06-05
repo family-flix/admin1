@@ -5,7 +5,12 @@ import { For, Show, createSignal } from "solid-js";
 import { ChevronRight, Eye, Folder, FolderInput, Loader, MoreHorizontal, Scroll, Search, Send } from "lucide-solid";
 
 import { batchUploadSubtitles, validateSubtitleFiles } from "@/services";
-import { fetchMovieMediaProfile, fetchSeasonMediaProfile } from "@/services/media";
+import {
+  fetchMovieMediaProfile,
+  fetchMovieMediaProfileProcess,
+  fetchSeasonMediaProfile,
+  fetchSeasonMediaProfileProcess,
+} from "@/services/media";
 import { Button, Dialog, DropdownMenu, Input, LazyImage, ScrollView } from "@/components/ui";
 import {
   ButtonCore,
@@ -83,8 +88,8 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
       uploadLoadingDialog.hide();
     },
   });
-  const seasonProfileRequest = new RequestCore(fetchSeasonMediaProfile);
-  const movieProfileRequest = new RequestCore(fetchMovieMediaProfile);
+  const seasonProfileRequest = new RequestCore(fetchSeasonMediaProfile, { process: fetchSeasonMediaProfileProcess });
+  const movieProfileRequest = new RequestCore(fetchMovieMediaProfile, { process: fetchMovieMediaProfileProcess });
   const curMedia = new RefCore<{
     id: string;
     type: MediaTypes;

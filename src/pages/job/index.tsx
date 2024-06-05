@@ -5,11 +5,11 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
-import { Button, Skeleton, ScrollView, ListView, Checkbox } from "@/components/ui";
+import { Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { ButtonCore, ButtonInListCore, CheckboxCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { JobItem, fetchJobList, pause_job, TaskStatus } from "@/domains/job";
+import { JobItem, fetchJobList, pauseJob, TaskStatus, fetchJobListProcess } from "@/biz/job";
 import { refreshJobs } from "@/store/job";
 import { ViewComponent } from "@/store/types";
 import { cn } from "@/utils";
@@ -19,8 +19,8 @@ import { TabHeaderCore } from "@/domains/ui/tab-header";
 export const LogListPage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
-  const jobList = new ListCore(new RequestCore(fetchJobList), {});
-  const pauseJob = new RequestCore(pause_job, {
+  const jobList = new ListCore(new RequestCore(fetchJobList, { process: fetchJobListProcess }), {});
+  const $pauseJob = new RequestCore(pauseJob, {
     onLoading(loading) {
       pauseJobBtn.setLoading(loading);
     },
@@ -34,7 +34,7 @@ export const LogListPage: ViewComponent = (props) => {
   });
   const pauseJobBtn = new ButtonInListCore<JobItem>({
     onClick(task) {
-      pauseJob.run(task.id);
+      $pauseJob.run(task.id);
     },
   });
   const profileBtn = new ButtonInListCore<JobItem>({

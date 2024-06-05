@@ -1,4 +1,4 @@
-import { request } from "@/domains/request_v2/utils";
+import { media_request } from "@/biz/requests/index";
 
 /**
  * 删除指定成员
@@ -6,7 +6,7 @@ import { request } from "@/domains/request_v2/utils";
  */
 export function fetchMemberAccounts(body: { id: string }) {
   const { id } = body;
-  return request.post<
+  return media_request.post<
     {
       provider: string;
       provider_id: string;

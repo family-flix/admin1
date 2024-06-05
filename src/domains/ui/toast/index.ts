@@ -54,12 +54,12 @@ export class ToastCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.present = new PresenceCore();
     this.present.onShow(() => {
-      console.log("[]ToastCore - this.present.onShow");
+      // console.log("[]ToastCore - this.present.onShow");
       this.open = true;
       this.emit(Events.OpenChange, true);
     });
     this.present.onHidden(() => {
-      console.log("[]ToastCore - this.present.onHide");
+      // console.log("[]ToastCore - this.present.onHide");
       this.open = false;
       this.emit(Events.OpenChange, false);
     });

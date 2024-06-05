@@ -4,15 +4,17 @@
 import { For, Show, createSignal } from "solid-js";
 import { Brush, Edit, RotateCcw, Search, Trash } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
 import {
   UnknownMovieMediaItem,
   fetchUnknownMediaList,
+  fetchUnknownMediaListProcess,
   setParsedMediaProfile,
   setParsedSeasonMediaSourceProfile,
 } from "@/services/parsed_media";
-import { ViewComponent } from "@/store/types";
 import { Button, ListView, LazyImage, ScrollView, Input, Dialog, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import {
   ButtonCore,
   ButtonInListCore,
@@ -24,15 +26,14 @@ import {
   ScrollViewCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
-import { MediaTypes } from "@/constants";
+import { MediaTypes } from "@/constants/index";
 
 export const UnknownMovieListPage: ViewComponent = (props) => {
   const { app, view, parent } = props;
 
-  const list = new ListCore(new RequestCore(fetchUnknownMediaList), {
+  const list = new ListCore(new RequestCore(fetchUnknownMediaList, { process: fetchUnknownMediaListProcess }), {
     pageSize: 50,
     search: {
       type: MediaTypes.Movie,
@@ -229,11 +230,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
   list.onStateChange((nextState) => {
     setResponse(nextState);
   });
-  view.onShow(() => {
-    list.init();
-  });
-
-  const dataSource = () => response().dataSource;
+  list.init();
 
   return (
     <>

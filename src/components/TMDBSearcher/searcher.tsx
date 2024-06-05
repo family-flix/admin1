@@ -10,13 +10,14 @@ import { Presence } from "@/components/ui/presence";
 import { TabHeader } from "@/components/ui/tab-header";
 import { MediaSearchView } from "@/components/MediaSelect";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
-import { TMDBSearcherCore } from "@/domains/tmdb";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
 import { DialogCore, ImageInListCore, PresenceCore } from "@/domains/ui";
-import { MediaSearchCore } from "@/domains/media_search";
+import { MediaSearchCore } from "@/biz/media_search";
 import { MediaTypes } from "@/constants";
 import { prepareEpisodeList, prepareSeasonList } from "@/services/media_profile";
+import { RequestCore } from "@/domains/request";
 
 export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
@@ -44,7 +45,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
     },
   });
   const searchPanel = new PresenceCore({
-    open: true,
+    visible: true,
   });
   const seasonPanel = new PresenceCore();
   const episodePanel = new PresenceCore();
@@ -57,7 +58,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
           return;
         }
         store.select(value);
-        const r = await prepareEpisodeList({
+        const r = await new RequestCore(prepareEpisodeList).run({
           media_id: value.id,
         });
         if (r.error) {
@@ -167,7 +168,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                       if (type === MediaTypes.Season) {
                         searchPanel.hide();
                         seasonPanel.show();
-                        const r = await prepareSeasonList({ series_id: String(id) });
+                        const r = await new RequestCore(prepareSeasonList).run({ series_id: String(id) });
                         if (r.error) {
                           return;
                         }

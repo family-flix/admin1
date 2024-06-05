@@ -114,9 +114,7 @@ export const MediaProfileHomeLayout: ViewComponent = (props) => {
 };
 
 function Menu(
-  props: {
-    app: Application;
-    history: ViewComponentProps["history"];
+  props: Pick<ViewComponentProps, "app" | "history"> & {
     highlight?: boolean;
     url?: PageKeys;
     icon: JSX.Element;

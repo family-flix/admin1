@@ -1,10 +1,12 @@
-import { client } from "@/store/request";
+import { media_request } from "@/biz/requests/index";
+import { TmpRequestResp } from "@/domains/request/utils";
 import { FetchParams } from "@/domains/list/typing";
-import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { CollectionTypes } from "@/constants";
+import { Result } from "@/domains/result/index";
+import { ListResponseWithCursor, Unpacked } from "@/types/index";
+import { CollectionTypes } from "@/constants/index";
 
 export function fetchCollectionList(params: FetchParams) {
-  return client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       title: string;
@@ -19,7 +21,7 @@ export function fetchCollectionList(params: FetchParams) {
     }>
   >("/api/v2/admin/collection/list", params);
 }
-export type CollectionItem = RequestedResource<typeof fetchCollectionList>["list"][number];
+export type CollectionItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchCollectionList>>>["list"][number];
 
 export function createCollection(values: {
   title: string;
@@ -29,7 +31,7 @@ export function createCollection(values: {
   medias: { id: string }[];
 }) {
   const { title, sort, desc, type = CollectionTypes.Manually, medias } = values;
-  return client.post("/api/v2/admin/collection/create", {
+  return media_request.post("/api/v2/admin/collection/create", {
     title,
     desc,
     sort,
@@ -49,9 +51,9 @@ export function createCollection(values: {
     medias,
   });
 }
-export async function fetchCollectionProfile(values: { collection_id: string }) {
+export function fetchCollectionProfile(values: { collection_id: string }) {
   const { collection_id } = values;
-  const r = await client.post<{
+  return media_request.post<{
     id: string;
     title: string;
     desc?: string;
@@ -67,6 +69,8 @@ export async function fetchCollectionProfile(values: { collection_id: string }) 
   }>("/api/v2/admin/collection/profile", {
     id: collection_id,
   });
+}
+export function fetchCollectionProfileProcess(r: TmpRequestResp<typeof fetchCollectionProfile>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -89,7 +93,7 @@ export function editCollection(body: {
   medias: { id: string; tv_id?: string }[];
 }) {
   const { collection_id, title, desc, sort, type, medias } = body;
-  return client.post("/api/v2/admin/collection/edit", {
+  return media_request.post("/api/v2/admin/collection/edit", {
     id: collection_id,
     title,
     desc,
@@ -113,7 +117,7 @@ export function editCollection(body: {
 
 export function deleteCollection(body: { collection_id: string }) {
   const { collection_id } = body;
-  return client.post("/api/v2/admin/collection/delete", {
+  return media_request.post("/api/v2/admin/collection/delete", {
     id: collection_id,
   });
 }

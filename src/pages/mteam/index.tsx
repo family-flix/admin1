@@ -1,17 +1,15 @@
-import { client2 } from "@/store/request";
+import { For, Show, createSignal } from "solid-js";
+
 import { ViewComponent } from "@/store/types";
 import { Button, Input } from "@/components/ui";
-import { ListCoreV2 } from "@/domains/list/v2";
-import { FetchParams } from "@/domains/list/typing";
-import { RequestCoreV2 } from "@/domains/request_v2";
-import { request } from "@/domains/request_v2/utils";
+import { ListCore } from "@/domains/list/index";
+import { RequestCore } from "@/domains/request/index";
 import { ButtonCore, ButtonInListCore, InputCore } from "@/domains/ui";
-import { For, Show, createSignal } from "solid-js";
-import { ListResponse } from "@/types";
-import { MTeamMediaItem, downloadMTeamMedia, search_media_in_mteam, search_media_in_mteam_process } from "./services";
+
+import { MTeamMediaItem, downloadMTeamMedia, searchTorrentInMTeam, searchTorrentInMTeamProcess } from "./services";
 
 export const MTeamPage: ViewComponent = (props) => {
-  const { app } = props;
+  const { app, client } = props;
 
   const $input = new InputCore({
     defaultValue: "",
@@ -35,16 +33,14 @@ export const MTeamPage: ViewComponent = (props) => {
       $list.reset();
     },
   });
-  const $list = new ListCoreV2(
-    new RequestCoreV2({
-      fetch: search_media_in_mteam,
-      process: search_media_in_mteam_process,
-      client: client2,
+  const $list = new ListCore(
+    new RequestCore(searchTorrentInMTeam, {
+      process: searchTorrentInMTeamProcess,
+      client,
     })
   );
-  const $download = new RequestCoreV2({
-    fetch: downloadMTeamMedia,
-    client: client2,
+  const $download = new RequestCore(downloadMTeamMedia, {
+    client,
   });
   const $downloadBtn = new ButtonInListCore<MTeamMediaItem>({
     onClick(record) {

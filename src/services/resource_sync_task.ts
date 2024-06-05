@@ -1,10 +1,11 @@
-import { client } from "@/store/request";
+import { media_request } from "@/biz/requests/index";
 import { FetchParams } from "@/domains/list/typing";
-import { ListResponseWithCursor, RequestedResource } from "@/types";
+import { TmpRequestResp } from "@/domains/request/utils";
+import { ListResponseWithCursor, Unpacked } from "@/types/index";
 
 /** 获取同步任务列表 */
 export function fetchSyncTaskList(body: FetchParams & { in_production: number; invalid: number; name: string }) {
-  return client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       resource_file_id: string;
@@ -31,7 +32,7 @@ export function fetchSyncTaskList(body: FetchParams & { in_production: number; i
     }>
   >("/api/v2/admin/sync_task/list", body);
 }
-export type SyncTaskItem = RequestedResource<typeof fetchSyncTaskList>["list"][number];
+export type SyncTaskItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchSyncTaskList>>>["list"][number];
 /**
  * 添加分享资源的同步任务
  * @param body
@@ -47,7 +48,7 @@ export function createSyncTaskWithUrl(body: {
   drive_id?: string;
 }) {
   const { url, pwd, resource_file_id, resource_file_name, drive_file_id, drive_file_name, drive_id } = body;
-  return client.post<{}>(`/api/v2/admin/sync_task/create`, {
+  return media_request.post<{}>(`/api/v2/admin/sync_task/create`, {
     url,
     pwd,
     resource_file_id,
@@ -60,7 +61,7 @@ export function createSyncTaskWithUrl(body: {
 
 /** 获取同步任务列表 */
 export function fetchPartialSyncTask(params: { id: string }) {
-  return client.post<{
+  return media_request.post<{
     id: string;
     resource_file_id: string;
     resource_file_name: string;
@@ -95,7 +96,7 @@ export function fetchPartialSyncTask(params: { id: string }) {
  */
 export function runSyncTask(body: { id: string }) {
   const { id } = body;
-  return client.post<{ job_id: string }>("/api/v2/admin/sync_task/run", {
+  return media_request.post<{ job_id: string }>("/api/v2/admin/sync_task/run", {
     id,
   });
 }
@@ -103,7 +104,7 @@ export function runSyncTask(body: { id: string }) {
 /** 修改同步任务管理的电视剧 */
 export function updateSyncTask(params: { id: string; season_id: string }) {
   const { id, season_id } = params;
-  return client.post<{
+  return media_request.post<{
     id: string;
     resource_file_id: string;
     resource_file_name: string;
@@ -125,18 +126,18 @@ export function updateSyncTask(params: { id: string; season_id: string }) {
  * 执行所有电视剧同步任务
  */
 export function runSyncTaskList() {
-  return client.get<{ job_id: string }>("/api/v2/admin/sync_task/run_all");
+  return media_request.get<{ job_id: string }>("/api/v2/admin/sync_task/run_all");
 }
 
 /** 标记同步任务已完结 */
 export function completeSyncTask(params: { id: string }) {
   const { id } = params;
-  return client.post<{}>("/api/v2/admin/sync_task/complete", { id });
+  return media_request.post<{}>("/api/v2/admin/sync_task/complete", { id });
 }
 /** 删除同步任务 */
 export function deleteSyncTask(params: { id: string }) {
   const { id } = params;
-  return client.post<{}>("/api/v2/admin/sync_task/delete", { id });
+  return media_request.post<{}>("/api/v2/admin/sync_task/delete", { id });
 }
 /** 给指定同步任务覆盖另一个分享资源 */
 export function overrideResourceForSyncTask(values: {
@@ -147,7 +148,7 @@ export function overrideResourceForSyncTask(values: {
   resource_file_name?: string;
 }) {
   const { id, url, pwd, resource_file_id, resource_file_name } = values;
-  return client.post<{}>("/api/v2/admin/sync_task/override", {
+  return media_request.post<{}>("/api/v2/admin/sync_task/override", {
     id,
     url,
     pwd,

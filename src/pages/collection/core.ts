@@ -1,4 +1,9 @@
-import { createCollection, editCollection, fetchCollectionProfile } from "@/services/collection";
+import {
+  createCollection,
+  editCollection,
+  fetchCollectionProfile,
+  fetchCollectionProfileProcess,
+} from "@/services/collection";
 import { InputCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
@@ -68,6 +73,7 @@ export class CollectionFormCore extends BaseDomain<TheTypesOfEvents> {
     },
   });
   profileRequest = new RequestCore(fetchCollectionProfile, {
+    process: fetchCollectionProfileProcess,
     onLoading: (loading) => {
       this.emit(Events.Loading, loading);
     },

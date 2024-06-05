@@ -1,19 +1,20 @@
-import { client } from "@/store/request";
+import { media_request } from "@/biz/requests/index";
 import { FetchParams } from "@/domains/list/typing";
-import { request } from "@/domains/request_v2/utils";
-import { ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { MediaTypes } from "@/constants";
+import { TmpRequestResp } from "@/domains/request/utils";
+import { Result } from "@/domains/result/index";
+import { ListResponseWithCursor, RequestedResource } from "@/types/index";
+import { MediaTypes } from "@/constants/index";
 
 /**
  * 搜索影视剧详情
  * @param params
  * @returns
  */
-export async function searchMediaProfile(
+export function searchMediaProfile(
   params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  const r = await client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaTypes;
@@ -30,13 +31,16 @@ export async function searchMediaProfile(
         air_date: string;
       }[];
     }>
-  >(`/api/v2/common/search`, {
+  >("/api/v2/common/search", {
     ...rest,
     keyword,
     page,
     page_size: pageSize,
     type,
   });
+}
+export type MediaProfileItem = RequestedResource<typeof searchMediaProfileProcess>["list"][0];
+export function searchMediaProfileProcess(r: TmpRequestResp<typeof searchMediaProfile>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -79,10 +83,9 @@ export async function searchMediaProfile(
     next_marker,
   });
 }
-export type MediaProfileItem = RequestedResource<typeof searchMediaProfile>["list"][0];
 
 export function fetchDashboard() {
-  const r = request.post<{
+  const r = media_request.post<{
     drive_count: number;
     drive_total_size_count: number;
     drive_total_size_count_text: string;
@@ -129,11 +132,11 @@ export const fetchDashboardDefaultResponse = {
 };
 
 export function refreshDashboard() {
-  return client.post("/api/v2/admin/dashboard/refresh", {});
+  return media_request.post("/api/v2/admin/dashboard/refresh", {});
 }
 
 export function fetchMediaRecentlyCreated(body: FetchParams) {
-  return request.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       media_id: string;

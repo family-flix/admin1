@@ -1,6 +1,7 @@
 import { BaseDomain, Handler } from "@/domains/base";
 import { RouteViewCore } from "@/domains/route_view";
 import { NavigatorCore } from "@/domains/navigator";
+// import { PathnameKey, RouteConfig } from "@/types";
 import { query_stringify } from "@/utils";
 
 enum Events {
@@ -100,10 +101,21 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
   }
 
   push(name: K, query: Record<string, string> = {}, options: Partial<{ ignore: boolean }> = {}) {
+    // console.log("-----------");
+    // console.log("[DOMAIN]history/index - push target url is", name, "and cur href is", this.$router.href);
     const { ignore } = options;
-    const uniqueKey = [name, query_stringify(query)].filter(Boolean).join("?");
+    if (this.isLayout(name)) {
+      console.log("[DOMAIN]history/index - the target url is layout", name);
+      return;
+    }
+    const route1 = this.routes[name];
+    if (!route1) {
+      console.log("[DOMAIN]history/index - push 2. no matched route", name);
+      return;
+    }
+    const uniqueKey = [route1.pathname, query_stringify(query)].filter(Boolean).join("?");
     if (uniqueKey === this.$router.href) {
-      console.log("[DOMAIN]history/index - push target url is", uniqueKey, "and cur href is", this.$router.href);
+      // console.log("[DOMAIN]history/index - push target url is", uniqueKey, "and cur href is", this.$router.href);
       return;
     }
     const view = this.views[uniqueKey];
@@ -111,21 +123,24 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
       this.ensureParent(view);
       view.query = query;
       if (!view.parent) {
-        console.log("[DOMAIN]history/index - push 1");
+        console.log("[DOMAIN]history/index - error1");
         return;
       }
       this.$router.href = view.href;
       this.$router.name = view.name;
-      const viewAfter = this.stacks.slice(this.cursor + 1);
-      for (let i = 0; i < viewAfter.length; i += 1) {
-        const v = viewAfter[i];
-        v.parent?.removeView(v, () => {
-          delete this.views[v.href];
-        });
-      }
+      // const viewAfter = this.stacks.slice(this.cursor + 1);
+      // for (let i = 0; i < viewAfter.length; i += 1) {
+      //   const v = viewAfter[i];
+      //   v.parent?.removeView(v, {
+      //     reason: "show_sibling",
+      //     callback: () => {
+      //       delete this.views[v.href];
+      //     },
+      //   });
+      // }
       this.stacks = this.stacks.slice(0, this.cursor + 1).concat(view);
       this.cursor += 1;
-      view.parent.showView(view);
+      view.parent.showView(view, { reason: "show_sibling", destroy: false });
       this.emit(Events.RouteChange, {
         reason: "push",
         view,
@@ -147,7 +162,7 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
       return m;
     })();
     if (!route) {
-      console.log("[DOMAIN]history/index - push 2. no matched route", uniqueKey, name, query);
+      console.log("[DOMAIN]history/index - push 2. no matched route", uniqueKey);
       return null;
     }
     const created = new RouteViewCore({
@@ -155,6 +170,7 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
       pathname: route.pathname,
       title: route.title,
       query,
+      animation: route.options?.animation,
       parent: null,
     });
     // created.onUnmounted(() => {
@@ -176,7 +192,7 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
     // }
     this.stacks = this.stacks.slice(0, this.cursor + 1).concat(created);
     this.cursor += 1;
-    created.parent.showView(created);
+    created.parent.showView(created, { reason: "show_sibling", destroy: false });
     this.emit(Events.RouteChange, {
       reason: "push",
       view: created,
@@ -240,6 +256,7 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
       pathname: route.pathname,
       title: route.title,
       query,
+      animation: route.options?.animation,
       parent: null,
     });
     this.views[uniqueKey] = created;
@@ -252,8 +269,11 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
     this.$router.name = created.name;
     const theViewNeedDestroy = this.stacks[this.stacks.length - 1];
     if (theViewNeedDestroy) {
-      theViewNeedDestroy.parent?.removeView(theViewNeedDestroy, () => {
-        delete this.views[uniqueKey];
+      theViewNeedDestroy.parent?.removeView(theViewNeedDestroy, {
+        reason: "show_sibling",
+        callback: () => {
+          delete this.views[uniqueKey];
+        },
       });
     }
     this.stacks[this.stacks.length - 1] = created;
@@ -272,25 +292,33 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
   back() {
     const targetCursor = this.cursor - 1;
     const viewPrepareShow = this.stacks[targetCursor];
-    // console.log("[DOMAIN]history - back", this.cursor, targetCursor, viewPrepareShow.title);
+    console.log("[DOMAIN]history - back", this.cursor, targetCursor, viewPrepareShow);
     if (!viewPrepareShow) {
+      // this.$view.showView(this.$view.subViews[0]);
       return;
     }
     const href = viewPrepareShow.href;
     if (!viewPrepareShow.parent) {
+      // this.$view.showView(this.$view.subViews[0]);
       return;
     }
     this.$router.href = href;
     this.$router.name = viewPrepareShow.name;
     this.cursor = targetCursor;
     const viewsAfter = this.stacks.slice(targetCursor + 1);
+    // console.log("[DOMAIN]history - back before viewsAfter.length", viewsAfter);
     for (let i = 0; i < viewsAfter.length; i += 1) {
       const v = viewsAfter[i];
-      v.parent?.removeView(v, () => {
-        delete this.views[v.href];
+      // console.log("[DOMAIN]history - back before removeView", v.parent?.title, v.title);
+      v.parent?.removeView(v, {
+        reason: "back",
+        destroy: true,
+        callback: () => {
+          delete this.views[v.href];
+        },
       });
     }
-    viewPrepareShow.parent.showView(viewPrepareShow);
+    viewPrepareShow.parent.showView(viewPrepareShow, { reason: "back", destroy: true });
     this.emit(Events.RouteChange, {
       reason: "back",
       view: viewPrepareShow,
@@ -318,8 +346,11 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
     const viewsAfter = this.stacks.slice(targetCursor + 1);
     for (let i = 0; i < viewsAfter.length; i += 1) {
       const v = viewsAfter[i];
-      v.parent?.removeView(v, () => {
-        delete this.views[v.href];
+      v.parent?.removeView(v, {
+        reason: "forward",
+        callback: () => {
+          delete this.views[v.href];
+        },
       });
     }
     viewPrepareShow.parent.showView(viewPrepareShow);
@@ -415,6 +446,13 @@ export class HistoryCore<K extends string, R extends Record<string, any>> extend
       parent: null,
     });
     return created.buildUrlWithPrefix(query);
+  }
+  isLayout(name: K) {
+    const route = this.routes[name];
+    if (!route) {
+      return null;
+    }
+    return route.layout;
   }
   handleClickLink(params: { href: string; target: null | string }) {
     const { href, target } = params;

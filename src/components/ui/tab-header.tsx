@@ -45,10 +45,20 @@ export const TabHeader = (props: { store: TabHeaderCore<any> }) => {
                   onClick={() => {
                     store.select(index());
                   }}
-                  onAnimationStart={(event) => {
+                  onAnimationEnd={(event) => {
                     event.stopPropagation();
-                    const { width, height, left } = event.currentTarget.getBoundingClientRect();
-                    store.updateTabClient(index(), { width, height, left });
+                    const target = event.currentTarget;
+                    // const { width, height, left } = event.currentTarget.getBoundingClientRect();
+                    store.updateTabClient(index(), {
+                      rect() {
+                        const { offsetLeft, clientWidth, clientHeight } = target;
+                        return {
+                          width: clientWidth,
+                          height: clientHeight,
+                          left: offsetLeft,
+                        };
+                      },
+                    });
                   }}
                 >
                   {tab.text}

@@ -8,7 +8,7 @@ import { Button, Input, LazyImage, Label, ListView, ScrollView } from "@/compone
 import * as Form from "@/components/ui/form";
 import { TabHeader } from "@/components/ui/tab-header";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
-import { MediaSearchCore } from "@/domains/media_search";
+import { MediaSearchCore } from "@/biz/media_search";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
 import { cn } from "@/utils";
 import { ImageInListCore } from "@/domains/ui";

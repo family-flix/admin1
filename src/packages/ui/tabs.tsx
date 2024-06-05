@@ -99,7 +99,7 @@ const Content = (
 
   const orientation = () => state().orientation;
   const isSelected = () => state().curValue === value;
-  const open = () => presenceState().open;
+  const open = () => presenceState().visible;
 
   return (
     <Presence store={presence}>

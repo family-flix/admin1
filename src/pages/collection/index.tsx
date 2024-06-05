@@ -4,6 +4,9 @@
 import { createSignal, For } from "solid-js";
 import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { driveList } from "@/store/drives";
+import { consumeAction, pendingActions } from "@/store/actions";
 import { CollectionItem, deleteCollection, fetchCollectionList } from "@/services/collection";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox, Dialog } from "@/components/ui";
 import {
@@ -19,10 +22,6 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { ViewComponent } from "@/store/types";
-import { driveList } from "@/store/drives";
-import { consumeAction, pendingActions } from "@/store/actions";
-import { DriveCore } from "@/domains/drive";
 
 export const CollectionListPage: ViewComponent = (props) => {
   const { app, history, view } = props;

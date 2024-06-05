@@ -4,42 +4,36 @@
 import { JSX, Show, createSignal } from "solid-js";
 
 import { PresenceCore } from "@/domains/ui/presence";
-import { cn } from "@/utils";
+import { cn } from "@/utils/index";
 
 export const Presence = (
   props: {
     store: PresenceCore;
+    enterClassName?: string;
+    exitClassName?: string;
   } & JSX.HTMLAttributes<HTMLElement>
 ) => {
-  const { store } = props;
+  const { store, enterClassName, exitClassName, onClick } = props;
 
   const [state, setState] = createSignal(store.state);
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
-  });
-  // store.onShow(() => {
-  //   console.log(1);
-  // });
-  // store.onHidden(() => {
-  //   console.log(2);
-  // });
-  // store.onDestroy(() => {
-  //   console.log(3);
-  // });
-
-  const open = () => state().open;
-  const mounted = () => state().mounted;
+  store.onStateChange((v) => setState(v));
 
   return (
-    <Show when={mounted()}>
+    <Show when={state().mounted}>
       <div
-        class={cn("presence", props.class)}
+        class={cn(
+          "presence",
+          state().enter && enterClassName ? enterClassName : "",
+          state().exit && exitClassName ? exitClassName : "",
+          props.class
+        )}
         role="presentation"
-        data-state={open() ? "open" : "closed"}
-        onAnimationEnd={() => {
-          store.unmount();
-        }}
+        data-state={state().visible ? "open" : "closed"}
+        // onAnimationEnd={() => {
+        //   store.unmount();
+        // }}
+        onClick={onClick}
       >
         {props.children}
       </div>

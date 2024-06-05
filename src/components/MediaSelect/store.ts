@@ -4,7 +4,7 @@
 import { ButtonCore, DialogCore } from "@/domains/ui";
 import { BaseDomain, Handler } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
-import { MediaSearchCore } from "@/domains/media_search";
+import { MediaSearchCore } from "@/biz/media_search";
 import { MediaTypes } from "@/constants";
 import { MediaProfileItem } from "@/services/common";
 

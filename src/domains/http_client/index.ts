@@ -1,7 +1,6 @@
-// import axios, { AxiosError, AxiosInstance, CancelToken } from "axios";
-
 import { BaseDomain, Handler } from "@/domains/base";
-import { JSONObject, Result } from "@/types/index";
+import { Result } from "@/domains/result/index";
+import { JSONObject } from "@/types/index";
 import { query_stringify } from "@/utils/index";
 
 enum Events {
@@ -12,105 +11,99 @@ type TheTypesOfEvents = {
 };
 
 type HttpClientCoreProps = {
-  hostname: string;
+  hostname?: string;
   headers?: Record<string, string>;
+  debug?: boolean;
 };
 type HttpClientCoreState = {};
 
 export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
-  //   axios: AxiosInstance;
-
-  hostname: string;
+  hostname: string = "";
   headers: Record<string, string> = {};
+  debug = false;
 
   constructor(props: Partial<{ _name: string }> & HttpClientCoreProps) {
     super(props);
 
-    const { hostname, headers = {} } = props;
+    const { hostname = "", headers = {}, debug = false } = props;
 
     this.hostname = hostname;
     this.headers = headers;
-    // this.user = user;
-    //     const client = axios.create({
-    //       timeout: 12000,
-    //     });
-    //     this.axios = client;
+    this.debug = debug;
   }
 
   async get<T>(
     endpoint: string,
-    query?: JSONObject,
-    extra: Partial<{ headers: Record<string, string>; token: unknown }> = {}
+    query?: Record<string, string | number | undefined>,
+    extra: Partial<{ headers: Record<string, string>; id: string }> = {}
   ): Promise<Result<T>> {
-    //     const client = this.axios;
-    // const user = this.user;
     try {
       const h = this.hostname;
-      const url = `${h}${endpoint}${query ? "?" + query_stringify(query) : ""}`;
-      const resp = await this.fetch<{ code: number | string; msg: string; data: unknown | null }>({
+      const url = [h, endpoint, query ? "?" + query_stringify(query) : ""].join("");
+      const payload = {
         url,
-        method: "GET",
-        // cancelToken: extra.token,
+        method: "GET" as const,
+        id: extra.id,
         headers: {
           ...this.headers,
           ...(extra.headers || {}),
-          // Authorization: user.token,
         },
-      });
-      console.log("before GET resp.data", resp.data);
-      return Result.Ok(resp.data as T);
+      };
+      if (this.debug) {
+        console.log("[DOMAIN]http_client - before fetch", payload);
+      }
+      const resp = await this.fetch<T>(payload);
+      return Result.Ok(resp.data);
     } catch (err) {
       const error = err as Error;
-      //       if (axios.isCancel(error)) {
-      //         return Result.Err("cancel", "CANCEL");
-      //       }
       const { message } = error;
-      // console.log("error", message);
       return Result.Err(message);
     }
   }
   async post<T>(
     endpoint: string,
-    body: JSONObject | FormData = {},
-    extra: Partial<{ headers: Record<string, string>; token: unknown }> = {}
+    body?: JSONObject | FormData,
+    extra: Partial<{ headers: Record<string, string>; id: string }> = {}
   ): Promise<Result<T>> {
-    //     const client = this.axios;
-    // const user = this.user;
     const h = this.hostname;
-    const url = `${h}${endpoint}`;
-    // console.log(url, h, endpoint, this.headers);
+    const url = [h, endpoint].join("");
     try {
-      const resp = await this.fetch<{ code: number | string; msg: string; data: unknown | null }>({
+      const payload = {
         url,
-        method: "POST",
+        method: "POST" as const,
         data: body,
-        // cancelToken: extra.token,
+        id: extra.id,
         headers: {
           ...this.headers,
           ...(extra.headers || {}),
-          // Authorization: user.token,
         },
-      });
-      // console.log('before resp.data', resp.data);
-      return Result.Ok(resp.data as T);
+      };
+      if (this.debug) {
+        console.log("[DOMAIN]http_client - before fetch", payload);
+      }
+      const resp = await this.fetch<T>(payload);
+      return Result.Ok(resp.data);
     } catch (err) {
       const error = err as Error;
-      //       if (axios.isCancel(error)) {
-      //         return Result.Err("cancel", "CANCEL");
-      //       }
       const { message } = error;
       return Result.Err(message);
     }
   }
   async fetch<T>(options: {
     url: string;
-    method: "GET" | "POST" | "PUT" | "DELETE";
+    method: "GET" | "POST";
+    id?: string;
     data?: JSONObject | FormData;
     headers?: Record<string, string>;
   }) {
-    return {} as { data: T };
+    console.log("请在 connect 中实现 fetch 方法");
+    return { data: {} } as { data: T };
   }
-  cancel() {}
+  cancel(id: string) {
+    const tip = "请在 connect 中实现 cancel 方法";
+    console.log(tip);
+    return Result.Err(tip);
+  }
   setHeaders(headers: Record<string, string>) {
     this.headers = headers;
   }
@@ -119,6 +112,9 @@ export class HttpClientCore extends BaseDomain<TheTypesOfEvents> {
       ...this.headers,
       ...headers,
     };
+  }
+  setDebug(debug: boolean) {
+    this.debug = debug;
   }
 
   onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {

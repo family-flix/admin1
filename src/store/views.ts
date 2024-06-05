@@ -12,7 +12,6 @@ import { RegisterPage } from "@/pages/register";
 import { NotFoundPage } from "@/pages/notfound";
 import { LogListPage } from "@/pages/job";
 import { LogProfilePage } from "@/pages/job/profile";
-import { TestPage } from "@/pages/test";
 import { DriveListPage } from "@/pages/drive";
 import { PersonListPage } from "@/pages/person";
 import { DriveProfilePage } from "@/pages/drive/profile";
@@ -34,10 +33,10 @@ import { SharedFilesTransferListPage } from "@/pages/resource/transfer";
 import { SeasonArchivePage } from "@/pages/archive/season";
 import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
-import { InvalidMediaListPage } from "@/pages/media_error";
-import { OuterMediaProfilePage } from "@/pages/outer_profile";
+import { InvalidMediaListPage } from "@/pages/invalid_media";
 import { MediaProfileHomeLayout } from "@/pages/media_profile/layout";
 import { SeasonMediaProfileManagePage } from "@/pages/media_profile";
+import { TestPage } from "@/pages/test";
 
 import { ViewComponent } from "@/store/types";
 
@@ -72,8 +71,6 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.collection_edit": CollectionEditPage,
   "root.home_layout.subtitles_list": HomeSubtitleListPage,
   "root.home_layout.subtitles_create": HomeSubtitleUploadPage,
-  "root.media_profile_layout": MediaProfileHomeLayout,
-  "root.media_profile_layout.home": SeasonMediaProfileManagePage,
   "root.archive": SeasonArchivePage,
   "root.preview": MediaPlayingPage,
   "root.login": LoginPage,

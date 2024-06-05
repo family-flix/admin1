@@ -38,9 +38,7 @@ export class TabHeaderCore<
   extra: Record<
     string,
     {
-      width: number;
-      height: number;
-      left: number;
+      rect: () => { width: number; height: number; left: number };
     }
   > = {};
   current: number | null = null;
@@ -104,20 +102,25 @@ export class TabHeaderCore<
     for (let i = 0; i < options.length; i += 1) {
       const { id } = options[i];
       this.extra[id] = {
-        left: 0,
-        width: 0,
-        height: 0,
+        rect() {
+          return {
+            left: 0,
+            width: 0,
+            height: 0,
+          };
+        },
       };
     }
   }
   select(index: number) {
-    this.current = index;
     const matchedTab = this.tabs[index] as unknown as T["options"][number];
+    // console.log("[DOMAIN]tab-header - select", index, matchedTab, this.tabs);
     if (!matchedTab) {
       return;
     }
+    this.current = index;
     const left = this.calcLineLeft(this.current);
-    // console.log("[DOMAIN]tab-header - select", index, left);
+    // console.log("[DOMAIN]tab-header - after this.calcLineLeft(this.current)", left);
     if (left !== null) {
       this.left = left;
       this.changeLinePosition(left);
@@ -137,7 +140,7 @@ export class TabHeaderCore<
     }
     this.current = matchedIndex;
     const left = this.calcLineLeft(this.current);
-    console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab, left);
+    // console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab, left);
     if (left !== null) {
       this.changeLinePosition(left);
     }
@@ -168,10 +171,11 @@ export class TabHeaderCore<
     if (!matchedTab) {
       return null;
     }
-    const client = this.extra[matchedTab.id];
-    return client.left - this.container.left + client.width / 2;
+    const client = this.extra[matchedTab.id].rect();
+    // console.log("[DOMAIN]ui/tab-header/index - calcLineLeft", this.extra, client);
+    return client.left + client.width / 2;
   }
-  updateTabClient(index: number, info: { width: number; height: number; left: number }) {
+  updateTabClient(index: number, info: { rect: () => { width: number; height: number; left: number } }) {
     const matchedTab = this.tabs[index];
     if (!matchedTab) {
       return;
@@ -184,7 +188,7 @@ export class TabHeaderCore<
     // if (this.current === null) {
     //   return;
     // }
-    const left = this.calcLineLeft(index);
+    const left = this.calcLineLeft(0);
     if (left !== null) {
       this.changeLinePosition(left);
     }
@@ -192,10 +196,9 @@ export class TabHeaderCore<
     this.emit(Events.Mounted);
   }
   changeLinePosition(left: number) {
-    console.log("[DOMAIN]ui/tab-headers - changeLinePosition", left);
     this.emit(Events.LinePositionChange, { left });
   }
-  updateTabClientById(id: string, info: { width: number; height: number; left: number }) {
+  updateTabClientById(id: string, info: { rect: () => { width: number; height: number; left: number } }) {
     const matchedTabIndex = this.tabs.findIndex((t) => t.id === id);
     if (matchedTabIndex === -1) {
       return;
@@ -217,7 +220,7 @@ export class TabHeaderCore<
     if (curTab === null) {
       return;
     }
-    const client = this.extra[curTab.id];
+    const client = this.extra[curTab.id].rect();
     const theTabMiddle = client.left + client.width / 2;
     const realTargetPosition = (() => {
       if (this.targetLeftWhenSelected === null) {

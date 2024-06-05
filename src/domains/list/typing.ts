@@ -5,15 +5,13 @@ import { JSONObject } from "@/types";
 
 export type OriginalResponse = {
   list: unknown[];
-} & {
-  data: {
-    list: unknown[];
-  };
 };
 /**
  * 查询参数
  */
-export interface Search extends JSONObject {}
+export type Search = {
+  [x: string]: string | number | boolean | null | undefined;
+};
 /**
  * 请求参数
  */
@@ -134,3 +132,5 @@ export interface ListProps<T> {
   beforeSearch?: () => void;
   afterSearch?: () => void;
 }
+
+export type ItemTypeFromListCore<T extends { response: { dataSource: {}[] } }> = T["response"]["dataSource"][number];

@@ -17,7 +17,7 @@ type DynamicContentCoreState = {
 };
 
 export class DynamicContentCore extends BaseDomain<TheTypesOfEvents> {
-  unique_id?: unknown;
+  unique_uid?: unknown;
   value: number;
 
   get state(): DynamicContentCoreState {
@@ -32,7 +32,7 @@ export class DynamicContentCore extends BaseDomain<TheTypesOfEvents> {
     const { value, unique_id } = props;
     this.value = value;
     if (unique_id) {
-      this.unique_id = unique_id;
+      this.unique_uid = unique_id;
     }
   }
 

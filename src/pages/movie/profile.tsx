@@ -10,12 +10,13 @@ import {
   deleteMedia,
   refreshMediaProfile,
   setMediaProfile,
+  fetchMovieMediaProfileProcess,
 } from "@/services/media";
 import { deleteParsedMediaSource } from "@/services/parsed_media";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
-import { TMDBSearcherCore } from "@/domains/tmdb";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import { RefCore } from "@/domains/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
@@ -28,6 +29,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchMovieMediaProfile, {
+    process: fetchMovieMediaProfileProcess,
     onFailed(error) {
       app.tip({ text: ["获取电视剧详情失败", error.message] });
     },

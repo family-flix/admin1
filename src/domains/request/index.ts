@@ -2,9 +2,13 @@
  * @file API 请求
  */
 import { BaseDomain, Handler } from "@/domains/base";
-import { BizError } from "@/domains/error";
-import { Result, UnpackedResult, Unpacked } from "@/types";
-import { sleep } from "@/utils";
+import { BizError } from "@/domains/error/index";
+import { HttpClientCore } from "@/domains/http_client/index";
+import { Result } from "@/domains/result/index";
+import { UnpackedResult } from "@/types/index";
+import { sleep } from "@/utils/index";
+
+import { RequestPayload, UnpackedRequestPayload } from "./utils";
 
 enum Events {
   BeforeRequest,
@@ -13,81 +17,134 @@ enum Events {
   Success,
   Failed,
   Completed,
+  Canceled,
   StateChange,
   ResponseChange,
 }
-type TheTypesOfEvents<T extends (...args: any[]) => Promise<Result<any>>> = {
+type TheTypesOfEvents<T> = {
   [Events.LoadingChange]: boolean;
   [Events.BeforeRequest]: void;
   [Events.AfterRequest]: void;
   [Events.Success]: T;
   [Events.Failed]: BizError;
   [Events.Completed]: void;
+  [Events.Canceled]: void;
   [Events.StateChange]: RequestState<T>;
-  [Events.ResponseChange]: UnpackedResult<Unpacked<ReturnType<T>>> | null;
+  [Events.ResponseChange]: T | null;
 };
-type RequestState<T extends (...args: any[]) => Promise<Result<any>>> = {
+
+type RequestState<T> = {
   loading: boolean;
-  response: UnpackedResult<Unpacked<ReturnType<T>>> | null;
+  error: BizError | null;
+  response: T | null;
 };
-type RequestProps<T extends (...args: any[]) => Promise<Result<any>>> = {
+type FetchFunction = (...args: any[]) => RequestPayload<any>;
+type ProcessFunction<V, P> = (value: V) => Result<P>;
+type RequestProps<F extends FetchFunction, P> = {
+  client?: HttpClientCore;
   delay?: null | number;
-  defaultResponse?: UnpackedResult<Unpacked<ReturnType<T>>>;
-  onSuccess: (v: T) => void;
-  onFailed: (error: BizError) => void;
-  onCompleted: () => void;
-  beforeRequest: () => void;
-  onLoading: (loading: boolean) => void;
+  // defaultResponse?: any;
+  defaultResponse?: P;
+  // fetch: F;
+  process?: ProcessFunction<Result<UnpackedRequestPayload<ReturnType<F>>>, P>;
+  onSuccess?: (v: UnpackedResult<P>) => void;
+  onFailed?: (error: BizError) => void;
+  onCompleted?: () => void;
+  onCanceled?: () => void;
+  beforeRequest?: () => void;
+  onLoading?: (loading: boolean) => void;
 };
+
+let handler: null | ((v: RequestCore<any>) => void) = null;
+export function onCreate(h: (v: RequestCore<any>) => void) {
+  handler = h;
+}
 
 /**
  * 用于接口请求的核心类
  */
-export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> extends BaseDomain<
-  TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>
+export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<ReturnType<F>>> extends BaseDomain<
+  TheTypesOfEvents<any>
 > {
   debug = false;
 
-  /** 原始 service 函数 */
-  private _service: T;
+  defaultResponse: P | null = null;
+
+  /**
+   * 就是
+   *
+   * ```js
+   * function test() {
+   *   return request.post('/api/ping');
+   * }
+   * ```
+   *
+   * 函数返回 RequestPayload，描述该次请求的地址、参数等
+   */
+  service: F;
+  process?: ProcessFunction<Result<UnpackedRequestPayload<ReturnType<F>>>, P>;
+  client?: HttpClientCore;
   delay: null | number = 800;
   loading = false;
   /** 处于请求中的 promise */
-  pending: ReturnType<T> | null = null;
+  // pending: Promise<UnpackedRequestPayload<ReturnType<F>>> | null = null;
+  pending: Promise<Result<P>> | null = null;
   /** 调用 prepare 方法暂存的参数 */
-  args: Parameters<T> | null = null;
+  // args: Parameters<T> | null = null;
   /** 请求的响应 */
-  response: UnpackedResult<Unpacked<ReturnType<T>>> | null = null;
+  response: P | null = null;
+  /** 请求失败，保存错误信息 */
+  error: BizError | null = null;
+  id = String(this.uid());
 
-  get state(): RequestState<T> {
+  get state(): RequestState<P> {
     return {
       loading: this.loading,
+      error: this.error,
       response: this.response,
     };
   }
 
-  constructor(service: T, props: Partial<RequestProps<UnpackedResult<Unpacked<ReturnType<T>>>>> = {}) {
+  constructor(fn: F, props: RequestProps<F, P> = {}) {
     super();
 
-    if (typeof fetch !== "function") {
-      throw new Error("service must be a function");
-    }
-    this._service = service;
-    const { delay, defaultResponse, onSuccess, onFailed, onCompleted, onLoading, beforeRequest } = props;
+    const {
+      client,
+      delay,
+      defaultResponse,
+      // fetch,
+      process,
+      onSuccess,
+      onFailed,
+      onCompleted,
+      onCanceled,
+      onLoading,
+      beforeRequest,
+    } = props;
+    this.service = fn;
+    this.process = process;
+    this.client = client;
+    // this.method = method;
     if (delay !== undefined) {
       this.delay = delay;
     }
     if (defaultResponse) {
+      this.defaultResponse = defaultResponse;
       this.response = defaultResponse;
     }
+    // const source = axios.CancelToken.source();
+    // this.source = source;
     if (onSuccess) {
       this.onSuccess(onSuccess);
     }
     if (onFailed) {
-      this.onFailed(onFailed);
+      this.onFailed(onFailed, { override: true });
     }
     if (onCompleted) {
       this.onCompleted(onCompleted);
+    }
+    if (onCanceled) {
+      this.onCanceled(onCanceled);
     }
     if (onLoading) {
       this.onLoadingChange(onLoading);
@@ -95,55 +152,115 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     if (beforeRequest) {
       this.beforeRequest(beforeRequest);
     }
+    if (handler) {
+      handler(this);
+    }
   }
-  token?: unknown;
   /** 执行 service 函数 */
-  async run(...args: Parameters<T>) {
+  async run(...args: Parameters<F>) {
+    if (!this.service) {
+      return Result.Err("缺少 service");
+    }
+    if (typeof this.service !== "function") {
+      return Result.Err("service 不是函数");
+    }
+    if (!this.client) {
+      return Result.Err("缺少 client");
+    }
     if (this.pending !== null) {
       const r = await this.pending;
-      const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
+      this.loading = false;
+      const data = r.data as P;
       this.pending = null;
-      return Result.Ok(d);
+      return Result.Ok(data);
     }
-    this.args = args;
+    // this.args = args;
+    this.loading = true;
+    this.response = this.defaultResponse;
+    this.error = null;
+    // const source = axios.CancelToken.source();
+    // this.source = source;
     this.emit(Events.LoadingChange, true);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.BeforeRequest);
-    const pending = this._service(...args, this.token) as ReturnType<T>;
-    this.pending = pending;
-    const [r] = await Promise.all([pending, this.delay === null ? null : sleep(this.delay)]);
+    let payloadProcess: null | ((v: any) => any) = null;
+    const r2 = (() => {
+      const { hostname = "", url, method, query, body, process } = this.service(...(args as unknown as any[]));
+      if (process) {
+        payloadProcess = process;
+      }
+      if (method === "GET") {
+        // const [query, extra = {}] = args;
+        const r = this.client.get<P>(hostname + url, query, {
+          id: this.id,
+        });
+        return Result.Ok(r) as Result<Promise<Result<P>>>;
+        // return Result.Ok(r);
+      }
+      if (method === "POST") {
+        // const [body, extra = {}] = args;
+        const r = this.client.post<P>(hostname + url, body, {
+          id: this.id,
+        });
+        // return Result.Ok(r);
+        return Result.Ok(r) as Result<Promise<Result<P>>>;
+      }
+      return Result.Err(`未知的 method '${method}'`);
+    })();
+    if (r2.error) {
+      return Result.Err(r2.error.message);
+    }
+    this.pending = r2.data;
+    const [r] = await Promise.all([this.pending, this.delay === null ? null : sleep(this.delay)]);
+    this.loading = false;
+    const rr = (() => {
+      if (payloadProcess) {
+        return payloadProcess(r);
+      }
+      return r;
+    })();
+    const resp = this.process ? this.process(rr as any) : rr;
     this.emit(Events.LoadingChange, false);
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.Completed);
     this.pending = null;
-    console.log("[DOMAIN]client - run", r.error);
-    if (r.error) {
-      this.emit(Events.Failed, r.error);
-      return Result.Err(r.error);
+    if (resp.error) {
+      if (resp.error.code === "CANCEL") {
+        this.emit(Events.Canceled);
+        return Result.Err(resp.error);
+      }
+      this.error = resp.error;
+      this.emit(Events.Failed, resp.error);
+      this.emit(Events.StateChange, { ...this.state });
+      return Result.Err(resp.error.message);
     }
-    this.response = r.data;
-    const d = r.data as UnpackedResult<Unpacked<ReturnType<T>>>;
-    this.emit(Events.Success, d);
+    const data = resp.data as P;
+    this.response = data;
+    this.emit(Events.Success, data);
     this.emit(Events.StateChange, { ...this.state });
-    this.emit(Events.ResponseChange, this.response);
-    return Result.Ok(d);
+    this.emit(Events.ResponseChange, data);
+    return Result.Ok(data);
   }
   /** 使用当前参数再请求一次 */
   reload() {
-    if (this.args === null) {
-      return;
-    }
-    this.run(...this.args);
+    // if (this.args === null) {
+    //   return;
+    // }
+    // this.run(...this.args);
   }
   cancel() {
-    // ...
+    if (!this.client) {
+      return Result.Err("缺少 client");
+    }
+    this.client.cancel(this.id);
+    // this.source.cancel("主动取消");
   }
   clear() {
     this.response = null;
     this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.ResponseChange, this.response);
   }
-  modifyResponse(fn: (resp: UnpackedResult<Unpacked<ReturnType<T>>>) => UnpackedResult<Unpacked<ReturnType<T>>>) {
+  modifyResponse(fn: (resp: P) => P) {
     if (this.response === null) {
       return;
     }
@@ -153,29 +270,41 @@ export class RequestCore<T extends (...args: any[]) => Promise<Result<any>>> ext
     this.emit(Events.ResponseChange, this.response);
   }
 
-  onLoadingChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.LoadingChange]>) {
+  onLoadingChange(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.LoadingChange]>) {
     return this.on(Events.LoadingChange, handler);
   }
-  beforeRequest(handler: Handler<TheTypesOfEvents<T>[Events.BeforeRequest]>) {
+  beforeRequest(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.BeforeRequest]>) {
     return this.on(Events.BeforeRequest, handler);
   }
-  onSuccess(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Success]>) {
+  onSuccess(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.Success]>) {
     return this.on(Events.Success, handler);
   }
-  onFailed(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Failed]>) {
+  onFailed(
+    handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.Failed]>,
+    opt: Partial<{
+      /** 清除其他 failed 监听 */
+      override: boolean;
+    }> = {}
+  ) {
+    if (opt.override) {
+      this.offEvent(Events.Failed);
+    }
     return this.on(Events.Failed, handler);
+  }
+  onCanceled(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.Canceled]>) {
+    return this.on(Events.Canceled, handler);
   }
   /** 建议使用 onFailed */
-  onError(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Failed]>) {
+  onError(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.Failed]>) {
     return this.on(Events.Failed, handler);
   }
-  onCompleted(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.Completed]>) {
+  onCompleted(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.Completed]>) {
     return this.on(Events.Completed, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.StateChange]>) {
+  onStateChange(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.StateChange]>) {
     return this.on(Events.StateChange, handler);
   }
-  onResponseChange(handler: Handler<TheTypesOfEvents<UnpackedResult<Unpacked<ReturnType<T>>>>[Events.ResponseChange]>) {
+  onResponseChange(handler: Handler<TheTypesOfEvents<UnpackedResult<P>>[Events.ResponseChange]>) {
     return this.on(Events.ResponseChange, handler);
   }
 }

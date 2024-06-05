@@ -60,7 +60,6 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     super(options);
 
     const {
-      _name: name,
       defaultValue,
       placeholder = "请输入",
       type = "string",
@@ -69,9 +68,6 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
       onBlur,
       onEnter,
     } = options;
-    if (name) {
-      this._name = name;
-    }
     this.placeholder = placeholder;
     this.type = type;
     this.disabled = disabled;

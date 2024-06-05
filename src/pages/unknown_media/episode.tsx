@@ -4,15 +4,19 @@
 import { For, Show, createSignal } from "solid-js";
 import { Brush, Edit, RotateCcw, Search, Trash } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { createJob } from "@/store/job";
 import {
   UnknownEpisodeItem,
   fetchParsedMediaSourceList,
+  fetchParsedMediaSourceListProcess,
   setParsedSeasonMediaSourceProfile,
 } from "@/services/parsed_media";
 import { delete_unknown_episode } from "@/services";
-import { renameFile } from "@/domains/drive";
+import { renameFile } from "@/biz/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import {
   ButtonCore,
   ButtonInListCore,
@@ -22,22 +26,22 @@ import {
   InputCore,
   ScrollViewCore,
 } from "@/domains/ui";
-import { TMDBSearcherCore } from "@/domains/tmdb";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { ViewComponent } from "@/store/types";
-import { createJob } from "@/store/job";
-import { MediaTypes } from "@/constants";
+import { MediaTypes } from "@/constants/index";
 
 export const UnknownEpisodeListPage: ViewComponent = (props) => {
   const { app, view } = props;
 
-  const list = new ListCore(new RequestCore(fetchParsedMediaSourceList), {
-    onLoadingChange(loading) {
-      refreshBtn.setLoading(loading);
-    },
-  });
+  const list = new ListCore(
+    new RequestCore(fetchParsedMediaSourceList, { process: fetchParsedMediaSourceListProcess }),
+    {
+      onLoadingChange(loading) {
+        refreshBtn.setLoading(loading);
+      },
+    }
+  );
   const refreshBtn = new ButtonCore({
     onClick() {
       list.refresh();
@@ -293,11 +297,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  view.onShow(() => {
-    list.init();
-  });
-
-  const dataSource = () => response().dataSource;
+  list.init();
 
   return (
     <>
@@ -329,7 +329,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
           // }
         >
           <div class="space-y-4">
-            <For each={dataSource()}>
+            <For each={response().dataSource}>
               {(episode) => {
                 const { id, name, episode_text, season_text, file_name, parent_paths, profile, drive } = episode;
                 return (

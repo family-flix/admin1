@@ -3,8 +3,8 @@
  */
 import mitt, { Handler } from "mitt";
 
-import { JobCore } from "@/domains/job";
-import { TaskStatus } from "@/domains/job/constants";
+import { JobCore } from "@/biz/job";
+import { TaskStatus } from "@/biz/job/constants";
 
 import { storage } from "./storage";
 

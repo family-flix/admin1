@@ -7,14 +7,18 @@ enum Events {
   StateChange,
   PresentChange,
   Show,
+  TmpShow,
   Hidden,
+  TmpHidden,
   Unmounted,
 }
 type TheTypesOfEvents = {
   [Events.StateChange]: PresenceState;
   [Events.PresentChange]: boolean;
   [Events.Show]: void;
+  [Events.TmpShow]: void;
   [Events.Hidden]: void;
+  [Events.TmpHidden]: void;
   [Events.Unmounted]: void;
 };
 const PresenceEventMap = {
@@ -32,127 +36,121 @@ const PresenceEventMap = {
 };
 type PresenceState = {
   mounted: boolean;
-  open: boolean;
-  unmounted: boolean;
+  enter: boolean;
+  visible: boolean;
+  exit: boolean;
+  text: string;
 };
 type PresenceProps = {
-  open?: boolean;
+  mounted?: boolean;
+  visible?: boolean;
 };
+
 export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   name = "PresenceCore";
   debug = false;
 
-  // styles: CSSStyleDeclaration;
   animationName = "none";
-  // private state = "unmounted";
-  open = false;
+
   mounted = false;
-  unmounted = false;
+  enter = false;
+  visible = false;
+  exit = false;
 
   get state(): PresenceState {
     return {
-      open: this.open,
       mounted: this.mounted,
-      unmounted: this.unmounted,
+      enter: this.enter,
+      visible: this.visible,
+      exit: this.exit,
+      text: (() => {
+        if (this.exit) {
+          return "exit";
+        }
+        if (this.enter) {
+          return "enter";
+        }
+        if (this.visible) {
+          return "visible";
+        }
+        return "unknown";
+      })(),
     };
   }
 
-  constructor(options: Partial<{ _name: string }> & PresenceProps = {}) {
-    super(options);
+  constructor(props: Partial<{ _name: string }> & PresenceProps = {}) {
+    super(props);
 
-    const { open } = options;
-    if (open) {
-      this.open = true;
+    const { mounted = false, visible = false } = props;
+    this.mounted = mounted;
+    this.visible = visible;
+    if (visible) {
       this.mounted = true;
     }
   }
-
-  calc() {
-    // const styles = this.styles;
-    // const wasPresent = this.prevPresent;
-    // const hasPresentChanged = wasPresent !== present;
-    // if (hasPresentChanged) {
-    //   const prevAnimationName = this.animationName;
-    //   const currentAnimationName = getAnimationName();
-    //   if (present) {
-    //     this.send("MOUNT");
-    //   } else if (currentAnimationName === "none" || styles.display === "none") {
-    //     // If there is no exit animation or the element is hidden, animations won't run
-    //     // so we unmount instantly
-    //     this.send("UNMOUNT");
-    //   } else {
-    //     const isAnimating = prevAnimationName !== currentAnimationName;
-    //     if (wasPresent && isAnimating) {
-    //       this.send("ANIMATION_OUT");
-    //     } else {
-    //       this.send("UNMOUNT");
-    //     }
-    //   }
-    //   this.prevPresent = present;
-    // }
-    // this.emit(Events.PresentChange, this.isPresent);
-    // if (this.isPresent) {
-    //   this.emit(Events.Show);
-    //   return;
-    // }
-    // this.emit(Events.Hidden);
+  toggle() {
+    if (this.visible) {
+      this.hide();
+      return;
+    }
+    this.show();
   }
-  /** 是否可见 */
-  get isPresent() {
-    return this.open;
-    // return ["mounted", "unmountSuspended"].includes(this.state);
-  }
-  // setStyles(styles: CSSStyleDeclaration) {
-  //   this.styles = styles;
-  // }
   show() {
-    // this.log("show");
-    // this.calc(true);
-    this.open = true;
     this.mounted = true;
-    this.emit(Events.Show);
-    this.emit(Events.StateChange, { ...this.state });
-  }
-  hide() {
-    console.log('[DOMAIN/ui]presence/index - hide');
-    // console.log(...this.log("hide"));
-    // this.calc(false);
-    this.open = false;
-    this.emit(Events.Hidden);
+    this.enter = true;
+    this.visible = true;
     this.emit(Events.StateChange, { ...this.state });
     setTimeout(() => {
-      if (this.mounted === false) {
-        return;
-      }
+      // 120 是预计的动画时间
+      this.emit(Events.Show);
+    }, 120);
+  }
+  hide(options: Partial<{ reason: "show_sibling" | "back" | "forward"; destroy: boolean }> = {}) {
+    // console.log("[DOMAIN]ui/presence - hide", options);
+    const { destroy = true } = options;
+    if (destroy === false) {
+      // 不销毁，但是要隐藏
+      this.visible = false;
+      this.emit(Events.Hidden);
+      this.emit(Events.StateChange, { ...this.state });
+      return;
+    }
+    this.exit = true;
+    this.emit(Events.StateChange, { ...this.state });
+    setTimeout(() => {
+      this.visible = false;
+      this.emit(Events.Hidden);
+      this.emit(Events.StateChange, { ...this.state });
       this.unmount();
     }, 120);
   }
-  send(event: "UNMOUNT" | "ANIMATION_OUT" | "MOUNT" | "ANIMATION_END" | "MOUNT") {
-    // this.log("send", event, this.state);
-    // const nextState = PresenceEventMap[this.state][event];
-    // this.state = nextState;
-    // const currentAnimationName = getAnimationName(this.styles);
-    // this.animationName =
-    //   nextState === "mounted" ? currentAnimationName : "none";
-    // this.calc(nextState);
-  }
   /** 将 DOM 从页面卸载 */
   unmount() {
-    // console.log("[]PresenceCore - destroy", this.state.open, this.state.unmounted);
-    if (this.open) {
-      // this.emit(Events.Show);
-      return;
-    }
+    // console.log("[]PresenceCore - destroy", this.visible, this.exit);
+    // if (this.open) {
+    //   return;
+    // }
     this.mounted = false;
+    this.enter = false;
+    this.visible = false;
+    this.exit = false;
     this.emit(Events.Unmounted);
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
-    this.open = false;
     this.mounted = false;
-    this.unmounted = false;
+    this.enter = false;
+    this.visible = false;
+    this.exit = false;
+    this.emit(Events.StateChange, { ...this.state });
   }
 
+  onTmpShow(handler: Handler<TheTypesOfEvents[Events.TmpShow]>) {
+    return this.on(Events.TmpShow, handler);
+  }
+  onTmpHidden(handler: Handler<TheTypesOfEvents[Events.TmpHidden]>) {
+    return this.on(Events.TmpHidden, handler);
+  }
   onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
     return this.on(Events.Show, handler);
   }
@@ -172,8 +170,4 @@ export class PresenceCore extends BaseDomain<TheTypesOfEvents> {
   get [Symbol.toStringTag]() {
     return "Presence";
   }
-}
-
-function getAnimationName(styles?: CSSStyleDeclaration) {
-  return styles?.animationName || "none";
 }

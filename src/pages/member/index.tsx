@@ -15,6 +15,7 @@ import {
   MemberItem,
   updateMemberPermission,
 } from "@/services/index";
+import { fetchMemberAccounts } from "@/services/member";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
 import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { Qrcode } from "@/components/Qrcode";
@@ -23,10 +24,8 @@ import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
 import { MultipleSelectionCore } from "@/domains/multiple";
-import { create_link } from "@/domains/shortlink";
-import { cn } from "@/utils";
-import { RequestCoreV2 } from "@/domains/request_v2";
-import { fetchMemberAccounts } from "@/services/member";
+import { create_link } from "@/biz/shortlink";
+import { cn } from "@/utils/index";
 
 function Page(props: ViewComponentProps) {
   const { app, client, storage, history } = props;
@@ -36,8 +35,7 @@ function Page(props: ViewComponentProps) {
       $refreshBtn.setLoading(loading);
     },
   });
-  const memberAccountsRequest = new RequestCoreV2({
-    fetch: fetchMemberAccounts,
+  const memberAccountsRequest = new RequestCore(fetchMemberAccounts, {
     defaultResponse: {},
     client,
   });
@@ -352,7 +350,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
   return (
     <>
       <ScrollView store={$page.ui.$scroll} class="h-screen p-8">
-        <h1 class="text-2xl">成员列表</h1>
+        <h1 class="text-2xl">成员列表({response().total})</h1>
         <div class="mt-8">
           <div class="space-x-2">
             <Button icon={<RotateCcw class="w-4 h-4" />} store={$page.ui.$refreshBtn}>

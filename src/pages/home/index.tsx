@@ -4,7 +4,7 @@
 import { createSignal, For, Show } from "solid-js";
 import { Send, FileSearch, RefreshCcw, AlertTriangle, Loader, Bird } from "lucide-solid";
 
-import { client } from "@/store/request";
+import { ViewComponent } from "@/store/types";
 import {
   fetchDashboard,
   fetchDashboardDefaultResponse,
@@ -13,36 +13,24 @@ import {
 } from "@/services/common";
 import { pushMessageToMembers } from "@/services";
 import { Button, Dialog, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
-import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
+import { DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { ImageInListCore } from "@/domains/ui/image";
 import { RequestCore } from "@/domains/request";
-import { addDrive } from "@/domains/drive";
-import { fetchDriveInstanceList } from "@/domains/drive/services";
 import { ListCore } from "@/domains/list";
-import { ListCoreV2 } from "@/domains/list/v2";
 import { FilenameParserCore } from "@/components/FilenameParser";
 import { DynamicContent } from "@/components/DynamicContent";
 import { DynamicContentCore } from "@/domains/ui/dynamic-content";
-import { RequestCoreV2 } from "@/domains/request_v2";
-import { DriveTypes, ReportTypes } from "@/constants";
-import { ViewComponent } from "@/store/types";
+import { ReportTypes } from "@/constants/index";
 
 export const HomeIndexPage: ViewComponent = (props) => {
-  const { app, history, view } = props;
+  const { app, history, client, view } = props;
 
-  const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
-    search: {
-      hidden: 0,
-    },
-  });
-  const dashboardRequest = new RequestCoreV2({
-    fetch: fetchDashboard,
+  const dashboardRequest = new RequestCore(fetchDashboard, {
     defaultResponse: fetchDashboardDefaultResponse,
     client,
   });
-  const mediaListRecentlyCreated = new ListCoreV2(
-    new RequestCoreV2({
-      fetch: fetchMediaRecentlyCreated,
+  const mediaListRecentlyCreated = new ListCore(
+    new RequestCore(fetchMediaRecentlyCreated, {
       client,
     })
   );
@@ -57,52 +45,12 @@ export const HomeIndexPage: ViewComponent = (props) => {
       pushDialog.hide();
     },
   });
-  const driveCreateRequest = new RequestCore(addDrive, {
-    onLoading(loading) {
-      driveCreateDialog.okBtn.setLoading(loading);
-    },
-    onSuccess() {
-      app.tip({ text: ["添加云盘成功"] });
-      driveCreateDialog.hide();
-      driveTokenInput.clear();
-      driveList.refresh();
-    },
-    onFailed(error) {
-      app.tip({ text: ["添加云盘失败", error.message] });
-    },
-  });
   const refreshRequest = new RequestCore(refreshDashboard, {
     onSuccess() {
       app.tip({
         text: ["刷新成功"],
       });
       dashboardRequest.reload();
-    },
-  });
-  const driveCreateDialog = new DialogCore({
-    title: "新增阿里云盘",
-    onOk() {
-      if (!driveTokenInput.value) {
-        app.tip({ text: ["请输入云盘信息"] });
-        return;
-      }
-      driveCreateRequest.run({ type: DriveTypes.AliyunBackupDrive, payload: driveTokenInput.value });
-    },
-  });
-  const driveCreateBtn = new ButtonCore({
-    onClick() {
-      driveCreateDialog.show();
-    },
-  });
-  const driveTokenInput = new InputCore({
-    defaultValue: "",
-    placeholder: "请输入",
-  });
-  const allDriveCheckbox = new CheckboxCore({
-    onChange(checked) {
-      driveList.search({
-        hidden: checked ? null : 0,
-      });
     },
   });
   const pushInput = new InputCore({
@@ -125,58 +73,21 @@ export const HomeIndexPage: ViewComponent = (props) => {
       });
     },
   });
-  const refreshBtn = new ButtonCore({
-    onClick() {
-      driveList.refresh();
-    },
-  });
-  const searchBtn = new ButtonCore({
-    onClick() {
-      if (!nameSearchInput.value) {
-        app.tip({
-          text: ["请输入搜索关键字"],
-        });
-        return;
-      }
-      driveList.search({
-        name: nameSearchInput.value,
-      });
-    },
-  });
-  const nameSearchInput = new InputCore({
-    defaultValue: "",
-    onEnter() {
-      searchBtn.click();
-    },
-  });
   const filenameParseDialog = new DialogCore({
     title: "文件名解析",
     footer: false,
   });
   const filenameParser = new FilenameParserCore({});
-  const resetBtn = new ButtonCore({
-    onClick() {
-      driveList.reset();
-    },
-  });
   const poster = new ImageInListCore({});
   const refreshIcon = new DynamicContentCore({
     value: 1,
   });
-  const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      driveList.loadMore();
-    },
-  });
+  const scrollView = new ScrollViewCore({});
 
-  // const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [dashboard, setDashboard] = createSignal(dashboardRequest.response);
   const [info, setInfo] = createSignal(filenameParser.state);
   const [mediaResponse, setMediaResponse] = createSignal(mediaListRecentlyCreated.response);
 
-  driveList.onLoadingChange((loading) => {
-    refreshBtn.setLoading(loading);
-  });
   mediaListRecentlyCreated.onStateChange((v) => {
     setMediaResponse(v);
   });
@@ -188,7 +99,6 @@ export const HomeIndexPage: ViewComponent = (props) => {
     setInfo(nextState);
   });
 
-  // driveList.initAny();
   mediaListRecentlyCreated.init();
   dashboardRequest.run();
 

@@ -1,11 +1,9 @@
 import { For, createSignal } from "solid-js";
 
-import { Dialog } from "@/components/ui";
-import { DialogCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
 import { driveList } from "@/store/drives";
+import { DialogCore } from "@/domains/ui/index";
 
-import { DriveSelectCore } from ".";
+import { DriveSelectCore } from "./index";
 
 export const DriveSelect = (props: { store: DriveSelectCore }) => {
   const { store } = props;
@@ -15,9 +13,7 @@ export const DriveSelect = (props: { store: DriveSelectCore }) => {
   const [driveListState, setDriveListState] = createSignal(driveList.response);
   const [curDrive, setCurDrive] = createSignal(store.ref.value);
 
-  driveList.onStateChange((nextState) => {
-    setDriveListState(nextState);
-  });
+  driveList.onStateChange((v) => setDriveListState(v));
   store.onChange((nextState) => {
     setCurDrive(nextState);
   });

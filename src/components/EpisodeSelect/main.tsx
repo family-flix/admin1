@@ -26,7 +26,8 @@ import {
   fetchSeasonProfileInTMDB,
   fetchTVProfileInTMDB,
   searchMediaInTMDB,
-} from "@/domains/tmdb/services";
+  searchMediaInTMDBProcess,
+} from "@/biz/tmdb/services";
 import { Response } from "@/domains/list/typing";
 
 enum Events {
@@ -82,12 +83,12 @@ export class EpisodeSelectCore extends BaseDomain<TheTypesOfEvents> {
   /** 弹窗取消按钮 */
   cancelBtn: ButtonCore;
   tvPanel = new PresenceCore({
-    open: true,
+    visible: true,
   });
   seasonPanel = new PresenceCore();
   episodePanel = new PresenceCore();
   /** 季列表 */
-  list = new ListCore(new RequestCore(searchMediaInTMDB), {
+  list = new ListCore(new RequestCore(searchMediaInTMDB, { process: searchMediaInTMDBProcess }), {
     onLoadingChange: (loading) => {
       this.searchBtn.setLoading(loading);
     },

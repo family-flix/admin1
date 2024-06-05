@@ -52,11 +52,11 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { DriveCore } from "@/domains/drive";
+import { DriveCore } from "@/biz/drive";
 import { consumeAction, pendingActions } from "@/store/actions";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
-import { Result } from "@/types";
+import { Result } from "@/domains/result/index";
 import { ViewComponent } from "@/store/types";
 import { MediaSourceOptions, TVGenresOptions } from "@/constants";
 import { cn } from "@/utils";

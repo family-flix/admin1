@@ -1,4 +1,4 @@
-import { FileItem, searchDriveFiles } from "@/services/drive";
+import { FileItem, searchDriveFiles, searchDriveFilesProcess } from "@/services/drive";
 import { ButtonCore, DialogCore, InputCore } from "@/domains/ui";
 import { BaseDomain, Handler } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
@@ -22,7 +22,7 @@ type FileSearcherDialogState = {
   showFooter: boolean;
 };
 type FileSearcherDialogProps = {
-  search: JSONObject;
+  search: Record<string, string | number>;
   /** 是否底部按钮 */
   footer: boolean;
   /** 是否展示确定按钮 */
@@ -35,7 +35,7 @@ type FileSearcherDialogProps = {
 
 export class FileSearcherCore extends BaseDomain<TheTypesOfEvents> {
   $dialog = new DialogCore();
-  $list = new ListCore(new RequestCore(searchDriveFiles));
+  $list = new ListCore(new RequestCore(searchDriveFiles, { process: searchDriveFilesProcess }));
   form = {
     input: new InputCore({
       defaultValue: "",

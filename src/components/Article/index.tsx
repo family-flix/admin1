@@ -10,7 +10,7 @@ import {
   ArticleNodeType,
   ArticleSectionNode,
   ArticleTextNode,
-} from "@/domains/article";
+} from "@/biz/article/index";
 
 export function Article(props: { nodes: ArticleCore["children"] }) {
   // console.log("nodes", JSON.stringify(props.nodes));

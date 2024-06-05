@@ -4,17 +4,18 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { ArrowLeft } from "lucide-solid";
 
-import { fetchSourcePreviewInfo } from "@/services/parsed_media";
-import { Video } from "@/components/ui";
-import { RequestCore } from "@/domains/request";
-import { PlayerCore } from "@/domains/player";
 import { ViewComponent } from "@/store/types";
+import { fetchSourcePreviewInfo, fetchSourcePreviewInfoProcess } from "@/services/parsed_media";
+import { Video } from "@/components/ui";
+import { RequestCore } from "@/domains/request/index";
+import { PlayerCore } from "@/domains/player/index";
 
 export const MediaPlayingPage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const player = new PlayerCore({ app });
   const fileRequest = new RequestCore(fetchSourcePreviewInfo, {
+    process: fetchSourcePreviewInfoProcess,
     onSuccess(v) {
       setProfile(v);
       player.setSize({
@@ -84,25 +85,7 @@ export const MediaPlayingPage: ViewComponent = (props) => {
     app.tip({ text: ["视频加载错误", error.message] });
     player.pause();
   });
-  player.onUrlChange(async ({ url, thumbnail }) => {
-    const $video = player.node()!;
-    console.log("[PAGE]play - player.onUrlChange", url, $video);
-    //   player.setCurrentTime(player.currentTime);
-    if (player.canPlayType("application/vnd.apple.mpegurl")) {
-      player.load(url);
-      return;
-    }
-    const mod = await import("hls.js");
-    const Hls2 = mod.default;
-    if (Hls2.isSupported() && url.includes("m3u8")) {
-      // console.log("[PAGE]TVPlaying - need using hls.js");
-      const Hls = new Hls2({ fragLoadingTimeOut: 2000 });
-      Hls.attachMedia($video);
-      Hls.on(Hls2.Events.MEDIA_ATTACHED, () => {
-        Hls.loadSource(url);
-      });
-      return;
-    }
+  player.onUrlChange(({ url }) => {
     player.load(url);
   });
   // console.log("[PAGE]tv/play - before fetch tv profile", view.query.id);

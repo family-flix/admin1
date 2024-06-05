@@ -1,8 +1,11 @@
-import { Application } from "@/domains/app";
+import { StorageCore } from "@/domains/storage/index";
+import { Result } from "@/domains/result/index";
 
-const ownerDocument = globalThis.document;
+import { Application, MEDIA } from "./index";
+import { ThemeTypes } from "./types";
 
-export function connect(app: Application) {
+export function connect<T extends { storage: StorageCore<any> }>(app: Application<T>) {
+  const ownerDocument = globalThis.document;
   app.getComputedStyle = (el: HTMLElement) => {
     return window.getComputedStyle(el);
   };
@@ -17,37 +20,16 @@ export function connect(app: Application) {
     document.execCommand("copy");
     document.body.removeChild(textArea);
   };
-  app.notify = async (msg: { title: string; body: string }) => {
-    const { title, body } = msg;
-    // 请求通知权限
-    const permission = await Notification.requestPermission();
-    console.log("[DOMAIN]app/connect - app.notify", permission);
-    if (permission !== "granted") {
-      alert(body);
-      return;
-    }
-    // 创建通知
-    const notification = new Notification(title, {
-      body,
-      // icon: "notification-icon.png", // 可选的图标
-    });
-    // 处理通知点击事件
-    // notification.onclick = function () {
-    // };
-  };
   window.addEventListener("DOMContentLoaded", () => {
     // 1
     const { innerWidth, innerHeight } = window;
     app.setSize({ width: innerWidth, height: innerHeight });
   });
+  window.addEventListener("orientationchange", function () {
+    app.handleScreenOrientationChange(window.orientation);
+  });
   window.addEventListener("load", () => {
     // console.log("2");
-  });
-  window.addEventListener("popstate", (event) => {
-    console.log("[DOMAIN]Application connect popstate", event.state?.from, event.state?.to);
-    const { type } = event;
-    const { pathname, href } = window.location;
-    app.emit(app.Events.PopState, { type, href, pathname: event.state?.to });
   });
   window.addEventListener("beforeunload", (event) => {
     // // 取消事件
@@ -65,8 +47,8 @@ export function connect(app: Application) {
       width: innerWidth,
       height: innerHeight,
     };
-    // app.emit(app.Events.Resize, { width: innerWidth, height: innerHeight });
-    app.resize(size);
+    // 旋转屏幕/进入全屏会触发这里（安卓）
+    // app.handleResize(size);
   });
   window.addEventListener("blur", () => {
     app.emit(app.Events.Blur);
@@ -78,7 +60,65 @@ export function connect(app: Application) {
     }
     app.emit(app.Events.Show);
   });
-
+  /**
+   * 环境变量 ------------
+   */
+  const userAgent = navigator.userAgent;
+  const ua = userAgent.toLowerCase();
+  const ios = /iPad|iPhone|iPod/.test(userAgent);
+  const android = /Android/.test(userAgent);
+  app.setEnv({
+    wechat: ua.indexOf("micromessenger") !== -1,
+    ios,
+    android,
+  });
+  /**
+   * 主题 ——-------------
+   */
+  const media = window.matchMedia(MEDIA);
+  let curTheme = "light";
+  const getSystemTheme = (e?: MediaQueryList | MediaQueryListEvent) => {
+    console.log("[Domain]app/connect - handleMediaQuery");
+    if (!e) {
+      e = window.matchMedia(MEDIA);
+    }
+    const isDark = e.matches;
+    const systemTheme = isDark ? "dark" : "light";
+    curTheme = systemTheme;
+    app.theme = systemTheme;
+    return Result.Ok(systemTheme);
+  };
+  media.addListener(getSystemTheme);
+  let attribute = "data-theme";
+  const defaultTheme = "system";
+  const defaultThemes = ["light", "dark"];
+  const colorSchemes = ["light", "dark"];
+  const attrs = defaultThemes;
+  app.applyTheme = (theme: ThemeTypes) => {
+    const d = document.documentElement;
+    const name = curTheme;
+    if (attribute === "class") {
+      d.classList.remove(...attrs);
+      if (name) d.classList.add(name);
+    } else {
+      if (name) {
+        d.setAttribute(attribute, name);
+      } else {
+        d.removeAttribute(attribute);
+      }
+    }
+    const fallback = colorSchemes.includes(defaultTheme) ? defaultTheme : null;
+    const colorScheme = colorSchemes.includes(curTheme) ? curTheme : fallback;
+    // @ts-ignore
+    d.style.colorScheme = colorScheme;
+    return Result.Ok(null);
+  };
+  app.getSystemTheme = getSystemTheme;
+  app.setTheme = (theme: ThemeTypes) => {
+    app.theme = theme;
+    app.emit(app.Events.StateChange, { ...app.state });
+    app.$storage.set("theme", theme);
+  };
   const { availHeight, availWidth } = window.screen;
   if (window.navigator.userAgent.match(/iphone/i)) {
     const matched = [
@@ -101,45 +141,7 @@ export function connect(app: Application) {
     const { key } = event;
     app.keydown({ key });
   });
-  // ownerDocument.addEventListener("click", (event) => {
-  //   // console.log('[DOMAIN]app/connect.web', event.target);
-  //   let target = event.target;
-  //   if (target instanceof Document) {
-  //     return;
-  //   }
-  //   if (target === null) {
-  //     return;
-  //   }
-  //   let matched = false;
-  //   while (target) {
-  //     const t = target as HTMLElement;
-  //     if (t.tagName === "A") {
-  //       matched = true;
-  //       break;
-  //     }
-  //     target = t.parentNode;
-  //   }
-  //   if (!matched) {
-  //     return;
-  //   }
-  //   const t = target as HTMLElement;
-  //   const href = t.getAttribute("href");
-  //   console.log("[CORE]app/connect - link a", href);
-  //   if (!href) {
-  //     return;
-  //   }
-  //   if (!href.startsWith("/")) {
-  //     return;
-  //   }
-  //   if (href.startsWith("http")) {
-  //     return;
-  //   }
-  //   if (t.getAttribute("target") === "_blank") {
-  //     return;
-  //   }
-  //   event.preventDefault();
-  //   app.emit(app.Events.ClickLink, { href, target: null });
-  // });
+
   const originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
   app.disablePointer = () => {
     ownerDocument.body.style.pointerEvents = "none";

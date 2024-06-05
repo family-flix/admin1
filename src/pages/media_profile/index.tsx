@@ -4,6 +4,9 @@
 import { createSignal, For, Show } from "solid-js";
 import { Award, Send, BookOpen, Calendar, RotateCw, Search, SlidersHorizontal, Train } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { driveList } from "@/store/drives";
+import { createJob } from "@/store/job";
 import {
   fetchMediaProfileList,
   fetchPartialMediaProfile,
@@ -11,13 +14,10 @@ import {
   deleteMediaProfile,
   editMediaProfile,
   refreshMediaProfile,
+  fetchMediaProfileListProcess,
+  fetchPartialMediaProfileProcess,
 } from "@/services/media_profile";
-import {
-  moveSeasonToResourceDrive,
-  refreshSeasonProfiles,
-  transferSeasonToAnotherDrive,
-  refreshSeasonProfile,
-} from "@/services";
+import { moveSeasonToResourceDrive, refreshSeasonProfiles, transferSeasonToAnotherDrive } from "@/services";
 import {
   Skeleton,
   Popover,
@@ -30,6 +30,7 @@ import {
   CheckboxGroup,
   ListView,
 } from "@/components/ui";
+import { MediaProfileValues, MediaProfileValuesCore } from "@/components/MediaProfileValues";
 import {
   ScrollViewCore,
   DialogCore,
@@ -43,20 +44,16 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { DriveCore } from "@/domains/drive";
-import { createJob } from "@/store/job";
+import { DriveCore } from "@/biz/drive";
 import { pendingActions, consumeAction } from "@/store/actions";
-import { driveList } from "@/store/drives";
-import { Result } from "@/types";
-import { ViewComponent } from "@/store/types";
-import { MediaSourceOptions, MediaTypes, TVGenresOptions } from "@/constants";
-import { cn } from "@/utils";
-import { MediaProfileValues, MediaProfileValuesCore } from "@/components/MediaProfileValues";
+import { Result } from "@/domains/result/index";
+import { MediaSourceOptions, MediaTypes, TVGenresOptions } from "@/constants/index";
+import { cn } from "@/utils/index";
 
 export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
-  const seasonList = new ListCore(new RequestCore(fetchMediaProfileList), {
+  const seasonList = new ListCore(new RequestCore(fetchMediaProfileList, { process: fetchMediaProfileListProcess }), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
@@ -107,7 +104,7 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
       });
     },
   });
-  const partialMediaRequest = new RequestCore(fetchPartialMediaProfile);
+  const partialMediaRequest = new RequestCore(fetchPartialMediaProfile, { process: fetchPartialMediaProfileProcess });
   const refreshProfileRequest = new RequestCore(refreshMediaProfile, {
     onSuccess(r) {
       refreshProfileBtn.setLoading(false);

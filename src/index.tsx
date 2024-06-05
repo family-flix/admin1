@@ -115,18 +115,35 @@ function Application() {
     });
     const { pathname, query } = history.$router;
     const route = routesWithPathname[pathname];
-    console.log("[ROOT]onMount", pathname, route, app.$user);
+    console.log("[ROOT]onMount", pathname, route, app.$user.isLogin);
     if (!route) {
-      history.push("root.home_layout.index");
+      history.push("root.notfound");
       return;
     }
-    if (route.name === "root") {
-      history.push("root.home_layout.index", query, { ignore: true });
+    if (!app.$user.isLogin) {
+      if (route.options?.require?.includes("login")) {
+        app.tip({
+          text: ["请先登录"],
+        });
+        history.push("root.login", { redirect: route.pathname });
+        return;
+      }
+    }
+    client.appendHeaders({
+      Authorization: app.$user.token,
+    });
+    if (!history.isLayout(route.name)) {
+      history.push(route.name, query, { ignore: true });
       return;
     }
-    history.push(route.name, query, { ignore: true });
+    // if (route.name === "root") {
+    //   history.push("root.home_layout.index", query, { ignore: true });
+    //   return;
+    // }
+    history.push("root.home_layout.index");
   });
   const { innerWidth, innerHeight } = window;
+  history.$router.prepare(location);
   app.start({
     width: innerWidth,
     height: innerHeight,
@@ -173,5 +190,4 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
     "Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got mispelled?"
   );
 }
-console.log("invoke render Application");
 render(() => <Application />, root!);

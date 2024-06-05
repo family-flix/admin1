@@ -4,17 +4,23 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
-import { MediaSourceItem, SeasonMediaProfile, fetchSeasonMediaProfile, setMediaProfile } from "@/services/media";
-import { deleteParsedMediaSource } from "@/services/parsed_media";
+import { appendAction } from "@/store/actions";
+import { createJob } from "@/store/job";
+import { ViewComponent } from "@/store/types";
 import {
-  fetchEpisodesOfSeason,
+  MediaSourceItem,
+  SeasonMediaProfile,
   EpisodeItemInSeason,
-  deleteSeason,
-  SeasonInTVProfile,
-  refreshSeasonProfile,
-} from "@/services";
+  fetchSeasonMediaProfile,
+  fetchSeasonMediaProfileProcess,
+  fetchEpisodesOfSeason,
+  setMediaProfile,
+} from "@/services/media";
+import { deleteParsedMediaSource } from "@/services/parsed_media";
+import { deleteSeason, SeasonInTVProfile, refreshSeasonProfile } from "@/services/index";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import {
   MenuItemCore,
   ContextMenuCore,
@@ -27,17 +33,13 @@ import {
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { TMDBSearcherCore } from "@/domains/tmdb";
 import { ListCore } from "@/domains/list";
-import { appendAction } from "@/store/actions";
-import { createJob } from "@/store/job";
-import { ViewComponent } from "@/store/types";
-import { bytes_to_size, cn } from "@/utils";
 
 export const HomeSeasonProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchSeasonMediaProfile, {
+    process: fetchSeasonMediaProfileProcess,
     onSuccess(v) {
       poster.setURL(v.poster_path);
       setProfile(v);
@@ -95,8 +97,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
   });
   const curEpisodeList = new ListCore(new RequestCore(fetchEpisodesOfSeason), {
     search: {
-      tv_id: view.query.id,
-      season_id: view.query.season_id,
+      media_id: view.query.id,
     },
   });
   const seasonDeletingRequest = new RequestCore(deleteSeason, {

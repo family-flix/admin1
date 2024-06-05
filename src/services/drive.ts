@@ -1,8 +1,9 @@
-import { client } from "@/store/request";
+import { media_request } from "@/biz/requests/index";
 import { FetchParams } from "@/domains/list/typing";
-import { FileType, MediaTypes } from "@/constants";
-import { ListResponse, RequestedResource, Result } from "@/types";
-import { request } from "@/domains/request_v2/utils";
+import { Result } from "@/domains/result/index";
+import { TmpRequestResp } from "@/domains/request/utils";
+import { FileType, MediaTypes } from "@/constants/index";
+import { ListResponse, Unpacked } from "@/types/index";
 
 /**
  * 获取指定云盘内文件夹列表
@@ -13,7 +14,7 @@ import { request } from "@/domains/request_v2/utils";
  * @param {string} body.name 传入该值时，使用该值进行搜索
  * @param {string} body.page_size 每页文件数量
  */
-export async function fetchDriveFiles(
+export function fetchDriveFiles(
   body: {
     /** 云盘id */
     drive_id: string;
@@ -25,7 +26,7 @@ export async function fetchDriveFiles(
   } & FetchParams
 ) {
   const { drive_id, file_id, name, next_marker, page, pageSize = 24 } = body;
-  const r = await client.post<{
+  return media_request.post<{
     items: {
       file_id: string;
       name: string;
@@ -44,13 +45,13 @@ export async function fetchDriveFiles(
     page,
     page_size: pageSize,
   });
+}
+export function fetchDriveFilesProcess(r: TmpRequestResp<typeof fetchDriveFiles>) {
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { items } = r.data;
+  const { items, next_marker } = r.data;
   return Result.Ok({
-    page,
-    page_size: pageSize,
     list: items.map((file) => {
       const { file_id, name, parent_file_id, size, type, thumbnail } = file;
       return {
@@ -66,8 +67,8 @@ export async function fetchDriveFiles(
         ],
       };
     }),
-    no_more: r.data.next_marker === "",
-    next_marker: r.data.next_marker,
+    no_more: next_marker === "",
+    next_marker,
   });
 }
 // export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
@@ -78,7 +79,7 @@ export async function fetchDriveFiles(
  */
 export function fetchFileProfile(values: { file_id: string; drive_id: string }) {
   const { drive_id, file_id } = values;
-  return client.post<{
+  return media_request.post<{
     id: string;
     type: FileType;
     file_name: string;
@@ -119,7 +120,7 @@ export function renameFilesInDrive(values: {
   replace: string;
 }) {
   const { drive_id, file_id, name, regexp, replace } = values;
-  return client.post<{ job_id: string }>(`/api/v2/drive/rename_files`, {
+  return media_request.post<{ job_id: string }>("/api/v2/drive/rename_files", {
     drive_id,
     file_id,
     name,
@@ -133,7 +134,7 @@ export function renameFilesInDrive(values: {
  */
 export function renameFileInDrive(body: { drive_id: string; file_id: string; name: string }) {
   const { drive_id, file_id, name } = body;
-  return client.post<{ job_id: string }>(`/api/v2/drive/file/rename`, {
+  return media_request.post<{ job_id: string }>("/api/v2/drive/file/rename", {
     drive_id,
     file_id,
     name,
@@ -145,7 +146,7 @@ export function renameFileInDrive(body: { drive_id: string; file_id: string; nam
  */
 export function deleteFileInDrive(body: { drive_id: string; file_id: string; file_name: string }) {
   const { drive_id, file_id, file_name } = body;
-  return client.post<{ job_id: string }>("/api/v2/drive/file/delete", {
+  return media_request.post<{ job_id: string }>("/api/v2/drive/file/delete", {
     drive_id,
     file_id,
     file_name,
@@ -155,7 +156,7 @@ export function deleteFileInDrive(body: { drive_id: string; file_id: string; fil
 /** 归档指定文件到资源盘 */
 export function transferFileToAnotherDrive(values: { drive_id: string; file_id: string; to_drive_id: string }) {
   const { drive_id, to_drive_id, file_id } = values;
-  return client.post<{ job_id: string }>("/api/v2/drive/file/transfer", {
+  return media_request.post<{ job_id: string }>("/api/v2/drive/file/transfer", {
     file_id,
     from_drive_id: drive_id,
     to_drive_id,
@@ -164,14 +165,14 @@ export function transferFileToAnotherDrive(values: { drive_id: string; file_id: 
 
 export function transferFileToResourceDrive(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
-  return client.post<{ job_id: string }>("/api/v2/drive/file/to_resource_drive", {
+  return media_request.post<{ job_id: string }>("/api/v2/drive/file/to_resource_drive", {
     file_id,
     from_drive_id: drive_id,
   });
 }
 
-export async function searchDriveFiles() {
-  const r = await client.post<
+export function searchDriveFiles() {
+  return media_request.post<
     ListResponse<{
       id: string;
       file_id: string;
@@ -184,6 +185,9 @@ export async function searchDriveFiles() {
       type: number;
     }>
   >("/api/admin/file/search");
+}
+export type FileItem = NonNullable<Unpacked<TmpRequestResp<typeof searchDriveFilesProcess>>>["list"][number];
+export function searchDriveFilesProcess(r: TmpRequestResp<typeof searchDriveFiles>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -203,11 +207,10 @@ export async function searchDriveFiles() {
     }),
   });
 }
-export type FileItem = RequestedResource<typeof searchDriveFiles>["list"][number];
 
 export function getFileDownloadURL(values: { file_id: string; drive_id: string }) {
   const { file_id, drive_id } = values;
-  return request.post<{ url: string }>("/api/v2/drive/file/download", {
+  return media_request.post<{ url: string }>("/api/v2/drive/file/download", {
     file_id,
     drive_id,
   });
@@ -220,7 +223,7 @@ export function getFileDownloadURL(values: { file_id: string; drive_id: string }
  */
 export function deleteDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return client.post("/api/v2/admin/drive/delete", {
+  return media_request.post("/api/v2/admin/drive/delete", {
     drive_id,
   });
 }

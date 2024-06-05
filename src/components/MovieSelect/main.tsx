@@ -11,7 +11,7 @@ import { ButtonCore, DialogCore, DialogProps, ImageInListCore, InputCore, Scroll
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { fetchMovieMediaList } from "@/services/media";
+import { fetchMovieMediaList, fetchMovieMediaListProcess } from "@/services/media";
 
 enum Events {
   StateChange,
@@ -51,7 +51,7 @@ export class MovieSelectCore extends BaseDomain<TheTypesOfEvents> {
   /** 弹窗取消按钮 */
   cancelBtn: ButtonCore;
   /** 季列表 */
-  list = new ListCore(new RequestCore(fetchMovieMediaList), {
+  list = new ListCore(new RequestCore(fetchMovieMediaList, { process: fetchMovieMediaListProcess }), {
     onLoadingChange: (loading) => {
       this.searchBtn.setLoading(loading);
     },

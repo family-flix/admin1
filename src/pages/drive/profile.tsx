@@ -4,26 +4,25 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Binary, ChevronRight, Download, FolderInput, Search, Trash } from "lucide-solid";
 
+import { createJob } from "@/store/job";
+import { driveList } from "@/store/drives";
+import { ViewComponent } from "@/store/types";
 import {
   renameFilesInDrive,
   fetchDriveFiles,
   transferFileToAnotherDrive,
   transferFileToResourceDrive,
-  fetchFileProfile,
   getFileDownloadURL,
+  fetchDriveFilesProcess,
 } from "@/services/drive";
-import { setFileEpisodeProfile } from "@/services";
+import { setFileEpisodeProfile } from "@/services/index";
+import { setParsedMediaProfileInFileId } from "@/services/parsed_media";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
 import { EpisodeSelectCore } from "@/components/EpisodeSelect";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { TMDBSearcherCore } from "@/domains/tmdb";
-import {
-  setParsedMediaProfile,
-  setParsedMediaProfileInFileId,
-  setParsedSeasonMediaSourceProfile,
-} from "@/services/parsed_media";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import { ListCore } from "@/domains/list";
 import {
   DialogCore,
@@ -34,16 +33,12 @@ import {
   ScrollViewCore,
   MenuCore,
 } from "@/domains/ui";
-import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/domains/drive";
-import { RefCore } from "@/domains/cur";
+import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/biz/drive";
+import { RefCore } from "@/domains/cur/index";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/store/types";
-import { FileType, MediaTypes } from "@/constants";
-import { createJob } from "@/store/job";
-import { driveList } from "@/store/drives";
+import { FileType, MediaTypes } from "@/constants/index";
 import { downloadFile } from "@/utils/download";
-import { buildRegexp } from "@/utils";
-import { RequestCoreV2 } from "@/domains/request_v2";
+import { buildRegexp } from "@/utils/index";
 
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, history, client, view } = props;
@@ -68,7 +63,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const filesRequest = new RequestCore(fetchDriveFiles);
+  const filesRequest = new RequestCore(fetchDriveFiles, { process: fetchDriveFilesProcess });
   const toAnotherDriveRequest = new RequestCore(transferFileToAnotherDrive, {
     onSuccess(v) {
       createJob({
@@ -169,7 +164,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const list = new ListCore<typeof fetchDriveFiles, AliyunDriveFile>(new RequestCore(fetchDriveFiles), {
+  const list = new ListCore(new RequestCore(fetchDriveFiles, { process: fetchDriveFilesProcess }), {
     pageSize: 50,
     search: {
       drive_id: view.query.id,
@@ -313,6 +308,9 @@ export const DriveProfilePage: ViewComponent = (props) => {
         });
         return;
       }
+      app.tip({
+        text: ["开始索引"],
+      });
       fileMenu.hide();
       createJob({
         job_id: r.data.job_id,
@@ -701,7 +699,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       app.tip({
         text: ["开始下载"],
       });
-      const request = new RequestCoreV2({ fetch: getFileDownloadURL, client });
+      const request = new RequestCore(getFileDownloadURL, { client });
       const r = await request.run({ file_id: file.file_id, drive_id: view.query.id });
       if (r.error) {
         app.tip({

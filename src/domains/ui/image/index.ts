@@ -54,7 +54,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
     return prefix + url;
   }
 
-  unique_id: unknown;
+  unique_uid: unknown;
   src: string;
   width: number;
   height: number;
@@ -87,11 +87,14 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
       this.scale = scale;
     }
     if (unique_id) {
-      this.unique_id = unique_id;
+      this.unique_uid = unique_id;
     }
   }
 
-  setURL(src: string | null) {
+  setURL(src?: string | null) {
+    if (src === undefined) {
+      return;
+    }
     if (src === null) {
       return;
     }

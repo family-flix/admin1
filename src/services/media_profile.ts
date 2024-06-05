@@ -1,87 +1,20 @@
-import { client } from "@/store/request";
+import { media_request } from "@/biz/requests/index";
+import { TmpRequestResp } from "@/domains/request/utils";
 import { FetchParams } from "@/domains/list/typing";
-import { ListResponse, ListResponseWithCursor, RequestedResource, Result } from "@/types";
-import { MediaTypes } from "@/constants";
-
-// export async function fetchMediaProfileList(params: FetchParams & Partial<{ keyword: string; type: MediaTypes }>) {
-//   const { keyword, page, pageSize, type, ...rest } = params;
-//   const r = await request.post<
-//     ListResponseWithCursor<{
-//       id: string;
-//       type: MediaTypes;
-//       name: string;
-//       original_name: string;
-//       overview: string;
-//       poster_path: string;
-//       air_date: string;
-//       sources: {
-//         id: string;
-//         name: string;
-//         overview: string;
-//         order: number;
-//         air_date: string;
-//       }[];
-//     }>
-//   >(`/api/v2/media_profile/list`, {
-//     ...rest,
-//     keyword,
-//     page,
-//     page_size: pageSize,
-//     type,
-//   });
-//   if (r.error) {
-//     return Result.Err(r.error.message);
-//   }
-//   const { next_marker, list } = r.data;
-//   return Result.Ok({
-//     list: list.map((media) => {
-//       if (media.type === MediaTypes.Movie) {
-//         const { id, name, original_name, overview, air_date, poster_path } = media;
-//         return {
-//           id,
-//           type: MediaTypes.Movie,
-//           name,
-//           original_name,
-//           overview,
-//           poster_path,
-//           air_date,
-//           episodes: [],
-//         };
-//       }
-//       const { id, name, original_name, overview, air_date, poster_path, sources = [] } = media;
-//       return {
-//         id,
-//         type: MediaTypes.Season,
-//         name,
-//         original_name,
-//         overview,
-//         poster_path,
-//         air_date,
-//         episodes: sources.map((episode) => {
-//           const { id, name, air_date, order } = episode;
-//           return {
-//             id,
-//             name,
-//             air_date,
-//             order,
-//           };
-//         }),
-//       };
-//     }),
-//     next_marker,
-//   });
-// }
+import { Result } from "@/domains/result/index";
+import { ListResponse, ListResponseWithCursor, RequestedResource, Unpacked } from "@/types/index";
+import { MediaTypes } from "@/constants/index";
 
 /**
  * 搜索影视剧详情
  * @param params
  * @returns
  */
-export async function fetchMediaProfileList(
+export function fetchMediaProfileList(
   params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  const r = await client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string;
       type: MediaTypes;
@@ -115,6 +48,9 @@ export async function fetchMediaProfileList(
     page_size: pageSize,
     type,
   });
+}
+export type MediaProfileItem = RequestedResource<typeof fetchMediaProfileListProcess>["list"][0];
+export function fetchMediaProfileListProcess(r: TmpRequestResp<typeof fetchMediaProfileList>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -165,11 +101,10 @@ export async function fetchMediaProfileList(
     next_marker,
   });
 }
-export type MediaProfileItem = RequestedResource<typeof fetchMediaProfileList>["list"][0];
 
-export async function fetchPartialMediaProfile(body: { id: string }) {
+export function fetchPartialMediaProfile(body: { id: string }) {
   const { id } = body;
-  const r = await client.post<{
+  return media_request.post<{
     id: string;
     type: MediaTypes;
     name: string;
@@ -197,6 +132,8 @@ export async function fetchPartialMediaProfile(body: { id: string }) {
   }>("/api/v2/media_profile/partial", {
     media_profile_id: id,
   });
+}
+export function fetchPartialMediaProfileProcess(r: TmpRequestResp<typeof fetchPartialMediaProfile>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -243,23 +180,23 @@ export async function fetchPartialMediaProfile(body: { id: string }) {
 }
 
 export function deleteMediaProfile(body: { id: string }) {
-  return client.post<ListResponse<void>>(`/api/v2/media_profile/delete`, {
+  return media_request.post<ListResponse<void>>(`/api/v2/media_profile/delete`, {
     media_profile_id: body.id,
   });
 }
 
 export function editMediaProfile(body: { id: string; name?: string; source_count?: number }) {
   const { id, name, source_count } = body;
-  return client.post<ListResponse<void>>(`/api/v2/media_profile/edit`, {
+  return media_request.post<ListResponse<void>>(`/api/v2/media_profile/edit`, {
     id,
     name,
     source_count,
   });
 }
 
-export async function prepareSeasonList(params: { series_id: string }) {
+export function prepareSeasonList(params: { series_id: string }) {
   const { series_id } = params;
-  const r = await client.post<
+  return media_request.post<
     ListResponseWithCursor<{
       id: string | number;
       type: MediaTypes;
@@ -273,24 +210,11 @@ export async function prepareSeasonList(params: { series_id: string }) {
   >(`/api/v2/media_profile/init_series`, {
     series_id,
   });
-  if (r.error) {
-    return Result.Err(r.error);
-  }
-  const { list, next_marker } = r.data;
-  return Result.Ok({
-    list: list.map((item) => {
-      return {
-        ...item,
-        episodes: [],
-      };
-    }),
-    next_marker,
-  });
 }
 
-export async function prepareEpisodeList(params: { media_id: string | number }) {
+export function prepareEpisodeList(params: { media_id: string | number }) {
   const { media_id } = params;
-  return client.post<
+  return media_request.post<
     ListResponse<{
       id: string | number;
       type: MediaTypes;
@@ -301,7 +225,7 @@ export async function prepareEpisodeList(params: { media_id: string | number }) 
       air_date: string;
       order: number;
     }>
-  >(`/api/v2/media_profile/init_season`, {
+  >("/api/v2/media_profile/init_season", {
     media_id,
   });
 }
@@ -311,9 +235,9 @@ export async function prepareEpisodeList(params: { media_id: string | number }) 
  * @param params
  * @returns
  */
-export async function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: string; type?: MediaTypes }) {
+export function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: string; type?: MediaTypes }) {
   const { keyword, page, pageSize, type, ...rest } = params;
-  return client.post<
+  return media_request.post<
     ListResponse<{
       id: string | number;
       type: MediaTypes;
@@ -331,10 +255,10 @@ export async function searchMediaInTMDB(params: Partial<FetchParams> & { keyword
     type,
   });
 }
-export type TheMediaInTMDB = RequestedResource<typeof searchMediaInTMDB>["list"][0];
+export type TheMediaInTMDB = NonNullable<Unpacked<TmpRequestResp<typeof searchMediaInTMDB>>>["list"][number];
 
 /** 刷新电视剧详情 */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
-  return client.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });
+  return media_request.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });
 }

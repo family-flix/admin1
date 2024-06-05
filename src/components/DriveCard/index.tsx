@@ -40,19 +40,16 @@ import {
   ImageCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { Application } from "@/domains/app";
-import { DriveCore, addDrive, updateAliyunDrive } from "@/domains/drive";
-import { AliyunDriveFilesCore } from "@/domains/drive/files";
+import { DriveCore, addDrive, updateAliyunDrive } from "@/biz/drive";
+import { AliyunDriveFilesCore } from "@/biz/drive/files";
 import { BizError } from "@/domains/error";
 import { DriveTypes, FileType } from "@/constants";
 import { createJob } from "@/store/job";
+import { ViewComponentProps } from "@/store/types";
 
-export const DriveCard = (props: {
-  app: Application;
-  store: DriveCore;
-  onClick?: () => void;
-  onRefresh?: () => void;
-}) => {
+export const DriveCard = (
+  props: Pick<ViewComponentProps, "app"> & { store: DriveCore; onClick?: () => void; onRefresh?: () => void }
+) => {
   const { app, store: drive, onClick, onRefresh } = props;
 
   const createResourceDriveRequest = new RequestCore(addDrive, {

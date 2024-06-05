@@ -9,7 +9,7 @@ import { Button, Input, ScrollView } from "@/components/ui";
 import { ButtonCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { Result } from "@/types";
+import { Result } from "@/domains/result/index";
 import { ViewComponent } from "@/store/types";
 
 export const SharedFilesHistoryPage: ViewComponent = (props) => {

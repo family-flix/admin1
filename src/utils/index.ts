@@ -3,8 +3,10 @@ import "dayjs/locale/zh-cn";
 import relative_time from "dayjs/plugin/relativeTime";
 import { twMerge } from "tailwind-merge";
 
+import { Result } from "@/domains/result/index";
+import { JSONObject } from "@/types/index";
+
 import { cn as nzhcn } from "./nzh";
-import { JSONObject, Result } from "@/types";
 
 dayjs.extend(relative_time);
 dayjs.locale("zh-cn");
@@ -38,18 +40,17 @@ export function episode_to_chinese_num(str: string) {
   return s;
 }
 export function season_to_chinese_num(str: string) {
-  const regex = /(\d+)/g;
-  let s = str.replace(/[sS]/g, "");
-  const matches = s.match(regex);
-  if (!matches) {
+  const num = str.match(/[0-9]{1,}/);
+  if (!num) {
     return str;
   }
-  for (let i = 0; i < matches.length; i++) {
-    const num = parseInt(matches[i], 10);
-    const chinese_num = num_to_chinese(num);
-    s = s.replace(matches[i], `第${chinese_num}季`);
+  const value = parseInt(num[0]);
+  const chinese_num = num_to_chinese(value);
+  const correct = chinese_num.match(/^一(十.{0,1})/);
+  if (correct) {
+    return `第${correct[1]}季`;
   }
-  return s;
+  return `第${chinese_num}季`;
 }
 /**
  * 阿拉伯数字转中文数字

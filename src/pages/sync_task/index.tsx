@@ -47,8 +47,8 @@ import {
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { RefCore } from "@/domains/cur";
-import { SharedResourceCore } from "@/domains/shared_resource";
-import { Result } from "@/types/index";
+import { SharedResourceCore } from "@/biz/shared_resource";
+import { Result } from "@/domains/result/index";
 import { FileType } from "@/constants/index";
 
 function Page(props: ViewComponentProps) {

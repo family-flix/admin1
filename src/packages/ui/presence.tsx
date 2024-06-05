@@ -21,7 +21,7 @@ export const Presence = (
     setState(nextState);
   });
 
-  const open = () => state().open;
+  const open = () => state().visible;
   const mounted = () => state().mounted;
 
   return (

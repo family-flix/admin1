@@ -4,26 +4,20 @@
 import { createSignal, For, Switch } from "solid-js";
 import { RotateCcw, HardDrive, Search } from "lucide-solid";
 
+import { driveList } from "@/store/drives";
+import { ViewComponent } from "@/store/types";
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
-import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
-import { RequestCore } from "@/domains/request";
-import { addDrive } from "@/domains/drive";
-import { fetchDriveInstanceList } from "@/domains/drive/services";
-import { ListCore } from "@/domains/list";
-import { code_get_drive_token, DriveTypes } from "@/constants";
-import { ViewComponent } from "@/store/types";
-import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { TabHeader } from "@/components/ui/tab-header";
+import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
+import { TabHeaderCore } from "@/domains/ui/tab-header";
+import { RequestCore } from "@/domains/request/index";
+import { addDrive } from "@/biz/drive/index";
+import { code_get_drive_token, DriveTypes } from "@/constants/index";
 
 export const DriveListPage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
-  const driveList = new ListCore(new RequestCore(fetchDriveInstanceList), {
-    search: {
-      hidden: 0,
-    },
-  });
   const driveCreateRequest = new RequestCore(addDrive, {
     onLoading(loading) {
       driveCreateDialog.okBtn.setLoading(loading);
@@ -53,10 +47,10 @@ export const DriveListPage: ViewComponent = (props) => {
         id: DriveTypes.QuarkDrive,
         text: "夸克",
       },
-      {
-        id: DriveTypes.XunleiDrive,
-        text: "迅雷",
-      },
+      // {
+      //   id: DriveTypes.XunleiDrive,
+      //   text: "迅雷",
+      // },
       {
         id: DriveTypes.LocalFolder,
         text: "文件夹",
@@ -130,15 +124,9 @@ export const DriveListPage: ViewComponent = (props) => {
   const [driveResponse, setDriveResponse] = createSignal(driveList.response);
   const [tabId, setTabId] = createSignal(driveTabs.selectedTabId);
 
-  driveTabs.onChange((event) => {
-    setTabId(event.id);
-  });
-  driveList.onLoadingChange((loading) => {
-    refreshBtn.setLoading(loading);
-  });
-  driveList.onStateChange((nextState) => {
-    setDriveResponse(nextState);
-  });
+  driveTabs.onChange((event) => setTabId(event.id));
+  driveList.onLoadingChange((v) => refreshBtn.setLoading(v));
+  driveList.onStateChange((v) => setDriveResponse(v));
 
   driveList.initAny();
 
@@ -255,24 +243,33 @@ export const DriveListPage: ViewComponent = (props) => {
             if (tabId() === DriveTypes.Cloud189Drive) {
               return (
                 <div class="p-4">
-                  <p>1、准备天翼云盘账户名、密码。账户名即手机号；如果没有密码请先设置密码</p>
-                  <p>2、构造 {`{"account": "", "pwd": ""}`}格式数据并粘贴到下方输入框，点击确认即可</p>
+                  <div>1、准备天翼云盘账户名、密码。账户名即手机号；如果没有密码请先设置密码</div>
+                  <div>
+                    2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"account": "", "pwd": ""}`}</pre>
+                    格式数据并粘贴到下方输入框，点击确认即可
+                  </div>
                 </div>
               );
             }
             if (tabId() === DriveTypes.QuarkDrive) {
               return (
                 <div class="p-4">
-                  <p>1、在网页端登录夸克云盘</p>
-                  <p>2、构造 {`{"id": "","token": ""}`}格式数据并粘贴到下方输入框，点击确认即可</p>
+                  <div>1、在网页端登录夸克云盘</div>
+                  <div>
+                    2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"id": "","token": ""}`}</pre>
+                    格式数据并粘贴到下方输入框，点击确认即可
+                  </div>
                 </div>
               );
             }
             if (tabId() === DriveTypes.LocalFolder) {
               return (
                 <div class="p-4">
-                  <p>1、获取存放视频文件的文件夹「绝对路径」</p>
-                  <p>2、构造 {`{"dir": ""}`}格式数据并粘贴到下方输入框，点击确认即可</p>
+                  <div>1、获取存放视频文件的文件夹「绝对路径」</div>
+                  <div>
+                    2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"dir": ""}`}</pre>
+                    格式数据并粘贴到下方输入框，点击确认即可
+                  </div>
                 </div>
               );
             }
