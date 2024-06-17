@@ -5,6 +5,7 @@
 import { hasAdmin } from "@/services/index";
 import { media_request } from "@/biz/requests";
 import { ListCore } from "@/domains/list/index";
+import { ImageCore } from "@/domains/ui/index";
 import { Application } from "@/domains/app/index";
 import { NavigatorCore } from "@/domains/navigator/index";
 import { BizError } from "@/domains/error/index";
@@ -12,24 +13,31 @@ import { RouteViewCore } from "@/domains/route_view";
 import { RouteConfig } from "@/domains/route_view/utils";
 import { HistoryCore } from "@/domains/history/index";
 import { UserCore } from "@/biz/user/index";
-import { RequestCore, onCreate } from "@/domains/request/index";
+import { RequestCore, onRequestCreated } from "@/domains/request/index";
 import { Result } from "@/domains/result/index";
 
-import { PageKeys, routes } from "./routes";
+import { PageKeys, routes, routesWithPathname } from "./routes";
 import { client } from "./request";
 import { storage } from "./storage";
 
-onCreate((ins) => {
+onRequestCreated((ins) => {
   ins.onFailed((e) => {
     app.tip({
       text: [e.message],
     });
+    if (e.code === 900) {
+      history.push("root.login");
+    }
   });
   if (!ins.client) {
     ins.client = client;
   }
 });
+if (window.location.hostname === "media-t.funzm.com") {
+  media_request.setEnv("dev");
+}
 NavigatorCore.prefix = import.meta.env.BASE_URL;
+ImageCore.prefix = window.location.origin;
 
 class ExtendsUser extends UserCore {
   say() {
@@ -60,24 +68,30 @@ export const app = new Application({
   user,
   storage,
   async beforeReady() {
-    if (!user.isLogin) {
-      const r = await new RequestCore(hasAdmin).run();
-      if (r.error) {
-        return Result.Ok(null);
-      }
-      const { existing } = r.data;
-      if (!existing) {
-        // history.push(registerPage);
-        user.needRegister = true;
-        history.push("root.register");
-        return Result.Ok(null);
-      }
-      // app.showView(loginPage);
-      // @todo 如果目标是 /login，就不用 check is login
-      // history.push("root.login");
+    const { pathname, query } = history.$router;
+    const route = routesWithPathname[pathname];
+    console.log("[ROOT]onMount", pathname, route, app.$user.isLogin);
+    if (!route) {
+      history.push("root.notfound");
       return Result.Ok(null);
     }
-    await app.$user.validate();
+    if (!app.$user.isLogin) {
+      if (route.options?.require?.includes("login")) {
+        app.tip({
+          text: ["请先登录"],
+        });
+        history.push("root.login", { redirect: route.pathname });
+        return Result.Ok(null);
+      }
+    }
+    client.appendHeaders({
+      Authorization: app.$user.token,
+    });
+    if (!history.isLayout(route.name)) {
+      history.push(route.name, query, { ignore: true });
+      return Result.Ok(null);
+    }
+    history.push("root.home_layout.index");
     return Result.Ok(null);
   },
 });
@@ -86,6 +100,9 @@ user.onTip((msg) => {
 });
 user.onLogin((profile) => {
   storage.set("user", profile);
+  media_request.appendHeaders({
+    Authorization: user.token,
+  });
   history.push("root.home_layout.index");
 });
 user.onLogout(() => {

@@ -84,6 +84,9 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     const list = new ListCore(
       new RequestCore(fetchDriveFiles, {
         process: fetchDriveFilesProcess,
+        onFailed: (error) => {
+          this.tip({ text: [error.message] });
+        },
       }),
       {
         pageSize: 50,
@@ -133,7 +136,6 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
         list.loadMore();
       },
     });
-    list.onTip(this.tip);
     list.init();
     return {
       list,

@@ -286,6 +286,7 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
     },
   });
   const deleteConfirmDialog = new DialogCore({
+    title: "删除电视剧",
     async onOk() {
       const media = seasonRef.value;
       if (!media) {

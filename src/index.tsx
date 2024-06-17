@@ -4,9 +4,9 @@ import { createSignal, For, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Loader2 } from "lucide-solid";
 
-import { app, history } from "@/store/index";
+import { app, history } from "./store/index";
 import { storage } from "./store/storage";
-import { client } from "@/store/request";
+import { client } from "./store/request";
 import { PageKeys, routesWithPathname } from "./store/routes";
 import { pages } from "./store/views";
 import { KeepAliveRouteView } from "./components/ui";
@@ -74,7 +74,6 @@ connectHistory(history);
 
 function Application() {
   const view = history.$view;
-  const router = history.$router;
   const toast = new ToastCore();
 
   const [state, setState] = createSignal(app.state);
@@ -105,42 +104,6 @@ function Application() {
     toast.show({
       texts: text,
     });
-  });
-  app.onError((error) => {
-    // 处理各种错误？
-  });
-  app.onReady(() => {
-    client.appendHeaders({
-      Authorization: app.$user.token,
-    });
-    const { pathname, query } = history.$router;
-    const route = routesWithPathname[pathname];
-    console.log("[ROOT]onMount", pathname, route, app.$user.isLogin);
-    if (!route) {
-      history.push("root.notfound");
-      return;
-    }
-    if (!app.$user.isLogin) {
-      if (route.options?.require?.includes("login")) {
-        app.tip({
-          text: ["请先登录"],
-        });
-        history.push("root.login", { redirect: route.pathname });
-        return;
-      }
-    }
-    client.appendHeaders({
-      Authorization: app.$user.token,
-    });
-    if (!history.isLayout(route.name)) {
-      history.push(route.name, query, { ignore: true });
-      return;
-    }
-    // if (route.name === "root") {
-    //   history.push("root.home_layout.index", query, { ignore: true });
-    //   return;
-    // }
-    history.push("root.home_layout.index");
   });
   const { innerWidth, innerHeight } = window;
   history.$router.prepare(location);

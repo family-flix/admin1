@@ -14,9 +14,6 @@ type TheTypesOfEvents = {
   [Events.Loaded]: void;
   [Events.Error]: void;
 };
-const prefix = window.location.origin;
-// const prefix = "https://img.funzm.com";
-// const DEFAULT_IMAGE1 = prefix + "/placeholder.png";
 export enum ImageStep {
   Pending,
   Loading,
@@ -44,6 +41,7 @@ type ImageState = Omit<ImageProps, "scale"> & {
 };
 
 export class ImageCore extends BaseDomain<TheTypesOfEvents> {
+  static prefix = "";
   static url(url?: string | null) {
     if (!url) {
       return "";
@@ -51,7 +49,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
     if (url.includes("http")) {
       return url;
     }
-    return prefix + url;
+    return ImageCore.prefix + url;
   }
 
   unique_uid: unknown;

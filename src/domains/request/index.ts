@@ -56,7 +56,7 @@ type RequestProps<F extends FetchFunction, P> = {
 };
 
 let handler: null | ((v: RequestCore<any>) => void) = null;
-export function onCreate(h: (v: RequestCore<any>) => void) {
+export function onRequestCreated(h: (v: RequestCore<any>) => void) {
   handler = h;
 }
 
@@ -185,7 +185,8 @@ export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<Ret
     this.emit(Events.BeforeRequest);
     let payloadProcess: null | ((v: any) => any) = null;
     const r2 = (() => {
-      const { hostname = "", url, method, query, body, process } = this.service(...(args as unknown as any[]));
+      const { hostname = "", url, method, query, body, headers, process } = this.service(...(args as unknown as any[]));
+      // console.log('[DOMAIN]request/index - after = this.service()', headers);
       if (process) {
         payloadProcess = process;
       }
@@ -193,6 +194,7 @@ export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<Ret
         // const [query, extra = {}] = args;
         const r = this.client.get<P>(hostname + url, query, {
           id: this.id,
+          headers,
         });
         return Result.Ok(r) as Result<Promise<Result<P>>>;
         // return Result.Ok(r);
@@ -201,6 +203,7 @@ export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<Ret
         // const [body, extra = {}] = args;
         const r = this.client.post<P>(hostname + url, body, {
           id: this.id,
+          headers,
         });
         // return Result.Ok(r);
         return Result.Ok(r) as Result<Promise<Result<P>>>;
