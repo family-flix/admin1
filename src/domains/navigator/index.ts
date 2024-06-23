@@ -6,7 +6,7 @@ import qs from "qs";
 import parse from "url-parse";
 
 import { BaseDomain, Handler } from "@/domains/base";
-import { JSONObject } from "@/types";
+import { JSONObject } from "@/types/index";
 
 enum Events {
   PushState,
@@ -296,7 +296,6 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     // this.emit(Events.PathnameChange, { ...this._pending });
     // forward
     if (isForward) {
-      console.log("is forward");
       this.setPrevPathname(this.pathname);
       this.setPathname(targetPathname);
       const lastStackWhenBack = this.prevHistories.pop();
@@ -308,11 +307,10 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.PopState, { type: "forward", pathname, href });
       return;
     }
-    if (this.histories.length === 1) {
-      return;
-    }
+    // if (this.histories.length === 1) {
+    //   return;
+    // }
     // back
-    console.log("is back");
     this.emit(Events.Back);
     // var confirmationMessage = "您的输入还未完成，确认放弃吗？";
     // if (confirm(confirmationMessage)) {
@@ -325,10 +323,7 @@ export class NavigatorCore extends BaseDomain<TheTypesOfEvents> {
     this.setPrevPathname(this.pathname);
     this.setPathname(targetPathname);
     // const cloneStacks = this.histories.slice(0, this.histories.length - 1);
-    console.log(
-      "[DOMAIN]navigator - before pop",
-      this.histories.map((h) => h.pathname)
-    );
+    console.log( "[DOMAIN]navigator - before pop", this.histories.map((h) => h.pathname));
     const cloneStacks = this.histories.slice(0, this.histories.length - 1);
     this.histories = cloneStacks.filter(Boolean);
     // this.histories.pop();

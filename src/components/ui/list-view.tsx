@@ -72,7 +72,7 @@ export function ListView(
           <div class="flex flex-col items-center justify-center text-slate-500">
             <AlertCircle class="w-24 h-24" />
             <div class="mt-4 flex items-center space-x-2">
-              <div class="text-xl">{response().error?.message}</div>
+              <div class="text-xl text-center">{response().error?.message}</div>
             </div>
           </div>
         </div>

@@ -6,6 +6,42 @@ export function connect(history: HistoryCore<string, any>) {
   history.reload = () => {
     window.location.reload();
   };
+  history.back = () => {
+    window.history.back();
+  };
+  history.$router.onPopState((r) => {
+    const { type, pathname, href } = r;
+    console.log("[ROOT]index - app.onPopState", type, pathname, href);
+    if (type === "back") {
+      history.realBack();
+      return;
+    }
+    if (type === "forward") {
+      history.forward();
+      return;
+    }
+  });
+  history.$router.onPushState(({ from, to, path, pathname }) => {
+    console.log("[ROOT]index - before history.pushState", from, to, path, pathname);
+    window.history.pushState(
+      {
+        from,
+        to,
+      },
+      "",
+      path
+    );
+  });
+  history.$router.onReplaceState(({ from, path, pathname }) => {
+    console.log("[ROOT]index - before history.replaceState", from, path, pathname);
+    window.history.replaceState(
+      {
+        from,
+      },
+      "",
+      path
+    );
+  });
   ownerDocument.addEventListener("click", (event) => {
     // console.log('[DOMAIN]app/connect.web', event.target);
     let target = event.target;

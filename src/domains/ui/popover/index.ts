@@ -103,7 +103,6 @@ export class PopoverCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Show);
   }
   hide() {
-    console.log("[DOMAIN/ui]popover/index - hide");
     if (this.visible === false) {
       return;
     }

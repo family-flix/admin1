@@ -1,34 +1,79 @@
-/**
- * @file 一个可下拉刷新的滚动容器
- * 必须给固定的高度？
- */
 import { BaseDomain, Handler } from "@/domains/base";
 
+import { getPoint, damping, preventDefault, getAngleByPoints } from "./utils";
+
+let handler: null | ((v: ScrollViewCore) => void) = null;
+export function onCreateScrollView(h: (v: ScrollViewCore) => void) {
+  handler = h;
+}
+
 type PullToRefreshStep = "pending" | "pulling" | "refreshing" | "releasing";
+export type PointEvent = {
+  touches?: { pageX: number; pageY: number }[];
+  clientX?: number;
+  clientY?: number;
+  cancelable?: boolean;
+  preventDefault?: () => void;
+};
+type PullToDownOptions = {
+  /** 在列表顶部，松手即可触发下拉刷新回调的移动距离 */
+  offset: number;
+  /**
+   * 是否锁定下拉刷新
+   * 默认 false
+   */
+  isLock: boolean;
+  /**
+   * 当手指 touchmove 位置在距离 body 底部指定范围内的时候结束上拉刷新，避免 Webview 嵌套导致 touchend 事件不执行
+   */
+  bottomOffset: number;
+  /**
+   * 向下滑动最少偏移的角度，取值区间[0,90]
+   * 默认45度，即向下滑动的角度大于45度则触发下拉。而小于45度，将不触发下拉，避免与左右滑动的轮播等组件冲突
+   */
+  minAngle: number;
+};
 enum Events {
-  ReachBottom,
-  Scroll,
+  InDownOffset,
+  OutDownOffset,
+  Pulling,
   PullToRefresh,
-  PullToBack,
-  Refreshing,
-  StateChange,
+  PullToRefreshFinished,
+  InUpOffset,
+  OutUpOffset,
+  Scrolling,
+  ReachBottom,
+  Mounted,
 }
 type TheTypesOfEvents = {
-  [Events.ReachBottom]: void;
-  [Events.Scroll]: { scrollTop: number };
+  [Events.InDownOffset]: void;
+  [Events.OutDownOffset]: void;
+  [Events.Pulling]: { instance: number };
   [Events.PullToRefresh]: void;
-  [Events.PullToBack]: void;
-  [Events.StateChange]: ScrollViewState;
-  [Events.Refreshing]: void;
+  [Events.PullToRefreshFinished]: void;
+  [Events.InUpOffset]: void;
+  [Events.OutUpOffset]: void;
+  [Events.Scrolling]: { scrollTop: number };
+  [Events.ReachBottom]: void;
+  [Events.Mounted]: void;
 };
-type ScrollViewProps = {
-  pullToRefresh?: boolean;
+type EnvNeeded = {
+  android: boolean;
+  pc: boolean;
+  ios: boolean;
+  wechat: boolean;
+};
+export type ScrollViewProps = {
+  os?: EnvNeeded;
+  // down: Partial<PullToDownOptions>;
+  /** 下拉多少距离后刷新 */
+  offset?: number;
   onScroll?: (pos: { scrollTop: number }) => void;
   onReachBottom?: () => void;
   onPullToRefresh?: () => void;
   onPullToBack?: () => void;
 };
-type ScrollViewState = {
+type ScrollViewCoreState = {
   top: number;
   left: number;
   /** 当前滚动距离顶部的距离 */
@@ -36,17 +81,23 @@ type ScrollViewState = {
   scrollable: boolean;
   /** 是否支持下拉刷新 */
   pullToRefresh: boolean;
-  pullToBack: {
-    enabled: boolean;
-    canBack: boolean;
-    width: number;
-    height: number;
-  };
+  // pullToBack: {
+  //   enabled: boolean;
+  //   canBack: boolean;
+  //   width: number;
+  //   height: number;
+  // };
   /** 下拉刷新的阶段 */
   step: PullToRefreshStep;
 };
-
 export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
+  os: EnvNeeded = {
+    android: true,
+    ios: false,
+    pc: false,
+    wechat: false,
+  };
+
   /** 尺寸信息 */
   rect: Partial<{
     /** 宽度 */
@@ -63,12 +114,14 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     scrollTop: 0,
     contentHeight: 0,
   };
-  canPullToRefresh = false;
-  canReachBottom = false;
+  canPullToRefresh: boolean;
+  canReachBottom = true;
+  /** 隐藏下拉刷新指示器 */
+  needHideIndicator = false;
   scrollable = true;
   /** 下拉刷新相关的状态信息 */
   pullToRefresh: {
-    state: PullToRefreshStep;
+    step: PullToRefreshStep;
     /** 开始拖动的起点 y */
     pullStartY: number;
     /** 开始拖动的起点 x */
@@ -84,7 +137,7 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
     /** 实际移动的距离？ */
     distResisted: number;
   } = {
-    state: "pending",
+    step: "pending",
     pullStartX: 0,
     pullStartY: 0,
     pullMoveX: 0,
@@ -95,29 +148,72 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
   };
   /** 滚动到底部的阈值 */
   threshold = 120;
-  private _pullToRefresh = false;
 
-  state: ScrollViewState = {
-    top: 0,
-    left: 0,
-    step: "pending",
-    scrollTop: 0,
-    pullToRefresh: false,
-    pullToBack: {
-      enabled: false,
-      canBack: false,
-      width: 0,
-      height: 192,
-    },
-    scrollable: true,
+  options: ScrollViewProps;
+  pullToRefreshOptions: PullToDownOptions;
+
+  isPullToRefreshing = false;
+  isLoadingMore = false;
+  startPoint: { x: number; y: number } = {
+    x: 0,
+    y: 0,
   };
+  lastPoint: { x: number; y: number } = {
+    x: 0,
+    y: 0,
+  };
+  downHight = 0;
+  upHight = 0;
+  maxTouchMoveInstanceY = 0;
+  inTouchEnd = false;
+  inTopWhenPointDown = false;
+  inBottomWhenPointDown = false;
+  isMoveDown = false;
+  isMoveUp = false;
+  isScrollTo = false;
+  /**
+   * 为了让 StartPullToRefresh、OutOffset 等事件在拖动过程中仅触发一次的标记
+   */
+  movetype: PullToRefreshStep = "pending";
+  preScrollY = 0;
+  /** 标记上拉已经自动执行过，避免初始化时多次触发上拉回调 */
+  isUpAutoLoad = false;
 
-  constructor(options: Partial<{ _name: string }> & ScrollViewProps = {}) {
-    super(options);
+  get state(): ScrollViewCoreState {
+    return {
+      top: 0,
+      left: 0,
+      step: this.movetype,
+      scrollTop: this.downHight,
+      pullToRefresh: this.canPullToRefresh,
+      scrollable: this.scrollable,
+    };
+  }
 
-    const { pullToRefresh = false, onScroll, onReachBottom, onPullToRefresh, onPullToBack } = options;
-    this.canPullToRefresh = pullToRefresh;
-    this.state.pullToRefresh = pullToRefresh;
+  constructor(props: ScrollViewProps = {}) {
+    super(props);
+
+    const { os, offset = 80, onScroll, onReachBottom, onPullToRefresh, onPullToBack } = props;
+    // console.log(props);
+
+    this.options = props;
+    if (os) {
+      this.os = os;
+    }
+    this.pullToRefreshOptions = {
+      isLock: false,
+      offset,
+      bottomOffset: 20,
+      minAngle: 45,
+    };
+    this.canPullToRefresh = !!onPullToRefresh;
+    if (!this.canPullToRefresh) {
+      this.needHideIndicator = true;
+    }
+    // console.log("[DOMAIN]ui/scroll-view", this.unique_id, onPullToRefresh, this.needHideIndicator, this.canPullToRefresh);
+    if (this.needHideIndicator) {
+      this.pullToRefreshOptions.offset = 9999;
+    }
     if (onScroll) {
       this.onScroll(onScroll);
     }
@@ -125,272 +221,279 @@ export class ScrollViewCore extends BaseDomain<TheTypesOfEvents> {
       this.onReachBottom(onReachBottom);
     }
     if (onPullToRefresh) {
-      this.canPullToRefresh = true;
-      this.state.pullToRefresh = true;
       this.onPullToRefresh(onPullToRefresh);
     }
-    if (onPullToBack) {
-      this.state.pullToBack.enabled = true;
-      this.onPullToBack(onPullToBack);
+    if (handler) {
+      handler(this);
     }
   }
-
+  setReady() {
+    this.emit(Events.Mounted);
+  }
   setRect(rect: Partial<{ width: number; height: number; contentHeight: number }>) {
     this.rect = {
       ...this.rect,
       ...rect,
     };
   }
-  startPull(pos: { x: number; y: number }) {
-    const { x, y } = pos;
-    const { state } = this.pullToRefresh;
-    (() => {
-      if (x < 30) {
-        // this._pullToRefresh = false;
-        this.state.scrollable = false;
-        this._pullToRefresh = false;
-        this.emit(Events.StateChange, { ...this.state });
-      }
-    })();
-    if (this.state.pullToRefresh === false) {
-      this._pullToRefresh = false;
+  /** 显示下拉进度布局 */
+  startPullToRefresh = () => {
+    // console.log("[DOMAIN]ScrollView - startPullToRefresh", this.isPullToRefreshing);
+    if (this.isPullToRefreshing) {
+      return;
     }
-    if (state !== "pending") {
-      this._pullToRefresh = false;
+    this.isPullToRefreshing = true;
+    this.downHight = this.pullToRefreshOptions.offset;
+    this.setIndicatorHeightTransition(true);
+    this.changeIndicatorHeight(this.downHight);
+    this.emit(Events.PullToRefresh);
+  };
+  /** 结束下拉刷新 */
+  finishPullToRefresh = () => {
+    if (!this.isPullToRefreshing) {
+      return;
     }
-    // console.log("[DOMAIN]ui/scroll-view - start pulling", { x, y });
-    // y 方向滚动了一定距离，不可能可以下拉刷新
-    if (this.rect.scrollTop) {
-      this._pullToRefresh = false;
+    this.downHight = 0;
+    this.changeIndicatorHeight(0);
+    this.isPullToRefreshing = false;
+    this.emit(Events.PullToRefreshFinished);
+  };
+  disablePullToRefresh = () => {
+    this.pullToRefreshOptions.isLock = true;
+  };
+  enablePullToRefresh = () => {
+    this.pullToRefreshOptions.isLock = false;
+  };
+  handleMouseDown = (event: MouseEvent) => {
+    this.handlePointDown(event);
+  };
+  handleMouseMove = (event: MouseEvent) => {
+    this.handlePointMove(event);
+  };
+  handleTouchStart = (event: TouchEvent) => {
+    // @ts-ignore
+    this.handlePointDown(event);
+  };
+  handleTouchMove = (event: TouchEvent) => {
+    // @ts-ignore
+    this.handlePointMove(event);
+  };
+  /** 鼠标/手指按下 */
+  handlePointDown = (e: PointEvent) => {
+    if (this.isScrollTo) {
+      // 如果列表执行滑动事件，则阻止事件，优先执行 scrollTo 方法
+      preventDefault(e);
     }
-    this.pullToRefresh.pullStartY = y;
-    this.pullToRefresh.pullStartX = x;
-  }
-  _disablePullToBack = false;
-  _disablePullToRefresh = false;
-  isPullToRefresh = false;
-  isPullToBack = false;
-  pulling(
-    pos: { x: number; y: number },
-    lifetimes: Partial<{
-      onCanPull: () => void;
-    }> = {}
-  ) {
-    const { x: curX, y: curY } = pos;
-    const { pullStartX = 0, pullStartY = 0 } = this.pullToRefresh;
-    const pullingDistance = (() => {
-      const distance: { x: number; y: number } = {
-        x: 0,
-        y: 0,
-      };
-      distance.y = curY - pullStartY;
-      distance.x = curX - pullStartX;
-      return distance;
-    })();
-    (() => {
-      if (this.isPullToBack || this.isPullToBack) {
-        return;
-      }
-      if (pullingDistance.x > 10 && this.state.pullToBack.enabled) {
-        if (!this._disablePullToBack) {
-          this.isPullToBack = true;
-          this._disablePullToRefresh = true;
-        }
-      }
-      if (Math.abs(pullingDistance.y) > 10) {
-        if (!this._disablePullToRefresh) {
-          this._disablePullToBack = true;
-          if (this._pullToRefresh && pullingDistance.y > 10) {
-            this.isPullToRefresh = true;
+    const startPoint = getPoint(e);
+    if (startPoint.x < 30) {
+      preventDefault(e);
+      return;
+    }
+    this.startPoint = startPoint;
+    this.lastPoint = this.startPoint;
+    this.maxTouchMoveInstanceY = this.getBodyHeight() - this.pullToRefreshOptions.bottomOffset;
+    this.inTouchEnd = false;
+    const scrollTop = this.getScrollTop();
+    // const clientHeight = this.getScrollClientHeight();
+    // const height = this.getScrollHeight();
+    this.inTopWhenPointDown = scrollTop === 0;
+    // this.inBottomWhenPointDown = scrollTop + clientHeight + 1 >= height;
+  };
+  /** 鼠标/手指移动 */
+  handlePointMove = (e: PointEvent) => {
+    // console.log("[DOMAIN]ScrollView - handlePointMove");
+    if (!this.startPoint) {
+      return;
+    }
+    // 当前滚动条的距离
+    const scrollTop = this.getScrollTop();
+    if (scrollTop > 0) {
+      this.inTopWhenPointDown = false;
+    }
+    const curPoint = getPoint(e);
+    const instanceY = curPoint.y - this.startPoint.y;
+    console.log("[DOMAIN]ScrollView - handlePointMove", scrollTop, instanceY);
+    if (instanceY > 0) {
+      if (scrollTop <= 0) {
+        preventDefault(e);
+        if (this.canPullToRefresh && !this.inTouchEnd && !this.isPullToRefreshing) {
+          if (!this.inTopWhenPointDown) {
+            return;
           }
+          const angle = getAngleByPoints(this.lastPoint, curPoint);
+          if (angle && angle < this.pullToRefreshOptions.minAngle) {
+            return;
+          }
+          // 如果手指的位置超过配置的距离，则提前结束下拉，避免 Webview 嵌套导致 touchend 无法触发
+          if (this.maxTouchMoveInstanceY > 0 && curPoint.y >= this.maxTouchMoveInstanceY) {
+            this.inTouchEnd = true;
+            this.handleTouchEnd();
+            return;
+          }
+          // console.log("before this.downHight < this.optDown.offset");
+          if (this.downHight < this.pullToRefreshOptions.offset) {
+            if (this.movetype !== "pulling") {
+              if (this.movetype === "pending") {
+                // console.log("start");
+                this.setIndicatorHeightTransition(false);
+                if (this.os.ios && !this.inTopWhenPointDown) {
+                  this.optimizeScroll(true);
+                }
+              }
+              if (this.movetype === "releasing") {
+                // console.log("recover");
+              }
+              this.movetype = "pulling";
+              this.emit(Events.InDownOffset);
+              this.isMoveDown = true;
+            }
+          } else {
+            if (this.movetype !== "releasing") {
+              this.movetype = "releasing";
+              this.emit(Events.OutDownOffset);
+              this.isMoveDown = true;
+            }
+          }
+          this.downHight = damping(curPoint.y - this.startPoint.y, 1000);
+          this.changeIndicatorHeight(this.downHight);
+          this.emit(Events.Pulling, {
+            instance: this.downHight,
+          });
         }
       }
-    })();
-
-    // console.log("[DOMAIN]ui/scroll-view - pulling", isPullToRefresh);
-    if (this.isPullToBack) {
-      this.state.scrollable = false;
-      this.pullToRefresh.distX = pullingDistance.x;
-      const distance = this.pullToRefresh.distX;
-      // const h = this.state.pullToBack.height;
-      this.state.pullToBack.canBack = false;
-      if (distance >= 62) {
-        this.state.pullToBack.canBack = true;
+    }
+    if (instanceY < 0) {
+      const scrollHeight = this.getScrollHeight();
+      const clientHeight = this.getScrollClientHeight();
+      const toBottom = scrollHeight - clientHeight - scrollTop;
+      if (toBottom <= 0) {
+        preventDefault(e);
       }
-      const scaleFactor = 0.008;
-      const scaledDistance = distance / (1 + Math.abs(distance) * scaleFactor);
-      const distanceX = scaledDistance >= 0 ? scaledDistance : 0;
-      this.state.pullToBack.width = distanceX;
-      this.state.pullToBack.height = (() => {
-        const i = 192 - distance;
-        if (i <= 58) {
-          return 58;
-        }
-        return i;
-      })();
-      console.log("[DOMAIN]ui/scroll-view - pulling", distanceX);
-      this.emit(Events.StateChange, { ...this.state });
+    }
+    this.lastPoint = curPoint;
+  };
+  handleTouchEnd = () => {
+    if (!this.canPullToRefresh) {
       return;
     }
-    if (!this.isPullToRefresh) {
+    if (!this.isMoveDown) {
       return;
     }
-    if (this.canPullToRefresh === false) {
-      return;
+    // console.log('handle touch end', this.unique_id, this.downHight, this.pullToRefreshOptions.offset)
+    if (this.downHight >= this.pullToRefreshOptions.offset) {
+      this.startPullToRefresh();
+    } else {
+      this.downHight = 0;
+      this.setIndicatorHeightTransition(true);
+      this.changeIndicatorHeight(0);
     }
-    if (this.pullToRefresh.state === "refreshing") {
-      return;
-    }
-    this.pullToRefresh.pullMoveY = curY;
-    if (this.pullToRefresh.state === "pending") {
-      this.pullToRefresh.state = "pulling";
-    }
-    this.pullToRefresh.distY = pullingDistance.y;
-    if (this.pullToRefresh.distY <= 0) {
-      return;
-    }
-    const distThreshold = 60;
-    const distMax = 80;
-    const distResisted =
-      resistanceFunction(this.pullToRefresh.distY / distThreshold) * Math.min(distMax, this.pullToRefresh.distY);
-    this.pullToRefresh.distResisted = distResisted;
-    if (this.pullToRefresh.state === "pulling" && distResisted > distThreshold) {
-      this.pullToRefresh.state = "releasing";
-    }
-    if (this.pullToRefresh.state === "releasing" && distResisted <= distThreshold) {
-      this.pullToRefresh.state = "pulling";
-    }
-    this.state.top = distResisted;
-    this.state.step = this.pullToRefresh.state;
-    this.emit(Events.StateChange, { ...this.state });
-  }
-  async endPulling() {
-    // console.log("[DOMAIN]ui/scroll-view - endPulling", this.state.left);
-    if (this.state.pullToBack.canBack) {
-      this.emit(Events.PullToBack);
-    }
-    this.state.pullToBack.canBack = false;
-    this.state.pullToBack.width = 0;
-    this.state.pullToBack.height = 192;
-    this.state.scrollable = true;
-    this.pullToRefresh.pullStartX = 0;
-    this.pullToRefresh.pullMoveX = 0;
-    this.pullToRefresh.distX = 0;
-    this._disablePullToRefresh = false;
-    this._disablePullToBack = false;
-    this._pullToRefresh = true;
-    this.isPullToBack = false;
-    this.isPullToRefresh = false;
-    this.emit(Events.StateChange, { ...this.state });
-    if (this.canPullToRefresh === false) {
-      return;
-    }
-    if (["refreshing"].includes(this.pullToRefresh.state)) {
-      return;
-    }
-    if (["pending", "pulling"].includes(this.pullToRefresh.state)) {
-      this.pullToRefresh.pullStartY = 0;
-      this.pullToRefresh.pullMoveY = 0;
-      this.pullToRefresh.distY = 0;
-      this.pullToRefresh.distResisted = 0;
-      this.pullToRefresh.state = "pending";
-      this.state.top = 0;
-      this.state.step = this.pullToRefresh.state;
-      this.emit(Events.StateChange, { ...this.state });
-      return;
-    }
-    // if (
-    //   this.pullToRefresh.state === "releasing" &&
-    //   this.pullToRefresh.distResisted > 60
-    // ) {
-    // }
-    this.startPullToRefresh();
-  }
-  /** 页面滚动时调用 */
-  handleScroll(event: { scrollTop: number }) {
-    const { scrollTop } = event;
-    this.emit(Events.Scroll, { scrollTop });
-    const { height = 0, contentHeight = 0 } = this.rect;
-    // console.log("[DOMAIN]ui/scroll-view - scroll", scrollTop, height, contentHeight);
-    if (scrollTop + height + this.threshold >= contentHeight) {
-      if (this.canReachBottom === false) {
+    this.optimizeScroll(false);
+    this.movetype = "pending";
+    this.isMoveDown = false;
+  };
+  handleScrolling = () => {
+    const scrollTop = this.getScrollTop();
+    const isUp = scrollTop - this.preScrollY > 0;
+    if (!this.isLoadingMore) {
+      const toBottom = this.getScrollHeight() - this.getScrollClientHeight() - scrollTop;
+      if (toBottom <= this.threshold && isUp) {
+        // 如果滚动条距离底部指定范围内且向上滑,则执行上拉加载回调
+        // this.startReachBottom();
+        this.isLoadingMore = true;
         this.emit(Events.ReachBottom);
       }
-      this.canReachBottom = true;
-    } else {
-      this.canReachBottom = false;
     }
-    this.rect.scrollTop = scrollTop;
-    this.state.scrollTop = scrollTop;
-    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Scrolling, { scrollTop });
+  };
+  finishLoadingMore() {
+    this.isLoadingMore = false;
   }
-  /** 启用下拉刷新 */
-  enablePullToRefresh() {
-    this.canPullToRefresh = true;
+  setMounted() {
+    this.emit(Events.Mounted);
   }
-  /** 禁用下拉刷新 */
-  disablePullToRefresh() {
-    this.canPullToRefresh = false;
+  refreshRect() {
+    console.log("请在 connect 中实现 refreshRect 方法");
   }
-  enablePullToBack() {
-    this.state.pullToBack.enabled = true;
-    this.emit(Events.StateChange, { ...this.state });
+  setBounce = (isBounce: boolean) => {
+    console.log("请在 connect 中实现 setBounce 方法");
+  };
+  changeIndicatorHeight(height: number) {
+    console.log("请在 connect 中实现 changeDownIndicatorHeight 方法");
   }
-  disablePullToBack() {
-    this.state.pullToBack.enabled = false;
-    this.emit(Events.StateChange, { ...this.state });
+  setIndicatorHeightTransition(set: boolean) {
+    console.log("请在 connect 中实现 addDownIndicatorHeightTransition 方法");
   }
+  optimizeScroll(optimize: boolean) {
+    console.log("请在 connect 中实现 optimizeScroll 方法");
+  }
+  hideIndicator = () => {
+    console.log("请在 connect 中实现 hideIndicator 方法");
+  };
   /**
-   * 开始下拉刷新
-   * 调用后触发下拉刷新动画，效果与用户手动下拉刷新一致
+   * 滑动列表到指定位置
+   * 带缓冲效果 (y=0 回到顶部；如果要滚动到底部可以传一个较大的值，比如 99999)
    */
-  startPullToRefresh() {
-    if (this.canPullToRefresh === false) {
-      return;
-    }
-    this.pullToRefresh.pullStartY = 0;
-    this.pullToRefresh.pullMoveY = 0;
-    this.pullToRefresh.distY = 60;
-    this.pullToRefresh.distResisted = 60;
-    this.pullToRefresh.state = "refreshing";
-    this.state.top = 60;
-    this.state.step = this.pullToRefresh.state;
-    this.emit(Events.PullToRefresh);
-    this.emit(Events.StateChange, { ...this.state });
+  scrollTo = (position: Partial<{ left: number; top: number }>, duration = 300) => {
+    console.log("请在 connect 中实现 scrollTo 方法");
+  };
+  /* 滚动条到底部的距离 */
+  getToBottom() {
+    return this.getScrollHeight() - this.getScrollClientHeight() - this.getScrollTop();
   }
-  /**
-   * 结束下拉刷新
-   */
-  stopPullToRefresh() {
-    this.pullToRefresh.state = "pending";
-    this.state.top = 0;
-    this.state.step = this.pullToRefresh.state;
-    this.emit(Events.StateChange, { ...this.state });
+  /* 获取元素到 mescroll 滚动列表顶部的距离 */
+  getOffsetTop(dom: unknown) {
+    console.log("请在 connect 中实现 getScrollHeight 方法");
+    return 0;
   }
-  scrollTo(position: Partial<{ left: number; top: number }>) {
-    console.log("请在 connect 中实现该方法");
+  /* 滚动内容的高度 */
+  getScrollHeight() {
+    console.log("请在 connect 中实现 getScrollHeight 方法");
+    return 0;
   }
+  /** 获取滚动容器的高度 */
+  getScrollClientHeight() {
+    console.log("请在 connect 中实现 getClientHeight 方法");
+    return 0;
+  }
+  /* 滚动条的位置 */
+  getScrollTop() {
+    console.log("请在 connect 中实现 getScrollTop 方法");
+    return 0;
+  }
+  /* 设置滚动条的位置 */
+  setScrollTop(y: number) {
+    console.log("请在 connect 中实现 setScrollTop 方法");
+  }
+  /* body的高度 */
+  getBodyHeight() {
+    console.log("请在 connect 中实现 getBodyHeight 方法");
+    return 0;
+  }
+  /* 销毁mescroll */
+  destroy = () => {
+    console.error("请在 connect 中实现 destroy 方法");
+  };
 
-  onScroll(handler: Handler<TheTypesOfEvents[Events.Scroll]>) {
-    return this.on(Events.Scroll, handler);
+  inDownOffset(handler: Handler<TheTypesOfEvents[Events.InDownOffset]>) {
+    return this.on(Events.InDownOffset, handler);
+  }
+  outDownOffset(handler: Handler<TheTypesOfEvents[Events.OutDownOffset]>) {
+    return this.on(Events.OutDownOffset, handler);
+  }
+  onPulling(handler: Handler<TheTypesOfEvents[Events.Pulling]>) {
+    return this.on(Events.Pulling, handler);
+  }
+  onScroll(handler: Handler<TheTypesOfEvents[Events.Scrolling]>) {
+    return this.on(Events.Scrolling, handler);
   }
   onReachBottom(handler: Handler<TheTypesOfEvents[Events.ReachBottom]>) {
-    // console.log("register onReachBottom", this._name);
     return this.on(Events.ReachBottom, handler);
   }
   onPullToRefresh(handler: Handler<TheTypesOfEvents[Events.PullToRefresh]>) {
-    this.state.pullToRefresh = true;
+    this.canPullToRefresh = true;
     return this.on(Events.PullToRefresh, handler);
   }
-  onPullToBack(handler: Handler<TheTypesOfEvents[Events.PullToBack]>) {
-    this.state.pullToBack.enabled = true;
-    return this.on(Events.PullToBack, handler);
+  onMounted(handler: Handler<TheTypesOfEvents[Events.Mounted]>) {
+    return this.on(Events.Mounted, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    return this.on(Events.StateChange, handler);
-  }
-}
-
-function resistanceFunction(t: number) {
-  return Math.min(1, t / 2.5);
 }

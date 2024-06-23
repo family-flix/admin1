@@ -9,7 +9,7 @@ import { Result } from "@/domains/result/index";
 import { TmpRequestResp } from "@/domains/request/utils";
 import { DriveTypes, MediaErrorTypes, MediaTypes, ReportTypeTexts, ReportTypes } from "@/constants/index";
 import { ListResponse, ListResponseWithCursor, MutableRecord, RequestedResource, Unpacked } from "@/types/index";
-import { bytes_to_size, query_stringify } from "@/utils/index";
+import { bytes_to_size } from "@/utils/index";
 
 /**
  * 获取电视剧列表

@@ -3,7 +3,6 @@
  */
 import { RequestedResource } from "@/types/index";
 import { Result } from "@/domains/result/index";
-import { query_stringify } from "@/utils/index";
 
 export type RequestPayload<T> = {
   hostname?: string;
@@ -24,15 +23,6 @@ export type UnpackedRequestPayload<T> = NonNullable<T extends RequestPayload<inf
 // export type UnpackedRequestPayload<T> = T extends RequestPayload<infer U> ? U : T;
 export type TmpRequestResp<T extends (...args: any[]) => any> = Result<UnpackedRequestPayload<RequestedResource<T>>>;
 
-let posterHandler: null | ((v: RequestPayload<any>) => void) = null;
-export function onCreatePostPayload(h: (v: RequestPayload<any>) => void) {
-  posterHandler = h;
-}
-let getHandler: null | ((v: RequestPayload<any>) => void) = null;
-export function onCreateGetPayload(h: (v: RequestPayload<any>) => void) {
-  getHandler = h;
-}
-
 /**
  * 并不是真正发出网络请求，仅仅是「构建请求信息」然后交给 HttpClient 发出请求
  * 所以这里构建的请求信息，就要包含
@@ -51,16 +41,14 @@ export const request = {
   ) {
     // console.log("GET", endpoint);
     const { headers } = extra;
-    const url = [endpoint, query ? "?" + query_stringify(query) : ""].join("");
+    // const url = [endpoint, query ? "?" + query_stringify(query) : ""].join("");
     const resp = {
-      url,
+      url: endpoint,
       method: "GET",
+      query,
       // defaultResponse,
       headers,
     } as RequestPayload<T>;
-    if (getHandler) {
-      getHandler(resp);
-    }
     return resp;
   },
   /** 构建请求参数 */
@@ -81,9 +69,6 @@ export const request = {
       // defaultResponse,
       headers,
     } as RequestPayload<T>;
-    if (posterHandler) {
-      posterHandler(resp);
-    }
     return resp;
   },
 };
@@ -118,6 +103,9 @@ export function request_factory(opt: {
         console.log("[REQUEST]utils - setHeaders", headers);
       }
       _headers = headers;
+    },
+    deleteHeader(key: string) {
+      delete _headers[key];
     },
     appendHeaders(extra: Record<string, string | number>) {
       if (_debug) {

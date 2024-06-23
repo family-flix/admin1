@@ -15,7 +15,7 @@ const Input = (
 ) => {
   const { store } = props;
 
-  let ref: HTMLInputElement;
+  let ref: HTMLInputElement | undefined = undefined;
   const [state, setState] = createSignal(store.state);
   // const [v, setV] = createSignal();
 
@@ -44,7 +44,7 @@ const Input = (
 
   return (
     <input
-      ref={(e) => (ref = e)}
+      ref={ref}
       class={cn(props.class)}
       style={props.style}
       multiple

@@ -290,7 +290,9 @@ export type AliyunDriveProfile = RequestedResource<typeof fetchDriveProfile>;
  */
 export function deleteDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return media_request.get(`/api/admin/drive/delete/${drive_id}`);
+  return media_request.post("/api/v2/admin/drive/delete", {
+    id: drive_id,
+  });
 }
 
 /**
@@ -300,7 +302,7 @@ export function deleteDrive(body: { drive_id: string }) {
  */
 export function exportDriveInfo(body: { drive_id: string }) {
   const { drive_id } = body;
-  return media_request.get<{
+  return media_request.post<{
     app_id: string;
     drive_id: string;
     device_id: string;
@@ -313,7 +315,9 @@ export function exportDriveInfo(body: { drive_id: string }) {
     root_folder_id?: string;
     total_size?: number;
     used_size?: number;
-  }>(`/api/admin/drive/export/${drive_id}`);
+  }>("/api/v2/admin/drive/export", {
+    id: drive_id,
+  });
 }
 
 /**
@@ -341,7 +345,8 @@ export function setDriveRootFolderId(body: { drive_id: string; root_folder_id: s
  */
 export function setAliyunDriveRefreshToken(values: { refresh_token: string; drive_id: string }) {
   const { refresh_token, drive_id } = values;
-  return media_request.post<void>(`/api/admin/drive/token/${drive_id}`, {
+  return media_request.post<void>("/api/v2/admin/drive/set_token", {
+    id: drive_id,
     refresh_token,
   });
 }

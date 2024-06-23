@@ -136,7 +136,7 @@ export function refreshDashboard() {
 }
 
 export function fetchMediaRecentlyCreated(body: FetchParams) {
-  return media_request.post<
+  const r = media_request.post<
     ListResponseWithCursor<{
       id: string;
       media_id: string;
@@ -146,4 +146,6 @@ export function fetchMediaRecentlyCreated(body: FetchParams) {
       text: string;
     }>
   >("/api/v2/admin/dashboard/added_media", body);
+  console.log(r);
+  return r;
 }

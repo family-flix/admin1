@@ -427,7 +427,6 @@ export const SeasonMediaProfileManagePage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore({
-    pullToRefresh: false,
     onReachBottom() {
       seasonList.loadMore();
     },

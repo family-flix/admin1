@@ -4,6 +4,8 @@
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { appendAction } from "@/store/actions";
 import {
   MovieProfile,
   fetchMovieMediaProfile,
@@ -15,24 +17,18 @@ import {
 import { deleteParsedMediaSource } from "@/services/parsed_media";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
 import { TMDBSearcherCore } from "@/biz/tmdb";
+import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
-import { ViewComponent } from "@/store/types";
-import { appendAction } from "@/store/actions";
-import { createJob } from "@/store/job";
-import { MediaTypes } from "@/constants";
+import { MediaTypes } from "@/constants/index";
 
 export const MovieProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const profileRequest = new RequestCore(fetchMovieMediaProfile, {
     process: fetchMovieMediaProfileProcess,
-    onFailed(error) {
-      app.tip({ text: ["获取电视剧详情失败", error.message] });
-    },
     onSuccess(v) {
       poster.setURL(v.poster_path);
       setProfile(v);
@@ -50,9 +46,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
     onFailed(error) {
       app.tip({ text: ["更改详情失败", error.message] });
     },
-  });
-  const filenameParseRequest = new RequestCore(parseVideoFilename, {
-    onLoading(loading) {},
   });
   const sourceDeletingRequest = new RequestCore(deleteParsedMediaSource, {
     onSuccess() {
@@ -73,11 +66,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
       app.tip({
         text: ["删除成功"],
-      });
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["删除视频源失败", error.message],
       });
     },
   });
@@ -114,61 +102,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const subtitleRef = new RefCore<{ drive_id: string; lang: string; file: File }>();
   const sourceRef = new RefCore<{ id: string; file_id: string }>();
-  const subtitleUploadInput = new InputCore({
-    defaultValue: [],
-    placeholder: "上传字幕文件",
-    type: "file",
-    async onChange(v) {
-      const file = v[0];
-      if (!file) {
-        return;
-      }
-      if (!profileRequest.response) {
-        app.tip({
-          text: ["请等待详情加载完成"],
-        });
-        return;
-      }
-      if (profileRequest.response.sources.length === 0) {
-        app.tip({
-          text: ["必须包含至少一个视频源"],
-        });
-        return;
-      }
-      const { name } = file;
-      const r = await filenameParseRequest.run({ name, keys: ["subtitle_lang"] });
-      if (r.error) {
-        app.tip({
-          text: ["文件名解析失败"],
-        });
-        return;
-      }
-      const { subtitle_lang } = r.data;
-      if (!subtitle_lang) {
-        app.tip({
-          text: ["文件名中没有解析出字幕语言"],
-        });
-        return;
-      }
-      const sources = profileRequest.response.sources;
-      const reference_id = sources[0].drive.id;
-      // 使用 every 方法遍历数组，检查每个元素的 drive.id 是否和参考 id 相同
-      const all_ids_equal = sources.every((source) => source.drive.id === reference_id);
-      if (!all_ids_equal) {
-        app.tip({
-          text: ["视频源在多个云盘内，请手动选择上传至哪个云盘"],
-        });
-        return;
-      }
-      subtitleRef.select({
-        drive_id: reference_id,
-        file,
-        lang: subtitle_lang,
-      });
-    },
-  });
   const poster = new ImageCore({});
   const profileRefreshBtn = new ButtonCore({
     onClick() {
@@ -225,7 +159,10 @@ export const MovieProfilePage: ViewComponent = (props) => {
       movieProfileChangeDialog.show();
     },
   });
-  const scrollView = new ScrollViewCore();
+  const scrollView = new ScrollViewCore({});
+  profileRequest.onStateChange((v) => {
+    setProfile(v.response);
+  });
 
   const [profile, setProfile] = createSignal<MovieProfile | null>(null);
 
