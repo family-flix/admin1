@@ -14,9 +14,7 @@ import { cn } from "@/utils";
 export const UnknownMediaLayout: ViewComponent = (props) => {
   const { app, history, pages, client, storage, view } = props;
 
-  const scrollView = new ScrollViewCore({
-    _name: "unknown_media/layout",
-  });
+  const scrollView = new ScrollViewCore({});
   const tab = new TabHeaderCore({
     key: "id",
     options: [

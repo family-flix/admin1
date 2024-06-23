@@ -432,7 +432,6 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   });
   const seasonSelect = new TVSeasonSelectCore({});
   const scrollView = new ScrollViewCore({
-    pullToRefresh: false,
     onReachBottom() {
       syncTaskList.loadMore();
     },
