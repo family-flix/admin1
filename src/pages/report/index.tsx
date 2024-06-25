@@ -14,8 +14,8 @@ import {
   fetchMovieList,
   replyReport,
   fetchReportListProcess,
-} from "@/services/index";
-import { fetchMovieMediaList, fetchMovieMediaListProcess } from "@/services/media";
+} from "@/biz/services/index";
+import { fetchMovieMediaList, fetchMovieMediaListProcess } from "@/biz/services/media";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";

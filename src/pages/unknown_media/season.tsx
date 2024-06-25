@@ -10,8 +10,8 @@ import {
   fetchUnknownMediaList,
   fetchUnknownMediaListProcess,
   setParsedMediaProfile,
-} from "@/services/parsed_media";
-import { deleteUnknownTV } from "@/services/index";
+  deleteParsedMedia,
+} from "@/biz/services/parsed_media";
 import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/biz/tmdb";
@@ -60,7 +60,7 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
       });
     },
   });
-  const tvDeletingRequest = new RequestCore(deleteUnknownTV, {
+  const tvDeletingRequest = new RequestCore(deleteParsedMedia, {
     onLoading(loading) {
       tvDeletingConfirmDialog.okBtn.setLoading(loading);
       tvDeletingBtn.setLoading(loading);
@@ -123,7 +123,7 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
         return;
       }
       tvDeletingRequest.run({
-        parsed_tv_id: seasonRef.value.id,
+        parsed_media_id: seasonRef.value.id,
       });
     },
   });
@@ -182,8 +182,13 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
 
   console.log("[PAGE]/unknown_media/season - ", parent);
   if (parent?.scrollView) {
-    parent?.scrollView.onReachBottom(() => {
-      list.loadMore();
+    const scroll = parent.scrollView;
+    scroll.onReachBottom(async () => {
+      if (!view.visible) {
+        return;
+      }
+      await list.loadMore();
+      scroll.finishLoadingMore();
     });
   }
   list.onStateChange((nextState) => {

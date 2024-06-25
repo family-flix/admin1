@@ -24,7 +24,7 @@ import {
 import { ViewComponent, ViewComponentProps } from "@/store/types";
 import { onJobsChange } from "@/store/job";
 import { PageKeys } from "@/store/routes";
-import { fetchSettings, notify_test, updateSettings } from "@/services";
+import { fetchSettings, testSendNotification, updateSettings } from "@/biz/services";
 import { Show } from "@/packages/ui/show";
 import { Button, Checkbox, Dialog, DropdownMenu, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
@@ -190,7 +190,7 @@ export const HomeLayout: ViewComponent = (props) => {
     defaultValue: "",
     placeholder: "请输入 push deer token",
   });
-  const notify1TestRequest = new RequestCore(notify_test, {
+  const notify1TestRequest = new RequestCore(testSendNotification, {
     onLoading(loading) {
       notify1TestBtn.setLoading(loading);
     },

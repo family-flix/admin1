@@ -4,7 +4,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { ChevronRight, Folder, FolderInput, MoreHorizontal, Send } from "lucide-solid";
 
-import { createSyncTaskWithUrl } from "@/services/resource_sync_task";
+import { createSyncTaskWithUrl } from "@/biz/services/resource_sync_task";
 import { Button, DropdownMenu, Input } from "@/components/ui";
 import { ButtonCore, DropdownMenuCore, InputCore, MenuCore, MenuItemCore } from "@/domains/ui";
 import { SharedResourceCore } from "@/biz/shared_resource";

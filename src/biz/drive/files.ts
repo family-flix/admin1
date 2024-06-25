@@ -1,7 +1,7 @@
 /**
  * @todo 如果删除当前选中的文件夹，子文件夹在视图上也要同步移除
  */
-import { fetchDriveFiles, renameFileInDrive, deleteFileInDrive, fetchDriveFilesProcess } from "@/services/drive";
+import { fetchDriveFiles, renameFileInDrive, deleteFileInDrive, fetchDriveFilesProcess } from "@/biz/services/drive";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";

@@ -1,4 +1,4 @@
-import { TheMediaInTMDB, searchMediaInTMDB } from "@/services/media_profile";
+import { TheMediaInTMDB, searchMediaInTMDB } from "@/biz/services/media_profile";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, InputCore } from "@/domains/ui/index";
 import { ListCore } from "@/domains/list/index";

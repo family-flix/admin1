@@ -34,9 +34,6 @@ import { SeasonArchivePage } from "@/pages/archive/season";
 import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
 import { InvalidMediaListPage } from "@/pages/invalid_media";
-import { MediaProfileHomeLayout } from "@/pages/media_profile/layout";
-import { SeasonMediaProfileManagePage } from "@/pages/media_profile";
-import { TestPage } from "@/pages/test";
 
 import { ViewComponent } from "@/store/types";
 

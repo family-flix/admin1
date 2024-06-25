@@ -4,7 +4,7 @@
 import { For, createSignal } from "solid-js";
 import { Search } from "lucide-solid";
 
-import { SharedFileHistoryItem, fetch_shared_files_histories } from "@/services";
+import { SharedFileHistoryItem, fetchResourceSearchHistoryList } from "@/biz/services";
 import { Button, Input, ScrollView } from "@/components/ui";
 import { ButtonCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
@@ -15,7 +15,7 @@ import { ViewComponent } from "@/store/types";
 export const SharedFilesHistoryPage: ViewComponent = (props) => {
   const { app } = props;
 
-  const list = new ListCore(new RequestCore(fetch_shared_files_histories));
+  const list = new ListCore(new RequestCore(fetchResourceSearchHistoryList));
   const scrollView = new ScrollViewCore({
     onReachBottom() {
       list.loadMore();

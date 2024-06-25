@@ -6,9 +6,10 @@ import dayjs from "dayjs";
 import { FetchParams } from "@/domains/list/typing";
 import { Result } from "@/domains/result/index";
 import { media_request } from "@/biz/requests/index";
-import { RequestPayload, TmpRequestResp } from "@/domains/request/utils";
+import { ListResponseWithCursor } from "@/biz/requests/types";
+import { RequestPayload, TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { DriveTypes, FileType } from "@/constants/index";
-import { JSONObject, ListResponseWithCursor, RequestedResource } from "@/types/index";
+import { JSONObject } from "@/types/index";
 import { bytes_to_size } from "@/utils/index";
 
 /** 解析一段 json 字符串 */
@@ -28,7 +29,8 @@ function parseJSONStr<T extends JSONObject>(json: string) {
 /**
  * 新增云盘
  * @param {object} body 提交体
- * @param {string} body.payload 从阿里云盘页面通过脚本生成的云盘信息 json 字符串
+ * @param {DriveTypes} body.type 云盘类型
+ * @param {string} body.payload 云盘基本信息、授权凭证等等
  */
 export function addDrive(body: { type?: DriveTypes; payload: string }) {
   const { type = DriveTypes.AliyunBackupDrive, payload } = body;
@@ -44,38 +46,33 @@ export function addDrive(body: { type?: DriveTypes; payload: string }) {
 }
 
 /**
- * 更新阿里云盘信息
+ * 更新云盘信息
  * @param {string} id 云盘 id
+ * @param {object} body 云盘信息（目前仅支持传入 remark、hidden
  */
-export function updateAliyunDriveRemark(id: string, body: { remark?: string }) {
-  return media_request.post<{ id: string }>(`/api/admin/drive/${id}/remark`, body);
-}
-
-/**
- * 更新阿里云盘信息
- * @param {string} id 云盘 id
- */
-export function updateAliyunDriveVisible(id: string, body: { hide?: number }) {
-  return media_request.post<{ id: string }>(`/api/admin/drive/${id}/hide`, body);
-}
-
-/**
- * 更新阿里云盘信息
- * @param {string} id 云盘 id
- * @param {object} body 云盘信息（目前仅支持传入 remark、root_folder_id、root_folder_name
- */
-export function updateAliyunDrive(
-  id: string,
-  body: { remark?: string; hidden?: number; root_folder_id?: string; root_folder_name?: string }
+export function updateDriveProfile(
+  body: Partial<{
+    id: string;
+    remark: string;
+    hidden: number;
+    root_folder_id: string;
+    root_folder_name: string;
+  }>
 ) {
-  return media_request.post<{ id: string }>(`/api/admin/drive/${id}/update`, body);
+  const { id, remark, hidden, root_folder_id, root_folder_name } = body;
+  return media_request.post<{ id: string }>("/api/v2/admin/drive/update", {
+    id,
+    remark,
+    hidden,
+    root_folder_id,
+    root_folder_name,
+  });
 }
-
 /**
  * 获取阿里云盘列表
  */
 export function fetchDriveList(params: FetchParams) {
-  const { page, pageSize, ...restParams } = params;
+  const { page, pageSize, ...rest } = params;
   return media_request.post<
     ListResponseWithCursor<{
       id: string;
@@ -96,11 +93,11 @@ export function fetchDriveList(params: FetchParams) {
         started_at: number;
       }[];
     }>
-  >("/api/admin/drive/list", {
+  >("/api/v2/admin/drive/list", {
+    ...rest,
     page,
     page_size: pageSize,
     hidden: 0,
-    ...restParams,
   });
 }
 export type DriveItem = RequestedResource<typeof fetchDriveListProcess>["list"][0];
@@ -215,7 +212,7 @@ export function analysisDrive(body: {
 }
 
 /**
- * 全量索引指定云盘
+ * 索引云盘指定文件
  * @param {object} body
  * @param {string} body.drive_id 要索引的云盘 id
  * @param {string} [body.target_folder] 要索引的云盘内指定文件夹 id
@@ -230,7 +227,6 @@ export function analysisSpecialFilesInDrive(body: {
     files,
   });
 }
-
 /**
  * 文件洗码
  * @param {object} body
@@ -247,7 +243,6 @@ export function changeDriveFileHash(body: {
     drive_id,
   });
 }
-
 /**
  * 索引指定云盘新增的文件/文件夹
  * @param {object} body
@@ -259,9 +254,9 @@ export function analysisNewFilesInDrive(body: { drive_id: string }) {
     drive_id,
   });
 }
-
 /**
  * 搜索指定云盘内所有解析到、但没有匹配到详情的影视剧
+ * @deprecated
  * @param {object} body
  * @param {string} body.drive_id 要索引的云盘 id
  */
@@ -271,7 +266,6 @@ export function matchParsedMediasInDrive(body: { drive_id: string }) {
     drive_id,
   });
 }
-
 /**
  * 获取云盘详情
  * @param {object} body
@@ -279,9 +273,9 @@ export function matchParsedMediasInDrive(body: { drive_id: string }) {
  */
 export function fetchDriveProfile(body: { drive_id: string }) {
   const { drive_id } = body;
-  return media_request.get<{ id: string; root_folder_id: string }>(`/api/admin/drive/${drive_id}`);
+  return media_request.get<{ id: string; root_folder_id: string }>("/api/v2/admin/drive/profile", { id: drive_id });
 }
-export type AliyunDriveProfile = RequestedResource<typeof fetchDriveProfile>;
+export type DriveProfile = RequestedResource<typeof fetchDriveProfile>;
 
 /**
  * 删除指定云盘
@@ -294,7 +288,6 @@ export function deleteDrive(body: { drive_id: string }) {
     id: drive_id,
   });
 }
-
 /**
  * 导出云盘信息
  * @param {object} body
@@ -319,105 +312,19 @@ export function exportDriveInfo(body: { drive_id: string }) {
     id: drive_id,
   });
 }
-
-/**
- * 设置云盘索引根目录
- * @param {object} body
- * @param {string} body.drive_id 云盘 id
- * @param {string} body.root_folder_id 云盘根目录id
- */
-export function setDriveRootFolderId(body: { drive_id: string; root_folder_id: string; root_folder_name: string }) {
-  const { root_folder_id, root_folder_name, drive_id } = body;
-  return media_request.post<void>("/api/v2/drive/update", {
-    drive_id,
-    payload: {
-      root_folder_id,
-      root_folder_name,
-    },
-  });
-}
-
 /**
  * 更新阿里云盘 refresh_token
  * @param {object} body
- * @param {string} body.drive 云盘 id
+ * @param {string} body.drive_id 云盘 id
  * @param {string} body.refresh_token 新的 refresh_token 值
  */
-export function setAliyunDriveRefreshToken(values: { refresh_token: string; drive_id: string }) {
-  const { refresh_token, drive_id } = values;
+export function setDriveToken(values: { drive_id: string; refresh_token: string }) {
+  const { drive_id, refresh_token } = values;
   return media_request.post<void>("/api/v2/admin/drive/set_token", {
     id: drive_id,
     refresh_token,
   });
 }
-
-/**
- * 获取指定云盘内文件夹列表
- * @param {object} body
- * @param {string} body.drive_id 云盘 id
- * @param {string} body.file_id 文件夹id（如果传入说明是获取指定文件夹下的文件列表
- * @param {string} body.next_marker 在获取文件列表时，如果是获取下一页，就需要传入该值
- * @param {string} body.name 传入该值时，使用该值进行搜索
- * @param {string} body.page_size 每页文件数量
- */
-export function fetchDriveFiles(
-  body: {
-    /** 云盘id */
-    drive_id: string;
-    /** 文件夹id */
-    file_id: string;
-    next_marker: string;
-    /** 按名称搜索时的关键字 */
-    name?: string;
-  } & FetchParams
-) {
-  const { drive_id, file_id, name, next_marker, page, pageSize = 24 } = body;
-  return media_request.get<{
-    items: {
-      file_id: string;
-      name: string;
-      next_marker: string;
-      parent_file_id: string;
-      size: number;
-      type: "folder" | "file";
-      thumbnail: string;
-    }[];
-    next_marker: string;
-  }>(`/api/admin/drive/files/${drive_id}`, {
-    name,
-    file_id,
-    next_marker,
-    page,
-    page_size: pageSize,
-  });
-}
-// export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
-export function fetchDriveFilesProcess(r: TmpRequestResp<typeof fetchDriveFiles>) {
-  if (r.error) {
-    return Result.Err(r.error);
-  }
-  const { items } = r.data;
-  return Result.Ok({
-    list: items.map((file) => {
-      const { file_id, name, parent_file_id, size, type, thumbnail } = file;
-      return {
-        file_id,
-        name,
-        type: type === "file" ? FileType.File : FileType.Folder,
-        size,
-        parent_paths: [
-          {
-            file_id: parent_file_id,
-            name: "",
-          },
-        ],
-      };
-    }),
-    no_more: r.data.next_marker === "",
-    next_marker: r.data.next_marker,
-  });
-}
-
 /**
  * 给指定云盘的指定文件夹内，新增一个新文件夹
  * @param {object} body
@@ -431,12 +338,12 @@ export function addFolderInDrive(body: { drive_id: string; name: string; parent_
     file_id: string;
     name: string;
     parent_file_id: string;
-  }>(`/api/admin/drive/files/add/${drive_id}`, {
+  }>("/api/v2/drive/files/add", {
+    id: drive_id,
     name,
     parent_file_id,
   });
 }
-
 /**
  * 指定云盘签到
  * @param {object} body
@@ -444,9 +351,10 @@ export function addFolderInDrive(body: { drive_id: string; name: string; parent_
  */
 export function checkInDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return media_request.get(`/api/admin/drive/check_in/${drive_id}`);
+  return media_request.post("/api/v2/admin/drive/check_in", {
+    id: drive_id,
+  });
 }
-
 /**
  * 领取所有签到奖励
  * @param {object} body
@@ -454,50 +362,17 @@ export function checkInDrive(body: { drive_id: string }) {
  */
 export function receiveCheckInRewardOfDrive(body: { drive_id: string }) {
   const { drive_id } = body;
-  return media_request.get<{ job_id: string }>(`/api/admin/drive/receive_rewards/${drive_id}`);
+  return media_request.post<{ job_id: string }>("/api/v2/admin/drive/receive_rewards", {
+    id: drive_id,
+  });
 }
-
-/**
- * 删除指定云盘的文件
- */
-export function deleteFile(body: { drive_id: string; file_id: string }) {
-  const { drive_id, file_id } = body;
-  return media_request.get<{ job_id: string }>(`/api/admin/file/${file_id}/delete?drive_id=${drive_id}`);
-}
-
 /**
  * 重命名指定云盘的文件
  */
 export function renameFile(body: { parsed_media_source_id: string; name: string }) {
   const { parsed_media_source_id, name } = body;
-  return media_request.post<{ job_id: string }>(`/api/v2/admin/parsed_media_source/rename`, {
+  return media_request.post<{ job_id: string }>("/api/v2/admin/parsed_media_source/rename", {
     parsed_media_source_id,
     name,
-  });
-}
-
-/** 用正则重命名多个文件 */
-export function renameChildFilesName(values: { drive_id: string; file_id: string; regexp: string; replace: string }) {
-  const { drive_id, file_id, regexp, replace } = values;
-  return media_request.post<{ job_id: string }>(`/api/v2/aliyundrive/rename_files`, {
-    drive_id,
-    file_id,
-    regexp,
-    replace,
-  });
-}
-
-export function transferFileToAnotherDrive(values: { drive_id: string; file_id: string; target_drive_id: string }) {
-  const { drive_id, target_drive_id, file_id } = values;
-  return media_request.post<{ job_id: string }>(`/api/admin/file/${file_id}/transfer?drive_id=${drive_id}`, {
-    from_drive_id: drive_id,
-    target_drive_id,
-  });
-}
-
-export function transferFileToResourceDrive(values: { drive_id: string; file_id: string }) {
-  const { drive_id, file_id } = values;
-  return media_request.post<{ job_id: string }>(`/api/admin/file/${file_id}/to_resource_drive?drive_id=${drive_id}`, {
-    from_drive_id: drive_id,
   });
 }

@@ -8,19 +8,17 @@ import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/store/types";
 import {
-  renameFilesInDrive,
+  renameFilesInDriveWithRegexp,
   fetchDriveFiles,
   transferFileToAnotherDrive,
   transferFileToResourceDrive,
   getFileDownloadURL,
   fetchDriveFilesProcess,
-} from "@/services/drive";
-import { setFileEpisodeProfile } from "@/services/index";
-import { setParsedMediaProfileInFileId } from "@/services/parsed_media";
+} from "@/biz/services/drive";
+import { setParsedMediaProfileInFileId } from "@/biz/services/parsed_media";
 import { Dialog, DropdownMenu, Input, ScrollView, Skeleton, ListView, Button } from "@/components/ui";
 import { List } from "@/components/List";
 import { DriveFileCard } from "@/components/DriveFileCard";
-import { EpisodeSelectCore } from "@/components/EpisodeSelect";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/biz/tmdb";
 import { ListCore } from "@/domains/list";
@@ -43,7 +41,7 @@ import { buildRegexp } from "@/utils/index";
 export const DriveProfilePage: ViewComponent = (props) => {
   const { app, history, client, view } = props;
 
-  const filesRenameRequest = new RequestCore(renameFilesInDrive, {
+  const filesRenameRequest = new RequestCore(renameFilesInDriveWithRegexp, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -95,27 +93,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
     onFailed(error) {
       app.tip({
         text: ["归档失败", error.message],
-      });
-    },
-  });
-  const episodeProfileSetRequest = new RequestCore(setFileEpisodeProfile, {
-    onSuccess(v) {
-      createJob({
-        job_id: v.job_id,
-        onFinish() {
-          episodeSelect.dialog.okBtn.setLoading(false);
-          episodeSelect.dialog.hide();
-          curFile.clear();
-          app.tip({
-            text: ["完成设置"],
-          });
-        },
-      });
-    },
-    onFailed(error) {
-      episodeSelect.dialog.okBtn.setLoading(false);
-      app.tip({
-        text: ["设置失败", error.message],
       });
     },
   });
@@ -448,36 +425,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const episodeSelect = new EpisodeSelectCore({
-    onOk() {
-      const tv = episodeSelect.curTV.value;
-      const season = episodeSelect.curSeason.value;
-      const episode = episodeSelect.curEpisode.value;
-      if (!tv || !season || !episode) {
-        app.tip({
-          text: ["请选择剧集"],
-        });
-        return;
-      }
-      if (!curFile.value) {
-        app.tip({
-          text: ["请先选择要设置的文件"],
-        });
-        return;
-      }
-      const file = curFile.value;
-      app.tip({
-        text: ["开始设置"],
-      });
-      episodeSelect.dialog.okBtn.setLoading(true);
-      episodeProfileSetRequest.run({
-        file_id: file.file_id,
-        unique_id: tv.id,
-        season_number: season.season_number,
-        episode_number: episode.episode_number,
-      });
-    },
-  });
   const dialog = new DialogCore({
     onOk() {
       if (!curFile.value) {
@@ -644,36 +591,6 @@ export const DriveProfilePage: ViewComponent = (props) => {
       fileMenu.hide();
     },
   });
-  // const setEpisodeProfileItem = new MenuItemCore({
-  //   label: "设置剧集信息",
-  //   async onClick() {
-  //     if (!driveFileManage.virtualSelectedFolder) {
-  //       app.tip({
-  //         text: ["请先选择要设置的文件"],
-  //       });
-  //       return;
-  //     }
-  //     const [file] = driveFileManage.virtualSelectedFolder;
-  //     curFile.select(file);
-  //     episodeSelect.show();
-  //     fileMenu.hide();
-  //   },
-  // });
-  // const setMovieProfileItem = new MenuItemCore({
-  //   label: "设置电影信息",
-  //   async onClick() {
-  //     if (!driveFileManage.virtualSelectedFolder) {
-  //       app.tip({
-  //         text: ["请先选择要设置的文件"],
-  //       });
-  //       return;
-  //     }
-  //     const [file] = driveFileManage.virtualSelectedFolder;
-  //     curFile.select(file);
-  //     dialog2.show();
-  //     fileMenu.hide();
-  //   },
-  // });
   const driveSubMenu = new MenuCore({
     _name: "menus-of-drives",
     side: "right",

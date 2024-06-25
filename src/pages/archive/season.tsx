@@ -23,9 +23,8 @@ import {
   fetchPartialMediaPrepareArchiveProcess,
   transferMediaToAnotherDrive,
   transferMediaToResourceDrive,
-} from "@/services/media";
-import { deleteParsedMediaSource } from "@/services/parsed_media";
-import { moveSeasonToResourceDrive } from "@/services";
+} from "@/biz/services/media";
+import { deleteParsedMediaSource } from "@/biz/services/parsed_media";
 import { Button, CheckboxGroup, Dialog, Input, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { DriveSelectCore } from "@/components/DriveSelect";
 import { DriveSelect } from "@/components/DriveSelect/dialog";

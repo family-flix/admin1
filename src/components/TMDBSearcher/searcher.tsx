@@ -16,7 +16,7 @@ import { cn } from "@/utils";
 import { DialogCore, ImageInListCore, PresenceCore } from "@/domains/ui";
 import { MediaSearchCore } from "@/biz/media_search";
 import { MediaTypes } from "@/constants";
-import { prepareEpisodeList, prepareSeasonList } from "@/services/media_profile";
+import { prepareEpisodeList, prepareSeasonList } from "@/biz/services/media_profile";
 import { RequestCore } from "@/domains/request";
 
 export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {

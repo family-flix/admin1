@@ -1,9 +1,9 @@
 import dayjs from "dayjs";
 
 import { media_request } from "@/biz/requests/index";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { ListResponse, ListResponseWithCursor } from "@/biz/requests/types";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { FetchParams } from "@/domains/list/typing";
-import { ListResponse, ListResponseWithCursor, RequestedResource } from "@/types";
 import { Result } from "@/domains/result/index";
 
 import { TaskStatus, TaskTypes } from "./constants";
@@ -147,7 +147,6 @@ export function fetchOutputLinesOfJobProcess(r: TmpRequestResp<typeof fetchOutpu
     }),
   });
 }
-
 /**
  * 查询索引任务状态
  */
@@ -157,20 +156,20 @@ export function fetchJobStatus(id: string) {
     { id }
   );
 }
-// export type JobItem = RequestedResource<typeof fetch_job_status>;
-
 /**
  * 中止指定任务
  * @param id
  * @returns
  */
 export function pauseJob(id: string) {
-  return media_request.post<{ id: string }>(`/api/v2/admin/task/pause`, {
+  return media_request.post<{ id: string }>("/api/v2/admin/task/pause", {
     id,
     force: "1",
   });
 }
-
+/**
+ * 获取演职人员列表
+ */
 export function fetchPersonList(params: FetchParams) {
   return media_request.post<
     ListResponseWithCursor<{

@@ -4,8 +4,7 @@
 import { BaseDomain, Handler } from "@/domains/base";
 import { BizError } from "@/domains/error/index";
 import { HttpClientCore } from "@/domains/http_client/index";
-import { Result } from "@/domains/result/index";
-import { UnpackedResult } from "@/types/index";
+import { Result, UnpackedResult } from "@/domains/result/index";
 import { sleep } from "@/utils/index";
 
 import { RequestPayload, UnpackedRequestPayload } from "./utils";

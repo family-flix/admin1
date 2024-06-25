@@ -6,7 +6,7 @@ import { BaseDomain, Handler } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
 import { MediaSearchCore } from "@/biz/media_search";
 import { MediaTypes } from "@/constants";
-import { MediaProfileItem } from "@/services/common";
+import { MediaProfileItem } from "@/biz/services/common";
 
 enum Events {
   Ok,

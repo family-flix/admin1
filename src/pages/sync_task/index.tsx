@@ -30,7 +30,7 @@ import {
   completeSyncTask,
   deleteSyncTask,
   overrideResourceForSyncTask,
-} from "@/services/resource_sync_task";
+} from "@/biz/services/resource_sync_task";
 import { Skeleton, ScrollView, Input, Button, LazyImage, Dialog, Checkbox, BackToTop, ListView } from "@/components/ui";
 import { FileSearcherCore } from "@/components/FileSearcher";
 import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";

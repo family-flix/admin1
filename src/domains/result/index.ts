@@ -5,6 +5,7 @@ export type Resp<T> = {
   error: T extends null ? BizError : null;
 };
 export type Result<T> = Resp<T> | Resp<null>;
+export type UnpackedResult<T> = NonNullable<T extends Resp<infer U> ? (U extends null ? U : U) : T>;
 
 /** 构造一个结果对象 */
 export const Result = {

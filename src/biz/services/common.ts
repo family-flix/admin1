@@ -1,16 +1,14 @@
 import { media_request } from "@/biz/requests/index";
+import { ListResponseWithCursor } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { Result } from "@/domains/result/index";
-import { ListResponseWithCursor, RequestedResource } from "@/types/index";
 import { MediaTypes } from "@/constants/index";
 
 /**
- * 搜索影视剧详情
- * @param params
- * @returns
+ * 影视剧详情列表
  */
-export function searchMediaProfile(
+export function fetchMediaProfileList(
   params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
@@ -39,8 +37,8 @@ export function searchMediaProfile(
     type,
   });
 }
-export type MediaProfileItem = RequestedResource<typeof searchMediaProfileProcess>["list"][0];
-export function searchMediaProfileProcess(r: TmpRequestResp<typeof searchMediaProfile>) {
+export type MediaProfileItem = RequestedResource<typeof fetchMediaProfileListProcess>["list"][0];
+export function fetchMediaProfileListProcess(r: TmpRequestResp<typeof fetchMediaProfileList>) {
   if (r.error) {
     return Result.Err(r.error.message);
   }
@@ -83,7 +81,7 @@ export function searchMediaProfileProcess(r: TmpRequestResp<typeof searchMediaPr
     next_marker,
   });
 }
-
+/** 获取数据看板 */
 export function fetchDashboard() {
   const r = media_request.post<{
     drive_count: number;
@@ -130,11 +128,11 @@ export const fetchDashboardDefaultResponse = {
   file_size_count_today: 0,
   updated_at: null,
 };
-
+/** 获取最新看板数据 */
 export function refreshDashboard() {
   return media_request.post("/api/v2/admin/dashboard/refresh", {});
 }
-
+/** 获取今日新增影视剧 */
 export function fetchMediaRecentlyCreated(body: FetchParams) {
   const r = media_request.post<
     ListResponseWithCursor<{
@@ -146,6 +144,5 @@ export function fetchMediaRecentlyCreated(body: FetchParams) {
       text: string;
     }>
   >("/api/v2/admin/dashboard/added_media", body);
-  console.log(r);
   return r;
 }

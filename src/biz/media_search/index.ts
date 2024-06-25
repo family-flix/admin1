@@ -1,7 +1,7 @@
 /**
  * @file 搜索本地数据库已归档的影视剧详情
  */
-import { fetchMediaProfileList, fetchMediaProfileListProcess, MediaProfileItem } from "@/services/media_profile";
+import { fetchMediaProfileList, fetchMediaProfileListProcess, MediaProfileItem } from "@/biz/services/media_profile";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, InputCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list/index";

@@ -40,7 +40,7 @@ import {
   ImageCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { DriveCore, addDrive, updateAliyunDrive } from "@/biz/drive";
+import { DriveCore, addDrive, updateDriveProfile } from "@/biz/drive";
 import { AliyunDriveFilesCore } from "@/biz/drive/files";
 import { BizError } from "@/domains/error";
 import { DriveTypes, FileType } from "@/constants";
@@ -67,7 +67,7 @@ export const DriveCard = (
       });
     },
   });
-  const toggleDriveVisibleRequest = new RequestCore(updateAliyunDrive, {
+  const toggleDriveVisibleRequest = new RequestCore(updateDriveProfile, {
     onSuccess() {
       app.tip({
         text: ["操作成功"],
@@ -82,7 +82,7 @@ export const DriveCard = (
       });
     },
   });
-  const remarkUpdateRequest = new RequestCore(updateAliyunDrive, {
+  const remarkUpdateRequest = new RequestCore(updateDriveProfile, {
     onLoading(loading) {
       remarkUpdateDialog.okBtn.setLoading(loading);
     },
@@ -133,7 +133,8 @@ export const DriveCard = (
         });
         return;
       }
-      remarkUpdateRequest.run(drive.id, {
+      remarkUpdateRequest.run({
+        id: drive.id,
         remark: remarkInput.value,
       });
     },
@@ -334,7 +335,7 @@ export const DriveCard = (
         label: "隐藏",
         icon: <Eye class="mr-2 w-4 h-4" />,
         onClick() {
-          toggleDriveVisibleRequest.run(drive.id, { hidden: 1 });
+          toggleDriveVisibleRequest.run({ id: drive.id, hidden: 1 });
         },
       }),
       new MenuItemCore({

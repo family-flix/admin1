@@ -10,8 +10,8 @@ import {
   fetchDashboardDefaultResponse,
   fetchMediaRecentlyCreated,
   refreshDashboard,
-} from "@/services/common";
-import { pushMessageToMembers } from "@/services";
+} from "@/biz/services/common";
+import { pushMessageToMembers } from "@/biz/services";
 import { Button, Dialog, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
 import { DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { ImageInListCore } from "@/domains/ui/image";

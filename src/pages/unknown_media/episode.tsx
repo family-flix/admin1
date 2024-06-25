@@ -11,8 +11,8 @@ import {
   fetchParsedMediaSourceList,
   fetchParsedMediaSourceListProcess,
   setParsedSeasonMediaSourceProfile,
-} from "@/services/parsed_media";
-import { delete_unknown_episode } from "@/services";
+  deleteParsedMediaSource,
+} from "@/biz/services/parsed_media";
 import { renameFile } from "@/biz/drive";
 import { Button, Dialog, Input, LazyImage, ListView, ScrollView } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore, TMDBSearcherView } from "@/components/TMDBSearcher";
@@ -32,7 +32,7 @@ import { ListCore } from "@/domains/list";
 import { MediaTypes } from "@/constants/index";
 
 export const UnknownEpisodeListPage: ViewComponent = (props) => {
-  const { app, view } = props;
+  const { app, view, parent } = props;
 
   const list = new ListCore(
     new RequestCore(fetchParsedMediaSourceList, { process: fetchParsedMediaSourceListProcess }),
@@ -90,7 +90,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
       renameFileDialog.okBtn.setLoading(false);
     },
   });
-  const deleteUnknownEpisode = new RequestCore(delete_unknown_episode, {
+  const deleteUnknownEpisode = new RequestCore(deleteParsedMediaSource, {
     onLoading(loading) {
       deleteConfirmDialog.okBtn.setLoading(loading);
     },
@@ -150,7 +150,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
         app.tip({ text: ["请先选择要删除的剧集"] });
         return;
       }
-      deleteUnknownEpisode.run({ id: curEpisode.value.id });
+      deleteUnknownEpisode.run({ parsed_media_source_id: curEpisode.value.id });
     },
   });
   const deleteBtn = new ButtonInListCore<UnknownEpisodeItem>({
@@ -293,6 +293,16 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
 
   const [response, setResponse] = createSignal(list.response);
 
+  if (parent?.scrollView) {
+    const scroll = parent.scrollView;
+    scroll.onReachBottom(async () => {
+      if (!view.$presence.visible) {
+        return;
+      }
+      await list.loadMore();
+      scroll.finishLoadingMore();
+    });
+  }
   list.onStateChange((nextState) => {
     setResponse(nextState);
   });
@@ -301,7 +311,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView class="px-8 pb-12" store={scrollView}>
+      <div class="px-8 pb-12">
         <div class="my-4 flex items-center space-x-2">
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
@@ -384,7 +394,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
             </For>
           </div>
         </ListView>
-      </ScrollView>
+      </div>
       <Dialog store={bindEpisodeDialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={mediaSearch} />

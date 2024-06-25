@@ -1,6 +1,6 @@
 import { media_request } from "@/biz/requests/index";
 import { TmpRequestResp } from "@/domains/request/utils";
-import { Unpacked } from "@/types/index";
+import { UnpackedResult } from "@/domains/result/index";
 
 /**
  * 解析文件名
@@ -23,5 +23,5 @@ export function parseVideoFilename(body: { name: string; keys?: string[] }) {
     subtitle_lang: string;
   }>("/api/admin/parse", { name, keys });
 }
-export type ParsedVideoInfo = NonNullable<Unpacked<TmpRequestResp<typeof parseVideoFilename>>>;
+export type ParsedVideoInfo = NonNullable<UnpackedResult<TmpRequestResp<typeof parseVideoFilename>>>;
 export type VideoKeys = keyof ParsedVideoInfo;

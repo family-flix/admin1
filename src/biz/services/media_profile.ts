@@ -1,8 +1,8 @@
 import { media_request } from "@/biz/requests/index";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { ListResponse, ListResponseWithCursor } from "@/biz/requests/types";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { FetchParams } from "@/domains/list/typing";
-import { Result } from "@/domains/result/index";
-import { ListResponse, ListResponseWithCursor, RequestedResource, Unpacked } from "@/types/index";
+import { Result, UnpackedResult } from "@/domains/result/index";
 import { MediaTypes } from "@/constants/index";
 
 /**
@@ -41,7 +41,7 @@ export function fetchMediaProfileList(
         order: number;
       }[];
     }>
-  >(`/api/v2/media_profile/list`, {
+  >("/api/v2/media_profile/list", {
     ...rest,
     keyword,
     page,
@@ -101,7 +101,9 @@ export function fetchMediaProfileListProcess(r: TmpRequestResp<typeof fetchMedia
     next_marker,
   });
 }
-
+/**
+ * 获取影视剧详情
+ */
 export function fetchPartialMediaProfile(body: { id: string }) {
   const { id } = body;
   return media_request.post<{
@@ -178,22 +180,28 @@ export function fetchPartialMediaProfileProcess(r: TmpRequestResp<typeof fetchPa
     origin_country,
   });
 }
-
+/**
+ * 删除指定影视剧详情
+ */
 export function deleteMediaProfile(body: { id: string }) {
-  return media_request.post<ListResponse<void>>(`/api/v2/media_profile/delete`, {
+  return media_request.post<ListResponse<void>>("/api/v2/media_profile/delete", {
     media_profile_id: body.id,
   });
 }
-
+/**
+ * 编辑指定影视剧详情
+ */
 export function editMediaProfile(body: { id: string; name?: string; source_count?: number }) {
   const { id, name, source_count } = body;
-  return media_request.post<ListResponse<void>>(`/api/v2/media_profile/edit`, {
+  return media_request.post<ListResponse<void>>("/api/v2/media_profile/edit", {
     id,
     name,
     source_count,
   });
 }
-
+/**
+ * 根据电视剧详情id，获取电视剧详情和季详情列表
+ */
 export function prepareSeasonList(params: { series_id: string }) {
   const { series_id } = params;
   return media_request.post<
@@ -207,11 +215,13 @@ export function prepareSeasonList(params: { series_id: string }) {
       air_date: string;
       order: number;
     }>
-  >(`/api/v2/media_profile/init_series`, {
+  >("/api/v2/media_profile/init_series", {
     series_id,
   });
 }
-
+/**
+ * 根据季详情id，获取季详情信息与剧集列表
+ */
 export function prepareEpisodeList(params: { media_id: string | number }) {
   const { media_id } = params;
   return media_request.post<
@@ -232,8 +242,6 @@ export function prepareEpisodeList(params: { media_id: string | number }) {
 
 /**
  * 在 TMDB 搜索影视剧
- * @param params
- * @returns
  */
 export function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: string; type?: MediaTypes }) {
   const { keyword, page, pageSize, type, ...rest } = params;
@@ -247,7 +255,7 @@ export function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: stri
       poster_path: string;
       air_date: string;
     }>
-  >(`/api/v2/media_profile/search_tmdb`, {
+  >("/api/v2/media_profile/search_tmdb", {
     ...rest,
     keyword,
     page,
@@ -255,9 +263,11 @@ export function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: stri
     type,
   });
 }
-export type TheMediaInTMDB = NonNullable<Unpacked<TmpRequestResp<typeof searchMediaInTMDB>>>["list"][number];
+export type TheMediaInTMDB = NonNullable<UnpackedResult<TmpRequestResp<typeof searchMediaInTMDB>>>["list"][number];
 
-/** 刷新电视剧详情 */
+/**
+ * 刷新电视剧详情
+ */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
   return media_request.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });

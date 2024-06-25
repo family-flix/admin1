@@ -4,7 +4,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { Calendar, Send, Smile } from "lucide-solid";
 
-import { SeasonMediaItem, fetchSeasonMediaList } from "@/services/media";
+import { SeasonMediaItem, fetchSeasonMediaList } from "@/biz/services/media";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, DialogCore, DialogProps, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";

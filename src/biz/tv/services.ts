@@ -1,8 +1,9 @@
 import { client } from "@/store/request";
+import { ListResponse, RequestedResource } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { ListResponse, RequestedResource, Unpacked, UnpackedResult } from "@/types";
-import { Result } from "@/domains/result/index";
-import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils";
+import { Result, UnpackedResult } from "@/domains/result/index";
+import { Unpacked } from "@/types/index";
+import { episode_to_chinese_num, relative_time_from_now, season_to_chinese_num } from "@/utils/index";
 
 import { EpisodeResolutionTypes, EpisodeResolutionTypeTexts } from "./constants";
 

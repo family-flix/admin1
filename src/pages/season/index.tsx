@@ -17,14 +17,7 @@ import {
   Trash,
 } from "lucide-solid";
 
-import {
-  SeasonMediaItem,
-  transferMediaToAnotherDrive,
-  fetchSeasonMediaList,
-  fetchPartialSeasonMedia,
-  deleteMedia,
-} from "@/services/media";
-import { moveSeasonToResourceDrive, refreshSeasonProfiles, refreshSeasonProfile } from "@/services";
+import { SeasonMediaItem, fetchSeasonMediaList, fetchPartialSeasonMedia, deleteMedia } from "@/biz/services/media";
 import {
   Skeleton,
   Popover,
@@ -71,64 +64,8 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
-  const moveToResourceDriveRequest = new RequestCore(moveSeasonToResourceDrive, {
-    onLoading(loading) {
-      moveToResourceDriveConfirmDialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["移动失败", error.message],
-      });
-    },
-    onSuccess(r) {
-      app.tip({
-        text: ["开始移动，请等待一段时间"],
-      });
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          if (!seasonRef.value) {
-            return;
-          }
-          const { name } = seasonRef.value;
-          app.tip({
-            text: [`完成电视剧 '${name}' 移动到资源盘`],
-          });
-        },
-      });
-      moveToResourceDriveConfirmDialog.hide();
-    },
-  });
   const partialSeasonRequest = new RequestCore(fetchPartialSeasonMedia);
   const mediaDeleteRequest = new RequestCore(deleteMedia);
-  const transferRequest = new RequestCore(transferMediaToAnotherDrive, {
-    onLoading(loading) {
-      transferConfirmDialog.okBtn.setLoading(loading);
-    },
-    onFailed(error) {
-      app.tip({
-        text: ["归档失败", error.message],
-      });
-    },
-    onSuccess(r) {
-      app.tip({
-        text: ["开始归档，请等待一段时间"],
-      });
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          if (!seasonRef.value) {
-            return;
-          }
-          const { name } = seasonRef.value;
-          app.tip({
-            text: [`完成电视剧 '${name}' 归档`],
-          });
-        },
-      });
-      transferConfirmDialog.hide();
-    },
-  });
   const seasonRef = new RefCore<SeasonMediaItem>();
   const onlyInvalidCheckbox = new CheckboxCore({
     onChange(checked) {
@@ -227,37 +164,6 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       nameSearchInput.clear();
     },
   });
-  const transferConfirmDialog = new DialogCore({
-    title: "移动到其他云盘",
-    onOk() {
-      if (!driveRef.value) {
-        app.tip({ text: ["请先选择目标云盘"] });
-        return;
-      }
-      const curSeason = seasonRef.value;
-      if (!curSeason) {
-        app.tip({ text: ["请先选择电视剧"] });
-        return;
-      }
-      transferRequest.run({
-        media_id: curSeason.id,
-        to_drive_id: driveRef.value.id,
-      });
-    },
-    onCancel() {
-      driveRef.clear();
-      transferConfirmDialog.hide();
-    },
-  });
-  const transferBtn = new ButtonInListCore<SeasonMediaItem>({
-    onClick(record) {
-      if (record === null) {
-        return;
-      }
-      seasonRef.select(record);
-      transferConfirmDialog.show();
-    },
-  });
   const refreshPartialBtn = new ButtonInListCore<SeasonMediaItem>({
     async onClick(record) {
       refreshPartialBtn.setLoading(true);
@@ -271,15 +177,6 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       });
     },
   });
-  // const refreshProfileBtn = new ButtonInListCore<SeasonMediaItem>({
-  //   onClick(record) {
-  //     app.tip({
-  //       text: ["开始更新"],
-  //     });
-  //     refreshProfileBtn.setLoading(true);
-  //     refreshProfileRequest.run({ season_id: record.id });
-  //   },
-  // });
   const profileBtn = new ButtonInListCore<SeasonMediaItem>({
     onClick(record) {
       history.push("root.home_layout.season_profile", { id: record.id });
@@ -319,66 +216,9 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       deleteConfirmDialog.show();
     },
   });
-  const refreshSeasonProfilesRequest = new RequestCore(refreshSeasonProfiles, {
-    beforeRequest() {
-      refreshSeasonListBtn.setLoading(true);
-    },
-    async onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          app.tip({ text: ["更新成功"] });
-          seasonList.refresh();
-          refreshSeasonListBtn.setLoading(false);
-        },
-      });
-    },
-    onFailed(error) {
-      app.tip({ text: ["更新失败", error.message] });
-      refreshSeasonListBtn.setLoading(false);
-    },
-  });
-  const refreshSeasonListBtn = new ButtonCore({
-    onClick() {
-      app.tip({ text: ["开始更新"] });
-      refreshSeasonProfilesRequest.run();
-    },
-  });
-  // const gotoInvalidTVListPageBtn = new ButtonCore({
-  //   onClick() {
-  //     app.showView(homeInvalidTVListPage);
-  //   },
-  // });
   const gotoSeasonArchivePageBtn = new ButtonCore({
     onClick() {
-      // app.showView(seasonArchivePage);
       history.push("root.archive");
-    },
-  });
-  const moveToResourceDriveConfirmDialog = new DialogCore({
-    title: "移动到资源盘",
-    onOk() {
-      const curSeason = seasonRef.value;
-      if (!curSeason) {
-        app.tip({ text: ["请先选择电视剧"] });
-        return;
-      }
-      moveToResourceDriveRequest.run({
-        season_id: curSeason.id,
-      });
-    },
-    onCancel() {
-      driveRef.clear();
-      transferConfirmDialog.hide();
-    },
-  });
-  const moveToResourceDriveBtn = new ButtonInListCore<SeasonMediaItem>({
-    onClick(record) {
-      if (record === null) {
-        return;
-      }
-      seasonRef.select(record);
-      moveToResourceDriveConfirmDialog.show();
     },
   });
   const refreshBtn = new ButtonCore({
@@ -617,22 +457,6 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
                                 >
                                   删除
                                 </Button>
-                                <Show when={cur_episode_count === episode_count}>
-                                  <Button
-                                    store={transferBtn.bind(season)}
-                                    variant="subtle"
-                                    icon={<Package class="w-4 h-4" />}
-                                  >
-                                    归档
-                                  </Button>
-                                  <Button
-                                    store={moveToResourceDriveBtn.bind(season)}
-                                    variant="subtle"
-                                    icon={<BookOpen class="w-4 h-4" />}
-                                  >
-                                    移动到资源盘
-                                  </Button>
-                                </Show>
                               </div>
                             </div>
                           </div>
@@ -646,44 +470,6 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
           </div>
         </div>
       </ScrollView>
-      <Dialog store={transferConfirmDialog}>
-        <div class="w-[520px]">
-          <div class="mt-2 space-y-4 h-[320px] overflow-y-auto">
-            <For each={driveListState().dataSource}>
-              {(drive) => {
-                const { id, name, state } = drive;
-                return (
-                  <div
-                    classList={{
-                      "bg-gray-100 border rounded-sm p-2 cursor-pointer hover:bg-gray-200": true,
-                      "border-green-500": curDrive()?.id === id,
-                    }}
-                    onClick={() => {
-                      driveRef.select(drive);
-                    }}
-                  >
-                    <div
-                      classList={{
-                        "py-2": true,
-                      }}
-                    >
-                      <div class="text-xl">{name}</div>
-                    </div>
-                    <div class="text-slate-500 text-sm">
-                      {state.used_size}/{state.total_size}
-                    </div>
-                  </div>
-                );
-              }}
-            </For>
-          </div>
-        </div>
-      </Dialog>
-      <Dialog store={moveToResourceDriveConfirmDialog}>
-        <div class="w-[520px]">
-          <div>将电视剧移动到资源盘后才能公开分享</div>
-        </div>
-      </Dialog>
       <Dialog store={deleteConfirmDialog}>
         <div class="w-[520px]">
           <div>确认删除吗？</div>

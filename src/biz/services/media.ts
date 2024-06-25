@@ -1,7 +1,8 @@
 import { media_request } from "@/biz/requests/index";
+import { ListResponseWithCursor } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { Result } from "@/domains/result/index";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { Result, UnpackedResult } from "@/domains/result/index";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import {
   MediaErrorTypes,
   MediaOriginCountries,
@@ -9,7 +10,6 @@ import {
   MovieMediaOriginCountryTextMap,
   SeasonMediaOriginCountryTextMap,
 } from "@/constants/index";
-import { ListResponseWithCursor, RequestedResource, Unpacked } from "@/types/index";
 
 import { processMediaPrepareArchive } from "./utils";
 
@@ -37,8 +37,11 @@ export function fetchSeasonMediaList(params: FetchParams & Partial<{ name: strin
     page_size: pageSize,
   });
 }
-export type SeasonMediaItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchSeasonMediaList>>>["list"][number];
+export type SeasonMediaItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchSeasonMediaList>>>["list"][number];
 
+/**
+ * 获取电视剧详情
+ */
 export function fetchSeasonMediaProfile(body: { season_id: string }) {
   const { season_id } = body;
   return media_request.post<{
@@ -208,7 +211,6 @@ export function fetchMovieMediaProfileProcess(r: TmpRequestResp<typeof fetchMovi
     sources,
   });
 }
-
 /*
  * 获取电视剧部分详情
  */
@@ -231,26 +233,28 @@ export function fetchPartialSeasonMedia(params: { media_id: string }) {
     media_id,
   });
 }
-
-/** 刷新电影详情 */
+/**
+ * 刷新电影详情
+ */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
   return media_request.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", {
     media_id,
   });
 }
-/** 改变电影详情 */
-export function changeMovieProfile(body: {
-  movie_id: string;
+/**
+ * 改变电视剧详情
+ */
+export function setMediaProfile(body: {
+  media_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
 }) {
-  const { movie_id, media_profile } = body;
-  return media_request.post<{ job_id: string }>("/api/v2/admin/media/set_profile", {
-    media_id: movie_id,
+  const { media_id, media_profile } = body;
+  return media_request.post<void>("/api/v2/admin/media/set_profile", {
+    media_id,
     media_profile,
   });
 }
-
 export type MediaSource = {
   id: string;
   file_id: string;
@@ -284,7 +288,9 @@ export type MediaPrepareArchiveItemResp = {
     }[];
   }[];
 };
-/** 获取可以归档的季列表 */
+/**
+ * 获取可以归档的季列表
+ */
 export function fetchMediaListPrepareArchive(params: FetchParams & Partial<{ name: string; drive_ids: string }>) {
   const { page, pageSize, ...rest } = params;
   return media_request.post<ListResponseWithCursor<MediaPrepareArchiveItemResp>>("/api/v2/admin/media/archive/list", {
@@ -305,6 +311,9 @@ export function fetchMediaListPrepareArchiveProcess(r: TmpRequestResp<typeof fet
   });
 }
 export type MediaPrepareArchiveItem = RequestedResource<typeof fetchMediaListPrepareArchiveProcess>["list"][number];
+/**
+ * 获取可以归档的影视剧
+ */
 export function fetchPartialMediaPrepareArchive(body: { media_id: string }) {
   const { media_id } = body;
   return media_request.post<MediaPrepareArchiveItemResp>("/api/v2/admin/media/archive/partial", {
@@ -317,23 +326,13 @@ export function fetchPartialMediaPrepareArchiveProcess(r: TmpRequestResp<typeof 
   }
   return Result.Ok(processMediaPrepareArchive(r.data));
 }
-/** 删除电视剧/电影 */
+/**
+ * 删除电视剧/电影
+ */
 export function deleteMedia(body: { media_id: string }) {
   const { media_id } = body;
   return media_request.post("/api/v2/admin/media/delete", {
     media_id,
-  });
-}
-
-/** 改变电视剧详情 */
-export function setMediaProfile(body: {
-  media_id: string;
-  media_profile: { id: string; type: MediaTypes; name: string };
-}) {
-  const { media_id, media_profile } = body;
-  return media_request.post<void>(`/api/v2/admin/media/set_profile`, {
-    media_id,
-    media_profile,
   });
 }
 
@@ -361,7 +360,9 @@ type MovieError = {
   poster_path: string | null;
   texts: string[];
 };
-
+/**
+ * 获取存在问题的影视剧列表
+ */
 export function fetchInvalidMediaList(body: FetchParams) {
   return media_request.post<
     ListResponseWithCursor<{
@@ -377,8 +378,7 @@ export function fetchInvalidMediaList(body: FetchParams) {
     }>
   >("/api/v2/admin/media/invalid", body);
 }
-export type MediaErrorItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchInvalidMediaList>>>["list"][number];
-
+export type MediaErrorItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchInvalidMediaList>>>["list"][number];
 /**
  * 转存指定季到指定云盘
  */
@@ -389,9 +389,9 @@ export function transferMediaToAnotherDrive(body: { media_id: string; to_drive_i
     to_drive_id,
   });
 }
-
 /**
  * 转存指定季到对应资源盘
+ * 只有阿里云盘支持
  */
 export function transferMediaToResourceDrive(body: { media_id: string }) {
   const { media_id } = body;
@@ -399,11 +399,8 @@ export function transferMediaToResourceDrive(body: { media_id: string }) {
     media_id,
   });
 }
-
 /**
  * 获取指定电视剧、指定季下的剧集，支持分页
- * @param body
- * @returns
  */
 export function fetchEpisodesOfSeason(body: { media_id: string } & FetchParams) {
   const { media_id, page, pageSize, next_marker } = body;
@@ -435,4 +432,6 @@ export function fetchEpisodesOfSeason(body: { media_id: string } & FetchParams) 
     page_size: pageSize,
   });
 }
-export type EpisodeItemInSeason = NonNullable<Unpacked<TmpRequestResp<typeof fetchEpisodesOfSeason>>>["list"][number];
+export type EpisodeItemInSeason = NonNullable<
+  UnpackedResult<TmpRequestResp<typeof fetchEpisodesOfSeason>>
+>["list"][number];

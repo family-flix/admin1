@@ -25,6 +25,20 @@ import { storage } from "./storage";
 if (window.location.hostname === "media-t.funzm.com") {
   media_request.setEnv("dev");
 }
+onRequestCreated((ins) => {
+  ins.onFailed((e) => {
+    app.tip({
+      text: [e.message],
+    });
+    if (e.code === 900) {
+      history.push("root.login");
+    }
+  });
+  if (!ins.client) {
+    ins.client = client;
+  }
+});
+onCreateScrollView((ins) => ins.os === app.env);
 NavigatorCore.prefix = import.meta.env.BASE_URL;
 ImageCore.prefix = window.location.origin;
 
@@ -60,6 +74,12 @@ export const app = new Application({
     const { pathname, query } = history.$router;
     const route = routesWithPathname[pathname];
     console.log("[ROOT]onMount", pathname, route, app.$user.isLogin);
+    client.appendHeaders({
+      Authorization: app.$user.token,
+    });
+    media_request.appendHeaders({
+      Authorization: app.$user.token,
+    });
     if (!route) {
       history.push("root.notfound");
       return Result.Ok(null);
@@ -79,13 +99,7 @@ export const app = new Application({
       history.push("root.login", { redirect: route.pathname });
       return Result.Err("need login");
     }
-    console.log('before client.appendHeaders', app.$user.token);
-    client.appendHeaders({
-      Authorization: app.$user.token,
-    });
-    media_request.appendHeaders({
-      Authorization: app.$user.token,
-    });
+    console.log("before client.appendHeaders", app.$user.token);
     if (!history.isLayout(route.name)) {
       history.push(route.name, query, { ignore: true });
       return Result.Ok(null);
@@ -156,20 +170,6 @@ user.onExpired(() => {
   });
   history.push("root.login");
 });
-onRequestCreated((ins) => {
-  ins.onFailed((e) => {
-    app.tip({
-      text: [e.message],
-    });
-    if (e.code === 900) {
-      history.push("root.login");
-    }
-  });
-  if (!ins.client) {
-    ins.client = client;
-  }
-});
-onCreateScrollView((ins) => ins.os === app.env);
 
 ListCore.commonProcessor = <T>(
   originalResponse: any

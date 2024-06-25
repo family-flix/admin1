@@ -14,8 +14,8 @@ import {
   fetchPermissionList,
   MemberItem,
   updateMemberPermission,
-} from "@/services/index";
-import { fetchMemberAccounts } from "@/services/member";
+} from "@/biz/services/index";
+import { fetchMemberAccounts } from "@/biz/services/member";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
 import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { Qrcode } from "@/components/Qrcode";

@@ -10,7 +10,7 @@ import * as TreePrimitive from "@/packages/ui/tree";
 import * as PopperPrimitive from "@/packages/ui/popper";
 import { ViewComponent } from "@/store/types";
 import { RequestCore } from "@/domains/request";
-import { upload_file } from "@/services";
+import { uploadFileToDrive } from "@/biz/services";
 import { Select } from "@/components/ui/select";
 import { SelectItemCore } from "@/domains/ui/select/item";
 import { PopperCore } from "@/domains/ui/popper";
@@ -51,7 +51,7 @@ export const TestPage: ViewComponent = (props) => {
   //     console.log(v);
   //   },
   // });
-  const uploadRequest = new RequestCore(upload_file);
+  const uploadRequest = new RequestCore(uploadFileToDrive);
   const input = new InputCore<File[]>({
     defaultValue: [],
     type: "file",

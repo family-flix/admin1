@@ -5,7 +5,7 @@ import { createSignal, For, JSXElement, Show } from "solid-js";
 import { AlertCircle, RotateCw, Search, Trash } from "lucide-solid";
 
 import { ViewComponent } from "@/store/types";
-import { deleteMedia, fetchInvalidMediaList, MediaErrorItem } from "@/services/media";
+import { deleteMedia, fetchInvalidMediaList, MediaErrorItem } from "@/biz/services/media";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView } from "@/components/ui";
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, ImageInListCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";

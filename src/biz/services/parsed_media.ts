@@ -1,13 +1,13 @@
 import { media_request } from "@/biz/requests/index";
-import { FetchParams } from "@/domains/list/typing";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { ListResponseWithCursor } from "@/biz/requests/types";
 import { EpisodeResolutionTypeTexts, EpisodeResolutionTypes } from "@/biz/tv/constants";
+import { FetchParams } from "@/domains/list/typing";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { Result } from "@/domains/result/index";
 import { MediaTypes } from "@/constants/index";
-import { ListResponseWithCursor, MutableRecord, RequestedResource } from "@/types/index";
 
 /**
- * 获取无法识别的 tv
+ * 获取解析出的影视剧列表
  */
 export function fetchUnknownMediaList(params: FetchParams & { name?: string; empty?: 0 | 1; type?: MediaTypes }) {
   const { page, pageSize, type, ...rest } = params;
@@ -42,7 +42,7 @@ export function fetchUnknownMediaList(params: FetchParams & { name?: string; emp
         };
       }[];
     }>
-  >(`/api/v2/admin/parsed_media/list`, {
+  >("/api/v2/admin/parsed_media/list", {
     ...rest,
     type,
     page,
@@ -68,9 +68,8 @@ export function fetchUnknownMediaListProcess(r: TmpRequestResp<typeof fetchUnkno
     }),
   });
 }
-
 /**
- * 获取无法识别的 tv
+ * 获取解析出的电影列表
  */
 export function fetchUnknownMovieMediaList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
@@ -103,7 +102,7 @@ export function fetchUnknownMovieMediaList(params: FetchParams) {
         };
       }[];
     }>
-  >(`/api/v2/admin/parsed_media/list`, {
+  >("/api/v2/admin/parsed_media/list", {
     ...rest,
     type: MediaTypes.Movie,
     page,
@@ -129,7 +128,9 @@ export function fetchUnknownMovieMediaListProcess(r: TmpRequestResp<typeof fetch
     }),
   });
 }
-
+/**
+ * 获取解析出的剧集列表
+ */
 export function fetchParsedMediaSourceList(params: FetchParams) {
   const { page, pageSize, ...rest } = params;
   return media_request.post<
@@ -151,7 +152,7 @@ export function fetchParsedMediaSourceList(params: FetchParams) {
         name: string;
       };
     }>
-  >(`/api/v2/admin/parsed_media_source/list`, {
+  >("/api/v2/admin/parsed_media_source/list", {
     ...rest,
     type: MediaTypes.Season,
     page,
@@ -180,8 +181,9 @@ export function fetchParsedMediaSourceListProcess(r: TmpRequestResp<typeof fetch
     }),
   });
 }
-
-/** 设置未解析的影视剧详情 */
+/**
+ * 给影视剧解析结果设置一个详情
+ */
 export function setParsedMediaProfile(body: {
   parsed_media_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
@@ -192,8 +194,9 @@ export function setParsedMediaProfile(body: {
     media_profile,
   });
 }
-
-/** 设置未解析的影视剧详情 */
+/**
+ * 给视频文件设置一个详情
+ */
 export function setParsedMediaProfileInFileId(body: {
   file_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
@@ -205,7 +208,9 @@ export function setParsedMediaProfileInFileId(body: {
   });
 }
 
-/** 设置未解析的影视剧详情 */
+/**
+ * 给剧集解析结果设置一个详情
+ */
 export function setParsedSeasonMediaSourceProfile(body: {
   parsed_media_source_id: string;
   media_profile: { id: string; type: MediaTypes; name: string };
@@ -218,15 +223,27 @@ export function setParsedSeasonMediaSourceProfile(body: {
     media_source_profile,
   });
 }
-
-/** 删除解析出的影视剧记录（不删除文件） */
+/**
+ * 删除解析出的影视剧记录及对应的剧集记录
+ */
+export function deleteParsedMedia(params: { parsed_media_id: string }) {
+  const { parsed_media_id } = params;
+  return media_request.post("/api/v2/admin/parsed_media/delete", {
+    id: parsed_media_id,
+  });
+}
+/**
+ * 删除解析出的剧集记录（不删除文件
+ */
 export function deleteParsedMediaSource(params: { parsed_media_source_id: string }) {
   const { parsed_media_source_id } = params;
   return media_request.post("/api/v2/admin/parsed_media_source/delete", {
     parsed_media_source_id,
   });
 }
-
+/**
+ * 获取视频文件播放信息
+ */
 export function fetchSourcePreviewInfo(body: { id: string }) {
   const { id } = body;
   return media_request.post<{

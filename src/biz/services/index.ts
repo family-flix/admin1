@@ -4,46 +4,13 @@
 import dayjs from "dayjs";
 
 import { media_request } from "@/biz/requests/index";
+import { ListResponse, ListResponseWithCursor } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { Result } from "@/domains/result/index";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { Result, UnpackedResult } from "@/domains/result/index";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { DriveTypes, MediaErrorTypes, MediaTypes, ReportTypeTexts, ReportTypes } from "@/constants/index";
-import { ListResponse, ListResponseWithCursor, MutableRecord, RequestedResource, Unpacked } from "@/types/index";
+import { MutableRecord, Unpacked } from "@/types/index";
 import { bytes_to_size } from "@/utils/index";
-
-/**
- * 获取电视剧列表
- */
-export function fetch_tv_list(params: FetchParams & { name: string }) {
-  const { page, pageSize, ...rest } = params;
-  return media_request.get<
-    ListResponse<{
-      id: string;
-      name: string;
-      original_name: string;
-      overview: string;
-      poster_path: string;
-      first_air_date: string;
-      popularity: string;
-      episode_count: number;
-      season_count: number;
-      cur_episode_count: number;
-      cur_season_count: number;
-      episode_sources: number;
-      size_count: number;
-      size_count_text: string;
-      incomplete: boolean;
-      need_bind: boolean;
-      sync_task: { id: string } | null;
-      tips: string[];
-    }>
-  >("/api/admin/tv/list", {
-    ...rest,
-    page,
-    page_size: pageSize,
-  });
-}
-export type TVItem = NonNullable<Unpacked<TmpRequestResp<typeof fetch_tv_list>>>["list"][number];
 
 function processSeasonPrepareArchive(season: SeasonPrepareArchiveItemResp) {
   const { id, season_text, poster_path, episode_count, cur_episode_count, name, episodes } = season;
@@ -301,36 +268,12 @@ type MoviePrepareArchiveItemResp = {
     }[];
   }[];
 };
-
-/** 刷新电视剧详情 */
-export function refreshSeasonProfile(body: { season_id: string }) {
-  const { season_id } = body;
-  return media_request.post<{ job_id: string }>(`/api/admin/season/${season_id}/refresh_profile`, {});
-}
-/** 改变电视剧详情 */
-export function changeSeasonProfile(body: { season_id: string; unique_id?: number }) {
-  const { season_id, unique_id } = body;
-  return media_request.post<{ job_id: string }>(`/api/admin/season/${season_id}/set_profile`, {
-    unique_id,
-  });
-}
-/** 手动修改电视剧详情 */
-export function updateSeasonProfileManually(body: { season_id: string; title?: string; episode_count?: number }) {
-  const { season_id, title, episode_count } = body;
-  return media_request.post<void>(`/api/admin/season/${season_id}/update`, { name: title, episode_count });
-}
-/** 删除指定电视剧季 */
-export function deleteSeason(body: { season_id: string }) {
-  const { season_id } = body;
-  return media_request.get<void>(`/api/admin/season/${season_id}/delete`);
-}
-
 /**
  * 获取电影列表
  */
 export function fetchMovieList(params: FetchParams & { name: string; duplicated: number }) {
   const { page, pageSize, ...rest } = params;
-  return media_request.get<
+  return media_request.post<
     ListResponse<{
       id: string;
       name: string;
@@ -370,18 +313,6 @@ export function fetchMoveListProcess(r: TmpRequestResp<typeof fetchMovieList>) {
     }),
   });
 }
-
-/** 删除指定未识别电视剧 */
-export function deleteUnknownTV(values: { parsed_tv_id: string }) {
-  const { parsed_tv_id } = values;
-  return media_request.get(`/api/admin/unknown_tv/${parsed_tv_id}/delete`);
-}
-
-export function delete_unknown_episode(body: { id: string }) {
-  const { id } = body;
-  return media_request.get(`/api/admin/unknown_episode/delete/${id}`, undefined);
-}
-
 /**
  * 获取成员列表
  * @param params
@@ -411,8 +342,7 @@ export function fetchMemberList(params: FetchParams) {
     page_size: pageSize,
   });
 }
-export type MemberItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchMemberList>>>["list"][number];
-
+export type MemberItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchMemberList>>>["list"][number];
 /**
  * 添加成员
  * @param body
@@ -421,7 +351,6 @@ export type MemberItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchMemberL
 export function createMember(body: { remark: string }) {
   return media_request.post<{ id: string; account: { id: string; pwd: string } }>("/api/v2/admin/member/add", body);
 }
-
 /**
  * 生成成员授权链接
  * @param body
@@ -431,56 +360,6 @@ export function createMemberAuthToken(body: { id: string }) {
   return media_request.post<{ id: string }>("/api/v2/admin/member/add_token", body);
 }
 /**
- * 更新所有电视剧详情
- */
-export function refreshSeasonProfiles() {
-  return media_request.get<{ job_id: string }>("/api/admin/season/refresh_profile");
-}
-
-/**
- * 更新所有电影详情
- */
-export function refreshMovieProfiles() {
-  return media_request.get<{ job_id: string }>("/api/admin/movie/refresh_profile");
-}
-
-/**
- * 转存指定季到指定云盘
- */
-export function transferSeasonToAnotherDrive(body: { season_id: string; target_drive_id: string }) {
-  const { season_id, target_drive_id } = body;
-  return media_request.post<{ job_id: string }>(`/api/admin/season/${season_id}/transfer`, {
-    target_drive_id,
-  });
-}
-
-/**
- * 转存指定电影到指定云盘
- */
-export function transferMovieToAnotherDrive(body: { movie_id: string; target_drive_id: string }) {
-  const { movie_id, target_drive_id } = body;
-  return media_request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/transfer`, {
-    target_drive_id,
-  });
-}
-
-/**
- * 移动指定电视剧到资源盘
- */
-export function moveSeasonToResourceDrive(body: { season_id: string }) {
-  const { season_id } = body;
-  return media_request.post<{ job_id: string }>(`/api/admin/season/${season_id}/to_resource_drive`, {});
-}
-
-/**
- * 移动指定电影到资源盘
- */
-export function moveMovieToResourceDrive(body: { movie_id: string }) {
-  const { movie_id } = body;
-  return media_request.post<{ job_id: string }>(`/api/admin/movie/${movie_id}/to_resource_drive`, {});
-}
-
-/**
  * 删除指定成员
  * @returns
  */
@@ -488,83 +367,13 @@ export function deleteMember(body: { id: string }) {
   const { id } = body;
   return media_request.post("/api/v2/admin/member/delete", { id });
 }
-
 export function updateMemberPermission(values: { member_id: string; permissions: string[] }) {
   const { member_id, permissions } = values;
-  return media_request.post(`/api/v2/admin/member/update_permission`, {
+  return media_request.post("/api/v2/admin/member/update_permission", {
     member_id,
     permissions,
   });
 }
-
-/**
- * 是否已经有管理员
- */
-export function hasAdmin() {
-  return media_request.get<{ existing: boolean }>("/api/admin/user/existing");
-}
-
-export function fetchSeasonProfile(body: { season_id: string }) {
-  const { season_id } = body;
-  return media_request.get<{
-    id: string;
-    name: string;
-    overview: string;
-    poster_path: null;
-    backdrop_path: null;
-    original_language: string;
-    air_date: string;
-    tmdb_id: number;
-    // incomplete: boolean;
-    seasons: {
-      id: string;
-      name: string;
-      overview: string;
-      season_number: number;
-    }[];
-    episodes: {
-      id: string;
-      name: string;
-      overview: string;
-      episode_number: string;
-      air_date: string;
-      runtime: number;
-      sources: {
-        id: string;
-        file_id: string;
-        file_name: string;
-        parent_paths: string;
-        size: number;
-        created: string;
-        drive: {
-          id: string;
-          name: string;
-          avatar: string;
-        };
-      }[];
-    }[];
-  }>(`/api/admin/season/${season_id}`);
-}
-export type TVProfile = RequestedResource<typeof fetchSeasonProfileProcess>;
-export type SeasonInTVProfile = RequestedResource<typeof fetchSeasonProfileProcess>["seasons"][number];
-export function fetchSeasonProfileProcess(r: TmpRequestResp<typeof fetchSeasonProfile>) {
-  if (r.error) {
-    return Result.Err(r.error);
-  }
-  const { id, name, overview, poster_path, backdrop_path, air_date, tmdb_id, seasons, episodes } = r.data;
-  return Result.Ok({
-    id,
-    name,
-    overview,
-    poster_path,
-    backdrop_path,
-    air_date,
-    tmdb_id,
-    seasons,
-    episodes,
-  });
-}
-
 export function fetchReportList(params: FetchParams) {
   return media_request.post<
     ListResponseWithCursor<{
@@ -615,33 +424,31 @@ export function fetchReportListProcess(r: TmpRequestResp<typeof fetchReportList>
     }),
   });
 }
-
-export function fetch_shared_files_histories(body: FetchParams) {
-  return media_request.get<
+export function fetchResourceSearchHistoryList(body: FetchParams) {
+  return media_request.post<
     ListResponse<{
       id: string;
       url: string;
       title: string;
       created: string;
     }>
-  >("/api/admin/shared_file/list", body);
+  >("/api/v2/admin/sync_task/search_history", body);
 }
 export type SharedFileHistoryItem = NonNullable<
-  Unpacked<TmpRequestResp<typeof fetch_shared_files_histories>>
+  UnpackedResult<TmpRequestResp<typeof fetchResourceSearchHistoryList>>
 >["list"][0];
-
-export function fetch_shared_files_transfer_list(body: FetchParams) {
-  return media_request.get<
+export function fetchResourceTransferHistoryList(body: FetchParams) {
+  return media_request.post<
     ListResponse<{
       id: string;
       url: string;
       name: string;
       created: string;
     }>
-  >("/api/admin/shared_file_save/list", body);
+  >("/api/v2/admin/sync_task/transfer_history", body);
 }
-export type SharedFileTransferItem = RequestedResource<typeof fetchSharedFilesTransferListProcess>["list"][0];
-export function fetchSharedFilesTransferListProcess(r: TmpRequestResp<typeof fetch_shared_files_transfer_list>) {
+export type SharedFileTransferItem = RequestedResource<typeof fetchResourceTransferHistoryListProcess>["list"][0];
+export function fetchResourceTransferHistoryListProcess(r: TmpRequestResp<typeof fetchResourceTransferHistoryList>) {
   if (r.error) {
     return Result.Err(r.error);
   }
@@ -656,14 +463,12 @@ export function fetchSharedFilesTransferListProcess(r: TmpRequestResp<typeof fet
     }),
   });
 }
-
-export function upload_file(body: FormData) {
+export function uploadFileToDrive(body: FormData) {
   return media_request.post("/api/admin/upload", body);
 }
-
-export function notify_test(values: { text: string; token: string }) {
+export function testSendNotification(values: { text: string; token: string }) {
   const { text, token } = values;
-  return media_request.post(`/api/admin/notify/test`, { text, token });
+  return media_request.post("/api/admin/notify/test", { text, token });
 }
 
 type UserSettings = {
@@ -682,14 +487,12 @@ type UserSettings = {
   /** 无需邀请码 */
   no_need_invitation_code?: boolean;
 };
-
 /**
  * 获取用户配置
  */
 export function fetchSettings() {
   return media_request.post<UserSettings>("/api/v2/admin/settings/profile", {});
 }
-
 /**
  * 更新用户配置
  */
@@ -711,11 +514,9 @@ export function updateSettings(values: Partial<UserSettings>) {
     no_need_invitation_code,
   });
 }
-
 export function pushMessageToMembers(values: { content: string }) {
   return media_request.post("/api/admin/notify", values);
 }
-
 type AnswerPayload = Partial<{
   content: string;
   media_id: string;
@@ -726,18 +527,17 @@ export function replyReport(
   } & AnswerPayload
 ) {
   const { report_id, content, media_id } = values;
-  return media_request.post(`/api/v2/admin/report/reply`, {
+  return media_request.post("/api/v2/admin/report/reply", {
     id: report_id,
     content,
     media_id,
   });
 }
-
 /**
  * 获取权限列表
  */
 export function fetchPermissionList(params: FetchParams) {
-  const { pageSize, ...restParams } = params;
+  const { pageSize, ...rest } = params;
   return media_request.post<
     ListResponse<{
       code: string;
@@ -745,10 +545,9 @@ export function fetchPermissionList(params: FetchParams) {
     }>
   >("/api/admin/permission/list", {
     page_size: pageSize,
-    ...restParams,
+    ...rest,
   });
 }
-
 /**
  * 新增权限
  */
@@ -759,7 +558,6 @@ export function addPermission(values: { desc: string }) {
   };
   return media_request.post("/api/admin/permission/add", body);
 }
-
 /**
  * 校验字幕文件名是否合法
  */
@@ -776,7 +574,6 @@ export function validateSubtitleFiles(values: { filenames: string[] }) {
     filenames,
   });
 }
-
 export function batchUploadSubtitles(values: {
   media_id: string;
   type: MediaTypes;
@@ -805,7 +602,6 @@ export function batchUploadSubtitles(values: {
   }
   return media_request.post<{ job_id: string }>("/api/v2/admin/subtitle/batch_create", body);
 }
-
 export function fetchSubtitleList(params: FetchParams) {
   return media_request.post<
     ListResponseWithCursor<{
@@ -827,31 +623,16 @@ export function fetchSubtitleList(params: FetchParams) {
     }>
   >("/api/v2/admin/subtitle/list", params);
 }
-export type SubtitleItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchSubtitleList>>>["list"][number];
-
+export type SubtitleItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchSubtitleList>>>["list"][number];
+/**
+ * 删除指定影视剧下的所有字幕？
+ */
 export function deleteSubtitle(values: { subtitle_id: string }) {
   const { subtitle_id } = values;
   return media_request.post("/api/v2/admin/subtitle/delete", {
     subtitle_id,
   });
 }
-
-export function setFileEpisodeProfile(values: {
-  file_id: string;
-  source?: number;
-  unique_id: number | string;
-  season_number: number;
-  episode_number: number;
-}) {
-  const { file_id, source, unique_id, season_number, episode_number } = values;
-  return media_request.post<{ job_id: string }>(`/api/admin/file/${file_id}/set_episode_profile`, {
-    source,
-    unique_id,
-    season_number,
-    episode_number,
-  });
-}
-
 type TVProfileError = {
   id: string;
   name: string | null;
@@ -908,7 +689,6 @@ type MovieProfileError = {
     source_count: number;
   }[];
 };
-
 type TVError = {
   id: string;
   name: string | null;
@@ -1094,22 +874,6 @@ export function fetchInvalidMediaListProcess(r: TmpRequestResp<typeof fetchInval
     }),
   });
 }
-
-/** 删除季详情 */
-export function deleteSeasonProfileInMediaError(values: { id: string; profile_id: string }) {
-  return media_request.post<null | {}>("/api/admin/media_error/season_profile/delete", values);
-}
-
-/** 删除剧集详情 */
-export function deleteEpisodeProfileInMediaError(values: { id: string; profile_id: string }) {
-  return media_request.post<null | {}>("/api/admin/media_error/episode_profile/delete", values);
-}
-
-/** 删除电影详情 */
-export function deleteMovieProfileInMediaError(values: { id: string; profile_id: string }) {
-  return media_request.post<null | {}>("/api/admin/media_error/movie_profile/delete", values);
-}
-
 /** 获取播放记录列表 */
 export function fetchMemberHistoryList(values: { member_id: string }) {
   return media_request.post<

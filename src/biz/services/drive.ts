@@ -1,25 +1,20 @@
 import { media_request } from "@/biz/requests/index";
+import { ListResponse } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { Result } from "@/domains/result/index";
+import { Result, UnpackedResult } from "@/domains/result/index";
 import { TmpRequestResp } from "@/domains/request/utils";
 import { FileType, MediaTypes } from "@/constants/index";
-import { ListResponse, Unpacked } from "@/types/index";
 
 /**
  * 获取指定云盘内文件夹列表
- * @param {object} body
- * @param {string} body.drive_id 云盘 id
- * @param {string} body.file_id 文件夹id（如果传入说明是获取指定文件夹下的文件列表
- * @param {string} body.next_marker 在获取文件列表时，如果是获取下一页，就需要传入该值
- * @param {string} body.name 传入该值时，使用该值进行搜索
- * @param {string} body.page_size 每页文件数量
  */
 export function fetchDriveFiles(
   body: {
     /** 云盘id */
     drive_id: string;
-    /** 文件夹id */
+    /** 文件夹id（如果传入说明是获取指定文件夹下的文件列表，不传就是获取根文件夹 */
     file_id: string;
+    /** 在获取文件列表时，如果是获取下一页，就需要传入该值 */
     next_marker: string;
     /** 按名称搜索时的关键字 */
     name?: string;
@@ -111,8 +106,10 @@ export function fetchFileProfile(values: { file_id: string; drive_id: string }) 
   });
 }
 
-/** 用正则重命名多个文件 */
-export function renameFilesInDrive(values: {
+/**
+ * 用正则重命名指定文件夹下的所有子文件
+ */
+export function renameFilesInDriveWithRegexp(values: {
   drive_id: string;
   file_id: string;
   name: string;
@@ -130,7 +127,7 @@ export function renameFilesInDrive(values: {
 }
 
 /**
- * 重命名指定云盘的文件
+ * 重命名指定云盘的指定文件
  */
 export function renameFileInDrive(body: { drive_id: string; file_id: string; name: string }) {
   const { drive_id, file_id, name } = body;
@@ -142,7 +139,7 @@ export function renameFileInDrive(body: { drive_id: string; file_id: string; nam
 }
 
 /**
- * 删除指定云盘的文件
+ * 删除指定云盘的指定文件
  */
 export function deleteFileInDrive(body: { drive_id: string; file_id: string; file_name: string }) {
   const { drive_id, file_id, file_name } = body;
@@ -153,7 +150,9 @@ export function deleteFileInDrive(body: { drive_id: string; file_id: string; fil
   });
 }
 
-/** 归档指定文件到资源盘 */
+/**
+ * 归档指定文件到资源盘
+ */
 export function transferFileToAnotherDrive(values: { drive_id: string; file_id: string; to_drive_id: string }) {
   const { drive_id, to_drive_id, file_id } = values;
   return media_request.post<{ job_id: string }>("/api/v2/drive/file/transfer", {
@@ -162,7 +161,10 @@ export function transferFileToAnotherDrive(values: { drive_id: string; file_id: 
     to_drive_id,
   });
 }
-
+/**
+ * 移动指定文件到对应的资源盘
+ * 只有阿里云盘支持
+ */
 export function transferFileToResourceDrive(values: { drive_id: string; file_id: string }) {
   const { drive_id, file_id } = values;
   return media_request.post<{ job_id: string }>("/api/v2/drive/file/to_resource_drive", {
@@ -170,7 +172,9 @@ export function transferFileToResourceDrive(values: { drive_id: string; file_id:
     from_drive_id: drive_id,
   });
 }
-
+/**
+ * 使用关键字搜索云盘内的文件
+ */
 export function searchDriveFiles() {
   return media_request.post<
     ListResponse<{
@@ -186,7 +190,7 @@ export function searchDriveFiles() {
     }>
   >("/api/admin/file/search");
 }
-export type FileItem = NonNullable<Unpacked<TmpRequestResp<typeof searchDriveFilesProcess>>>["list"][number];
+export type FileItem = NonNullable<UnpackedResult<TmpRequestResp<typeof searchDriveFilesProcess>>>["list"][number];
 export function searchDriveFilesProcess(r: TmpRequestResp<typeof searchDriveFiles>) {
   if (r.error) {
     return Result.Err(r.error.message);
@@ -207,7 +211,9 @@ export function searchDriveFilesProcess(r: TmpRequestResp<typeof searchDriveFile
     }),
   });
 }
-
+/**
+ * 获取文件下载链接
+ */
 export function getFileDownloadURL(values: { file_id: string; drive_id: string }) {
   const { file_id, drive_id } = values;
   return media_request.post<{ url: string }>("/api/v2/drive/file/download", {
@@ -215,11 +221,8 @@ export function getFileDownloadURL(values: { file_id: string; drive_id: string }
     drive_id,
   });
 }
-
 /**
  * 删除指定云盘
- * @param {object} body
- * @param {string} body.drive_id 云盘 id
  */
 export function deleteDrive(body: { drive_id: string }) {
   const { drive_id } = body;

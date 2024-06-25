@@ -13,8 +13,8 @@ import {
   refreshMediaProfile,
   setMediaProfile,
   fetchMovieMediaProfileProcess,
-} from "@/services/media";
-import { deleteParsedMediaSource } from "@/services/parsed_media";
+} from "@/biz/services/media";
+import { deleteParsedMediaSource } from "@/biz/services/parsed_media";
 import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/biz/tmdb";

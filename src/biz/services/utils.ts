@@ -1,5 +1,5 @@
-import { DriveTypes, MediaTypes } from "@/constants";
-import { bytes_to_size } from "@/utils";
+import { DriveTypes, MediaTypes } from "@/constants/index";
+import { bytes_to_size } from "@/utils/index";
 
 import { MediaSource, MediaPrepareArchiveItemResp } from "./media";
 
@@ -107,4 +107,3 @@ export function processMediaPrepareArchive(season: MediaPrepareArchiveItemResp) 
     })(),
   };
 }
-

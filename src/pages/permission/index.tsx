@@ -5,7 +5,7 @@ import { For, Show, createSignal } from "solid-js";
 import { Lock, RotateCcw } from "lucide-solid";
 
 import { ViewComponent } from "@/store/types";
-import { addPermission, fetchPermissionList } from "@/services";
+import { addPermission, fetchPermissionList } from "@/biz/services";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { Button, Dialog, Input, ListView } from "@/components/ui";

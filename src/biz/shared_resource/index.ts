@@ -7,13 +7,7 @@ import { RequestCore } from "@/domains/request/index";
 import { Result } from "@/domains/result/index";
 import { sleep } from "@/utils/index";
 
-import {
-  check_has_same_name_tv,
-  fetch_resource_files,
-  AliyunFolderItem,
-  saveSharedFiles,
-  searchResourceFiles,
-} from "./services";
+import { fetchResourceFolderFiles, AliyunFolderItem, saveSharedFiles, searchResourceFiles } from "./services";
 
 enum Events {
   /** 输入分享链接 */
@@ -123,7 +117,7 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.loading = true;
     this.emit(Events.LoadingChange, this.loading);
     const [r] = await Promise.all([
-      new RequestCore(fetch_resource_files).run({
+      new RequestCore(fetchResourceFolderFiles).run({
         url: this.url,
         code: this.code,
         file_id,
@@ -217,39 +211,6 @@ export class SharedResourceCore extends BaseDomain<TheTypesOfEvents> {
     this.files = r.data.items;
     this.next_marker = "";
     this.emit(Events.StateChange, { ...this.state });
-  }
-  findTheTVHasSameNameWithSelectedFolder() {
-    if (this.selectedFolder === null) {
-      this.tip({ text: ["请先选择要关联的文件夹"] });
-      return;
-    }
-    this.findTheTVHasSameName(this.selectedFolder);
-  }
-  /**
-   * 在云盘内查找同名影视剧
-   */
-  async findTheTVHasSameName(file: { file_id: string; name: string }) {
-    const { name } = file;
-    const r = await new RequestCore(check_has_same_name_tv).run({
-      file_name: name,
-    });
-    if (r.error) {
-      this.tip({ text: ["查找同名文件夹失败", r.error.message] });
-      return;
-    }
-    const theTVHasSameName = r.data;
-    if (theTVHasSameName === null) {
-      this.tip({ text: ["没有同名影视剧"] });
-      return;
-    }
-    const { id, name: n, original_name, poster_path, overview, first_air_date } = theTVHasSameName;
-    this.emit(Events.ShowTVProfile, {
-      id,
-      name: n || original_name,
-      poster: poster_path,
-      overview,
-      firstAirDate: first_air_date,
-    });
   }
   /** 选择指定的文件夹 */
   selectFolder(folder: { file_id: string; name: string }) {

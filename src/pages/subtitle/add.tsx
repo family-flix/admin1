@@ -4,13 +4,13 @@
 import { For, Show, createSignal } from "solid-js";
 import { ChevronRight, Eye, Folder, FolderInput, Loader, MoreHorizontal, Scroll, Search, Send } from "lucide-solid";
 
-import { batchUploadSubtitles, validateSubtitleFiles } from "@/services";
+import { batchUploadSubtitles, validateSubtitleFiles } from "@/biz/services";
 import {
   fetchMovieMediaProfile,
   fetchMovieMediaProfileProcess,
   fetchSeasonMediaProfile,
   fetchSeasonMediaProfileProcess,
-} from "@/services/media";
+} from "@/biz/services/media";
 import { Button, Dialog, DropdownMenu, Input, LazyImage, ScrollView } from "@/components/ui";
 import {
   ButtonCore,

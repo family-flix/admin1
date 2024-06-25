@@ -3,7 +3,7 @@ import {
   editCollection,
   fetchCollectionProfile,
   fetchCollectionProfileProcess,
-} from "@/services/collection";
+} from "@/biz/services/collection";
 import { InputCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { RequestCore } from "@/domains/request";

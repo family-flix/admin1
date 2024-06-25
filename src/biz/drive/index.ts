@@ -2,7 +2,7 @@
  * @file 云盘实例
  * 包含所有云盘相关的操作、数据
  */
-import { deleteDrive } from "@/services/drive";
+import { deleteDrive } from "@/biz/services/drive";
 import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
 import { Result } from "@/domains/result/index";
@@ -12,9 +12,8 @@ import {
   analysisDrive,
   exportDriveInfo,
   refreshDriveProfile,
-  setAliyunDriveRefreshToken,
-  setDriveRootFolderId,
-  updateAliyunDrive,
+  setDriveToken,
+  updateDriveProfile,
   DriveItem,
   addFolderInDrive,
   checkInDrive,
@@ -261,7 +260,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 更新云盘基本信息 */
   async update() {
-    const r = await new RequestCore(updateAliyunDrive).run(this.id, this.values);
+    const r = await new RequestCore(updateDriveProfile).run({ id: this.id, ...this.values });
     this.values = {};
     if (r.error) {
       this.tip({ text: ["更新失败", r.error.message] });
@@ -326,8 +325,8 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 设置云盘索引根目录 */
   async setRootFolder(file: { file_id: string; name: string }) {
-    const r = await new RequestCore(setDriveRootFolderId).run({
-      drive_id: this.id,
+    const r = await new RequestCore(updateDriveProfile).run({
+      id: this.id,
       root_folder_id: file.file_id,
       root_folder_name: file.name,
     });
@@ -345,7 +344,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   setRefreshToken(token: string) {
     this.values.refresh_token = token;
   }
-  refreshTokenRequest = new RequestCore(setAliyunDriveRefreshToken);
+  refreshTokenRequest = new RequestCore(setDriveToken);
   /** 提交云盘 refresh_token */
   async submitRefreshToken() {
     const { refresh_token } = this.values;

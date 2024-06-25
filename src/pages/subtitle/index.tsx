@@ -6,7 +6,7 @@ import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
 
 import { ViewComponent } from "@/store/types";
 import { refreshJobs } from "@/store/job";
-import { SubtitleItem, deleteSubtitle, fetchSubtitleList } from "@/services";
+import { SubtitleItem, deleteSubtitle, fetchSubtitleList } from "@/biz/services";
 import { Button, Skeleton, ScrollView, ListView, LazyImage, Dialog } from "@/components/ui";
 import { ButtonCore, DialogCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";

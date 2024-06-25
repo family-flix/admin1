@@ -7,7 +7,7 @@ import { Award, BookOpen, Calendar, Clock, RotateCw, Search, Star } from "lucide
 import { ViewComponent } from "@/store/types";
 import { driveList } from "@/store/drives";
 import { consumeAction, pendingActions } from "@/store/actions";
-import { CollectionItem, deleteCollection, fetchCollectionList } from "@/services/collection";
+import { CollectionItem, deleteCollection, fetchCollectionList } from "@/biz/services/collection";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Checkbox, Dialog } from "@/components/ui";
 import {
   InputCore,

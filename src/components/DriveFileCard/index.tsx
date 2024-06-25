@@ -4,7 +4,7 @@
 import { JSXElement, Show, createSignal, onMount } from "solid-js";
 import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-solid";
 
-import { fetchFileProfile } from "@/services/drive";
+import { fetchFileProfile } from "@/biz/services/drive";
 import { LazyImage } from "@/components/ui";
 import { RefCore } from "@/domains/cur";
 import { AliyunDriveFile, DriveCore } from "@/biz/drive";

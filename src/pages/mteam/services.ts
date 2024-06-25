@@ -1,8 +1,8 @@
 import { media_request } from "@/biz/requests/index";
+import { ListResponse } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { TmpRequestResp } from "@/domains/request/utils";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { Result } from "@/domains/result/index";
-import { ListResponse, RequestedResource } from "@/types/index";
 import { bytes_to_size } from "@/utils/index";
 
 export function searchTorrentInMTeam(values: FetchParams & { keyword: string }) {

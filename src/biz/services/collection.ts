@@ -1,10 +1,11 @@
 import { media_request } from "@/biz/requests/index";
+import { ListResponseWithCursor } from "@/biz/requests/types";
 import { TmpRequestResp } from "@/domains/request/utils";
 import { FetchParams } from "@/domains/list/typing";
-import { Result } from "@/domains/result/index";
-import { ListResponseWithCursor, Unpacked } from "@/types/index";
+import { Result, UnpackedResult } from "@/domains/result/index";
 import { CollectionTypes } from "@/constants/index";
 
+/** 获取集合列表 */
 export function fetchCollectionList(params: FetchParams) {
   return media_request.post<
     ListResponseWithCursor<{
@@ -21,8 +22,9 @@ export function fetchCollectionList(params: FetchParams) {
     }>
   >("/api/v2/admin/collection/list", params);
 }
-export type CollectionItem = NonNullable<Unpacked<TmpRequestResp<typeof fetchCollectionList>>>["list"][number];
+export type CollectionItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchCollectionList>>>["list"][number];
 
+/** 创建集合 */
 export function createCollection(values: {
   title: string;
   sort: number;
@@ -51,6 +53,7 @@ export function createCollection(values: {
     medias,
   });
 }
+/** 获取集合详情 */
 export function fetchCollectionProfile(values: { collection_id: string }) {
   const { collection_id } = values;
   return media_request.post<{
@@ -84,6 +87,7 @@ export function fetchCollectionProfileProcess(r: TmpRequestResp<typeof fetchColl
     medias: medias.sort((a, b) => a.order - b.order),
   });
 }
+/** 编辑指定集合 */
 export function editCollection(body: {
   collection_id: string;
   title: string;
@@ -114,7 +118,7 @@ export function editCollection(body: {
     medias,
   });
 }
-
+/** 删除指定集合 */
 export function deleteCollection(body: { collection_id: string }) {
   const { collection_id } = body;
   return media_request.post("/api/v2/admin/collection/delete", {

@@ -11,7 +11,7 @@ import {
   fetchUnknownMediaListProcess,
   setParsedMediaProfile,
   setParsedSeasonMediaSourceProfile,
-} from "@/services/parsed_media";
+} from "@/biz/services/parsed_media";
 import { Button, ListView, LazyImage, ScrollView, Input, Dialog, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/biz/tmdb";
@@ -223,8 +223,13 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
 
   console.log("[PAGE]/unknown_media/season - ", parent);
   if (parent?.scrollView) {
-    parent?.scrollView.onReachBottom(() => {
-      list.loadMore();
+    const scroll = parent.scrollView;
+    scroll.onReachBottom(async () => {
+      if (!view.visible) {
+        return;
+      }
+      await list.loadMore();
+      scroll.finishLoadingMore();
     });
   }
   list.onStateChange((nextState) => {
@@ -234,7 +239,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
 
   return (
     <>
-      <ScrollView class="px-8 pb-12" store={scrollView}>
+      <div class="px-8 pb-12">
         <div class="flex items-center my-4 space-x-2">
           <Button icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
             刷新
@@ -336,7 +341,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
             </For>
           </div>
         </ListView>
-      </ScrollView>
+      </div>
       <Dialog store={dialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={searcher} />

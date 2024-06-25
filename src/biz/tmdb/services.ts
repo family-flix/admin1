@@ -1,9 +1,9 @@
 import { media_request } from "@/biz/requests/index";
+import { ListResponseWithCursor } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
-import { TmpRequestResp } from "@/domains/request/utils";
-import { Result } from "@/domains/result/index";
+import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
+import { Result, UnpackedResult } from "@/domains/result/index";
 import { MediaTypes } from "@/constants/index";
-import { ListResponse, ListResponseWithCursor, RequestedResource, Unpacked } from "@/types/index";
 
 /**
  * 在 TMDB 搜索影视剧
@@ -162,11 +162,11 @@ export function fetchTVProfileInTMDB(params: { unique_id: string }) {
     type: string;
     vote_average: number;
     vote_count: number;
-  }>(`/api/admin/tmdb/tv_profile`, {
+  }>("/api/admin/tmdb/tv_profile", {
     unique_id,
   });
 }
-export type TheTVProfileInTMDB = NonNullable<Unpacked<TmpRequestResp<typeof fetchTVProfileInTMDB>>>;
+export type TheTVProfileInTMDB = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchTVProfileInTMDB>>>;
 
 export function fetchSeasonProfileInTMDB(params: { unique_id: string; season_number: number }) {
   const { unique_id, season_number } = params;
@@ -195,9 +195,9 @@ export function fetchSeasonProfileInTMDB(params: { unique_id: string; season_num
     poster_path: string;
     season_number: number;
     vote_average: number;
-  }>(`/api/admin/tmdb/season_profile`, {
+  }>("/api/admin/tmdb/season_profile", {
     unique_id,
     season_number,
   });
 }
-export type TheSeasonProfileInTMDB = NonNullable<Unpacked<TmpRequestResp<typeof fetchSeasonProfileInTMDB>>>;
+export type TheSeasonProfileInTMDB = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchSeasonProfileInTMDB>>>;

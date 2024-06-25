@@ -9,8 +9,7 @@ import {
   fetchMovieMediaList,
   fetchMovieMediaListProcess,
   transferMediaToAnotherDrive,
-} from "@/services/media";
-import { moveMovieToResourceDrive, refreshMovieProfiles, transferMovieToAnotherDrive } from "@/services";
+} from "@/biz/services/media";
 import { LazyImage, Input, Button, Skeleton, ScrollView, ListView, Dialog } from "@/components/ui";
 import {
   InputCore,
@@ -62,60 +61,11 @@ export const MovieListPage: ViewComponent = (props) => {
       transferConfirmDialog.hide();
     },
   });
-  const movieToResourceDriveRequest = new RequestCore(moveMovieToResourceDrive, {
-    onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          moveToResourceDriveConfirmDialog.okBtn.setLoading(false);
-          if (!movieRef.value) {
-            return;
-          }
-          const { name } = movieRef.value;
-          app.tip({
-            text: [`完成电影「${name}」移动到资源盘`],
-          });
-        },
-      });
-      moveToResourceDriveConfirmDialog.hide();
-    },
-    onFailed(error) {
-      moveToResourceDriveConfirmDialog.okBtn.setLoading(false);
-      app.tip({
-        text: ["移动失败", error.message],
-      });
-    },
-  });
   const movieList = new ListCore(new RequestCore(fetchMovieMediaList, { process: fetchMovieMediaListProcess }), {
     onLoadingChange(loading) {
       searchBtn.setLoading(loading);
       resetBtn.setLoading(loading);
       refreshBtn.setLoading(loading);
-    },
-  });
-  const refreshMovieProfilesRequest = new RequestCore(refreshMovieProfiles, {
-    beforeRequest() {
-      refreshMovieListBtn.setLoading(true);
-    },
-    async onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          app.tip({ text: ["更新成功"] });
-          movieList.refresh();
-          refreshMovieListBtn.setLoading(false);
-        },
-      });
-    },
-    onFailed(error) {
-      app.tip({ text: ["更新失败", error.message] });
-      refreshMovieListBtn.setLoading(false);
-    },
-  });
-  const refreshMovieListBtn = new ButtonCore({
-    onClick() {
-      app.tip({ text: ["开始更新"] });
-      refreshMovieProfilesRequest.run();
     },
   });
   const movieRef = new RefCore<MovieMediaItem>();
@@ -188,35 +138,6 @@ export const MovieListPage: ViewComponent = (props) => {
   });
   const avatar = new ImageInListCore({});
   const poster = new ImageInListCore({});
-  const moveToResourceDriveConfirmDialog = new DialogCore({
-    title: "移动到资源盘",
-    onOk() {
-      const curMovie = movieRef.value;
-      if (!curMovie) {
-        app.tip({ text: ["请先选择电影"] });
-        return;
-      }
-      app.tip({
-        text: ["开始移动，请等待一段时间"],
-      });
-      movieToResourceDriveRequest.run({
-        movie_id: curMovie.id,
-      });
-    },
-    onCancel() {
-      driveRef.clear();
-      transferConfirmDialog.hide();
-    },
-  });
-  const moveToResourceDriveBtn = new ButtonInListCore<MovieMediaItem>({
-    onClick(record) {
-      if (record === null) {
-        return;
-      }
-      movieRef.select(record);
-      moveToResourceDriveConfirmDialog.show();
-    },
-  });
   const refreshBtn = new ButtonCore({
     onClick() {
       movieList.refresh();
@@ -289,9 +210,6 @@ export const MovieListPage: ViewComponent = (props) => {
             <Button class="" store={resetBtn}>
               重置
             </Button>
-            {/* <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshMovieListBtn}>
-              更新近3月内电影详情
-            </Button> */}
           </div>
           <div class="flex items-center space-x-2 mt-4">
             <Input class="" store={nameSearchInput} />
@@ -416,13 +334,6 @@ export const MovieListPage: ViewComponent = (props) => {
                               >
                                 归档
                               </Button>
-                              <Button
-                                store={moveToResourceDriveBtn.bind(movie)}
-                                variant="subtle"
-                                icon={<BookOpen class="w-4 h-4" />}
-                              >
-                                移动到资源盘
-                              </Button>
                             </div>
                           </div>
                         </div>
@@ -466,11 +377,6 @@ export const MovieListPage: ViewComponent = (props) => {
               }}
             </For>
           </div>
-        </div>
-      </Dialog>
-      <Dialog store={moveToResourceDriveConfirmDialog}>
-        <div class="w-[520px]">
-          <div>将电影移动到资源盘后才能公开分享</div>
         </div>
       </Dialog>
     </>

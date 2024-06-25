@@ -7,6 +7,8 @@ import { ArrowLeft, Play, Trash } from "lucide-solid";
 import { appendAction } from "@/store/actions";
 import { createJob } from "@/store/job";
 import { ViewComponent } from "@/store/types";
+import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
+import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import {
   MediaSourceItem,
   SeasonMediaProfile,
@@ -15,25 +17,23 @@ import {
   fetchSeasonMediaProfileProcess,
   fetchEpisodesOfSeason,
   setMediaProfile,
-} from "@/services/media";
-import { deleteParsedMediaSource } from "@/services/parsed_media";
-import { deleteSeason, SeasonInTVProfile, refreshSeasonProfile } from "@/services/index";
-import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
-import { TMDBSearcherView } from "@/components/TMDBSearcher";
-import { TMDBSearcherCore } from "@/biz/tmdb";
+  deleteMedia,
+} from "@/biz/services/media";
+import { refreshMediaProfile } from "@/biz/services/media_profile";
+import { deleteParsedMediaSource } from "@/biz/services/parsed_media";
+import { TMDBSearcherCore } from "@/biz/tmdb/index";
 import {
   MenuItemCore,
   ContextMenuCore,
   ScrollViewCore,
   DialogCore,
   ButtonCore,
-  InputCore,
   ImageCore,
   ImageInListCore,
 } from "@/domains/ui";
-import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
-import { ListCore } from "@/domains/list";
+import { RequestCore } from "@/domains/request/index";
+import { RefCore } from "@/domains/cur/index";
+import { ListCore } from "@/domains/list/index";
 
 export const HomeSeasonProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
@@ -100,7 +100,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
       media_id: view.query.id,
     },
   });
-  const seasonDeletingRequest = new RequestCore(deleteSeason, {
+  const seasonDeletingRequest = new RequestCore(deleteMedia, {
     onLoading(loading) {
       seasonDeletingConfirmDialog.okBtn.setLoading(loading);
     },
@@ -130,7 +130,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
       profileRequest.reload();
     },
   });
-  const seasonProfileRefreshRequest = new RequestCore(refreshSeasonProfile, {
+  const seasonProfileRefreshRequest = new RequestCore(refreshMediaProfile, {
     onSuccess(r) {
       createJob({
         job_id: r.job_id,
@@ -148,8 +148,8 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
       profileRefreshBtn.setLoading(false);
     },
   });
-  const tmpSeasonRef = new RefCore<SeasonInTVProfile>();
-  const seasonRef = new RefCore<SeasonInTVProfile>();
+  const tmpSeasonRef = new RefCore<SeasonMediaProfile>();
+  const seasonRef = new RefCore<SeasonMediaProfile>();
   const episodeRef = new RefCore<MediaSourceItem>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
@@ -191,7 +191,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
         text: ["开始刷新"],
       });
       profileRefreshBtn.setLoading(true);
-      seasonProfileRefreshRequest.run({ season_id: view.query.season_id });
+      seasonProfileRefreshRequest.run({ media_id: view.query.season_id });
     },
   });
   const seasonDeletingBtn = new ButtonCore({
@@ -212,7 +212,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
         return;
       }
       seasonDeletingRequest.run({
-        season_id: seasonRef.value.id,
+        media_id: seasonRef.value.id,
       });
     },
   });
