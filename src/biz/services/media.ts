@@ -89,7 +89,7 @@ export function fetchSeasonMediaProfile(body: { season_id: string }) {
   });
 }
 export type SeasonMediaProfile = RequestedResource<typeof fetchSeasonMediaProfileProcess>;
-export type MediaSourceItem = RequestedResource<typeof fetchSeasonMediaProfileProcess>["episodes"][number];
+export type MediaProfile = RequestedResource<typeof fetchSeasonMediaProfileProcess>["episodes"][number];
 export function fetchSeasonMediaProfileProcess(r: TmpRequestResp<typeof fetchSeasonMediaProfile>) {
   if (r.error) {
     return Result.Err(r.error);

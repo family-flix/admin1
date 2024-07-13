@@ -70,8 +70,9 @@ export const TaskProfilePage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      logList.loadMore();
+    async onReachBottom() {
+      await logList.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
 

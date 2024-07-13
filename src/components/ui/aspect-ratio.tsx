@@ -7,5 +7,9 @@ export const AspectRatio = (
 ) => {
   const { ratio = 1 / 1 } = props;
 
-  return <div class={props.class} style={`position: relative; width: 100%; padding-bottom: ${100 / ratio}%;`}></div>;
+  return (
+    <div class={props.class} style={`position: relative; width: 100%; padding-bottom: ${100 / ratio}%;`}>
+      {props.children}
+    </div>
+  );
 };

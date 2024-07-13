@@ -17,8 +17,9 @@ export const SharedFilesHistoryPage: ViewComponent = (props) => {
 
   const list = new ListCore(new RequestCore(fetchResourceSearchHistoryList));
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      list.loadMore();
+    async onReachBottom() {
+      await list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   const nameSearchInput = new InputCore({

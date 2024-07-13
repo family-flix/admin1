@@ -115,14 +115,14 @@ export const Select = (props: { store: SelectCore<any> }) => {
 
   const [state, setState] = createSignal(store.state);
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
+  store.onStateChange((v) => {
+    setState(v);
   });
 
   return (
     <div class="relative">
       <Show when={state().value === null}>
-        <div class="absolute inset-0 pointer-events-none">点击选择</div>
+        <div class="absolute inset-0 pointer-events-none">{state().placeholder}</div>
       </Show>
       <select
         value={state().value}

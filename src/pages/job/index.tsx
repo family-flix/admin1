@@ -94,8 +94,9 @@ export const LogListPage: ViewComponent = (props) => {
     [TaskStatus.Running]: () => <Timer class="w-4 h-4" />,
   };
 
-  scrollView.onReachBottom(() => {
-    jobList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await jobList.loadMore();
+    scrollView.finishLoadingMore();
   });
   // view.onShow(() => {
   jobList.init();

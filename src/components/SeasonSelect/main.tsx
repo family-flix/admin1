@@ -5,12 +5,12 @@ import { For, Show, createSignal } from "solid-js";
 import { Calendar, Send, Smile } from "lucide-solid";
 
 import { SeasonMediaItem, fetchSeasonMediaList } from "@/biz/services/media";
+import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { BaseDomain, Handler } from "@/domains/base";
 import { ButtonCore, DialogCore, DialogProps, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 
 enum Events {
   StateChange,
@@ -94,7 +94,7 @@ export class TVSeasonSelectCore extends BaseDomain<TheTypesOfEvents> {
     this.curSeason.clear();
   }
   select(season: SeasonMediaItem) {
-    //     console.log("[COMPONENT]TVSeasonSelect - select", season);
+    // console.log("[COMPONENT]SeasonSelect - select", season);
     this.curSeason.select(season);
     this.emit(Events.Select, season);
   }
@@ -121,8 +121,9 @@ export const SeasonSelect = (props: { store: TVSeasonSelectCore }) => {
 
   const poster = new ImageInListCore({});
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      store.list.loadMore();
+    async onReachBottom() {
+      await store.list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
 
@@ -138,7 +139,7 @@ export const SeasonSelect = (props: { store: TVSeasonSelectCore }) => {
 
   return (
     <div>
-      <div class="flex items-center space-x-2 mt-4">
+      <div class="flex items-center space-x-2">
         <Input store={store.nameInput} />
         <Button store={store.searchBtn} variant="subtle">
           搜索

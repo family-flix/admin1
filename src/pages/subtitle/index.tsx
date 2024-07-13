@@ -105,8 +105,9 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   seasonList.onStateChange((nextState) => {
     setResponse(nextState);
   });
-  scrollView.onReachBottom(() => {
-    seasonList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await seasonList.loadMore();
+    scrollView.finishLoadingMore();
   });
   seasonList.init();
 

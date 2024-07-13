@@ -15,9 +15,9 @@ export function LazyImage(props: { store: ImageCore; alt?: string } & JSX.HTMLAt
 
   const [state, setState] = createSignal(store.state);
 
-  store.onStateChange((nextState) => {
-    // console.log("[COMPONENT]LazyImage - image.onStateChange", nextState);
-    setState(nextState);
+  store.onStateChange((v) => {
+    console.log("[COMPONENT]ui/image - store.onStateChange", v);
+    setState(v);
   });
   onMount(() => {
     if (!$img) {

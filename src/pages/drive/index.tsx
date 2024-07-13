@@ -116,8 +116,9 @@ export const DriveListPage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      driveList.loadMore();
+    async onReachBottom() {
+      await driveList.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
 

@@ -125,9 +125,9 @@ export function updateSyncTask(params: { id: string; season_id: string }) {
 /**
  * 执行所有电视剧同步任务
  */
-export function runSyncTaskList() {
-  return media_request.post<{ job_id: string }>("/api/v2/admin/sync_task/run_all");
-}
+// export function runSyncTaskList() {
+//   return media_request.post<{ job_id: string }>("/api/v2/admin/sync_task/run_all");
+// }
 /**
  * 标记同步任务已完结
  */

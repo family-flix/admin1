@@ -10,7 +10,7 @@ import { ViewComponent } from "@/store/types";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import {
-  MediaSourceItem,
+  MediaProfile,
   SeasonMediaProfile,
   EpisodeItemInSeason,
   fetchSeasonMediaProfile,
@@ -150,7 +150,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
   });
   const tmpSeasonRef = new RefCore<SeasonMediaProfile>();
   const seasonRef = new RefCore<SeasonMediaProfile>();
-  const episodeRef = new RefCore<MediaSourceItem>();
+  const episodeRef = new RefCore<MediaProfile>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
   // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
   const searcher = new TMDBSearcherCore();
@@ -275,8 +275,9 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
   //   },
   // });
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      curEpisodeList.loadMore();
+    async onReachBottom() {
+      await curEpisodeList.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
 

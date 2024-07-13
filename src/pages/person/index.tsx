@@ -38,8 +38,9 @@ export const PersonListPage: ViewComponent = (props) => {
     setResponse(nextState);
   });
 
-  scrollView.onReachBottom(() => {
-    personList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await personList.loadMore();
+    scrollView.finishLoadingMore();
   });
   // view.onShow(() => {
   personList.init();

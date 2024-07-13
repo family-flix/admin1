@@ -178,8 +178,9 @@ export const MovieListPage: ViewComponent = (props) => {
       return false;
     });
   });
-  scrollView.onReachBottom(() => {
-    movieList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await movieList.loadMore();
+    scrollView.finishLoadingMore();
   });
   movieList.onStateChange((nextState) => {
     setState(nextState);

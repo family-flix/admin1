@@ -12,8 +12,9 @@ import { FileSearcherCore } from "./store";
 export const FileSearcher = (props: { store: FileSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      store.$list.loadMore();
+    async onReachBottom() {
+      await store.$list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   const [state, setState] = createSignal(store.state);

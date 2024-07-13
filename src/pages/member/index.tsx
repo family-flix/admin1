@@ -15,16 +15,23 @@ import {
   MemberItem,
   updateMemberPermission,
 } from "@/biz/services/index";
+import { create_link } from "@/biz/shortlink";
 import { fetchMemberAccounts } from "@/biz/services/member";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
 import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { Qrcode } from "@/components/Qrcode";
-import { DialogCore, InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, CheckboxGroupCore } from "@/domains/ui";
-import { ListCore } from "@/domains/list";
-import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
-import { MultipleSelectionCore } from "@/domains/multiple";
-import { create_link } from "@/biz/shortlink";
+import {
+  DialogCore,
+  InputCore,
+  ButtonCore,
+  ButtonInListCore,
+  ScrollViewCore,
+  CheckboxGroupCore,
+} from "@/domains/ui/index";
+import { ListCore } from "@/domains/list/index";
+import { RequestCore } from "@/domains/request/index";
+import { RefCore } from "@/domains/cur/index";
+import { MultipleSelectionCore } from "@/domains/multiple/index";
 import { cn } from "@/utils/index";
 
 function Page(props: ViewComponentProps) {
@@ -273,8 +280,9 @@ ${url}`;
     },
   });
   const $scroll = new ScrollViewCore({
-    onReachBottom() {
-      $memberList.loadMore();
+    async onReachBottom() {
+      await $memberList.loadMore();
+      $scroll.finishLoadingMore();
     },
   });
   const $permissionList = new ListCore(new RequestCore(fetchPermissionList));
@@ -356,6 +364,9 @@ export const HomeMemberListPage: ViewComponent = (props) => {
             <Button icon={<RotateCcw class="w-4 h-4" />} store={$page.ui.$refreshBtn}>
               刷新
             </Button>
+            <Button class="" store={$page.ui.$resetBtn}>
+              重置
+            </Button>
             <Button store={$page.ui.$addMemberBtn} icon={<UserPlus class="w-4 h-4" />}>
               新增成员
             </Button>
@@ -367,9 +378,6 @@ export const HomeMemberListPage: ViewComponent = (props) => {
             <Input class="" store={$page.ui.$nameInput} />
             <Button class="" icon={<Search class="w-4 h-4" />} store={$page.ui.$searchBtn}>
               搜索
-            </Button>
-            <Button class="" store={$page.ui.$resetBtn}>
-              重置
             </Button>
           </div>
           <div class="mt-4">

@@ -84,8 +84,9 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
     // onScroll(pos) {
     //   console.log('scroll', pos);
     // },
-    onReachBottom() {
-      store.$list.loadMore();
+    async onReachBottom() {
+      await store.$list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
 

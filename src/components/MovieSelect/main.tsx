@@ -119,8 +119,9 @@ export const MovieSelect = (props: { store: MovieSelectCore }) => {
 
   const poster = new ImageInListCore({});
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      store.list.loadMore();
+    async onReachBottom() {
+      await store.list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
 
@@ -139,7 +140,7 @@ export const MovieSelect = (props: { store: MovieSelectCore }) => {
 
   return (
     <div>
-      <div class="flex items-center space-x-2 mt-4">
+      <div class="flex items-center space-x-2">
         <Input store={store.nameInput} />
         <Button store={store.searchBtn} variant="subtle">
           搜索

@@ -227,8 +227,9 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      seasonList.loadMore();
+    async onReachBottom() {
+      await seasonList.loadMore();
+      scrollView.finishLoadingMore();
     },
     onScroll() {
       tipPopover.hide();

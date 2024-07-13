@@ -32,6 +32,8 @@ type SelectState<T> = {
   value: T | null;
   /** 菜单是否展开 */
   open: boolean;
+  /** 提示 */
+  placeholder: string;
   /** 禁用 */
   disabled: boolean;
   /** 是否必填 */
@@ -41,6 +43,7 @@ type SelectState<T> = {
 };
 type SelectProps<T> = {
   defaultValue: T | null;
+  placeholder?: string;
   // options: SelectItemCore<T>[];
   options?: { value: T; label: string }[];
   onChange?: (v: T | null) => void;
@@ -51,6 +54,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   debug = true;
 
   // options: { text: string; store: SelectItemCore<T> }[] = [];
+  placeholder: string;
   options: { value: T; label: string }[] = [];
   value: T | null = null;
   disabled: boolean = false;
@@ -89,6 +93,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
       value: this.value,
       open: this.open,
       disabled: this.disabled,
+      placeholder: this.placeholder,
       required: false,
       dir: "ltr",
       styles: {},
@@ -98,12 +103,13 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   constructor(props: Partial<{ _name: string }> & SelectProps<T>) {
     super(props);
 
-    const { defaultValue, options = [], onChange } = props;
-    console.log("[DOMAIN]ui/select/index - constructor", defaultValue);
+    const { defaultValue, placeholder = "点击选择", options = [], onChange } = props;
+    // console.log("[DOMAIN]ui/select/index - constructor", defaultValue);
     this.options = options.map((opt) => {
       return opt;
     });
     this.value = defaultValue;
+    this.placeholder = placeholder;
     const matched = this.options.find((opt) => opt.value === defaultValue);
     if (matched) {
       this.emit(Events.StateChange, { ...this.state });

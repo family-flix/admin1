@@ -16,8 +16,9 @@ export const SharedFilesTransferListPage: ViewComponent = (props) => {
 
   const list = new ListCore(new RequestCore(fetchResourceTransferHistoryList));
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      list.loadMore();
+    async onReachBottom() {
+      await list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   const nameSearchInput = new InputCore({

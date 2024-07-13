@@ -69,8 +69,9 @@ export const InvalidMediaListPage: ViewComponent = (props) => {
 
   const [state, setState] = createSignal(errorList.response);
 
-  scrollView.onReachBottom(() => {
-    errorList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await errorList.loadMore();
+    scrollView.finishLoadingMore();
   });
   errorList.onStateChange((v) => setState(v));
   errorList.init();

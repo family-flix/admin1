@@ -39,8 +39,9 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
     // onScroll(pos) {
     //   console.log('scroll', pos);
     // },
-    onReachBottom() {
-      store.$list.loadMore();
+    async onReachBottom() {
+      await store.$list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   const [state, setState] = createSignal(store.state);

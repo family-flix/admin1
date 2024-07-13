@@ -90,10 +90,14 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   setURL(src?: string | null) {
-    if (src === undefined) {
+    console.log("[DOMAIN]ui/image setURL", this.realSrc, this.src, src, this.step);
+    if (!src) {
       return;
     }
-    if (src === null) {
+    if (this.realSrc && src !== this.realSrc) {
+      this.realSrc = src;
+      // 这里就是修改图片地址
+      this.handleShow();
       return;
     }
     this.realSrc = src;
@@ -105,7 +109,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 图片进入可视区域 */
   handleShow() {
-    // console.log("[IMAGE_CORE]handleShow", this.realSrc);
+    console.log("[DOMAIN]ui/image - handleShow", this.realSrc);
     if (!this.realSrc) {
       this.step = ImageStep.Failed;
       this.emit(Events.StateChange, { ...this.state });

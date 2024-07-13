@@ -26,7 +26,7 @@ import {
   runSyncTask,
   fetchPartialSyncTask,
   updateSyncTask,
-  runSyncTaskList,
+  // runSyncTaskList,
   completeSyncTask,
   deleteSyncTask,
   overrideResourceForSyncTask,
@@ -113,24 +113,24 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   //     }
   //   },
   // });
-  const runTaskListRequest = new RequestCore(runSyncTaskList, {
-    beforeRequest() {
-      runTaskListBtn.setLoading(true);
-    },
-    async onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          syncTaskList.refresh();
-          runTaskListBtn.setLoading(false);
-        },
-      });
-    },
-    onFailed(error) {
-      app.tip({ text: ["同步更新失败", error.message] });
-      runTaskListBtn.setLoading(false);
-    },
-  });
+  // const runTaskListRequest = new RequestCore(runSyncTaskList, {
+  //   beforeRequest() {
+  //     runTaskListBtn.setLoading(true);
+  //   },
+  //   async onSuccess(r) {
+  //     createJob({
+  //       job_id: r.job_id,
+  //       onFinish() {
+  //         syncTaskList.refresh();
+  //         runTaskListBtn.setLoading(false);
+  //       },
+  //     });
+  //   },
+  //   onFailed(error) {
+  //     app.tip({ text: ["同步更新失败", error.message] });
+  //     runTaskListBtn.setLoading(false);
+  //   },
+  // });
   const syncTaskRunningRequest = new RequestCore(runSyncTask, {
     beforeRequest() {
       execSyncTaskBtn.setLoading(true);
@@ -412,12 +412,12 @@ export const SyncTaskListPage: ViewComponent = (props) => {
       });
     },
   });
-  const runTaskListBtn = new ButtonCore({
-    onClick() {
-      app.tip({ text: ["开始同步所有文件夹"] });
-      runTaskListRequest.run();
-    },
-  });
+  // const runTaskListBtn = new ButtonCore({
+  //   onClick() {
+  //     app.tip({ text: ["开始同步所有文件夹"] });
+  //     runTaskListRequest.run();
+  //   },
+  // });
   const refreshBtn = new ButtonCore({
     onClick() {
       syncTaskList.refresh();
@@ -432,8 +432,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
   });
   const seasonSelect = new TVSeasonSelectCore({});
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      syncTaskList.loadMore();
+    async onReachBottom() {
+      await syncTaskList.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   const poster = new ImageInListCore({});
@@ -493,9 +494,9 @@ export const SyncTaskListPage: ViewComponent = (props) => {
               <Button class="" store={resetBtn}>
                 重置
               </Button>
-              <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={runTaskListBtn}>
+              {/* <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={runTaskListBtn}>
                 同步所有文件夹
-              </Button>
+              </Button> */}
               <div class="flex items-center space-x-2">
                 <Checkbox store={onlyInvalidCheckbox}></Checkbox>
                 <span>待处理</span>

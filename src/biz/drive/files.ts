@@ -132,8 +132,9 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
       this.emit(Events.LoadingChange, loading);
     });
     const scrollView = new ScrollViewCore({
-      onReachBottom() {
-        list.loadMore();
+      async onReachBottom() {
+        await list.loadMore();
+        scrollView.finishLoadingMore();
       },
     });
     list.init();

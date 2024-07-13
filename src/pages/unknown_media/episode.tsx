@@ -282,8 +282,9 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
     },
   });
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      list.loadMore();
+    async onReachBottom() {
+      await list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   const poster = new ImageInListCore({});

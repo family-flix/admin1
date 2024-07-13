@@ -133,8 +133,9 @@ export const CollectionListPage: ViewComponent = (props) => {
       return false;
     });
   });
-  scrollView.onReachBottom(() => {
-    collectionList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await collectionList.loadMore();
+    scrollView.finishLoadingMore();
   });
   collectionList.onStateChange((nextState) => {
     setState(nextState);

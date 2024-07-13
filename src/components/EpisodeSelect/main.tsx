@@ -223,8 +223,9 @@ export const EpisodeSelect = (props: { store: EpisodeSelectCore }) => {
   const [curEpisode, setCurEpisode] = createSignal(store.curEpisode.value);
 
   const scrollView = new ScrollViewCore({
-    onReachBottom() {
-      store.list.loadMore();
+    async onReachBottom() {
+      await store.list.loadMore();
+      scrollView.finishLoadingMore();
     },
   });
   store.onStateChange((nextState) => {

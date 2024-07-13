@@ -2,8 +2,10 @@
  * @file 上传字幕
  */
 import { For, Show, createSignal } from "solid-js";
-import { ChevronRight, Eye, Folder, FolderInput, Loader, MoreHorizontal, Scroll, Search, Send } from "lucide-solid";
+import { Eye, Loader, Trash } from "lucide-solid";
 
+import { ViewComponent } from "@/store/types";
+import { createJob } from "@/store/job";
 import { batchUploadSubtitles, validateSubtitleFiles } from "@/biz/services";
 import {
   fetchMovieMediaProfile,
@@ -11,7 +13,7 @@ import {
   fetchSeasonMediaProfile,
   fetchSeasonMediaProfileProcess,
 } from "@/biz/services/media";
-import { Button, Dialog, DropdownMenu, Input, LazyImage, ScrollView } from "@/components/ui";
+import { Button, Dialog, LazyImage, ScrollView } from "@/components/ui";
 import {
   ButtonCore,
   DialogCore,
@@ -21,7 +23,7 @@ import {
   InputInListCore,
   ImageCore,
 } from "@/domains/ui";
-import { RequestCore } from "@/domains/request";
+import { RequestCore, TheResponseOfRequestCore } from "@/domains/request";
 import { MediaTypes, SubtitleLanguageOptions } from "@/constants";
 import { DragZoneCore } from "@/domains/ui/drag-zone";
 import { SeasonSelect } from "@/components/SeasonSelect/main";
@@ -30,9 +32,7 @@ import { RefCore } from "@/domains/cur";
 import { Select } from "@/components/ui/select";
 import { SubtitlePreview, SubtitleReaderCore } from "@/components/SubtitlePreview";
 import { MovieSelect, MovieSelectCore } from "@/components/MovieSelect";
-import { ViewComponent } from "@/store/types";
-import { createJob } from "@/store/job";
-import { padding_zero } from "@/utils";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 export const HomeSubtitleUploadPage: ViewComponent = (props) => {
   const { app, view } = props;
@@ -94,6 +94,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
     id: string;
     type: MediaTypes;
     name: string;
+    overview: string;
     poster_path: string;
     episodes: { id: string; episode_number: number }[];
   }>();
@@ -125,14 +126,16 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
   const seasonSelectDialog = new DialogCore({
     title: "选择电视剧",
     async onOk() {
-      const season = seasonSelect.value;
-      if (!season) {
+      const media = seasonSelect.value;
+      if (!media) {
         app.tip({
           text: ["请选择电视剧"],
         });
         return;
       }
-      const r = await seasonProfileRequest.run({ season_id: season.id });
+      seasonSelectDialog.okBtn.setLoading(true);
+      const r = await seasonProfileRequest.run({ season_id: media.id });
+      seasonSelectDialog.okBtn.setLoading(false);
       if (r.error) {
         app.tip({
           text: ["获取详情失败", r.error.message],
@@ -148,11 +151,13 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
           };
         })
       );
+      poster.setURL(media.poster_path);
       curMedia.select({
-        id: season.id,
+        id: media.id,
         type: MediaTypes.Season,
-        name: season.name,
-        poster_path: season.poster_path,
+        name: media.name,
+        overview: media.overview,
+        poster_path: media.poster_path,
         episodes,
       });
       seasonSelectDialog.hide();
@@ -165,21 +170,22 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
     },
   });
   const movieSelectDialog = new DialogCore({
-    title: "选择电视剧",
+    title: "选择电影",
     onOk() {
-      const movie = movieSelect.value;
-      if (!movie) {
+      const media = movieSelect.value;
+      if (!media) {
         app.tip({
-          text: ["请选择电视剧"],
+          text: ["请选择电影"],
         });
         return;
       }
-      poster.setURL(movie.poster_path);
+      poster.setURL(media.poster_path);
       curMedia.select({
-        id: movie.id,
+        id: media.id,
         type: MediaTypes.Movie,
-        name: movie.name,
-        poster_path: movie.poster_path,
+        name: media.name,
+        overview: media.overview,
+        poster_path: media.poster_path,
         episodes: [],
       });
       movieSelectDialog.hide();
@@ -194,7 +200,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
       const selectedMedia = curMedia.value;
       if (!selectedMedia) {
         app.tip({
-          text: ["选择"],
+          text: ["请选择影视剧"],
         });
         return;
       }
@@ -303,6 +309,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
   });
   const langController = new SelectCore({
     defaultValue: null,
+    placeholder: "批量设置字幕语言",
     options: SubtitleLanguageOptions,
     onChange(v) {
       langSelect.setValue(v);
@@ -313,7 +320,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
     footer: false,
   });
   const uploadLoadingDialog = new DialogCore({
-    title: "上传字幕",
+    title: "",
     footer: false,
     closeable: false,
   });
@@ -339,107 +346,127 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
     <>
       <ScrollView store={scrollView} class="relative h-screen p-8">
         <h1 class="text-2xl">上传字幕</h1>
-        <div class="flex space-x-4 mt-8 w-full">
-          <div class="flex items-center flex-1 space-x-2">
-            <Show
-              when={selectedMedia()}
-              fallback={
-                <div class="space-x-2">
-                  <Button store={seasonSelectBtn}>选择关联的电视剧</Button>
-                  <Button store={movieSelectBtn}>选择关联的电影</Button>
-                </div>
-              }
-            >
-              <div class="flex">
-                <div class="w-[120px] mr-4">
-                  <LazyImage store={poster} />
-                </div>
-                <div class="flex-1">
-                  <div>{selectedMedia()?.name}</div>
-                  <div class="space-x-2">
-                    <Button store={seasonSelectBtn}>重新选择电视</Button>
-                    <Button store={movieSelectBtn}>重新选择电影</Button>
-                  </div>
-                </div>
-              </div>
-            </Show>
-          </div>
-          <div class="flex-1">
-            <div
-              classList={{
-                "relative w-full min-h-[180px] rounded-sm bg-slate-200 border border-2 cursor-pointer": true,
-                "border-green-500 border-dash": state().hovering,
-              }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                uploadZone.handleDragover();
-              }}
-              onDragLeave={() => {
-                uploadZone.handleDragleave();
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                uploadZone.handleDrop(Array.from(event.dataTransfer?.files || []));
-              }}
-            >
+        <div class="absolute bottom-0" style={{ top: "64px", left: "32px", right: "32px" }}>
+          <div class=" flex space-x-4 pt-8 w-full h-full">
+            <div class="flex flex-1 space-x-2">
               <Show
-                when={!!results()}
+                when={selectedMedia()}
                 fallback={
-                  <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
-                    <div class="p-4 text-center">
-                      <p>将文件拖拽至此或点击选择文件</p>
-                      <input type="file" class="absolute inset-0 opacity-0" />
+                  <div>
+                    <div class="space-x-2">
+                      <Button store={seasonSelectBtn}>选择关联的电视剧</Button>
+                      <Button store={movieSelectBtn}>选择关联的电影</Button>
                     </div>
                   </div>
                 }
               >
-                <div class="p-4">
-                  <div class="p-4 bg-white rounded-sm space-y-2">
-                    <div>
-                      <Select store={langController} />
-                    </div>
+                <div class="flex">
+                  <div class="w-[160px] mr-4">
+                    <AspectRatio ratio={3 / 4}>
+                      <LazyImage class="overflow-hidden absolute inset-0" store={poster} />
+                    </AspectRatio>
                   </div>
-                  <div class="space-y-2 mt-8">
-                    <For each={results()}>
-                      {(result) => {
-                        const { filename } = result;
-                        return (
-                          <div class="p-4 bg-white rounded-sm space-y-2">
-                            <div class="flex items-center space-x-2">
-                              <div class="break-all">{filename}</div>
-                              <div
-                                class=""
-                                onClick={() => {
-                                  const file = uploadZone.getFileByName(filename);
-                                  if (!file) {
-                                    app.tip({
-                                      text: ["没有匹配的文件"],
-                                    });
-                                    return;
-                                  }
-                                  subtitlePreview.setTitle(filename);
-                                  subtitlePreview.show();
-                                  fileReader.read(file);
-                                }}
-                              >
-                                <Eye class="w-4 h-4" />
-                              </div>
-                            </div>
-                            <Show when={selectedMedia()?.type === MediaTypes.Season}>
-                              <div>
-                                <Select store={episodeSelect.bind(filename)} />
-                              </div>
-                            </Show>
-                            <div>
-                              <Select store={langSelect.bind(filename)} />
-                            </div>
-                          </div>
-                        );
-                      }}
-                    </For>
+                  <div class="flex-1">
+                    <div class="text-3xl">{selectedMedia()?.name}</div>
+                    <div>{selectedMedia()?.overview}</div>
+                    <div class="mt-8 space-x-2">
+                      <Button store={seasonSelectBtn}>重新选择电视</Button>
+                      <Button store={movieSelectBtn}>重新选择电影</Button>
+                    </div>
                   </div>
                 </div>
               </Show>
+            </div>
+            <div class="relative flex-1">
+              <div
+                classList={{
+                  "overflow-y-auto absolute top-0 right-0 w-full min-h-[180px] rounded-sm bg-slate-200 border border-2":
+                    true,
+                  "border-green-500 border-dash": state().hovering,
+                }}
+                style={{ bottom: "128px" }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  uploadZone.handleDragover();
+                }}
+                onDragLeave={() => {
+                  uploadZone.handleDragleave();
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  uploadZone.handleDrop(Array.from(event.dataTransfer?.files || []));
+                }}
+              >
+                <Show
+                  when={results()?.length}
+                  fallback={
+                    <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
+                      <div class="p-4 text-center">
+                        <p>将文件拖拽至此或点击选择文件</p>
+                        <input type="file" class="absolute inset-0 opacity-0 cursor-pointer" />
+                      </div>
+                    </div>
+                  }
+                >
+                  <div class="p-4">
+                    <div class="p-4 bg-white rounded-sm space-y-2">
+                      <div>
+                        <Select store={langController} />
+                      </div>
+                    </div>
+                    <div class="space-y-2 mt-8">
+                      <For each={results()}>
+                        {(result) => {
+                          const { filename } = result;
+                          return (
+                            <div class="p-4 bg-white rounded-sm space-y-2">
+                              <div class="flex items-center justify-between">
+                                <div class="text-xl break-all">{filename}</div>
+                                <div class="flex items-center space-x-2">
+                                  <div
+                                    class=""
+                                    onClick={() => {
+                                      const file = uploadZone.getFileByName(filename);
+                                      if (!file) {
+                                        app.tip({
+                                          text: ["没有匹配的文件"],
+                                        });
+                                        return;
+                                      }
+                                      subtitlePreview.setTitle(filename);
+                                      subtitlePreview.show();
+                                      fileReader.read(file);
+                                    }}
+                                  >
+                                    <Eye class="w-4 h-4 cursor-pointer" />
+                                  </div>
+                                  <div
+                                    onClick={() => {
+                                      filenameValidatingRequest.modifyResponse((prev) => {
+                                        return prev.filter((subtitle) => subtitle.filename !== filename);
+                                      });
+                                    }}
+                                  >
+                                    <Trash class="w-4 h-4 cursor-pointer" />
+                                  </div>
+                                </div>
+                              </div>
+                              <Show when={selectedMedia()?.type === MediaTypes.Season}>
+                                <div>
+                                  <Select store={episodeSelect.bind(filename)} />
+                                </div>
+                              </Show>
+                              <div>
+                                <Select store={langSelect.bind(filename)} />
+                              </div>
+                            </div>
+                          );
+                        }}
+                      </For>
+                    </div>
+                  </div>
+                </Show>
+              </div>
             </div>
           </div>
         </div>

@@ -255,8 +255,9 @@ export const HomeReportListPage: ViewComponent = (props) => {
     refreshBtn.setLoading(loading);
   });
   reportList.onStateChange((v) => setResponse(v));
-  scrollView.onReachBottom(() => {
-    reportList.loadMore();
+  scrollView.onReachBottom(async () => {
+    await reportList.loadMore();
+    scrollView.finishLoadingMore();
   });
   reportList.init();
 
