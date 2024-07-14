@@ -21,7 +21,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const curSeasonRef = new RefCore<SubtitleItem>();
   const curEpisodeRef = new RefCore<SubtitleItem["sources"][number]>();
   const curSubtitleRef = new RefCore<SubtitleItem["sources"][number]["subtitles"][number]>();
-  const seasonList = new ListCore(new RequestCore(fetchSubtitleList), { pageSize: 3 });
+  const seasonList = new ListCore(new RequestCore(fetchSubtitleList), {});
   const subtitleDeletingRequest = new RequestCore(deleteSubtitle, {
     onLoading(loading) {
       subtitleDeletingConfirmDialog.okBtn.setLoading(loading);
