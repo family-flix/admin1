@@ -318,7 +318,7 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
               {/* <Button icon={<ArrowUpCircle class="w-4 h-4" />} store={refreshSeasonListBtn}>
                 更新近3月内电视剧详情
               </Button> */}
-              <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button>
+              {/* <Button store={gotoSeasonArchivePageBtn}>归档电视剧</Button> */}
             </div>
             <div class="flex items-center space-x-2 mt-4">
               <Input class="" store={nameSearchInput} />

@@ -68,7 +68,7 @@ export const SharedFilesHistoryPage: ViewComponent = (props) => {
               {(sharedFile) => {
                 const { id, url, title } = sharedFile;
                 return (
-                  <div class="p-4">
+                  <div class="py-4">
                     <p>{title}</p>
                     <a href={url} target="_blank">
                       {url}

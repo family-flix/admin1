@@ -127,12 +127,11 @@ export const SeasonSelect = (props: { store: TVSeasonSelectCore }) => {
     },
   });
 
-  store.onResponseChange((nextState) => {
-    setTVListResponse(nextState);
+  store.onResponseChange((v) => {
+    setTVListResponse(v);
   });
-  store.onCurSeasonChange((nextState) => {
-    //     console.log("[COMPONENT]TVSeasonSelect - store.onCurSeasonChange", nextState);
-    setCurSeason(nextState);
+  store.onCurSeasonChange((v) => {
+    setCurSeason(v);
   });
 
   store.list.init();

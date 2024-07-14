@@ -109,7 +109,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 图片进入可视区域 */
   handleShow() {
-    console.log("[DOMAIN]ui/image - handleShow", this.realSrc);
+    // console.log("[DOMAIN]ui/image - handleShow", this.realSrc);
     if (!this.realSrc) {
       this.step = ImageStep.Failed;
       this.emit(Events.StateChange, { ...this.state });

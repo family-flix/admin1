@@ -1,7 +1,7 @@
 /**
  * @file 任务列表
  */
-import { For, JSX, Show, createSignal } from "solid-js";
+import { For, JSX, Show, createSignal, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Ban, CheckCircle, ParkingCircle, RotateCw, Timer, Trash } from "lucide-solid";
 
@@ -78,14 +78,18 @@ export const LogListPage: ViewComponent = (props) => {
       });
     },
   });
-
   jobList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
+  scrollView.onReachBottom(async () => {
+    await jobList.loadMore();
+    scrollView.finishLoadingMore();
+  });
 
   const [response, setResponse] = createSignal(jobList.response);
-  jobList.onStateChange((nextState) => {
-    setResponse(nextState);
+
+  jobList.onStateChange((v) => {
+    setResponse(v);
   });
 
   const statusIcons: Record<TaskStatus, () => JSX.Element> = {
@@ -93,14 +97,12 @@ export const LogListPage: ViewComponent = (props) => {
     [TaskStatus.Paused]: () => <Ban class="w-4 h-4" />,
     [TaskStatus.Running]: () => <Timer class="w-4 h-4" />,
   };
-
-  scrollView.onReachBottom(async () => {
-    await jobList.loadMore();
-    scrollView.finishLoadingMore();
-  });
   // view.onShow(() => {
-  jobList.init();
+  // jobList.init();
   // });
+  onMount(() => {
+    tab.selectById(String(TaskStatus.Finished));
+  });
 
   const dataSource = () => response().dataSource;
 

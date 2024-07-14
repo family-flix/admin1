@@ -70,7 +70,7 @@ export const SharedFilesTransferListPage: ViewComponent = (props) => {
               {(sharedFile) => {
                 const { id, url, name, created } = sharedFile;
                 return (
-                  <div class="p-4">
+                  <div class="py-4">
                     <div class="text-lg">{name}</div>
                     <div class="text-slate-800">
                       <a href={url} target="_blank">

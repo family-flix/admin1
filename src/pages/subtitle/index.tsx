@@ -2,7 +2,7 @@
  * @file 字幕列表
  */
 import { For, JSX, createSignal } from "solid-js";
-import { Eye, Film, Mails, RotateCw, Tv } from "lucide-solid";
+import { Eye, File, Film, Mails, RotateCw, Trash, Tv } from "lucide-solid";
 
 import { ViewComponent } from "@/store/types";
 import { refreshJobs } from "@/store/job";
@@ -21,7 +21,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const curSeasonRef = new RefCore<SubtitleItem>();
   const curEpisodeRef = new RefCore<SubtitleItem["sources"][number]>();
   const curSubtitleRef = new RefCore<SubtitleItem["sources"][number]["subtitles"][number]>();
-  const seasonList = new ListCore(new RequestCore(fetchSubtitleList), {});
+  const seasonList = new ListCore(new RequestCore(fetchSubtitleList), { pageSize: 3 });
   const subtitleDeletingRequest = new RequestCore(deleteSubtitle, {
     onLoading(loading) {
       subtitleDeletingConfirmDialog.okBtn.setLoading(loading);
@@ -157,24 +157,32 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
                 return (
                   <div class={cn("space-y-1 flex p-4 rounded-sm bg-white")}>
                     <div class="flex flex-1">
-                      <LazyImage class="w-[120px] object-cover" store={poster.bind(poster_path)} />
+                      <LazyImage class="w-[120px] h-[180px] self-start object-cover" store={poster.bind(poster_path)} />
                       <div class="flex-1 ml-4 w-full">
                         <div class="text-xl">{name}</div>
-                        <div class="grid grid-cols-3 gap-2 mt-4 w-full">
+                        <div class="overflow-y-auto mt-4 w-full max-h-[320px] space-y-4">
                           <For each={sources}>
                             {(episode) => {
                               const { id, name, order, subtitles } = episode;
                               return (
                                 <div>
-                                  <div>
+                                  <div
+                                    classList={{
+                                      "text-lg": true,
+                                      "text-gray-200": subtitles.length === 0,
+                                    }}
+                                  >
                                     {order}、{name}
                                   </div>
-                                  <div>
+                                  <div class="ml-4 mt-2 text-sm text-gray-600">
                                     <For each={subtitles}>
                                       {(subtitle) => {
                                         const { id, unique_id, language } = subtitle;
                                         return (
                                           <div class="flex items-center space-x-2">
+                                            <div>
+                                              <File class="w-4 h-4" />
+                                            </div>
                                             <div>{unique_id}</div>
                                             <div>{language}</div>
                                             <div
@@ -185,7 +193,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
                                                 subtitleDeletingConfirmDialog.show();
                                               }}
                                             >
-                                              删除
+                                              <Trash class="w-4 h-4 cursor-pointer" />
                                             </div>
                                           </div>
                                         );

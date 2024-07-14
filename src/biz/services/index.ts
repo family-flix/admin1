@@ -603,8 +603,9 @@ export function batchUploadSubtitles(values: {
   return media_request.post<{ job_id: string }>("/api/v2/admin/subtitle/batch_create", body);
 }
 export function fetchSubtitleList(params: FetchParams) {
+  const { page, pageSize } = params;
   return media_request.post<
-    ListResponseWithCursor<{
+    ListResponse<{
       id: string;
       type: MediaTypes;
       name: string;
@@ -621,7 +622,10 @@ export function fetchSubtitleList(params: FetchParams) {
         }[];
       }[];
     }>
-  >("/api/v2/admin/subtitle/list", params);
+  >("/api/v2/admin/subtitle/list", {
+    page,
+    page_size: pageSize,
+  });
 }
 export type SubtitleItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchSubtitleList>>>["list"][number];
 /**

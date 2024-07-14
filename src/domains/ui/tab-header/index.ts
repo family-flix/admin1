@@ -128,7 +128,18 @@ export class TabHeaderCore<
     this.emit(Events.Change, { ...matchedTab, index });
     this.emit(Events.StateChange, { ...this.state });
   }
+  pendingAction: null | {
+    id: T["options"][number]["id"];
+    options: Partial<{ ignore: boolean }>;
+  } = null;
   selectById(id: T["options"][number]["id"], options: Partial<{ ignore: boolean }> = {}) {
+    if (!this.mounted) {
+      this.pendingAction = {
+        id,
+        options,
+      };
+      return;
+    }
     const { ignore } = options;
     const matchedIndex = this.tabs.findIndex((t) => t.id === id);
     if (matchedIndex === -1) {
@@ -188,12 +199,19 @@ export class TabHeaderCore<
     // if (this.current === null) {
     //   return;
     // }
-    const left = this.calcLineLeft(0);
-    if (left !== null) {
-      this.changeLinePosition(left);
-    }
     this.mounted = true;
     this.emit(Events.Mounted);
+    (() => {
+      if (this.pendingAction) {
+        this.selectById(this.pendingAction.id, this.pendingAction.options);
+        this.pendingAction = null;
+        return;
+      }
+      const left = this.calcLineLeft(0);
+      if (left !== null) {
+        this.changeLinePosition(left);
+      }
+    })();
   }
   changeLinePosition(left: number) {
     this.emit(Events.LinePositionChange, { left });

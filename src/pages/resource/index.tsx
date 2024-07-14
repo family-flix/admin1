@@ -106,18 +106,17 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
   });
   const searchHistoryBtn = new ButtonCore({
     onClick() {
-      // app.showView(sharedFilesHistoryPage);
-      history.push("root.home_layout.season_list");
+      history.push("root.home_layout.transfer_search_list");
     },
   });
   const transferHistoryBtn = new ButtonCore({
     onClick() {
       history.push("root.home_layout.transfer_history_list");
-      // app.showView(sharedFilesTransferListPage);
     },
   });
   const searchInput = new InputCore({
     defaultValue: "",
+    placeholder: "输入关键字搜索文件",
     onEnter(v) {
       if (!v) {
         return;
@@ -125,7 +124,6 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
       sharedResource.search(v);
     },
   });
-
   driveList.onStateChange((nextResponse) => {
     driveSubMenu.setItems(
       nextResponse.dataSource.map((drive) => {
@@ -210,15 +208,21 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
           </Button>
         </div>
         <div class="flex items-center space-x-2 mt-4">
-          <Input store={sharedFileUrlInput} />
-          <Input store={sharedFileCodeInput} />
+          <div class="flex items-center flex-1 space-x-2">
+            <div class="flex-1">
+              <Input store={sharedFileUrlInput} />
+            </div>
+            <div class="w-[180px]">
+              <Input store={sharedFileCodeInput} />
+            </div>
+          </div>
           <Button size="default" variant="default" icon={<Send class="w-4 h-4" />} store={sharedFileRequestBtn}>
             获取
           </Button>
         </div>
-        <div class="relative mt-4 p-4 bg-white rounded-sm">
+        <div class="relative overflow-hidden mt-4 bg-white rounded-sm">
           <Show when={paths().length}>
-            <div class="flex items-center flex-wrap space-x-2">
+            <div class="flex items-center flex-wrap m-4 space-x-2">
               <Folder class="w-4 h-4" />
               <For each={paths()}>
                 {(path, index) => {
@@ -248,7 +252,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
             </div>
           </Show>
           <Show when={files().length} fallback={<div></div>}>
-            <div class="mt-8 grid grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-6">
+            <div class="grid grid-cols-3 gap-2 m-4 mt-8 lg:grid-cols-4 xl:grid-cols-6">
               <For each={files()}>
                 {(file) => {
                   const { name, type } = file;

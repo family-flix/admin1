@@ -18,6 +18,7 @@ import {
 import { fetchMovieMediaList, fetchMovieMediaListProcess } from "@/biz/services/media";
 import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Textarea } from "@/components/ui";
 import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";
+import { MovieSelect, MovieSelectCore } from "@/components/MovieSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
 import { RefCore } from "@/domains/cur/index";
 import { RequestCore } from "@/domains/request/index";
@@ -46,7 +47,6 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
   const curReport = new RefCore<ReportItem>();
-  const curMovie = new RefCore<MovieItem>();
   const reportList = new ListCore(new RequestCore(fetchReportList, { process: fetchReportListProcess }), {});
   const replyRequest = new RequestCore(replyReport, {});
   const commentDialog = new DialogCore({
@@ -153,6 +153,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
   const tvSelectBtn = new ButtonInListCore<ReportItem>({
     onClick(report) {
       curReport.select(report);
+      // console.log("[PAGE]report/index - onClick", report);
       if (report.media && report.media.type === MediaTypes.Season) {
         seasonSelect.nameInput.setValue(report.media.name);
         seasonSelect.list.search({ name: report.media.name });
@@ -161,7 +162,6 @@ export const HomeReportListPage: ViewComponent = (props) => {
       seasonSelectDialog.show();
     },
   });
-
   const movieList = new ListCore(new RequestCore(fetchMovieMediaList, { process: fetchMovieMediaListProcess }), {
     onLoadingChange(loading) {
       movieSearchBtn.setLoading(loading);
@@ -179,6 +179,13 @@ export const HomeReportListPage: ViewComponent = (props) => {
       movieList.search({ name: movieNameSearchInput.value });
     },
   });
+  const movieSelect = new MovieSelectCore({
+    onSelect(season) {
+      if (curReport.value?.type === ReportTypes.Want) {
+        commentInput.setValue(`你想看的电影「${season.name}」已收录，点击观看`);
+      }
+    },
+  });
   const movieDialog = new DialogCore({
     title: "选择电影",
     async onOk() {
@@ -194,7 +201,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
         });
         return;
       }
-      if (!curMovie.value) {
+      if (!movieSelect.value) {
         app.tip({
           text: ["请选择电影"],
         });
@@ -204,7 +211,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
       const r = await replyRequest.run({
         report_id: curReport.value.id,
         content: commentInput.value,
-        media_id: curMovie.value.id,
+        media_id: movieSelect.value.id,
       });
       movieDialog.okBtn.setLoading(false);
       if (r.error) {
@@ -220,18 +227,21 @@ export const HomeReportListPage: ViewComponent = (props) => {
     },
     onCancel() {
       curReport.clear();
-      curMovie.clear();
       commentInput.clear();
     },
   });
   const movieSelectBtn = new ButtonInListCore<ReportItem>({
     onClick(report) {
       curReport.select(report);
-      // console.log(report.movie);
-      if (report.media && report.media.type === MediaTypes.Movie) {
-        movieNameSearchInput.setValue(report.media.name);
-        movieList.search({ name: report.media.name });
-      }
+      // console.log("[PAGE]report/index - onClick", report);
+      (() => {
+        if (report.media && report.media.type === MediaTypes.Movie) {
+          movieNameSearchInput.setValue(report.media.name);
+          movieList.search({ name: report.media.name });
+          return;
+        }
+        movieList.init();
+      })();
       commentInput.setValue(buildMsg(report));
       movieDialog.show();
     },
@@ -247,10 +257,8 @@ export const HomeReportListPage: ViewComponent = (props) => {
 
   const [response, setResponse] = createSignal(reportList.response);
   const [movieListResponse, setMovieListResponse] = createSignal(movieList.response);
-  const [curMovieState, setCurMovieState] = createSignal(curMovie.value);
 
   movieList.onStateChange((v) => setMovieListResponse(v));
-  curMovie.onStateChange((v) => setCurMovieState(v));
   reportList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
@@ -377,7 +385,7 @@ export const HomeReportListPage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={seasonSelectDialog}>
         <div class="w-[520px]">
-          <div>
+          <div class="mb-2">
             <Textarea store={commentInput} />
           </div>
           <SeasonSelect store={seasonSelect} />
@@ -385,74 +393,10 @@ export const HomeReportListPage: ViewComponent = (props) => {
       </Dialog>
       <Dialog store={movieDialog}>
         <div class="w-[520px]">
-          <div>
+          <div class="mb-2">
             <Textarea store={commentInput} />
           </div>
-          <div class="flex items-center space-x-2 mt-4">
-            <Input store={movieNameSearchInput} />
-            <Button store={movieSearchBtn} variant="subtle">
-              搜索
-            </Button>
-          </div>
-          <div class="mt-2">
-            <ListView
-              store={movieList}
-              skeleton={
-                <div>
-                  <div class="rounded-md border border-slate-300 bg-white shadow-sm">
-                    <div class="flex">
-                      <div class="overflow-hidden mr-2 rounded-sm">
-                        <Skeleton class="w-[120px] h-[180px]" />
-                      </div>
-                      <div class="flex-1 p-4">
-                        <Skeleton class="h-[36px] w-[180px]"></Skeleton>
-                        <div class="mt-2 space-y-1">
-                          <Skeleton class="h-[24px] w-[120px]"></Skeleton>
-                          <Skeleton class="h-[24px] w-[240px]"></Skeleton>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              }
-            >
-              <div class="space-y-4 max-h-[240px] overflow-y-auto">
-                <For each={movieListResponse().dataSource}>
-                  {(movie) => {
-                    const { name, overview, poster_path, air_date, vote_average, runtime } = movie;
-                    return (
-                      <div
-                        classList={{
-                          "rounded-md border border-slate-300 bg-white shadow-sm": true,
-                          "border-green-500": curMovieState()?.id === movie.id,
-                        }}
-                        onClick={() => {
-                          if (curReport.value?.type === ReportTypes.Want) {
-                            commentInput.setValue(`你想看的电影「${movie.name}」已收录，点击观看`);
-                          }
-                          curMovie.select(movie);
-                        }}
-                      >
-                        <div class="flex">
-                          <div class="overflow-hidden mr-2 rounded-sm">
-                            <LazyImage class="w-[120px] h-[180px]" store={poster.bind(poster_path)} alt={name} />
-                          </div>
-                          <div class="flex-1 w-0 p-4">
-                            <h2 class="text-2xl text-slate-800">{name}</h2>
-                            <div class="mt-2 overflow-hidden text-ellipsis">
-                              <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
-                                {overview}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }}
-                </For>
-              </div>
-            </ListView>
-          </div>
+          <MovieSelect store={movieSelect} />
         </div>
       </Dialog>
     </>

@@ -152,6 +152,9 @@ export const CollectionListPage: ViewComponent = (props) => {
             <Button class="space-x-1" icon={<RotateCw class="w-4 h-4" />} store={refreshBtn}>
               刷新
             </Button>
+            <Button class="" store={resetBtn}>
+              重置
+            </Button>
             <Button class="space-x-1" store={gotoCollectionCreatePage}>
               新增集合
             </Button>
@@ -160,9 +163,6 @@ export const CollectionListPage: ViewComponent = (props) => {
             <Input class="" store={nameSearchInput} />
             <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
               搜索
-            </Button>
-            <Button class="" store={resetBtn}>
-              重置
             </Button>
           </div>
           <div class="mt-4">
