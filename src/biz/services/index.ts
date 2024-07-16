@@ -466,25 +466,30 @@ export function fetchResourceTransferHistoryListProcess(r: TmpRequestResp<typeof
 export function uploadFileToDrive(body: FormData) {
   return media_request.post("/api/admin/upload", body);
 }
-export function testSendNotification(values: { text: string; token: string }) {
-  const { text, token } = values;
-  return media_request.post("/api/admin/notify/test", { text, token });
+export function testSendNotification(values: { text: string; token1: string; token2: string }) {
+  const { text, token1, token2 } = values;
+  return media_request.post("/api/admin/notify/test", { text, token1, token2 });
 }
 
-type UserSettings = {
-  /**
-   * PushDeer token
-   */
-  push_deer_token: string;
-  /**
-   * filename parse rules
-   */
-  extra_filename_rules: string;
-  ignore_files_when_sync: string;
-  max_size_when_sync: number;
-  /** 开放注册 */
+export type UserSettings = {
+  qiniu_access_token?: string;
+  qiniu_secret_token?: string;
+  qiniu_scope?: string;
+  /** 影视剧详情相关 */
+  tmdb_token?: string;
+  third_douban?: {
+    hostname: string;
+    token: string;
+  };
+  /** 消息推送相关 */
+  push_deer_token?: string;
+  telegram_token?: string;
+  /** 影视剧文件名解析相关 */
+  extra_filename_rules?: string;
+  ignore_files_when_sync?: string;
+  max_size_when_sync?: number;
+  /** 其他 */
   can_register?: boolean;
-  /** 无需邀请码 */
   no_need_invitation_code?: boolean;
 };
 /**
@@ -498,7 +503,9 @@ export function fetchSettings() {
  */
 export function updateSettings(values: Partial<UserSettings>) {
   const {
+    third_douban,
     push_deer_token,
+    telegram_token,
     extra_filename_rules,
     ignore_files_when_sync,
     max_size_when_sync,
@@ -506,7 +513,9 @@ export function updateSettings(values: Partial<UserSettings>) {
     no_need_invitation_code,
   } = values;
   return media_request.post("/api/v2/admin/settings/update", {
+    third_douban,
     push_deer_token,
+    telegram_token,
     extra_filename_rules,
     ignore_files_when_sync,
     max_size_when_sync,
@@ -892,4 +901,8 @@ export function fetchMemberHistoryList(values: { member_id: string }) {
       updated: string;
     }>
   >("/api/v2/admin/member/histories", values);
+}
+
+export function refresh_media_ranks() {
+  return media_request.post("/api/v2/admin/collection/refresh_media_rank");
 }

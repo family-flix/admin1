@@ -270,5 +270,5 @@ export type TheMediaInTMDB = NonNullable<UnpackedResult<TmpRequestResp<typeof se
  */
 export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
-  return media_request.post<{ job_id: string }>("/api/v2/media_profile/refresh", { media_id });
+  return media_request.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", { media_id });
 }

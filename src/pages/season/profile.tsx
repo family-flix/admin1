@@ -115,7 +115,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
       });
       appendAction("deleteTV", {
         tv_id: view.query.id,
-        id: view.query.season_id,
+        id: view.query.id,
       });
       seasonDeletingConfirmDialog.hide();
       history.back();
@@ -131,28 +131,17 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
     },
   });
   const seasonProfileRefreshRequest = new RequestCore(refreshMediaProfile, {
-    onSuccess(r) {
-      createJob({
-        job_id: r.job_id,
-        onFinish() {
-          app.tip({ text: ["刷新详情成功"] });
-          profileRequest.reload();
-          profileRefreshBtn.setLoading(false);
-        },
-      });
+    onLoading(loading) {
+      profileRefreshBtn.setLoading(loading);
     },
-    onFailed(error) {
-      app.tip({
-        text: ["刷新详情失败", error.message],
-      });
-      profileRefreshBtn.setLoading(false);
+    onSuccess() {
+      app.tip({ text: ["刷新详情成功"] });
+      profileRequest.reload();
     },
   });
-  const tmpSeasonRef = new RefCore<SeasonMediaProfile>();
   const seasonRef = new RefCore<SeasonMediaProfile>();
   const episodeRef = new RefCore<MediaProfile>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
-  // const curParsedTV = new SelectionCore<TVProfile["parsed_tvs"][number]>();
   const searcher = new TMDBSearcherCore();
   const dialog = new DialogCore({
     onOk() {
@@ -187,11 +176,8 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
   });
   const profileRefreshBtn = new ButtonCore({
     onClick() {
-      app.tip({
-        text: ["开始刷新"],
-      });
       profileRefreshBtn.setLoading(true);
-      seasonProfileRefreshRequest.run({ media_id: view.query.season_id });
+      seasonProfileRefreshRequest.run({ media_id: view.query.id });
     },
   });
   const seasonDeletingBtn = new ButtonCore({

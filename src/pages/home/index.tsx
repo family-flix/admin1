@@ -2,7 +2,7 @@
  * @file 管理后台首页(云盘列表)
  */
 import { createSignal, For, Show } from "solid-js";
-import { Send, FileSearch, RefreshCcw, AlertTriangle, Loader, Bird } from "lucide-solid";
+import { Send, FileSearch, RefreshCcw, AlertTriangle, Loader, Bird, BarChart } from "lucide-solid";
 
 import { ViewComponent } from "@/store/types";
 import {
@@ -11,7 +11,7 @@ import {
   fetchMediaRecentlyCreated,
   refreshDashboard,
 } from "@/biz/services/common";
-import { pushMessageToMembers } from "@/biz/services";
+import { pushMessageToMembers, refresh_media_ranks } from "@/biz/services";
 import { Button, Dialog, ScrollView, Textarea, Checkbox, Input, LazyImage } from "@/components/ui";
 import { DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { ImageInListCore } from "@/domains/ui/image";
@@ -336,6 +336,24 @@ export const HomeIndexPage: ViewComponent = (props) => {
                   <FileSearch class="w-6 h-6" />
                 </div>
                 <div class="mt-2 break-all text-sm text-center">文件名解析</div>
+              </div>
+              <div class=" relative">
+                <div
+                  class="flex flex-col items-center p-4 rounded-md bg-white border cursor-pointer"
+                  onClick={async () => {
+                    const r = await new RequestCore(refresh_media_ranks, { client }).run();
+                    if (r.error) {
+                      return;
+                    }
+                    app.tip({
+                      text: ["刷新成功"],
+                    });
+                    // filenameParseDialog.show();
+                  }}
+                >
+                  <BarChart class="w-6 h-6" />
+                </div>
+                <div class="mt-2 break-all text-sm text-center">刷新排行榜</div>
               </div>
             </div>
           </div>

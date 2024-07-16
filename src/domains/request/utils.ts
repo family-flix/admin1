@@ -183,7 +183,7 @@ export function request_factory(
     },
     post<T>(...args: Parameters<typeof request.post>) {
       const payload = request.post<T>(...args);
-      const { url, method, query, params, body } = payload;
+      const { url, method, query, params, body = {} } = payload;
       if (_debug) {
         console.log("create POST payload");
         console.log(payload);

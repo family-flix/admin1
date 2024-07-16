@@ -72,7 +72,7 @@ export function updateDriveProfile(
  * 获取阿里云盘列表
  */
 export function fetchDriveList(params: FetchParams) {
-  const { page, pageSize, ...rest } = params;
+  const { page, pageSize, hidden = 0, ...rest } = params;
   return media_request.post<
     ListResponseWithCursor<{
       id: string;
@@ -97,7 +97,7 @@ export function fetchDriveList(params: FetchParams) {
     ...rest,
     page,
     page_size: pageSize,
-    hidden: 0,
+    hidden,
   });
 }
 export type DriveItem = RequestedResource<typeof fetchDriveListProcess>["list"][0];

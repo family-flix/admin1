@@ -24,7 +24,7 @@ import {
 import { ViewComponent, ViewComponentProps } from "@/store/types";
 import { onJobsChange } from "@/store/job";
 import { PageKeys } from "@/store/routes";
-import { fetchSettings, testSendNotification, updateSettings } from "@/biz/services";
+import { UserSettings, fetchSettings, testSendNotification, updateSettings } from "@/biz/services";
 import { Show } from "@/packages/ui/show";
 import { Button, Checkbox, Dialog, DropdownMenu, Input, KeepAliveRouteView, Textarea } from "@/components/ui";
 import { TMDBSearcherDialog, TMDBSearcherDialogCore } from "@/components/TMDBSearcher";
@@ -39,8 +39,6 @@ import {
   MenuItemCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { Application } from "@/domains/app";
-import { HistoryCore } from "@/domains/history";
 import { cn, sleep } from "@/utils/index";
 
 function Page(props: ViewComponentProps) {
@@ -56,13 +54,18 @@ export const HomeLayout: ViewComponent = (props) => {
     },
     onSuccess(v) {
       const {
+        third_douban = { hostname: "", token: "" },
         push_deer_token = "",
+        telegram_token = "",
         extra_filename_rules = "",
         ignore_files_when_sync = "",
         can_register,
         no_need_invitation_code,
       } = v;
       notify1TokenInput.setValue(push_deer_token);
+      notify2TokenInput.setValue(telegram_token);
+      thirdDoubanHostnameInput.setValue(third_douban.hostname);
+      thirdDoubanTokenInput.setValue(third_douban.token);
       filenameParseRuleInput.setValue(extra_filename_rules);
       ignoreFilesRuleInput.setValue(ignore_files_when_sync);
       if (can_register) {
@@ -126,24 +129,34 @@ export const HomeLayout: ViewComponent = (props) => {
     title: "配置",
     onOk() {
       const notify1Token = notify1TokenInput.value?.trim();
+      const notify2Token = notify2TokenInput.value?.trim();
+      const thirdDouban = {
+        hostname: thirdDoubanHostnameInput.value?.trim(),
+        token: thirdDoubanTokenInput.value?.trim(),
+      };
       const ignoreFilesRule = ignoreFilesRuleInput.value?.trim();
       const filenameParse = filenameParseRuleInput.value?.trim();
       const canRegister = $canRegisterCheckbox.checked;
       const noNeedCode = $noNeedCode.checked;
-      const values = {
+      const values: UserSettings = {
         ignore_files_when_sync: ignoreFilesRule,
-        push_deer_token: notify1TokenInput.value?.trim(),
-        extra_filename_rules: filenameParseRuleInput.value?.trim(),
+        push_deer_token: notify1Token,
+        telegram_token: notify2Token,
+        third_douban: thirdDouban,
+        extra_filename_rules: filenameParse,
         can_register: canRegister,
         no_need_invitation_code: noNeedCode,
       };
       if (notify1Token) {
         values.push_deer_token = notify1Token;
       }
+      if (notify2Token) {
+        values.telegram_token = notify2Token;
+      }
       if (filenameParse) {
         values.extra_filename_rules = filenameParse;
       }
-      if (Object.keys(values).length === 0) {
+      if (Object.keys(values).filter((k) => !!values[k as keyof typeof values]).length === 0) {
         app.tip({
           text: ["配置不能均为空"],
         });
@@ -190,6 +203,18 @@ export const HomeLayout: ViewComponent = (props) => {
     defaultValue: "",
     placeholder: "请输入 push deer token",
   });
+  const notify2TokenInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入 Telegram token",
+  });
+  const thirdDoubanHostnameInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入三方豆瓣 hostname",
+  });
+  const thirdDoubanTokenInput = new InputCore({
+    defaultValue: "",
+    placeholder: "请输入三方豆瓣 token",
+  });
   const notify1TestRequest = new RequestCore(testSendNotification, {
     onLoading(loading) {
       notify1TestBtn.setLoading(loading);
@@ -225,7 +250,8 @@ export const HomeLayout: ViewComponent = (props) => {
       }
       notify1TestRequest.run({
         text: notify1TestInput.value,
-        token: notify1TokenInput.value,
+        token1: notify1TokenInput.value,
+        token2: notify2TokenInput.value,
       });
     },
   });
@@ -486,12 +512,19 @@ export const HomeLayout: ViewComponent = (props) => {
           <div>
             <div>PushDeer token</div>
             <Textarea store={notify1TokenInput} />
+            {/* <div>Telegram token</div>
+            <Textarea store={notify2TokenInput} /> */}
             <div class="mt-2 flex items-center space-x-2">
               <Input store={notify1TestInput} />
               <Button variant="subtle" store={notify1TestBtn}>
                 发送
               </Button>
             </div>
+          </div>
+          <div class="mt-4">
+            <div>三方豆瓣接口</div>
+            <Input store={thirdDoubanHostnameInput} />
+            <Input class="mt-2" store={thirdDoubanTokenInput} />
           </div>
           <div class="mt-4">
             <div>文件名解析规则</div>

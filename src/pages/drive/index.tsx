@@ -148,11 +148,9 @@ export const DriveListPage: ViewComponent = (props) => {
             <Button store={driveCreateBtn} icon={<HardDrive class="w-4 h-4" />}>
               新增云盘
             </Button>
-          </div>
-          <div class="mt-4 space-x-2">
             <div class="flex items-center space-x-2">
               <Checkbox store={allDriveCheckbox}></Checkbox>
-              <span>全部内容</span>
+              <span>全部云盘</span>
             </div>
           </div>
           <div class="flex items-center space-x-2 mt-4">
