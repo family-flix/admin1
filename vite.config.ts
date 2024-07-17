@@ -8,17 +8,6 @@ const config = defineConfig(({ mode }) => {
     base: "/admin",
     plugins: [
       solidPlugin(),
-      {
-        name: "singleHMR",
-        handleHotUpdate({ modules }) {
-          modules.map((m) => {
-            // @ts-ignore
-            m.importedModules = new Set();
-            m.importers = new Set();
-          });
-          return modules;
-        },
-      },
     ],
     resolve: {
       alias: {

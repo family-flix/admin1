@@ -34,11 +34,13 @@ function Application() {
       texts: text,
     });
   });
-  const { innerWidth, innerHeight, location } = window;
-  history.$router.prepare(location);
-  app.start({
-    width: innerWidth,
-    height: innerHeight,
+  onMount(() => {
+    const { innerWidth, innerHeight, location } = window;
+    history.$router.prepare(location);
+    app.start({
+      width: innerWidth,
+      height: innerHeight,
+    });
   });
 
   return (

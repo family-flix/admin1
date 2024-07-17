@@ -5,7 +5,6 @@ import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
 
 import { appendAction } from "@/store/actions";
-import { createJob } from "@/store/job";
 import { ViewComponent } from "@/store/types";
 import { Button, ContextMenu, ScrollView, Skeleton, Dialog, LazyImage, ListView, Input } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
@@ -360,7 +359,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4 whitespace-nowrap">
                   {/* <Button store={profileUpdateBtn}>修改详情</Button> */}
-                  <Button store={profileChangeBtn}>变更详情</Button>
+                  {/* <Button store={profileChangeBtn}>变更详情</Button> */}
                   <Button store={profileRefreshBtn}>刷新详情</Button>
                   <Button store={seasonDeletingBtn}>删除季</Button>
                 </div>

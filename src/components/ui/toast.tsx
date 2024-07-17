@@ -11,11 +11,9 @@ export const Toast = (props: { store: ToastCore }) => {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
-  store.onStateChange((nextState) => {
-    setState(nextState);
+  store.onStateChange((v) => {
+    setState(v);
   });
-
-  const texts = () => state().texts;
 
   return (
     <ToastPrimitive.Root store={store}>
@@ -35,7 +33,7 @@ export const Toast = (props: { store: ToastCore }) => {
           enterClassName="animate-in fade-in-90 sm:zoom-in-90"
           exitClassName="animate-out fade-out"
         >
-          <For each={texts()}>
+          <For each={state().texts}>
             {(text) => {
               return <div class="text-center">{text}</div>;
             }}

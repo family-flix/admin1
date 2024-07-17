@@ -232,7 +232,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4">
-                  <Button store={movieProfileChangeBtn}>关联详情</Button>
+                  {/* <Button store={movieProfileChangeBtn}>关联详情</Button> */}
                   <Button store={profileRefreshBtn}>刷新详情</Button>
                   <Button store={movieDeletingBtn} variant="subtle">
                     删除

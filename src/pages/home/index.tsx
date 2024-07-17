@@ -82,6 +82,9 @@ export const HomeIndexPage: ViewComponent = (props) => {
   const refreshIcon = new DynamicContentCore({
     value: 1,
   });
+  const rankBtn = new DynamicContentCore({
+    value: 1,
+  });
   const scrollView = new ScrollViewCore({});
 
   const [dashboard, setDashboard] = createSignal(dashboardRequest.response);
@@ -146,7 +149,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
           </div>
         </div>
         <div class="mt-8">
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-6 p-4 rounded-md border bg-white">
               <div>
                 <div class="text-lg">云盘信息</div>
@@ -210,7 +213,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
               </div>
             </div>
           </div>
-          <div class="mt-4 p-4 rounded-md border bg-white">
+          <div class="mt-2 p-4 rounded-md border bg-white">
             <div>
               <div class="text-lg">待处理问题</div>
             </div>
@@ -294,9 +297,11 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 >
                   <For each={mediaResponse().dataSource}>
                     {(media) => {
-                      const { name, poster_path, text } = media;
+                      const { id, media_id, name, poster_path, text } = media;
                       return (
-                        <div class="w-[128px]">
+                        <div class="w-[128px]" onClick={() => {
+                          // history.push();
+                        }}>
                           <LazyImage class="w-[128px] h-[192px]" store={poster.bind(poster_path)} />
                           <div class="max-w-full">
                             <div class="truncate">{name}</div>
@@ -341,7 +346,9 @@ export const HomeIndexPage: ViewComponent = (props) => {
                 <div
                   class="flex flex-col items-center p-4 rounded-md bg-white border cursor-pointer"
                   onClick={async () => {
+                    rankBtn.show(2);
                     const r = await new RequestCore(refresh_media_ranks, { client }).run();
+                    rankBtn.show(1);
                     if (r.error) {
                       return;
                     }
@@ -351,7 +358,19 @@ export const HomeIndexPage: ViewComponent = (props) => {
                     // filenameParseDialog.show();
                   }}
                 >
-                  <BarChart class="w-6 h-6" />
+                  <DynamicContent
+                    store={rankBtn}
+                    options={[
+                      {
+                        value: 1,
+                        content: <BarChart class="w-6 h-6" />,
+                      },
+                      {
+                        value: 2,
+                        content: <Loader class="w-6 h-6 animate animate-spin" />,
+                      },
+                    ]}
+                  ></DynamicContent>
                 </div>
                 <div class="mt-2 break-all text-sm text-center">刷新排行榜</div>
               </div>
