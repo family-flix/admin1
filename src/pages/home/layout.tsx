@@ -19,6 +19,7 @@ import {
   Folder,
   Sparkles,
   HeartCrack,
+  HardDrive,
 } from "lucide-solid";
 
 import { ViewComponent, ViewComponentProps } from "@/store/types";
@@ -40,6 +41,7 @@ import {
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { cn, sleep } from "@/utils/index";
+import { __VERSION__ } from "@/constants/index";
 
 function Page(props: ViewComponentProps) {
   const { app, history, client, storage, pages, view } = props;
@@ -313,73 +315,59 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "首页",
       icon: <Home class="w-6 h-6" />,
-      // url: "/home/index",
       url: "root.home_layout.index",
-      // view: homeIndexPage,
+    },
+    {
+      text: "云盘管理",
+      icon: <HardDrive class="w-6 h-6" />,
+      url: "root.home_layout.drive_list",
     },
     {
       text: "电视剧",
       icon: <Tv class="w-6 h-6" />,
-      // url: "/home/season",
       url: "root.home_layout.season_list",
-      // view: homeSeasonListPage,
     },
     {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
-      // url: "/home/movie",
       url: "root.home_layout.movie_list",
-      // view: homeMovieListPage,
     },
     {
       text: "刮削结果",
       icon: <Sparkles class="w-6 h-6" />,
-      // url: "/home/unknown_media/season",
       url: "root.home_layout.parse_result_layout.season",
-      // view: homeUnknownTVPage,
     },
     {
       text: "问题影视剧",
       icon: <HeartCrack class="w-6 h-6" />,
       badge: false,
-      // url: "/home/invalid_media",
       url: "root.home_layout.invalid_media_list",
-      // view: homeInvalidMediaListPage,
     },
     {
       text: "集合管理",
       icon: <Folder class="w-6 h-6" />,
-      // url: "/home/collection",
       url: "root.home_layout.collection_list",
-      // view: collectionListPage,
     },
     {
       text: "字幕管理",
       icon: <Subtitles class="w-6 h-6" />,
-      // url: "/home/subtitle",
       url: "root.home_layout.subtitles_list",
-      // view: homeSubtitleListPage,
     },
     {
       text: "同步任务",
       icon: <AlarmClock class="w-6 h-6" />,
-      // view: syncTaskListPage,
       url: "root.home_layout.resource_sync",
     },
     {
       text: "任务",
       icon: <Bot class="w-6 h-6" />,
       badge: false,
-      // url: "/home/log",
-      // view: homeTaskListPage,
       url: "root.home_layout.job_list",
     },
     {
       text: "问题反馈",
       icon: <CircuitBoard class="w-6 h-6" />,
       badge: false,
-      // url: "/home/report",
-      // view: homeReportListPage,
       url: "root.home_layout.report_list",
     },
     {
@@ -399,13 +387,11 @@ export const HomeLayout: ViewComponent = (props) => {
     {
       text: "成员",
       icon: <Users class="w-6 h-6" />,
-      // view: homeMemberListPage,
       url: "root.home_layout.member_list",
     },
     {
       text: "转存资源",
       icon: <FolderInput class="w-6 h-6" />,
-      // view: homeTransferPage,
       url: "root.home_layout.transfer",
     },
   ]);
@@ -459,14 +445,14 @@ export const HomeLayout: ViewComponent = (props) => {
                 }}
               </For>
             </div>
-            {/* <div class="flex justify-center space-x-2 h-[68rpx] py-2">
-              <Button class="" store={logoutBtn} variant="subtle" icon={<LogOut class="w-4 h-4" />}>
+            <div class="flex justify-center">
+              {/* <Button class="" store={logoutBtn} variant="subtle" icon={<LogOut class="w-4 h-4" />}>
                 退出登录
               </Button>
               <Button class="" store={settingsBtn} variant="subtle" icon={<Settings class="w-4 h-4" />}>
                 设置
-              </Button>
-            </div> */}
+              </Button> */}
+            </div>
           </div>
         </div>
         <div class="flex-1 bg-slate-100">
@@ -540,6 +526,10 @@ export const HomeLayout: ViewComponent = (props) => {
             开放注册
             <Checkbox store={$noNeedCode} />
             无需邀请码
+          </div>
+          <div class="mt-4">
+            <div>当前版本</div>
+            <div class="">v{__VERSION__}</div>
           </div>
           {/* <div class="mt-4">
             <div>其他</div>

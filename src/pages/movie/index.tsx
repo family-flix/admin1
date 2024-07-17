@@ -2,10 +2,23 @@
  * @file 电影列表
  */
 import { createSignal, For, Show } from "solid-js";
-import { Award, BookOpen, Calendar, Clock, Info, LocateIcon, MapPin, RotateCw, Search, Star } from "lucide-solid";
+import {
+  Award,
+  BookOpen,
+  Calendar,
+  Clock,
+  Info,
+  LocateIcon,
+  MapPin,
+  RotateCw,
+  Search,
+  Star,
+  Trash,
+} from "lucide-solid";
 
 import {
   MovieMediaItem,
+  deleteMedia,
   fetchMovieMediaList,
   fetchMovieMediaListProcess,
   transferMediaToAnotherDrive,
@@ -68,6 +81,7 @@ export const MovieListPage: ViewComponent = (props) => {
       refreshBtn.setLoading(loading);
     },
   });
+  const mediaDeleteRequest = new RequestCore(deleteMedia);
   const movieRef = new RefCore<MovieMediaItem>();
   const driveRef = new RefCore<DriveCore>({
     onChange(v) {
@@ -97,12 +111,41 @@ export const MovieListPage: ViewComponent = (props) => {
   });
   const profileBtn = new ButtonInListCore<MovieMediaItem>({
     onClick(record) {
-      // homeMovieProfilePage.query = {
-      //   id: record.id,
-      // };
-      // app.showView(homeMovieProfilePage);
-      // homeLayout.showSubView(homeMovieProfilePage);
       history.push("root.home_layout.movie_profile", { id: record.id });
+    },
+  });
+  const mediaDeleteBtn = new ButtonInListCore<MovieMediaItem>({
+    onClick(record) {
+      movieRef.select(record);
+      deleteConfirmDialog.show();
+    },
+  });
+  const deleteConfirmDialog = new DialogCore({
+    title: "删除电影",
+    async onOk() {
+      const media = movieRef.value;
+      if (!media) {
+        app.tip({
+          text: ["请选择要删除的电影"],
+        });
+        return;
+      }
+      deleteConfirmDialog.okBtn.setLoading(true);
+      const r = await mediaDeleteRequest.run({ media_id: media.id });
+      deleteConfirmDialog.okBtn.setLoading(false);
+      if (r.error) {
+        app.tip({
+          text: ["删除失败", r.error.message],
+        });
+        return;
+      }
+      app.tip({
+        text: ["删除成功"],
+      });
+      deleteConfirmDialog.hide();
+      movieList.deleteItem((item) => {
+        return item.id === media.id;
+      });
     },
   });
   const transferConfirmDialog = new DialogCore({
@@ -328,12 +371,19 @@ export const MovieListPage: ViewComponent = (props) => {
                               >
                                 详情
                               </Button>
-                              <Button
+                              {/* <Button
                                 store={transferBtn.bind(movie)}
                                 variant="subtle"
                                 icon={<BookOpen class="w-4 h-4" />}
                               >
                                 归档
+                              </Button> */}
+                              <Button
+                                store={mediaDeleteBtn.bind(movie)}
+                                variant="subtle"
+                                icon={<Trash class="w-4 h-4" />}
+                              >
+                                删除
                               </Button>
                             </div>
                           </div>
@@ -378,6 +428,11 @@ export const MovieListPage: ViewComponent = (props) => {
               }}
             </For>
           </div>
+        </div>
+      </Dialog>
+      <Dialog store={deleteConfirmDialog}>
+        <div class="w-[520px]">
+          <div>确认删除吗？</div>
         </div>
       </Dialog>
     </>

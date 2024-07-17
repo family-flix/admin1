@@ -90,15 +90,15 @@ function Page(props: ViewComponentProps) {
       $addMemberDialog.hide();
       $remarkInput.clear();
       $memberList.refresh();
-      $memberAccountsDialog.show();
-      const text = `https://media.funzm.com/mobile/home/index
+//       $memberAccountsDialog.show();
+//       const text = `${history.$router.origin}/mobile/home/index
 
-邮箱
-${r.account.id}
+// 邮箱
+// ${r.account.id}
 
-密码
-${r.account.pwd}
-`;
+// 密码
+// ${r.account.pwd}
+// `;
       // setText();
     },
   });
@@ -360,7 +360,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
       <ScrollView store={$page.ui.$scroll} class="h-screen p-8">
         <h1 class="text-2xl">成员列表({response().total})</h1>
         <div class="mt-8">
-          <div class="space-x-2">
+          <div class="flex items-center space-x-2">
             <Button icon={<RotateCcw class="w-4 h-4" />} store={$page.ui.$refreshBtn}>
               刷新
             </Button>

@@ -1,3 +1,6 @@
+// @ts-ignore
+export const __VERSION__ = process.global.__VERSION__;
+
 export const code = `const oo = document;
 const jj = JSON;
 const ll = localStorage;

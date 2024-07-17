@@ -1,7 +1,16 @@
 import path from "path";
+import fs from 'fs';
 
 import { UserConfigExport, defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
+
+const pkg = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(path.resolve(__dirname, "./package.json"), "utf-8"));
+  } catch (err) {
+    return null;
+  }
+})();
 
 const config = defineConfig(({ mode }) => {
   return {
@@ -18,6 +27,9 @@ const config = defineConfig(({ mode }) => {
     },
     esbuild: {
       drop: mode === "production" ? ["console", "debugger"] : [],
+    },
+    define: {
+      "process.global.__VERSION__": JSON.stringify(pkg ? pkg.version : "unknown"),
     },
     build: {
       target: "esnext",

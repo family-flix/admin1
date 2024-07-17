@@ -5,7 +5,7 @@ export const media_request = request_factory({
   hostnames: {
     dev: "https://media-t.funzm.com",
     test: "https://media-t.funzm.com",
-    prod: "https://media.funzm.com",
+    prod: "",
   },
   process<T>(r: Result<{ code: number | string; msg: string; data: T }>) {
     if (r.error) {
