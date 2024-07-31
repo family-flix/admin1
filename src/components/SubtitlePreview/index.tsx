@@ -1,6 +1,7 @@
-import { BaseDomain, Handler } from "@/domains/base";
 import { Show, createSignal } from "solid-js";
 import { Loader2 } from "lucide-solid";
+
+import { BaseDomain, Handler } from "@/domains/base";
 
 enum Events {
   Read,

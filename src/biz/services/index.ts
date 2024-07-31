@@ -8,7 +8,15 @@ import { ListResponse, ListResponseWithCursor } from "@/biz/requests/types";
 import { FetchParams } from "@/domains/list/typing";
 import { Result, UnpackedResult } from "@/domains/result/index";
 import { TmpRequestResp, RequestedResource } from "@/domains/request/utils";
-import { DriveTypes, MediaErrorTypes, MediaTypes, ReportTypeTexts, ReportTypes } from "@/constants/index";
+import {
+  DriveTypes,
+  MediaErrorTypes,
+  MediaTypes,
+  ReportTypeTexts,
+  ReportTypes,
+  SubtitleLanguageTexts,
+  SubtitleLanguages,
+} from "@/constants/index";
 import { MutableRecord, Unpacked } from "@/types/index";
 import { bytes_to_size } from "@/utils/index";
 
@@ -627,7 +635,7 @@ export function fetchSubtitleList(params: FetchParams) {
           id: string;
           type: number;
           unique_id: string;
-          language: string;
+          language: SubtitleLanguages;
         }[];
       }[];
     }>
@@ -637,6 +645,33 @@ export function fetchSubtitleList(params: FetchParams) {
   });
 }
 export type SubtitleItem = NonNullable<UnpackedResult<TmpRequestResp<typeof fetchSubtitleList>>>["list"][number];
+export function fetchSubtitleListProcess(r: TmpRequestResp<typeof fetchSubtitleList>) {
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((subtitle) => {
+      return {
+        ...subtitle,
+        sources: subtitle.sources.map((source) => {
+          return {
+            ...source,
+            subtitles: source.subtitles.map((sub) => {
+              const { id, type, unique_id, language } = sub;
+              return {
+                id,
+                type,
+                unique_id,
+                language: SubtitleLanguageTexts[language],
+              };
+            }),
+          };
+        }),
+      };
+    }),
+  });
+}
 /**
  * 删除指定影视剧下的所有字幕？
  */

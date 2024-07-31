@@ -259,18 +259,18 @@ export const ReportTypeTexts = {
   [ReportTypes.Want]: "想看",
 };
 export enum SubtitleLanguages {
-  Chi = "chi",
+  Chs = "chs",
   Cht = "cht",
   Eng = "eng",
   Jpn = "jpn",
-  ChiWithEng = "chi&eng",
+  ChsWithEng = "chs&eng",
 }
 export const SubtitleLanguageTexts = {
-  [SubtitleLanguages.Chi]: "中文",
+  [SubtitleLanguages.Chs]: "中文",
   [SubtitleLanguages.Cht]: "中文繁体",
   [SubtitleLanguages.Eng]: "英文",
   [SubtitleLanguages.Jpn]: "日文",
-  [SubtitleLanguages.ChiWithEng]: "中英对照",
+  [SubtitleLanguages.ChsWithEng]: "中英对照",
 };
 export const SubtitleLanguageOptions = Object.keys(SubtitleLanguageTexts).map((lang) => {
   return {

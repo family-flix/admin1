@@ -21,7 +21,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const curSeasonRef = new RefCore<SubtitleItem>();
   const curEpisodeRef = new RefCore<SubtitleItem["sources"][number]>();
   const curSubtitleRef = new RefCore<SubtitleItem["sources"][number]["subtitles"][number]>();
-  const seasonList = new ListCore(new RequestCore(fetchSubtitleList), {});
+  const $list = new ListCore(new RequestCore(fetchSubtitleList), {});
   const subtitleDeletingRequest = new RequestCore(deleteSubtitle, {
     onLoading(loading) {
       subtitleDeletingConfirmDialog.okBtn.setLoading(loading);
@@ -34,7 +34,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
       const curSeasonId = curSeasonRef.value?.id;
       const curEpisodeId = curEpisodeRef.value?.id;
       const curSubtitleId = curSubtitleRef.value?.id;
-      seasonList.modifyDataSource((item) => {
+      $list.modifyDataSource((item) => {
         if (item.id !== curSeasonId) {
           return item;
         }
@@ -81,7 +81,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const refreshBtn = new ButtonCore({
     onClick() {
       refreshJobs();
-      seasonList.refresh();
+      $list.refresh();
     },
   });
   const gotoUploadBtn = new ButtonCore({
@@ -97,19 +97,19 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
   const scrollView = new ScrollViewCore();
   const poster = new ImageInListCore({});
 
-  const [response, setResponse] = createSignal(seasonList.response);
+  const [response, setResponse] = createSignal($list.response);
 
-  seasonList.onLoadingChange((loading) => {
+  $list.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
   });
-  seasonList.onStateChange((nextState) => {
+  $list.onStateChange((nextState) => {
     setResponse(nextState);
   });
   scrollView.onReachBottom(async () => {
-    await seasonList.loadMore();
+    await $list.loadMore();
     scrollView.finishLoadingMore();
   });
-  seasonList.init();
+  $list.init();
 
   const typeIcons: Record<ReportTypes, () => JSX.Element> = {
     [ReportTypes.TV]: () => <Tv class="w-4 h-4" />,
@@ -134,7 +134,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
         </div>
         <ListView
           class="mt-4"
-          store={seasonList}
+          store={$list}
           skeleton={
             <div class="p-4 rounded-sm bg-white">
               <div class={cn("space-y-1")}>
@@ -184,7 +184,7 @@ export const HomeSubtitleListPage: ViewComponent = (props) => {
                                               <File class="w-4 h-4" />
                                             </div>
                                             <div>{unique_id}</div>
-                                            <div>{language}</div>
+                                            <div class="text-sm">{language}</div>
                                             <div
                                               onClick={() => {
                                                 curSeasonRef.select(season);
