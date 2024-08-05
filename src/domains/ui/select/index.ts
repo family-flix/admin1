@@ -237,6 +237,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   }
   setOptions(options: NonNullable<SelectProps<T>["options"]>) {
     this.options = options;
+    // console.log("[DOMAIN]ui/select - setOptions", this.unique_id, this.value, options);
     if (this.value === null) {
       return;
     }
@@ -459,8 +460,8 @@ export class SelectInListCore<K extends string, T> extends BaseDomain<TheTypesIn
     }
   ) {
     const { defaultValue } = extra || { defaultValue: null };
-    console.log("[DOMAIN]ui/select/index - bind", defaultValue);
     const existing = this.cached.get(unique_id);
+    // console.log("[DOMAIN]ui/select/index - bind", unique_id, existing, this.options);
     if (existing) {
       return existing;
     }
@@ -478,8 +479,9 @@ export class SelectInListCore<K extends string, T> extends BaseDomain<TheTypesIn
     return select;
   }
   setOptions(options: NonNullable<SelectProps<T>["options"]>) {
+    // console.log("[DOMAIN]ui/select - SelectInListCore item count is", this.list.length);
+    this.options = options;
     if (this.list.length === 0) {
-      this.options = options;
       return;
     }
     for (let i = 0; i < this.list.length; i += 1) {

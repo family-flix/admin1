@@ -47,6 +47,7 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
       for (let i = 0; i < filenames.length; i += 1) {
         const file = filenames[i];
         const e1 = episodeSelect.bind(file.filename, { defaultValue: file.episode_text || "" });
+        // console.log("before e1 && curMedia.value", e1.options, curMedia.value, file.episode_text);
         if (e1 && curMedia.value) {
           const order = file.episode_text.match(/E([0-9]{1,})/);
           if (!order) {
@@ -161,6 +162,27 @@ export const HomeSubtitleUploadPage: ViewComponent = (props) => {
         episodes,
       });
       seasonSelectDialog.hide();
+      if (filenameValidatingRequest.response) {
+        for (let i = 0; i < filenameValidatingRequest.response.length; i += 1) {
+          const file = filenameValidatingRequest.response[i];
+          const e1 = episodeSelect.bind(file.filename, { defaultValue: file.episode_text || "" });
+          if (e1 && curMedia.value) {
+            const order = file.episode_text.match(/E([0-9]{1,})/);
+            if (!order) {
+              return;
+            }
+            const matched = curMedia.value.episodes.find((e) => e.episode_number === Number(order[1]));
+            if (!matched) {
+              return;
+            }
+            e1.setValue(matched.id);
+          }
+          const e2 = langSelect.bind(file.filename, { defaultValue: file.language || "" });
+          if (e2) {
+            e2.setValue(file.language);
+          }
+        }
+      }
     },
   });
   const seasonSelect = new TVSeasonSelectCore({});
