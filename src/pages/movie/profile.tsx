@@ -191,7 +191,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
                     <div class="relative z-3">
                       <div class="flex">
                         <Skeleton class="w-[240px] h-[360px] rounded-lg mr-4 object-cover" />
-                        <div class="flex-1 mt-4">
+                        <div class="flex-1">
                           <Skeleton class="w-full h-[48px]"></Skeleton>
                           <Skeleton class="mt-6 w-12 h-[36px]"></Skeleton>
                           <div class="mt-2 space-y-1">
@@ -217,7 +217,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
                         store={poster}
                         // src={profile()?.poster_path ?? undefined}
                       />
-                      <div class="flex-1 mt-4">
+                      <div class="flex-1">
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
                         <div class="mt-2">{profile()?.overview}</div>

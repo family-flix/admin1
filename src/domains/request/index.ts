@@ -88,8 +88,8 @@ export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<Ret
   /** 处于请求中的 promise */
   // pending: Promise<UnpackedRequestPayload<ReturnType<F>>> | null = null;
   pending: Promise<Result<P>> | null = null;
-  /** 调用 prepare 方法暂存的参数 */
-  // args: Parameters<T> | null = null;
+  /** 调用 run 方法暂存的参数 */
+  args: Parameters<F> = [] as any;
   /** 请求的响应 */
   response: P | null = null;
   /** 请求失败，保存错误信息 */
@@ -176,6 +176,7 @@ export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<Ret
     // this.args = args;
     this.loading = true;
     this.response = this.defaultResponse;
+    this.args = args;
     this.error = null;
     // const source = axios.CancelToken.source();
     // this.source = source;
@@ -245,10 +246,7 @@ export class RequestCore<F extends FetchFunction, P = UnpackedRequestPayload<Ret
   }
   /** 使用当前参数再请求一次 */
   reload() {
-    // if (this.args === null) {
-    //   return;
-    // }
-    // this.run(...this.args);
+    this.run(...this.args);
   }
   cancel() {
     if (!this.client) {

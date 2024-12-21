@@ -101,7 +101,7 @@ export const LogListPage: ViewComponent = (props) => {
   // jobList.init();
   // });
   onMount(() => {
-    tab.selectById(String(TaskStatus.Finished));
+    tab.selectById(String(TaskStatus.Running));
   });
 
   const dataSource = () => response().dataSource;
@@ -148,7 +148,19 @@ export const LogListPage: ViewComponent = (props) => {
                       <div class={cn({})}>{statusText}</div>
                     </div>
                   </div>
-                  <div class="mt-2 space-x-2">
+                  <Show when={status === TaskStatus.Running}>
+                    <div class="mt-4">
+                      <div
+                        class={cn("relative h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800")}
+                      >
+                        <div
+                          class="h-full w-full flex-1 bg-slate-900 transition-all dark:bg-slate-400"
+                          style={{ transform: `translateX(-${100 - task.percent * 100}%)` }}
+                        />
+                      </div>
+                    </div>
+                  </Show>
+                  <div class="flex items-center mt-4 space-x-2">
                     <Button store={profileBtn.bind(task)} variant="subtle">
                       详情
                     </Button>

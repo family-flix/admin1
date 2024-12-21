@@ -15,6 +15,8 @@ import { RequestCore } from "@/domains/request/index";
 import { addDrive } from "@/biz/drive/index";
 import { code_get_drive_token, DriveTypes } from "@/constants/index";
 
+import { AlipanDriveCreateInput, AlipanOpenDriveCreateInput } from "./profile_input";
+
 export const DriveListPage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
@@ -35,6 +37,10 @@ export const DriveListPage: ViewComponent = (props) => {
   const driveTabs = new TabHeaderCore({
     key: "id",
     options: [
+      {
+        id: DriveTypes.AlipanOpenDrive,
+        text: "阿里云盘/开放接口",
+      },
       {
         id: DriveTypes.AliyunBackupDrive,
         text: "阿里云盘",
@@ -57,7 +63,7 @@ export const DriveListPage: ViewComponent = (props) => {
       },
     ],
     onMounted() {
-      driveTabs.selectById(DriveTypes.AliyunBackupDrive);
+      driveTabs.selectById(DriveTypes.AlipanOpenDrive);
     },
   });
   const driveCreateDialog = new DialogCore({
@@ -210,71 +216,82 @@ export const DriveListPage: ViewComponent = (props) => {
         <div class="w-[520px]">
           <TabHeader store={driveTabs} />
           {(() => {
+            if (tabId() === DriveTypes.AlipanOpenDrive) {
+              return (
+                <>
+                  <AlipanOpenDriveCreateInput app={app} store={driveTokenInput} />
+                </>
+              );
+            }
             if (tabId() === DriveTypes.AliyunBackupDrive) {
               return (
-                <div class="p-4">
-                  <p>1、在网页端登录阿里云盘</p>
-                  <p
-                    onClick={() => {
-                      app.copy(code_get_drive_token);
-                      app.tip({ text: ["复制成功"] });
-                    }}
-                  >
-                    2、点击复制下面代码
-                  </p>
-                  <div
-                    class="mt-2 border rounded-sm bg-gray-200"
-                    onClick={() => {
-                      app.copy(code_get_drive_token);
-                      app.tip({ text: ["复制成功"] });
-                    }}
-                  >
-                    <div class="relative p-2">
-                      <div class="overflow-y-auto h-[120px] break-all whitespace-pre-wrap">{code_get_drive_token}</div>
+                <>
+                  <div class="p-4">
+                    <p>1、在网页端登录阿里云盘</p>
+                    <p
+                      onClick={() => {
+                        app.copy(code_get_drive_token);
+                        app.tip({ text: ["复制成功"] });
+                      }}
+                    >
+                      2、点击复制下面代码
+                    </p>
+                    <div
+                      class="mt-2 border rounded-sm bg-gray-200"
+                      onClick={() => {
+                        app.copy(code_get_drive_token);
+                        app.tip({ text: ["复制成功"] });
+                      }}
+                    >
+                      <div class="relative p-2">
+                        <div class="overflow-y-auto h-[120px] break-all whitespace-pre-wrap">
+                          {code_get_drive_token}
+                        </div>
+                      </div>
                     </div>
+                    <p>3、回到已登录的阿里云盘页面，在浏览器「地址栏」手动输入 `javascript:`</p>
+                    <p>4、紧接着粘贴复制的代码并回车</p>
+                    <p>5、将得到的代码粘贴到下方输入框，点击确认即可</p>
                   </div>
-                  <p>3、回到已登录的阿里云盘页面，在浏览器「地址栏」手动输入 `javascript:`</p>
-                  <p>4、紧接着粘贴复制的代码并回车</p>
-                  <p>5、将得到的代码粘贴到下方输入框，点击确认即可</p>
-                </div>
+                  <AlipanDriveCreateInput store={driveTokenInput} />
+                </>
               );
             }
-            if (tabId() === DriveTypes.Cloud189Drive) {
-              return (
-                <div class="p-4">
-                  <div>1、准备天翼云盘账户名、密码。账户名即手机号；如果没有密码请先设置密码</div>
-                  <div>
-                    2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"account": "", "pwd": ""}`}</pre>
-                    格式数据并粘贴到下方输入框，点击确认即可
-                  </div>
-                </div>
-              );
-            }
-            if (tabId() === DriveTypes.QuarkDrive) {
-              return (
-                <div class="p-4">
-                  <div>1、在网页端登录夸克云盘</div>
-                  <div>
-                    2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"id": "","token": ""}`}</pre>
-                    格式数据并粘贴到下方输入框，点击确认即可
-                  </div>
-                </div>
-              );
-            }
-            if (tabId() === DriveTypes.LocalFolder) {
-              return (
-                <div class="p-4">
-                  <div>1、获取存放视频文件的文件夹「绝对路径」</div>
-                  <div>
-                    2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"dir": ""}`}</pre>
-                    格式数据并粘贴到下方输入框，点击确认即可
-                  </div>
-                </div>
-              );
-            }
+            // if (tabId() === DriveTypes.Cloud189Drive) {
+            //   return (
+            //     <div class="p-4">
+            //       <div>1、准备天翼云盘账户名、密码。账户名即手机号；如果没有密码请先设置密码</div>
+            //       <div>
+            //         2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"account": "", "pwd": ""}`}</pre>
+            //         格式数据并粘贴到下方输入框，点击确认即可
+            //       </div>
+            //     </div>
+            //   );
+            // }
+            // if (tabId() === DriveTypes.QuarkDrive) {
+            //   return (
+            //     <div class="p-4">
+            //       <div>1、在网页端登录夸克云盘</div>
+            //       <div>
+            //         2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"id": "","token": ""}`}</pre>
+            //         格式数据并粘贴到下方输入框，点击确认即可
+            //       </div>
+            //     </div>
+            //   );
+            // }
+            // if (tabId() === DriveTypes.LocalFolder) {
+            //   return (
+            //     <div class="p-4">
+            //       <div>1、获取存放视频文件的文件夹「绝对路径」</div>
+            //       <div>
+            //         2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"dir": ""}`}</pre>
+            //         格式数据并粘贴到下方输入框，点击确认即可
+            //       </div>
+            //     </div>
+            //   );
+            // }
           })()}
         </div>
-        <Textarea store={driveTokenInput} />
       </Dialog>
     </>
   );

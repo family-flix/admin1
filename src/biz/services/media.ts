@@ -84,6 +84,7 @@ export function fetchSeasonMediaProfile(body: { season_id: string }) {
         };
       }[];
     }[];
+    profile_id: string;
   }>("/api/v2/admin/season/profile", {
     season_id,
   });
@@ -94,7 +95,19 @@ export function fetchSeasonMediaProfileProcess(r: TmpRequestResp<typeof fetchSea
   if (r.error) {
     return Result.Err(r.error);
   }
-  const { id, name, overview, poster_path, backdrop_path, air_date, genres, origin_country, episodes, series } = r.data;
+  const {
+    id,
+    name,
+    overview,
+    poster_path,
+    backdrop_path,
+    air_date,
+    genres,
+    origin_country,
+    episodes,
+    series,
+    profile_id,
+  } = r.data;
   return Result.Ok({
     id,
     name,
@@ -110,6 +123,7 @@ export function fetchSeasonMediaProfileProcess(r: TmpRequestResp<typeof fetchSea
       .filter(Boolean)
       .join("、"),
     episodes,
+    profile_id,
   });
 }
 

@@ -240,6 +240,9 @@ export class Application<T extends { storage: StorageCore<any> }> extends BaseDo
   setTitle(title: string): void {
     throw new Error("请实现 setTitle 方法");
   }
+  openWindow(url: string) {
+    throw new Error("请实现 openWindow 方法");
+  }
   setEnv(env: JSONObject) {
     this.env = {
       ...this.env,

@@ -627,32 +627,16 @@ export const SyncTaskListPage: ViewComponent = (props) => {
                                   variant="subtle"
                                   icon={<RotateCw class="w-4 h-4" />}
                                 ></Button>
-                                <Button
-                                  store={linkSeasonBtn.bind(task)}
-                                  variant="subtle"
-                                  icon={<Pen class="w-4 h-4" />}
-                                >
+                                <Button store={linkSeasonBtn.bind(task)} variant="subtle">
                                   关联电视剧
                                 </Button>
-                                <Button
-                                  store={execSyncTaskBtn.bind(task)}
-                                  variant="subtle"
-                                  icon={<Bell class="w-4 h-4" />}
-                                >
+                                <Button store={execSyncTaskBtn.bind(task)} variant="subtle">
                                   运行
                                 </Button>
-                                <Button
-                                  store={syncTaskOverrideBtn.bind(task)}
-                                  variant="subtle"
-                                  icon={<Pen class="w-4 h-4" />}
-                                >
+                                <Button store={syncTaskOverrideBtn.bind(task)} variant="subtle">
                                   修改
                                 </Button>
-                                <Button
-                                  store={completeTaskBtn.bind(task)}
-                                  variant="subtle"
-                                  icon={<Pen class="w-4 h-4" />}
-                                >
+                                <Button store={completeTaskBtn.bind(task)} variant="subtle">
                                   完成
                                 </Button>
                                 <Button

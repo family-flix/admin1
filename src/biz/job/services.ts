@@ -21,6 +21,8 @@ export function fetchJobList(params: FetchParams) {
       desc: string;
       output_id: string;
       error?: string;
+      percent: number;
+      updated?: string;
       created: string;
     }>
   >("/api/v2/admin/task/list", params);
@@ -33,7 +35,7 @@ export function fetchJobListProcess(res: TmpRequestResp<typeof fetchJobList>) {
   const result = {
     ...res.data,
     list: res.data.list.map((task) => {
-      const { created, output_id, status, ...rest } = task;
+      const { created, output_id, status, percent, updated, ...rest } = task;
       return {
         ...rest,
         output_id,
@@ -50,8 +52,9 @@ export function fetchJobListProcess(res: TmpRequestResp<typeof fetchJobList>) {
           }
           return "未知";
         })(),
+        percent,
         created: dayjs(created).format("YYYY-MM-DD HH:mm:ss"),
-        // created: relative_time_from_now(created),
+        updated: dayjs(updated).format("YYYY-MM-DD HH:mm:ss"),
       };
     }),
   };

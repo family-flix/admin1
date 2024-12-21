@@ -306,9 +306,7 @@ export const MovieListPage: ViewComponent = (props) => {
                           </div>
                           <div class="flex-1 w-0 p-4">
                             <h2 class="text-2xl text-slate-800">
-                              <a href={url} target="_blank">
-                                {name}
-                              </a>
+                              <a href={url}>{name}</a>
                             </h2>
                             <div class="mt-2 overflow-hidden text-ellipsis">
                               <p class="text-slate-700 break-all whitespace-pre-wrap truncate line-clamp-4">
@@ -348,22 +346,7 @@ export const MovieListPage: ViewComponent = (props) => {
                                 </div>
                               </Show>
                             </div>
-                            <div class="flex flex-wrap gap-4 mt-4">
-                              <For each={persons}>
-                                {(person) => {
-                                  return (
-                                    <div class="flex flex-col items-center w-[80px]">
-                                      <LazyImage
-                                        class="w-8 h-8 rounded-full"
-                                        store={avatar.bind(person.profile_path)}
-                                      />
-                                      <div class="mt-2 text-center">{person.name}</div>
-                                    </div>
-                                  );
-                                }}
-                              </For>
-                            </div>
-                            <div class="space-x-2 mt-6">
+                            <div class="space-x-2 mt-4 p-1 overflow-hidden whitespace-nowrap">
                               <Button
                                 store={profileBtn.bind(movie)}
                                 variant="subtle"

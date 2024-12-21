@@ -16,6 +16,9 @@ import {
   Puzzle,
   Eye,
   Pen,
+  Folder,
+  Lock,
+  FolderCog,
 } from "lucide-solid";
 
 import {
@@ -237,33 +240,13 @@ export const DriveCard = (
   });
   const setRootFolderItem = new MenuItemCore({
     label: "设置索引根目录",
-    icon: <Edit3 class="mr-2 w-4 h-4" />,
+    icon: <FolderCog class="mr-2 w-4 h-4" />,
     onClick() {
       dropdown.hide();
       foldersModal.show();
       if (!driveFileManage.initialized) {
         driveFileManage.appendColumn({ file_id: "root", name: "文件" });
       }
-    },
-  });
-  const analysisQuicklyItem = new MenuItemCore({
-    label: "仅索引新增",
-    icon: <FolderSearch class="mr-2 w-4 h-4" />,
-    async onClick() {
-      dropdown.hide();
-      const r = await drive.startAnalysis({
-        quickly: true,
-      });
-      if (r.error) {
-        return;
-      }
-      createJob({
-        job_id: r.data.job_id,
-        onFinish() {
-          drive.finishAnalysis();
-          analysisBtn.setLoading(false);
-        },
-      });
     },
   });
   const matchMediaItem = new MenuItemCore({
@@ -308,16 +291,15 @@ export const DriveCard = (
           dropdown.hide();
         },
       }),
-      checkInItem,
-      receiveRewardsItem,
-      analysisQuicklyItem,
-      matchMediaItem,
+      // checkInItem,
+      // receiveRewardsItem,
+      // matchMediaItem,
       createResourceDrive,
       exportItem,
       setRootFolderItem,
       new MenuItemCore({
         label: "创建索引根目录",
-        icon: <Edit3 class="mr-2 w-4 h-4" />,
+        icon: <Folder class="mr-2 w-4 h-4" />,
         onClick() {
           dropdown.hide();
           createFolderModal.show();
@@ -340,7 +322,7 @@ export const DriveCard = (
       }),
       new MenuItemCore({
         label: "设置 refresh_token",
-        icon: <Edit3 class="mr-2 w-4 h-4" />,
+        icon: <Lock class="mr-2 w-4 h-4" />,
         onClick() {
           refreshTokenModal.show();
           dropdown.hide();
@@ -390,6 +372,24 @@ export const DriveCard = (
         app.tip({
           text: ["索引失败", r.error.message],
         });
+        return;
+      }
+      createJob({
+        job_id: r.data.job_id,
+        onFinish() {
+          drive.finishAnalysis();
+          analysisBtn.setLoading(false);
+        },
+      });
+    },
+  });
+  const analysisQuicklyBtn = new ButtonCore({
+    async onClick() {
+      dropdown.hide();
+      const r = await drive.startAnalysis({
+        quickly: true,
+      });
+      if (r.error) {
         return;
       }
       createJob({
@@ -492,6 +492,9 @@ export const DriveCard = (
               <div class="flex items-center mt-4 space-x-2">
                 <Button store={analysisBtn} variant="subtle" icon={<FolderSearch class="w-4 h-4" />}>
                   索引
+                </Button>
+                <Button store={analysisQuicklyBtn} variant="subtle">
+                  仅索引新增
                 </Button>
                 <Button variant="subtle" store={refreshBtn} icon={<RefreshCw class="w-4 h-4" />}>
                   刷新

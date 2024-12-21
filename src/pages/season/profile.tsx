@@ -18,7 +18,7 @@ import {
   setMediaProfile,
   deleteMedia,
 } from "@/biz/services/media";
-import { refreshMediaProfile } from "@/biz/services/media_profile";
+import { modifyMediaProfile, refreshMediaProfile } from "@/biz/services/media_profile";
 import { deleteParsedMediaSource } from "@/biz/services/parsed_media";
 import { TMDBSearcherCore } from "@/biz/tmdb/index";
 import {
@@ -33,6 +33,8 @@ import {
 import { RequestCore } from "@/domains/request/index";
 import { RefCore } from "@/domains/cur/index";
 import { ListCore } from "@/domains/list/index";
+import { SeasonProfileInput, SeasonProfileInputCore } from "@/components/SeasonProfileInput";
+import dayjs from "dayjs";
 
 export const HomeSeasonProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
@@ -138,6 +140,16 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
       profileRequest.reload();
     },
   });
+  const seasonProfileModifyRequest = new RequestCore(modifyMediaProfile, {
+    onLoading(loading) {
+      $seasonProfileDialog.okBtn.setLoading(loading);
+    },
+    onSuccess() {
+      app.tip({ text: ["编辑详情成功"] });
+      profileRequest.reload();
+      $seasonProfileDialog.hide();
+    },
+  });
   const seasonRef = new RefCore<SeasonMediaProfile>();
   const episodeRef = new RefCore<MediaProfile>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
@@ -171,6 +183,19 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
         searcher.$input.setValue(profileRequest.response.name);
       }
       dialog.show();
+    },
+  });
+  const profileUpdateBtn = new ButtonCore({
+    onClick() {
+      if (profileRequest.response) {
+        $seasonProfileInput.setValues({
+          title: profileRequest.response.name,
+          air_date: "2020/01/01",
+          // air_date: profileRequest.response.air_date,
+          summary: profileRequest.response.overview,
+        });
+      }
+      $seasonProfileDialog.show();
     },
   });
   const profileRefreshBtn = new ButtonCore({
@@ -228,6 +253,24 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
   });
   const poster = new ImageCore({});
   const seriesPoster = new ImageInListCore({});
+  const $seasonProfileDialog = new DialogCore({
+    onOk() {
+      const profile = profileRequest.response;
+      if (!profile) {
+        app.tip({
+          text: ["请先等待详情请求完毕"],
+        });
+        return;
+      }
+      const { name, overview, air_date } = $seasonProfileInput.getValues();
+      seasonProfileModifyRequest.run(profile.profile_id, {
+        name,
+        overview,
+        air_date: air_date ? air_date.valueOf() : undefined,
+      });
+    },
+  });
+  const $seasonProfileInput = SeasonProfileInputCore();
   // const profileTitleInput = new InputCore({
   //   defaultValue: "",
   //   placeholder: "请输入电视剧标题",
@@ -317,7 +360,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                     <div class="relative z-3">
                       <div class="flex">
                         <Skeleton class="w-[240px] h-[360px] rounded-lg mr-4 object-cover" />
-                        <div class="flex-1 mt-4">
+                        <div class="flex-1">
                           <Skeleton class="w-full h-[48px]"></Skeleton>
                           <Skeleton class="mt-6 w-12 h-[36px]"></Skeleton>
                           <div class="mt-2 space-y-1">
@@ -343,7 +386,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                         store={poster}
                         // src={profile()?.poster_path ?? undefined}
                       />
-                      <div class="flex-1 mt-4">
+                      <div class="flex-1">
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
                         <div class="mt-2">{profile()?.overview}</div>
@@ -358,9 +401,9 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4 whitespace-nowrap">
-                  {/* <Button store={profileUpdateBtn}>修改详情</Button> */}
                   {/* <Button store={profileChangeBtn}>变更详情</Button> */}
                   <Button store={profileRefreshBtn}>刷新详情</Button>
+                  <Button store={profileUpdateBtn}>编辑详情</Button>
                   <Button store={seasonDeletingBtn}>删除季</Button>
                 </div>
                 <div class="space-y-4 mt-8">
@@ -485,6 +528,11 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
           <div>不影响云盘内文件</div>
         </div>
       </Dialog> */}
+      <Dialog store={$seasonProfileDialog}>
+        <div class="w-[520px]">
+          <SeasonProfileInput store={$seasonProfileInput} />
+        </div>
+      </Dialog>
       <ContextMenu store={seasonContextMenu} />
     </>
   );

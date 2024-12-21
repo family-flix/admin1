@@ -272,3 +272,19 @@ export function refreshMediaProfile(body: { media_id: string }) {
   const { media_id } = body;
   return media_request.post<{ job_id: string }>("/api/v2/admin/media/refresh_profile", { media_id });
 }
+
+/**
+ * 手动编辑详情
+ */
+export function modifyMediaProfile(
+  id: string,
+  body: Partial<{
+    name: string;
+    alias: string;
+    overview: string;
+    source_count: number;
+    air_date: number;
+  }>
+) {
+  return media_request.post<void>("/api/v2/media_profile/edit", { id, ...body });
+}

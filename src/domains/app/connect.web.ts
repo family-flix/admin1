@@ -20,6 +20,9 @@ export function connect<T extends { storage: StorageCore<any> }>(app: Applicatio
     document.execCommand("copy");
     document.body.removeChild(textArea);
   };
+  app.openWindow = (url: string) => {
+    window.open(url);
+  };
   window.addEventListener("DOMContentLoaded", (e) => {
     const { innerWidth, innerHeight } = window;
     app.setSize({ width: innerWidth, height: innerHeight });
