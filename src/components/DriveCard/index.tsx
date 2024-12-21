@@ -19,6 +19,7 @@ import {
   Folder,
   Lock,
   FolderCog,
+  FolderSymlink,
 } from "lucide-solid";
 
 import {
@@ -267,11 +268,17 @@ export const DriveCard = (
     },
   });
   const createResourceDrive = new MenuItemCore({
-    label: "初始化资源盘",
-    icon: <Puzzle class="mr-2 w-4 h-4" />,
+    label: "创建资源盘",
+    tooltip: "阿里云盘包含备份盘与资源盘，该按扭将创建对应的资源盘记录",
+    icon: <FolderSymlink class="mr-2 w-4 h-4" />,
     onClick() {
       createResourceDriveRequest.run({
-        type: DriveTypes.AliyunResourceDrive,
+        type: (() => {
+          if (drive.type === DriveTypes.AlipanOpenDrive) {
+            return DriveTypes.AlipanResourceOpenDrive;
+          }
+          return DriveTypes.AliyunResourceDrive;
+        })(),
         payload: JSON.stringify({
           drive_id: drive.id,
         }),
@@ -291,9 +298,6 @@ export const DriveCard = (
           dropdown.hide();
         },
       }),
-      // checkInItem,
-      // receiveRewardsItem,
-      // matchMediaItem,
       createResourceDrive,
       exportItem,
       setRootFolderItem,
@@ -505,7 +509,7 @@ export const DriveCard = (
         </div>
       </div>
       <Dialog title={state().name} store={foldersModal}>
-        <div class="w-[520px] overflow-x-auto h-[320px]">
+        <div class=" overflow-x-auto w-[520px] h-[320px]">
           <Show
             when={filesState().initialized}
             fallback={
@@ -542,7 +546,7 @@ export const DriveCard = (
                     return (
                       <ScrollView
                         store={column.view}
-                        class="flex-shrink-0 px-2 pt-2 pb-12 border-r-2 overflow-x-hidden w-[240px] max-h-full overflow-y-auto"
+                        class="flex-shrink-0 px-2 pt-2 pb-12 border-r-2 overflow-x-hidden w-[240px] h-[320px] overflow-y-auto"
                       >
                         <ListView
                           store={column.list}

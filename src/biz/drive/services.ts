@@ -76,6 +76,7 @@ export function fetchDriveList(params: FetchParams) {
   return media_request.post<
     ListResponseWithCursor<{
       id: string;
+      type: DriveTypes;
       /** 云盘自定义名称 */
       name: string;
       /** 头像 */
@@ -111,7 +112,7 @@ export function fetchDriveListProcess(r: TmpRequestResp<typeof fetchDriveList>) 
     total,
     page_size,
     list: list.map((item) => {
-      const { id, name, avatar, drive_id, total_size, used_size, root_folder_id, vip = [] } = item;
+      const { id, type, name, avatar, drive_id, total_size, used_size, root_folder_id, vip = [] } = item;
       const valid_vip = vip
         .filter((v) => {
           return dayjs(v.expired_at * 1000).isAfter(dayjs());
@@ -124,6 +125,7 @@ export function fetchDriveListProcess(r: TmpRequestResp<typeof fetchDriveList>) 
         });
       const payload = {
         id,
+        type,
         name,
         avatar,
         drive_id,

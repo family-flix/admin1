@@ -6,7 +6,7 @@ import { deleteDrive } from "@/biz/services/drive";
 import { BaseDomain, Handler } from "@/domains/base";
 import { RequestCore } from "@/domains/request";
 import { Result } from "@/domains/result/index";
-import { FileType } from "@/constants/index";
+import { DriveTypes, FileType } from "@/constants/index";
 
 import {
   analysisDrive,
@@ -66,6 +66,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
 
   /** 云盘id */
   id: string;
+  type: DriveTypes;
   name: string;
   /** 刮削状态轮询定时器 */
   timer: NodeJS.Timer | null = null;
@@ -108,8 +109,9 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: DriveProps) {
     super(options);
 
-    const { id, name, vip } = options;
+    const { id, type, name, vip } = options;
     this.id = id;
+    this.type = type;
     this.name = name;
     this.state = {
       ...options,

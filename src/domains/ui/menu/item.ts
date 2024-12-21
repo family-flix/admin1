@@ -25,6 +25,7 @@ type TheTypesOfEvents = {
 type MenuItemProps = {
   /** 菜单文案 */
   label: string;
+  tooltip?: string;
   /** 菜单图标 */
   icon?: unknown;
   /** 菜单快捷键 */
@@ -48,6 +49,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   debug = true;
 
   label: string;
+  tooltip?: string;
   icon?: unknown;
   shortcut?: string;
   /** 子菜单 */
@@ -67,9 +69,10 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ _name: string }> & MenuItemProps) {
     super(options);
 
-    const { _name, label, icon, shortcut, disabled = false, menu, onClick } = options;
+    const { _name, tooltip, label, icon, shortcut, disabled = false, menu, onClick } = options;
 
     this.label = label;
+    this.tooltip = tooltip;
     this.icon = icon;
     this.shortcut = shortcut;
     if (_name) {

@@ -53,7 +53,7 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
                       <Show when={!!item.icon}>
                         <div class="mr-2">{item.icon as Element}</div>
                       </Show>
-                      {item.label}
+                      <div title={item.tooltip}>{item.label}</div>
                       <Show when={item.shortcut}>{item.shortcut}</Show>
                     </DropdownMenuPrimitive.Item>
                   }
@@ -133,7 +133,7 @@ const ItemWithSubMenu = (
                   )}
                   store={subMenuItem}
                 >
-                  {label}
+                  <div title={item.tooltip}>{item.label}</div>
                 </DropdownMenuPrimitive.Item>
               );
             }}
