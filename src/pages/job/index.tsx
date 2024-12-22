@@ -77,6 +77,9 @@ export const LogListPage: ViewComponent = (props) => {
         status: Number(opt.id),
       });
     },
+    onMounted() {
+      tab.selectById(String(TaskStatus.Running));
+    },
   });
   jobList.onLoadingChange((loading) => {
     refreshBtn.setLoading(loading);
