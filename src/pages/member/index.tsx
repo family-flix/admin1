@@ -495,11 +495,11 @@ export const HomeMemberListPage: ViewComponent = (props) => {
                                     <div class="space-y-2">
                                       {[
                                         {
-                                          prefix: "/pc/home/index?token=",
+                                          prefix: "/pc/home/index?tmp=1&token=",
                                           qrcode: false,
                                         },
                                         {
-                                          prefix: "/mobile/home/index?token=",
+                                          prefix: "/mobile/home/index?tmp=1&token=",
                                           qrcode: true,
                                         },
                                       ].map((config) => {
