@@ -278,26 +278,12 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
-                      <Show
-                        when={!profile}
-                        fallback={
-                          <div>
-                            <div class="w-full rounded">
-                              <LazyImage
-                                class="max-w-full max-h-full object-contain"
-                                store={poster.bind(profile?.poster_path)}
-                              />
-                            </div>
-                            <div>{profile?.name}</div>
-                          </div>
-                        }
-                      >
-                        <div class="w-full rounded">
-                          <LazyImage class="max-w-full max-h-full object-contain" store={folderImg} />
-                        </div>
+                      <Show when={profile} fallback={<LazyImage class="w-full object-contain" store={folderImg} />}>
+                        <LazyImage class="w-full h-[120px] object-contain" store={poster.bind(profile?.poster_path)} />
+                        <div>{profile?.name}</div>
                       </Show>
                     </div>
-                    <div class="flex-1 w-0 mt-2">
+                    <div class="flex-1 w-0">
                       <div class="text-lg">{name}</div>
                       <Show when={sources}>
                         <div class="mt-4 py-2">

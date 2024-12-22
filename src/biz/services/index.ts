@@ -937,6 +937,21 @@ export function fetchMemberHistoryList(values: { member_id: string }) {
     }>
   >("/api/v2/admin/member/histories", values);
 }
+export function fetchMemberHistoryListProcess(r: TmpRequestResp<typeof fetchMemberHistoryList>) {
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((history) => {
+      const { updated, ...rest } = history;
+      return {
+        ...rest,
+        updated: dayjs(updated).format("YYYY/MM/DD HH:mm"),
+      };
+    }),
+  });
+}
 
 export function refresh_media_ranks() {
   return media_request.post("/api/v2/admin/collection/refresh_media_rank");

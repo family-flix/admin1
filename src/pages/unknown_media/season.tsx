@@ -50,14 +50,8 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
       app.tip({ text: ["修改失败", error.message] });
     },
     onSuccess() {
-      app.tip({ text: ["修改成功"] });
+      app.tip({ text: ["修改成功 请刷新查看"] });
       dialog.hide();
-      list.deleteItem((item) => {
-        if (item.id === seasonRef.value?.id) {
-          return true;
-        }
-        return false;
-      });
     },
   });
   const tvDeletingRequest = new RequestCore(deleteParsedMedia, {
@@ -239,31 +233,17 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
-                      <Show
-                        when={!profile}
-                        fallback={
-                          <div>
-                            <div class="w-full rounded">
-                              <LazyImage
-                                class="max-w-full max-h-full object-contain"
-                                store={poster.bind(profile?.poster_path)}
-                              />
-                            </div>
-                            <div>{profile?.name}</div>
-                          </div>
-                        }
-                      >
-                        <div class="w-full rounded">
-                          <LazyImage class="max-w-full max-h-full object-contain" store={folderImg} />
-                        </div>
+                      <Show when={profile} fallback={<LazyImage class="w-full object-contain" store={folderImg} />}>
+                        <LazyImage class="w-full h-[120px] object-contain" store={poster.bind(profile?.poster_path)} />
+                        <div>{profile?.name}</div>
                       </Show>
                     </div>
-                    <div class="flex-1 w-0 mt-2">
+                    <div class="flex-1 w-0">
                       <div class="text-lg">
                         {name}/{season_text}
                       </div>
                       <Show when={sources}>
-                        <div class="mt-4 p-2 space-y-2">
+                        <div class="mt-4 py-2 space-y-2">
                           <For each={sources}>
                             {(parsedSource) => {
                               const { name, episode_text, parent_paths, profile, file_name, drive } = parsedSource;

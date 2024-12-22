@@ -39,6 +39,9 @@ export const DropdownMenu = (props: { store: DropdownMenuCore } & JSX.HTMLAttrib
         >
           <For each={state().items}>
             {(item) => {
+              if (item.hidden) {
+                return null;
+              }
               return (
                 <Show
                   when={!!item.menu}

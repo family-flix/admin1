@@ -4,7 +4,7 @@
 import { For, JSX, Show, createSignal } from "solid-js";
 import { Search } from "lucide-solid";
 
-import { Button, Input, LazyImage, Label, ListView, ScrollView } from "@/components/ui";
+import { Button, Input, LazyImage, Label, ListView, ScrollView, Skeleton } from "@/components/ui";
 import * as Form from "@/components/ui/form";
 import { TabHeader } from "@/components/ui/tab-header";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
@@ -83,8 +83,21 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
       <Show when={!store.type}>
         <TabHeader store={tab} />
       </Show> */}
-      <ScrollView store={scrollView} class="relative max-h-[480px] overflow-y-auto space-y-4">
-        <ListView store={store.$list}>
+      <ScrollView store={scrollView} class="relative h-[480px] overflow-y-auto space-y-4">
+        <ListView
+          store={store.$list}
+          skeleton={
+            <div class="flex">
+              <Skeleton class="w-[120px] h-[176px] rounded-sm mr-4" />
+              <div class="flex-1 overflow-hidden text-ellipsis space-y-1">
+                <Skeleton class="w-[128px] h-[32px]"></Skeleton>
+                <Skeleton class="w-[48px] h-[24px]"></Skeleton>
+                <Skeleton class="w-[320px] h-[48px]"></Skeleton>
+                <Skeleton class="w-[40px] h-[24px]"></Skeleton>
+              </div>
+            </div>
+          }
+        >
           <div class="relative">
             <For each={dataSource()}>
               {(media) => {
@@ -98,7 +111,7 @@ export const MediaSearchView = (props: { store: MediaSearchCore } & JSX.HTMLAttr
                   >
                     <div class="flex">
                       <LazyImage
-                        class="w-[120px] rounded-sm object-fit mr-4"
+                        class="w-[120px] h-[176px] rounded-sm object-fit mr-4"
                         store={poster.bind(poster_path)}
                         alt={name}
                       />

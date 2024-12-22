@@ -164,14 +164,15 @@ export class TabHeaderCore<
     }
   }
   handleChangeById(id: string) {
+    console.log("[DOMAIN]tab-header/index selectById", id, this.tabs);
     const matchedIndex = this.tabs.findIndex((t) => t.id === id);
     if (matchedIndex === -1) {
       return;
     }
     this.current = matchedIndex;
-    // console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab);
+    console.log("[DOMAIN]tab-header/index selectById", this.current, this.selectedTab);
     const left = this.calcLineLeft(this.current);
-    // console.log("[DOMAIN]tab-header/index handleChangeById", this.current, this.selectedTab, left);
+    console.log("[DOMAIN]tab-header/index handleChangeById", this.current, this.selectedTab, left);
     if (left !== null) {
       this.changeLinePosition(left);
     }
@@ -199,9 +200,8 @@ export class TabHeaderCore<
     // if (this.current === null) {
     //   return;
     // }
-    this.mounted = true;
-    this.emit(Events.Mounted);
     (() => {
+      console.log("[DOMAIN]ui/tab-header - tabs mounted", this.pendingAction);
       if (this.pendingAction) {
         this.selectById(this.pendingAction.id, this.pendingAction.options);
         this.pendingAction = null;
@@ -212,6 +212,8 @@ export class TabHeaderCore<
         this.changeLinePosition(left);
       }
     })();
+    this.mounted = true;
+    this.emit(Events.Mounted);
   }
   changeLinePosition(left: number) {
     this.emit(Events.LinePositionChange, { left });

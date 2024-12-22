@@ -1,4 +1,4 @@
-import { For, createSignal } from "solid-js";
+import { For, createSignal, onMount } from "solid-js";
 
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { cn } from "@/utils";
@@ -9,12 +9,13 @@ export const TabHeader = (props: { store: TabHeaderCore<any> }) => {
   const [state, setState] = createSignal(store.state);
   const [left, setLeft] = createSignal<null | number>(null);
 
-  const { tabs: options, current } = state();
-
+  console.log("[COMPONENT]ui/tab-header - listen onChange");
   store.onStateChange((v) => {
+    console.log("[COMPONENT]ui/tab-header - onChange", v);
     setState(v);
   });
   store.onLinePositionChange((v) => {
+    console.log("[COMPONENT]ui/tab-header - onLinePositionChange", v.left);
     setLeft(v.left);
   });
 
@@ -34,7 +35,7 @@ export const TabHeader = (props: { store: TabHeaderCore<any> }) => {
         // scroll-x
       >
         <div id="tabs-wrapper" class="flex">
-          <For each={options}>
+          <For each={state().tabs}>
             {(tab, index) => {
               return (
                 <div

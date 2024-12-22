@@ -32,6 +32,8 @@ type MenuItemProps = {
   shortcut?: string;
   /** 菜单是否禁用 */
   disabled?: boolean;
+  /** 是否隐藏 */
+  hidden?: boolean;
   /** 子菜单 */
   menu?: MenuCore;
   /** 点击后的回调 */
@@ -55,6 +57,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   /** 子菜单 */
   menu: MenuCore | null = null;
 
+  hidden = false;
   state: MenuItemState = {
     label: "",
     icon: null,
@@ -69,12 +72,13 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   constructor(options: Partial<{ _name: string }> & MenuItemProps) {
     super(options);
 
-    const { _name, tooltip, label, icon, shortcut, disabled = false, menu, onClick } = options;
+    const { _name, tooltip, label, icon, shortcut, disabled = false, hidden = false, menu, onClick } = options;
 
     this.label = label;
     this.tooltip = tooltip;
     this.icon = icon;
     this.shortcut = shortcut;
+    this.hidden = hidden;
     if (_name) {
       this._name = _name;
     }
@@ -174,6 +178,12 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     if (this.menu) {
       this.menu.reset();
     }
+  }
+  hide() {
+    this.hidden = true;
+  }
+  show() {
+    this.hidden = false;
   }
   unmount() {
     super.destroy();

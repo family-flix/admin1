@@ -10,13 +10,13 @@ import {
   createMemberAuthToken,
   deleteMember,
   fetchMemberHistoryList,
+  fetchMemberHistoryListProcess,
   fetchMemberList,
   fetchPermissionList,
   MemberItem,
   updateMemberPermission,
 } from "@/biz/services/index";
 import { create_link } from "@/biz/shortlink";
-import { fetchMemberAccounts } from "@/biz/services/member";
 import { Button, Dialog, Input, ListView, Skeleton, ScrollView, Checkbox, CheckboxGroup } from "@/components/ui";
 import { SeasonSelect, TVSeasonSelectCore } from "@/components/SeasonSelect";
 import { Qrcode } from "@/components/Qrcode";
@@ -42,10 +42,10 @@ function Page(props: ViewComponentProps) {
       $refreshBtn.setLoading(loading);
     },
   });
-  const memberAccountsRequest = new RequestCore(fetchMemberAccounts, {
-    defaultResponse: {},
-    client,
-  });
+  // const memberAccountsRequest = new RequestCore(fetchMemberAccounts, {
+  //   defaultResponse: {},
+  //   client,
+  // });
   const memberPermissionUpdateRequest = new RequestCore(updateMemberPermission, {
     onLoading(loading) {
       $permissionDialog.okBtn.setLoading(loading);
@@ -90,19 +90,21 @@ function Page(props: ViewComponentProps) {
       $addMemberDialog.hide();
       $remarkInput.clear();
       $memberList.refresh();
-//       $memberAccountsDialog.show();
-//       const text = `${history.$router.origin}/mobile/home/index
+      //       $memberAccountsDialog.show();
+      //       const text = `${history.$router.origin}/mobile/home/index
 
-// 邮箱
-// ${r.account.id}
+      // 邮箱
+      // ${r.account.id}
 
-// 密码
-// ${r.account.pwd}
-// `;
+      // 密码
+      // ${r.account.pwd}
+      // `;
       // setText();
     },
   });
-  const $historyList = new ListCore(new RequestCore(fetchMemberHistoryList));
+  const $historyList = new ListCore(
+    new RequestCore(fetchMemberHistoryList, { process: fetchMemberHistoryListProcess })
+  );
   const memberRef = new RefCore<MemberItem>();
   const $addMemberDialog = new DialogCore({
     title: "新增成员",
@@ -163,12 +165,12 @@ function Page(props: ViewComponentProps) {
       $historyDialog.show();
     },
   });
-  const $account = new ButtonInListCore<MemberItem>({
-    onClick(member) {
-      memberAccountsRequest.run({ id: member.id });
-      $memberAccountsDialog.show();
-    },
-  });
+  // const $account = new ButtonInListCore<MemberItem>({
+  //   onClick(member) {
+  //     memberAccountsRequest.run({ id: member.id });
+  //     $memberAccountsDialog.show();
+  //   },
+  // });
   const $link = new ButtonInListCore<MemberItem>({
     onClick(member) {
       memberRef.select(member);
@@ -322,7 +324,6 @@ ${url}`;
       $resetBtn,
       $profile,
       $link,
-      $account,
       $update,
       $ban,
       $delete,
@@ -442,13 +443,13 @@ export const HomeMemberListPage: ViewComponent = (props) => {
                             >
                               详情
                             </Button>
-                            <Button
+                            {/* <Button
                               variant="subtle"
                               icon={<Gem class="w-4 h-4" />}
                               store={$page.ui.$account.bind(member)}
                             >
                               账号
-                            </Button>
+                            </Button> */}
                             {/* <Button
                             variant="subtle"
                             icon={<ShieldAlert class="w-4 h-4" />}
@@ -456,14 +457,14 @@ export const HomeMemberListPage: ViewComponent = (props) => {
                           >
                             生成授权链接
                           </Button> */}
-                            <Button
+                            {/* <Button
                               variant="subtle"
                               icon={<ShieldClose class="w-4 h-4" />}
                               store={$page.ui.$link.bind(member)}
                             >
                               复制影片链接
-                            </Button>
-                            <Button
+                            </Button> */}
+                            {/* <Button
                               variant="subtle"
                               icon={<ShieldClose class="w-4 h-4" />}
                               store={$page.ui.$ban.bind(member)}
@@ -476,7 +477,7 @@ export const HomeMemberListPage: ViewComponent = (props) => {
                               store={$page.ui.$update.bind(member)}
                             >
                               修改信息
-                            </Button>
+                            </Button> */}
                             <Button
                               variant="subtle"
                               icon={<UserX class="w-4 h-4" />}

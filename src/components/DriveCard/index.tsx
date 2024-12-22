@@ -270,6 +270,7 @@ export const DriveCard = (
   const createResourceDrive = new MenuItemCore({
     label: "创建资源盘",
     tooltip: "阿里云盘包含备份盘与资源盘，该按扭将创建对应的资源盘记录",
+    hidden: drive.type === DriveTypes.AlipanResourceOpenDrive || drive.type === DriveTypes.AliyunResourceDrive,
     icon: <FolderSymlink class="mr-2 w-4 h-4" />,
     onClick() {
       createResourceDriveRequest.run({

@@ -346,25 +346,18 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
-                      <Show
-                        when={profile}
-                        fallback={
-                          <div class="w-full rounded">
-                            <LazyImage class="max-w-full max-h-full object-contain" store={folderImg} />
-                          </div>
-                        }
-                      >
-                        <LazyImage class="w-full" store={poster.bind(profile?.poster_path)} />
+                      <Show when={profile} fallback={<LazyImage class="w-full object-contain" store={folderImg} />}>
+                        <LazyImage class="w-full h-[120px] object-contain" store={poster.bind(profile?.poster_path)} />
                         <div>{profile?.name}</div>
                       </Show>
                     </div>
-                    <div class="flex-1">
+                    <div class="flex-1 w-0">
                       <div class="text-lg">{name}</div>
                       <div>
                         {season_text}/{episode_text}
                       </div>
                       <div class="mt-2 flex items-center space-x-2 text-slate-800">
-                        <div class="text-sm break-all">
+                        <div class="mt-4 py-2 text-sm break-all">
                           [{drive.name}]{parent_paths}/{file_name}
                         </div>
                         <div
