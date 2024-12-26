@@ -38,6 +38,7 @@ import { InvalidMediaListPage } from "@/pages/invalid_media";
 import { ViewComponent } from "@/store/types";
 
 import { PageKeys } from "./routes";
+import { TestPage } from "@/pages/test";
 
 export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout": HomeLayout,
@@ -68,6 +69,7 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.collection_edit": CollectionEditPage,
   "root.home_layout.subtitles_list": HomeSubtitleListPage,
   "root.home_layout.subtitles_create": HomeSubtitleUploadPage,
+  "root.home_layout.test": TestPage,
   "root.archive": SeasonArchivePage,
   "root.preview": MediaPlayingPage,
   "root.login": LoginPage,

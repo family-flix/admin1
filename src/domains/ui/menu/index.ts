@@ -190,7 +190,7 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     }
   }
   setItems(items: MenuItemCore[]) {
-    this.log("set items", items);
+    console.log("[DOMAIN]ui/menu - set items", items);
     this.state.items = items;
     this.items = items;
     this.listenItems(items);

@@ -3,7 +3,7 @@ import { For, JSX, onMount } from "solid-js";
 import { MoreVertical } from "lucide-solid";
 
 import { client } from "@/store/request";
-import { Input } from "@/components/ui";
+import { DropdownMenu, Input } from "@/components/ui";
 import { InputCore, CheckboxCore, MenuCore, MenuItemCore, DropdownMenuCore, SelectCore } from "@/domains/ui";
 import { TreeCore } from "@/domains/ui/tree";
 import * as TreePrimitive from "@/packages/ui/tree";
@@ -33,15 +33,27 @@ export const TestPage: ViewComponent = (props) => {
   const menu = new DropdownMenuCore({
     align: "end",
     items: [
-      // new MenuItemCore({
-      //   label: "测试",
-      // }),
-      // new MenuItemCore({
-      //   label: "云盘",
-      // }),
+      new MenuItemCore({
+        label: "测试",
+      }),
+      new MenuItemCore({
+        label: "测试2",
+      }),
       new MenuItemCore({
         label: "云盘",
         menu: subMenu,
+      }),
+      new MenuItemCore({
+        label: "云盘2",
+        menu: new MenuCore({
+          side: "right",
+          align: "start",
+          items: [
+            new MenuItemCore({
+              label: "13822136046",
+            }),
+          ],
+        }),
       }),
     ],
   });
@@ -88,24 +100,32 @@ export const TestPage: ViewComponent = (props) => {
     side: "right",
     align: "end",
   });
-  client.get("/api/ping");
-  client.get("/api/ping1");
-  client.get("/api/ping2");
-  client.get("/api/ping3");
-  client.get("/api/ping4");
-  client.get("/api/ping5");
-  client.get("/api/ping6");
-  client.get("/api/ping7");
-  client.get("/api/ping8");
-  client.get("/api/ping9");
-  client.get("/api/ping10");
-  client.get("/api/ping11");
-  client.get("/api/ping12");
-  client.get("/api/ping13");
+  // client.get("/api/ping");
+  // client.get("/api/ping1");
+  // client.get("/api/ping2");
+  // client.get("/api/ping3");
+  // client.get("/api/ping4");
+  // client.get("/api/ping5");
+  // client.get("/api/ping6");
+  // client.get("/api/ping7");
+  // client.get("/api/ping8");
+  // client.get("/api/ping9");
+  // client.get("/api/ping10");
+  // client.get("/api/ping11");
+  // client.get("/api/ping12");
+  // client.get("/api/ping13");
 
   return (
     <div class="p-4 bg-white">
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-1.jpg" />
+      <div
+        onClick={(event) => {
+          const { pageX, pageY } = event;
+          menu.toggle({ x: pageX, y: pageY });
+        }}
+      >
+        Click
+      </div>
+      {/* <img class="w-8" src="https://media-t.funzm.com/poster/615-1.jpg" />
       <img class="w-8" src="https://media-t.funzm.com/poster/615-2.jpg" />
       <img class="w-8" src="https://media-t.funzm.com/poster/615-3.jpg" />
       <img class="w-8" src="https://media-t.funzm.com/poster/615-4.jpg" />
@@ -129,7 +149,8 @@ export const TestPage: ViewComponent = (props) => {
       <img class="w-8" src="https://media-t.funzm.com/poster/1398-3.jpg" />
       <img class="w-8" src="https://media-t.funzm.com/poster/1398-4.jpg" />
       <img class="w-8" src="https://media-t.funzm.com/poster/1398-5.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-6.jpg" />
+      <img class="w-8" src="https://media-t.funzm.com/poster/1398-6.jpg" /> */}
+      <DropdownMenu store={menu}></DropdownMenu>
       {/* <div
         onClick={() => {
           app.tip({ text: ["Hello"] });

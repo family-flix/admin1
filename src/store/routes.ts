@@ -194,6 +194,10 @@ const configure = {
               require: ["login"],
             },
           },
+          test: {
+            title: "测试",
+            pathname: "/home/test",
+          },
         },
       },
       archive: {

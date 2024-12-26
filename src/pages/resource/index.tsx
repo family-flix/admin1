@@ -125,6 +125,7 @@ export const SharedFilesTransferPage: ViewComponent = (props) => {
     },
   });
   driveList.onStateChange((nextResponse) => {
+    console.log("[]", nextResponse.dataSource);
     driveSubMenu.setItems(
       nextResponse.dataSource.map((drive) => {
         const { name } = drive;
