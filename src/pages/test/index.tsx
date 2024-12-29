@@ -26,7 +26,7 @@ export const TestPage: ViewComponent = (props) => {
     align: "start",
     items: [
       new MenuItemCore({
-        label: "13822136046",
+        label: "sub_child_item",
       }),
     ],
   });
@@ -50,7 +50,7 @@ export const TestPage: ViewComponent = (props) => {
           align: "start",
           items: [
             new MenuItemCore({
-              label: "13822136046",
+              label: "hellloo",
             }),
           ],
         }),

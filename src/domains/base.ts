@@ -54,8 +54,8 @@ export function base<Events extends Record<EventType, unknown>>() {
 
 export class BaseDomain<Events extends Record<EventType, unknown>> {
   /** 用于自己区别同名 Domain 不同实例的标志 */
-  unique_id: string = "BaseDomain";
-  debug: boolean = false;
+  unique_id = "BaseDomain";
+  debug = false;
 
   _emitter = mitt<BaseDomainEvents<Events>>();
   listeners: Record<string | number, (() => void)[]> = {};

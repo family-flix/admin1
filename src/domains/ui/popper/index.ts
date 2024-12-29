@@ -299,7 +299,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     }
     return coords;
   }
-  enter() {
+  handleEnter() {
     // this.log("enter", this.reference?.x, this._enter);
     if (this._enter === true) {
       return;
@@ -307,7 +307,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
     this._enter = true;
     this.emit(Events.Enter);
   }
-  leave() {
+  handleLeave() {
     // this.log("leave", this.reference?.x, this._enter);
     if (this._enter === false) {
       return;

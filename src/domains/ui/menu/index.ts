@@ -16,7 +16,7 @@ enum Events {
   LeaveItem,
   EnterMenu,
   LeaveMenu,
-  StateChange,
+  Change,
 }
 type TheTypesOfEvents = {
   [Events.Show]: void;
@@ -25,13 +25,16 @@ type TheTypesOfEvents = {
   [Events.LeaveItem]: MenuItemCore;
   [Events.EnterMenu]: void;
   [Events.LeaveMenu]: void;
-  [Events.StateChange]: MenuState;
+  [Events.Change]: MenuCoreState;
 };
-type MenuState = {
+type MenuCoreState = {
+  /** 是否是展开状态 */
   open: boolean;
+  hover: boolean;
+  /** 所有选项 */
   items: MenuItemCore[];
 };
-type MenuProps = {
+type MenuCoreProps = {
   side: Side;
   align: Align;
   strategy: "fixed" | "absolute";
@@ -40,25 +43,21 @@ type MenuProps = {
 
 export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   _name = "MenuCore";
-  debug = true;
+  debug = false;
 
   popper: PopperCore;
   presence: PresenceCore;
   layer: DismissableLayerCore;
 
-  openTimer: NodeJS.Timeout | null = null;
-  state: MenuState = {
+  open_timer: NodeJS.Timeout | null = null;
+
+  state: MenuCoreState = {
     open: false,
+    hover: false,
     items: [],
   };
 
-  constructor(
-    options: Partial<
-      {
-        _name: string;
-      } & MenuProps
-    > = {}
-  ) {
+  constructor(options: Partial<{ _name: string } & MenuCoreProps> = {}) {
     super(options);
     const { _name, items = [], side, align, strategy } = options;
     if (_name) {
@@ -76,38 +75,44 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.presence = new PresenceCore();
     this.layer = new DismissableLayerCore();
 
-    this.listenItems(items);
+    this.listen_items(items);
 
     this.popper.onEnter(() => {
+      console.log("[DOMAIN]ui/menu/index - handle Enter popper");
+      this.state.hover = true;
       this.emit(Events.EnterMenu);
     });
     this.popper.onLeave(() => {
+      this.state.hover = false;
       this.emit(Events.LeaveMenu);
     });
     this.layer.onDismiss(() => {
       // console.log("[DOMAIN/ui]menu/index - hide");
-      console.log("[]MenuCore - this.layer.onDismiss");
+      // console.log("[DOMAIN]ui/menu/index - this.layer.onDismiss");
       this.hide();
     });
     this.presence.onHidden(() => {
-      // console.log("this.presence.onHidden", this.items.length);
+      console.log("[DOMAIN]ui/menu/index - presence.onHidden", this.cur_item?.label);
       this.reset();
-      if (this.curSub) {
-        this.curSub.hide();
+      if (this.cur_item) {
+        this.cur_item.blur();
+      }
+      if (this.cur_sub) {
+        this.cur_sub.hide();
       }
     });
   }
 
-  subs: MenuCore[] = [];
+  // subs: MenuCore[] = [];
   items: MenuItemCore[] = [];
-  curSub: MenuCore | null = null;
-  curItem: MenuItemCore | null = null;
+  cur_sub: MenuCore | null = null;
+  cur_item: MenuItemCore | null = null;
   inside = false;
   /** 鼠标是否处于子菜单中 */
-  inSubMenu = false;
+  in_sub_menu = false;
   /** 鼠标离开 item 时，可能要隐藏子菜单，但是如果从有子菜单的 item 离开前往子菜单，就不用隐藏 */
-  maybeHideSub = false;
-  hideSubTimer: NodeJS.Timeout | null = null;
+  maybe_hide_sub = false;
+  hide_sub_timer: NodeJS.Timeout | null = null;
 
   toggle() {
     const { open } = this.state;
@@ -119,107 +124,155 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.show();
   }
   show() {
+    if (this.state.open) {
+      return;
+    }
+    // console.log("[DOMAIN]ui/menu/index - hide");
+    this.state.open = true;
     this.presence.show();
     this.popper.place();
     this.emit(Events.Show);
     // this.emit(Events.StateChange, { ...this.state });
   }
   hide() {
-    console.log("[DOMAIN/ui]menu/index - hide");
+    if (this.state.open === false) {
+      return;
+    }
+    // console.log("[DOMAIN]ui/menu/index - hide");
+    this.state.open = false;
     // this.log("hide");
-    this.presence.hide();
+    this.presence.hide({ destroy: true });
     this.emit(Events.Hidden);
-    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, { ...this.state });
   }
-  listenItems(items: MenuItemCore[]) {
-    // this.log("listen items", items);
-    for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-      item.onEnter(() => {
-        // this.log("item.onEnter", this.inside, this.curSub?.inside);
-        this.maybeHideSub = false;
-        if (item.menu) {
-          this.maybeHideSub = false;
-          const subMenu = item.menu;
-          subMenu.show();
-        }
-        if (!item.menu && this.curSub) {
-          this.curSub.hide();
-        }
-        this.emit(Events.EnterItem, item);
-      });
-      item.onLeave(() => {
-        this.maybeHideSub = true;
-        this.emit(Events.LeaveItem, item);
-        // this.log("item.onLeave", this.items.length);
-        if (this.hideSubTimer !== null) {
-          clearInterval(this.hideSubTimer);
-          this.hideSubTimer = setTimeout(() => {
-            this.checkNeedHideSubMenu(item);
-          }, 100);
-          return;
-        }
-        this.hideSubTimer = setTimeout(() => {
-          this.checkNeedHideSubMenu(item);
-        }, 100);
-      });
-      if (!item.menu) {
-        continue;
+  /** 处理选项 */
+  listen_item(item: MenuItemCore) {
+    //  const item = items[i];
+    item.onEnter(() => {
+      // this.maybeHideSub = false;
+      // if (item.menu) {
+      //   this.maybeHideSub = false;
+      //   const subMenu = item.menu;
+      //   subMenu.show();
+      // }
+      // if (!item.menu && this.curSub) {
+      //   this.curSub.hide();
+      // }
+      console.log("[DOMAIN]ui/menu/index - item.onEnter", item.label, item.menu, this.cur_item?.label);
+      this.emit(Events.EnterItem, item);
+      if (item.menu) {
+        item.menu.show();
       }
-      const subMenu = item.menu;
-      subMenu.onShow(() => {
-        this.log("sub.onShow");
-        this.curSub = subMenu;
-      });
-      subMenu.onEnter(() => {
-        this.log("sub.onEnter");
-        this.inSubMenu = true;
-      });
-      subMenu.onLeave(() => {
-        this.log("sub.onLeave");
-        this.inSubMenu = false;
-      });
-      subMenu.onHide(() => {
-        this.log("sub.onHide");
-        this.curSub = null;
-      });
-      if (this.subs.includes(subMenu)) {
+      if (this.cur_item && this.cur_item !== item) {
+        this.cur_item.blur();
+        if (this.cur_item.menu) {
+          this.cur_item.menu.hide();
+        }
+      }
+      this.cur_item = item;
+    });
+    // 考虑清楚 menu item 选中状态,到底表达了什么,在什么情况下,会出现 选中状态
+    // 表达了两个含义 1是鼠标悬浮于 item 上   2是item 有子菜单且子菜单属于打开状态
+    item.onLeave(() => {
+      console.log(
+        "[DOMAIN]ui/menu/index - item.onLeave",
+        item.label,
+        { open: item._open, focused: item._focused },
+        item.menu?.state
+      );
+      // this.maybeHideSub = true;
+      this.emit(Events.LeaveItem, item);
+      item.blur();
+      if (item.menu) {
+        let timer = setTimeout(() => {
+          item.menu!.hide();
+          // this.cur_item = null;
+        }, 0);
+        item.menu.onEnter(() => {
+          console.log("[DOMAIN]ui/menu/index - item.menu.onEnter");
+          if (timer) {
+            clearTimeout(timer);
+          }
+        });
         return;
       }
-      this.subs.push(subMenu);
+      // this.checkNeedHideSubMenu(item);
+      // this.log("item.onLeave", this.items.length);
+      // if (this.hideSubTimer !== null) {
+      //   clearInterval(this.hideSubTimer);
+      //   this.hideSubTimer = setTimeout(() => {
+      //     this.checkNeedHideSubMenu(item);
+      //   }, 100);
+      //   return;
+      // }
+      // this.hideSubTimer = setTimeout(() => {
+      //   this.checkNeedHideSubMenu(item);
+      // }, 100);
+    });
+    if (!item.menu) {
+      return;
+    }
+    const sub_menu = item.menu;
+    // sub_menu.onShow(() => {
+    //   this.log("sub.onShow");
+    //   this.cur_sub = sub_menu;
+    // });
+    // sub_menu.onEnter(() => {
+    //   this.log("sub.onEnter");
+    //   this.in_sub_menu = true;
+    // });
+    // sub_menu.onLeave(() => {
+    //   this.log("sub.onLeave");
+    //   this.in_sub_menu = false;
+    // });
+    // sub_menu.onHide(() => {
+    //   this.log("sub.onHide");
+    //   this.cur_sub = null;
+    // });
+    // if (this.subs.includes(subMenu)) {
+    //   return;
+    // }
+    // this.subs.push(subMenu);
+  }
+  listen_items(items: MenuItemCore[]) {
+    // this.log("listen items", items);
+    for (let i = 0; i < items.length; i += 1) {
+      this.listen_item(items[i]);
     }
   }
   setItems(items: MenuItemCore[]) {
     console.log("[DOMAIN]ui/menu - set items", items);
     this.state.items = items;
     this.items = items;
-    this.listenItems(items);
-    this.emit(Events.StateChange, {
+    this.listen_items(items);
+    this.emit(Events.Change, {
       ...this.state,
     });
   }
   checkNeedHideSubMenu(item: MenuItemCore) {
-    if (this.hideSubTimer) {
-      clearTimeout(this.hideSubTimer);
-    }
-    this.hideSubTimer = null;
-    if (this.maybeHideSub === false) {
-      return;
-    }
+    // console.log("[DOMAIN]ui/menu/index - checkNeedHideSubMenu", item.label, this.maybeHideSub, this.curSub);
+    // if (this.hideSubTimer) {
+    //   clearTimeout(this.hideSubTimer);
+    // }
+    // this.hideSubTimer = null;
+    // if (this.maybeHideSub === false) {
+    //   return;
+    // }
     // this.log("leaveMenu check need hide subMenu", this.curSub, this.inSubMenu);
     // this.emit(Events.LeaveMenu);
     // 直接从有 SubMenu 的 MenuItem 离开，不到其他 MenuItem 场景下，也要关闭 SubMenu
-    if (this.curSub && !this.inSubMenu) {
-      this.curSub.hide();
-    }
+    // if (this.curSub && !this.inSubMenu) {
+    //   this.curSub.hide();
+    // }
   }
   reset() {
     // console.log("[]MenuCore - reset", this.items);
-    this.inSubMenu = false;
-    this.curItem = null;
-    this.curSub = null;
-    this.maybeHideSub = false;
-    this.hideSubTimer = null;
+    this.in_sub_menu = false;
+    // this.cur_item = null;
+    this.cur_sub = null;
+    this.maybe_hide_sub = false;
+    this.hide_sub_timer = null;
+    this.state.open = false;
     this.presence.reset();
     this.popper.reset();
     for (let i = 0; i < this.items.length; i += 1) {
@@ -232,9 +285,9 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
     this.layer.destroy();
     this.popper.destroy();
     this.presence.unmount();
-    for (let i = 0; i < this.subs.length; i += 1) {
-      this.subs[i].unmount();
-    }
+    // for (let i = 0; i < this.subs.length; i += 1) {
+    //   this.subs[i].unmount();
+    // }
     for (let i = 0; i < this.items.length; i += 1) {
       this.items[i].unmount();
     }
@@ -259,8 +312,8 @@ export class MenuCore extends BaseDomain<TheTypesOfEvents> {
   onLeave(handler: Handler<TheTypesOfEvents[Events.LeaveMenu]>) {
     return this.on(Events.LeaveMenu, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    return this.on(Events.StateChange, handler);
+  onChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {
+    return this.on(Events.Change, handler);
   }
 
   get [Symbol.toStringTag]() {

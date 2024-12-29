@@ -163,9 +163,9 @@ const SubTrigger = (
 ) => {
   const { store } = props;
 
-  onMount(() => {
-    store.log("[COMPONENT]SubTrigger - mounted");
-  });
+  // onMount(() => {
+  //   store.log("[COMPONENT]SubTrigger - mounted");
+  // });
 
   return (
     <MenuPrimitive.SubTrigger class={props.class} store={store}>
@@ -174,11 +174,7 @@ const SubTrigger = (
   );
 };
 
-const SubContent = (
-  props: {
-    store: MenuCore;
-  } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const SubContent = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   return (

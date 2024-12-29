@@ -59,12 +59,12 @@ const Content = (
 
   let $content: HTMLDivElement;
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
+  store.onStateChange((v) => {
+    setState(v);
   });
 
   onMount(() => {
-    console.log("[COMPONENT]PopperContent - getRect of floating", $content);
+    // console.log("[COMPONENT]PopperContent - getRect of floating", $content);
     store.setFloating({
       getRect() {
         const rect = $content.getBoundingClientRect();
@@ -110,10 +110,10 @@ const Content = (
       }}
       tabIndex={-1}
       onPointerEnter={() => {
-        store.enter();
+        store.handleEnter();
       }}
       onPointerLeave={() => {
-        store.leave();
+        store.handleLeave();
       }}
     >
       <div
@@ -144,7 +144,7 @@ const Arrow = (
 ) => {
   const { store } = props;
   // const { arrowX, arrowY, baseSide, placedSide, shouldHideArrow } = state;
-  let $arrow: HTMLSpanElement | undefined = undefined;
+  let $arrow: HTMLSpanElement | undefined;
 
   const [state, setState] = createSignal(store.state);
 

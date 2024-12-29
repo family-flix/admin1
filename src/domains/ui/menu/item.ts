@@ -3,32 +3,33 @@
  */
 import { BaseDomain, Handler } from "@/domains/base";
 
-import { MenuCore } from ".";
+import { MenuCore } from "./index";
 
 enum Events {
-  StateChange,
   Enter,
   Leave,
   Focus,
   Blur,
   Click,
+  Change,
 }
 type TheTypesOfEvents = {
-  [Events.StateChange]: MenuItemState;
   [Events.Enter]: void;
   [Events.Leave]: void;
   [Events.Focus]: void;
   [Events.Blur]: void;
   [Events.Click]: void;
+  [Events.Change]: MenuItemCoreState;
 };
 
-type MenuItemProps = {
+type MenuItemCoreProps = {
   /** 菜单文案 */
   label: string;
+  /** hover 时的提示 */
   tooltip?: string;
   /** 菜单图标 */
   icon?: unknown;
-  /** 菜单快捷键 */
+  /** 菜单快捷键/或者说额外内容? */
   shortcut?: string;
   /** 菜单是否禁用 */
   disabled?: boolean;
@@ -39,7 +40,7 @@ type MenuItemProps = {
   /** 点击后的回调 */
   onClick?: () => void;
 };
-type MenuItemState = MenuItemProps & {
+type MenuItemCoreState = MenuItemCoreProps & {
   /** 有子菜单并且子菜单展示了 */
   open: boolean;
   /** 是否聚焦 */
@@ -57,19 +58,25 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   /** 子菜单 */
   menu: MenuCore | null = null;
 
-  hidden = false;
-  state: MenuItemState = {
-    label: "",
-    icon: null,
-    shortcut: "",
-    open: false,
-    disabled: false,
-    focused: false,
-  };
-
+  /** 子菜单是否展示 */
+  _open = false;
+  _hidden = false;
   _enter = false;
+  _focused = false;
+  _disabled = false;
 
-  constructor(options: Partial<{ _name: string }> & MenuItemProps) {
+  get state(): MenuItemCoreState {
+    return {
+      label: this.label,
+      icon: this.icon,
+      shortcut: this.shortcut,
+      open: this._open,
+      disabled: this._disabled,
+      focused: this._focused || this._open,
+    };
+  }
+
+  constructor(options: Partial<{ _name: string }> & MenuItemCoreProps) {
     super(options);
 
     const { _name, tooltip, label, icon, shortcut, disabled = false, hidden = false, menu, onClick } = options;
@@ -78,112 +85,122 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.tooltip = tooltip;
     this.icon = icon;
     this.shortcut = shortcut;
-    this.hidden = hidden;
+    this._hidden = hidden;
+    this._disabled = disabled;
     if (_name) {
       this._name = _name;
     }
 
-    this.state.label = label;
-    this.state.icon = icon;
-    this.state.shortcut = shortcut;
-    this.state.disabled = disabled;
-
     if (menu) {
       this.menu = menu;
       menu.onShow(() => {
-        this.state.open = true;
-        this.emit(Events.StateChange, { ...this.state });
+        this._open = true;
+        this.emit(Events.Change, { ...this.state });
       });
       menu.onHide(() => {
-        this.state.open = false;
-        this.emit(Events.StateChange, { ...this.state });
+        this._open = false;
+        this.emit(Events.Change, { ...this.state });
       });
+      // menu.onEnter(() => {
+      //   console.log("[DOMAIN]ui/menu/item - handle Menu enter");
+      // });
+      // this.onBlur(() => {
+      //   menu.hide();
+      // });
     }
     if (onClick) {
       this.onClick(onClick.bind(this));
     }
   }
   setIcon(icon: unknown) {
-    this.state.icon = icon;
-    this.emit(Events.StateChange, { ...this.state });
+    this.icon = icon;
+    this.emit(Events.Change, { ...this.state });
   }
   /** 禁用指定菜单项 */
   disable() {
-    this.state.disabled = true;
-    this.emit(Events.StateChange, { ...this.state });
+    this._disabled = true;
+    this.emit(Events.Change, { ...this.state });
   }
+  /** 启用指定菜单项 */
   enable() {
-    this.state.disabled = false;
-    this.emit(Events.StateChange, { ...this.state });
+    this._disabled = false;
+    this.emit(Events.Change, { ...this.state });
   }
   /** 鼠标进入菜单项 */
-  enter() {
-    // console.log("enter", this.label, this._enter);
+  handlePointerEnter() {
+    console.log("[DOMAIN]ui/menu/item - handle pointer enter", this.label, this._enter);
     if (this._enter) {
       return;
     }
-    this.log("enter");
+    // this.log("enter");
     this._enter = true;
-    this.state.focused = true;
+    this._focused = true;
     this.emit(Events.Enter);
-    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, { ...this.state });
   }
-  move() {
-    if (this.state.disabled) {
-      this.leave();
-      return;
-    }
-    this.enter();
+  handlePointerMove() {
+    // console.log("[DOMAIN]ui/menu/item - handle pointer move", this.label);
+    // if (this.state.disabled) {
+    //   this.handlePointerLeave();
+    //   return;
+    // }
+    // this.handlePointerEnter();
   }
   /** 鼠标离开菜单项 */
-  leave() {
+  handlePointerLeave() {
+    console.log("[DOMAIN]ui/menu/item - handle pointer leave", this.label, this._enter, this._open);
     if (this._enter === false) {
       return;
     }
-    this.log("leave");
     this._enter = false;
-    this.state.focused = false;
+    this._focused = false;
     this.emit(Events.Leave);
-    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, { ...this.state });
   }
-  focus() {
-    if (this.state.focused) {
+  handleFocus() {
+    console.log("[DOMAIN]ui/menu/item - handle focus", this.label, this._focused);
+    if (this._focused) {
       return;
     }
-    this.log("focus");
-    this.state.focused = true;
+    // this.log("focus");
+    this._focused = true;
     this.emit(Events.Focus);
-    this.emit(Events.StateChange, { ...this.state });
+    this.emit(Events.Change, { ...this.state });
   }
-  blur() {
-    if (this.state.focused === false) {
+  handleBlur() {
+    console.log("[DOMAIN]ui/menu/item - handle blur", this.label, this._focused);
+    if (this._focused === false) {
       return;
     }
-    this.log("blur");
-    this.state.focused = false;
     this._enter = false;
-    this.emit(Events.Blur);
-    this.emit(Events.StateChange, { ...this.state });
+    this.blur();
   }
-  click() {
-    if (this.state.disabled) {
+  handleClick() {
+    if (this._disabled) {
       return;
     }
     this.emit(Events.Click);
   }
+  blur() {
+    this._focused = false;
+    this.emit(Events.Blur);
+    this.emit(Events.Change, { ...this.state });
+  }
   reset() {
-    // console.log("[]MenuItemCore - reset", this.state.open);
-    this.state = { ...this.state, focused: false, open: false };
+    console.log("[DOMAIN]ui/menu/item - reset", this.label, this.state.focused);
+    // this._disabled = false;
+    this._focused = false;
+    this._open = false;
     this._enter = false;
     if (this.menu) {
       this.menu.reset();
     }
   }
   hide() {
-    this.hidden = true;
+    this._hidden = true;
   }
   show() {
-    this.hidden = false;
+    this._hidden = false;
   }
   unmount() {
     super.destroy();
@@ -193,9 +210,6 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.reset();
   }
 
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    return this.on(Events.StateChange, handler);
-  }
   onEnter(handler: Handler<TheTypesOfEvents[Events.Enter]>) {
     return this.on(Events.Enter, handler);
   }
@@ -210,6 +224,9 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   }
   onClick(handler: Handler<TheTypesOfEvents[Events.Click]>) {
     return this.on(Events.Click, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {
+    return this.on(Events.Change, handler);
   }
 
   get [Symbol.toStringTag]() {

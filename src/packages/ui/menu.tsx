@@ -6,15 +6,12 @@ import { Portal as PortalPrimitive } from "solid-js/web";
 
 import { MenuCore } from "@/domains/ui/menu";
 import { MenuItemCore } from "@/domains/ui/menu/item";
-import { cn } from "@/utils";
+import { cn } from "@/utils/index";
 
 import * as PopperPrimitive from "./popper";
 import { Presence } from "./presence";
 import { DismissableLayer } from "./dismissable-layer";
 
-/* -------------------------------------------------------------------------------------------------
- * MenuRoot
- * -----------------------------------------------------------------------------------------------*/
 const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
@@ -25,9 +22,7 @@ const Root = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuAnchor
- * -----------------------------------------------------------------------------------------------*/
+/** 锚点 */
 const Anchor = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
@@ -38,9 +33,6 @@ const Anchor = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) =>
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuPortal
- * -----------------------------------------------------------------------------------------------*/
 const Portal = (
   props: {
     store: MenuCore;
@@ -55,9 +47,6 @@ const Portal = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuContent
- * -----------------------------------------------------------------------------------------------*/
 const Content = (
   props: {
     store: MenuCore;
@@ -104,29 +93,15 @@ const ContentImpl = (
   );
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuGroup
- * -----------------------------------------------------------------------------------------------*/
 const Group = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <div class={props.class}>{props.children}</div>;
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuLabel
- * -----------------------------------------------------------------------------------------------*/
 const Label = (props: {} & JSX.HTMLAttributes<HTMLElement>) => {
   return <div class={props.class}>{props.children}</div>;
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuItem
- * -----------------------------------------------------------------------------------------------*/
-const Item = (
-  props: {
-    store: MenuItemCore;
-    disabled?: boolean;
-  } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Item = (props: { store: MenuItemCore; disabled?: boolean } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   return (
@@ -135,11 +110,7 @@ const Item = (
     </ItemImpl>
   );
 };
-const ItemImpl = (
-  props: {
-    store: MenuItemCore;
-  } & JSX.HTMLAttributes<HTMLDivElement>
-) => {
+const ItemImpl = (props: { store: MenuItemCore } & JSX.HTMLAttributes<HTMLDivElement>) => {
   const { store: item } = props;
   let $item: HTMLDivElement;
 
@@ -158,10 +129,6 @@ const ItemImpl = (
   //   console.log("[ItemImpl]onCleanup", item.label);
   // });
 
-  const open = () => state().open;
-  const disabled = () => state().disabled;
-  const focused = () => state().focused;
-
   return (
     <div
       ref={(el) => {
@@ -176,38 +143,47 @@ const ItemImpl = (
       class={cn("menu__item-impl", props.class)}
       role="menuitem"
       aria-haspopup="menu"
+      aria-disabled={state().disabled || undefined}
       // aria-expanded=""
-      data-state={getOpenState(open())}
-      data-highlighted={focused() ? "" : undefined}
-      aria-disabled={disabled() || undefined}
-      data-disabled={disabled() ? "" : undefined}
-      tabIndex={disabled() ? undefined : -1}
-      onPointerMove={(event) => {
+      data-state={getOpenState(state().open)}
+      data-highlighted={state().focused ? "" : undefined}
+      data-disabled={state().disabled ? "" : undefined}
+      tabIndex={state().disabled ? undefined : -1}
+      onPointerEnter={(event) => {
+        console.log("[COMPONENT]ui/menu ItemImpl - onPointerEnter", event.pointerType, item.label);
         if (event.pointerType !== "mouse") {
           return;
         }
-        if (!item.state.disabled) {
-          event.currentTarget.focus();
-        }
-        item.move();
+        event.currentTarget.focus();
+        item.handlePointerEnter();
+      }}
+      onPointerMove={(event) => {
+        // if (event.pointerType !== "mouse") {
+        //   return;
+        // }
+        // if (!item.state.disabled) {
+        //   event.currentTarget.focus();
+        // }
+        // item.handlePointerMove();
       }}
       onPointerLeave={(event) => {
+        console.log("[COMPONENT]ui/menu ItemImpl - onPointerLeave", event.pointerType, item.label);
         if (event.pointerType !== "mouse") {
           return;
         }
-        event.currentTarget.blur();
-        item.leave();
+        item.handlePointerLeave();
+        // event.currentTarget.blur();
       }}
       onClick={() => {
         // console.log("[COMPONENT]MenuItemImpl - on click");
-        item.click();
+        item.handleClick();
       }}
       onFocus={() => {
         // console.log("[COMPONENT]MenuItemImpl - on focus");
-        item.focus();
+        item.handleFocus();
       }}
       onBlur={() => {
-        item.blur();
+        item.handleBlur();
       }}
     >
       {props.children}
@@ -229,27 +205,17 @@ const Arrow = (
   return <PopperPrimitive.Arrow class={props.class} store={store.popper}></PopperPrimitive.Arrow>;
 };
 
-/* -------------------------------------------------------------------------------------------------
- * MenuSub
- * -----------------------------------------------------------------------------------------------*/
-const Sub = (
-  props: {
-    store: MenuCore;
-  } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const Sub = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   return <PopperPrimitive.Root store={store.popper}>{props.children}</PopperPrimitive.Root>;
 };
 const SubTrigger = (
-  props: {
-    store: MenuItemCore;
-    onMounted?: (el: HTMLDivElement) => void;
-  } & JSX.HTMLAttributes<HTMLDivElement>
+  props: { store: MenuItemCore; onMounted?: (el: HTMLDivElement) => void } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
   const { store: item } = props;
 
-  let $item: HTMLDivElement | undefined = undefined;
+  let $item: HTMLDivElement | undefined;
 
   onMount(() => {
     const $$item = $item;
@@ -288,11 +254,7 @@ const SubTrigger = (
 };
 
 // const MenuSubContentContext = createContext<MenuCore>();
-const SubContent = (
-  props: {
-    store: MenuCore;
-  } & JSX.HTMLAttributes<HTMLElement>
-) => {
+const SubContent = (props: { store: MenuCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
   // const store = useContext(MenuSubContext);
   // onCleanup(() => {
@@ -300,7 +262,7 @@ const SubContent = (
   // });
 
   return (
-    <Presence store={store.presence}>
+    <Presence store={store.presence} class={props.class}>
       <ContentImpl store={store} class={props.class}>
         {props.children}
       </ContentImpl>
