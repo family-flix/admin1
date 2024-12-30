@@ -11,7 +11,7 @@ export function DatePicker(props: { store: DatePickerCore }) {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
-  store.onChange((v) => setState(v));
+  store.onStateChange((v) => setState(v));
 
   return (
     <PopoverPrimitive.Root store={store.$popover}>

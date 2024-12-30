@@ -1,9 +1,9 @@
 import { JSX, createSignal, onMount } from "solid-js";
 import { Loader2 } from "lucide-solid";
 
-import { InputCore } from "@/domains/ui/input";
+import { InputCore } from "@/domains/ui/form/input";
 import { Input as InputPrimitive } from "@/packages/ui/input";
-import { connect } from "@/domains/ui/input/connect.web";
+import { connect } from "@/domains/ui/form/input/connect.web";
 import { cn } from "@/utils";
 
 const Input = (props: { store: InputCore<any>; prefix?: JSX.Element; class?: string }) => {

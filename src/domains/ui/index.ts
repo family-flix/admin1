@@ -8,7 +8,7 @@ export * from "./dropdown-menu";
 export * from "./focus-scope";
 export * from "./form";
 export * from "./image";
-export * from "./input";
+export * from "./form/input";
 export * from "./menu";
 export * from "./node";
 export * from "./popover";

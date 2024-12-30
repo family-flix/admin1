@@ -1,4 +1,5 @@
 import { BaseDomain, Handler } from "@/domains/base";
+import { ValueInputInterface } from "../types";
 
 enum Events {
   Change,
@@ -36,7 +37,7 @@ type InputState<T> = {
   type: string;
 };
 
-export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
+export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements ValueInputInterface<T> {
   defaultValue: T;
   value: T;
   placeholder: string;

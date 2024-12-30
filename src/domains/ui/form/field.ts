@@ -1,5 +1,10 @@
 import { BaseDomain, Handler } from "@/domains/base";
-import { InputInterface } from "./types";
+import { InputCore } from "@/domains/ui/form/input";
+import { DatePickerCore } from "@/domains/ui/date-picker";
+
+import { ListContainerCore } from "./list";
+import { FormCore } from "./index";
+import { ValueInputInterface } from "./types";
 
 enum Events {
   Input,
@@ -7,29 +12,56 @@ enum Events {
 }
 type TheTypesOfEvents = {
   [Events.Input]: unknown;
-  [Events.StateChange]: FormFieldState;
+  [Events.StateChange]: FormFieldCoreState;
 };
-type FormFieldState = {
-  label: string;
-};
-type FormFieldProps = {
+type FormFieldCoreState = {
   label: string;
   name: string;
 };
+// value: InputCore<any> | DatePickerCore | ListInputCore | FormCore<any>;
+// type FormFieldCoreProps = {
+//   label: string;
+//   name: string;
+//   value: ValueInputInterface<any>;
+// };
 
-export class FormFieldCore extends BaseDomain<TheTypesOfEvents> {
-  state: FormFieldState = {
-    label: "",
-  };
+export class FormFieldCore<
+  T extends { label: string; name: string; required?: boolean; input: any }
+> extends BaseDomain<TheTypesOfEvents> {
+  _label: string;
+  _name: string;
+  _required = false;
+  $input: T["input"];
 
-  constructor(options: Partial<{ _name: string } & FormFieldProps> = {}) {
-    super(options);
+  get state(): FormFieldCoreState {
+    return {
+      label: this._label,
+      name: this._name,
+    };
+  }
+  get label() {
+    return this._label;
+  }
+  get name() {
+    return this._name;
+  }
+  // get $value() {
+  //   return this.$value;
+  // }
 
-    const { name, label } = options;
-    // this.name = name;
-    // this.state.label = label;
+  constructor(props: Partial<{ _name: string }> & T) {
+    super(props);
+
+    const { name, label, required = false, input } = props;
+    this._name = name;
+    this._label = label;
+    this._required = required;
+    this.$input = input;
   }
 
+  setLabel(label: string) {
+    this._label = label;
+  }
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
     this.on(Events.Input, handler);
   }

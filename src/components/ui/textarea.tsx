@@ -1,7 +1,7 @@
 import { JSX } from "solid-js/jsx-runtime";
 
 import { cn } from "@/utils";
-import { InputCore } from "@/domains/ui/input";
+import { InputCore } from "@/domains/ui/form/input";
 import { createSignal } from "solid-js";
 
 export interface TextareaProps extends HTMLTextAreaElement {}

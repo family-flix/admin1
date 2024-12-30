@@ -3,8 +3,8 @@
  */
 import { createSignal, JSX, onMount } from "solid-js";
 
-import { InputCore } from "@/domains/ui/input";
-import { connect } from "@/domains/ui/input/connect.web";
+import { InputCore } from "@/domains/ui/form/input";
+import { connect } from "@/domains/ui/form/input/connect.web";
 import { cn } from "@/utils";
 import { effect } from "solid-js/web";
 

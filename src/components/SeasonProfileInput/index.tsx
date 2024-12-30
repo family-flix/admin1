@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
 import { InputCore } from "@/domains/ui";
-import { ImageUploadCore } from "@/domains/ui/image-upload";
+import { ImageUploadCore } from "@/domains/ui/form/image-upload";
 import { Input, Textarea } from "@/components//ui";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DatePickerCore } from "@/domains/ui/date-picker";

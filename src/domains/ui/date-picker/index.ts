@@ -15,7 +15,7 @@ export function DatePickerCore(props: { today: Date }) {
   });
   const $btn = new ButtonCore({});
   $calendar.onChange(() => {
-    bus.emit(Events.Change, { ..._state });
+    bus.emit(Events.Change, _state.value);
   });
 
   const _state = {
@@ -25,12 +25,17 @@ export function DatePickerCore(props: { today: Date }) {
       }
       return "请选择";
     },
+    get value() {
+      return $calendar.value;
+    },
   };
   enum Events {
     Change,
+    StateChange,
   }
   type TheTypesOfEvents = {
-    [Events.Change]: typeof _state;
+    [Events.Change]: typeof _state.value;
+    [Events.StateChange]: typeof _state;
   };
   const bus = base<TheTypesOfEvents>();
 
@@ -43,11 +48,14 @@ export function DatePickerCore(props: { today: Date }) {
     $calendar,
     $btn,
     setValue(v: Date) {
-      console.log("[DOMAIN]ui/date-picker - setValue");
+      // console.log("[DOMAIN]ui/date-picker - setValue");
       $calendar.selectDay(v);
     },
     onChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {
       return bus.on(Events.Change, handler);
+    },
+    onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+      return bus.on(Events.StateChange, handler);
     },
   };
 }

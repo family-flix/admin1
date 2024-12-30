@@ -9,15 +9,16 @@ import * as Form from "@/components/ui/form";
 import { Presence } from "@/components/ui/presence";
 import { TabHeader } from "@/components/ui/tab-header";
 import { MediaSearchView } from "@/components/MediaSelect";
+import { Field } from "@/components/ListField";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { TMDBSearcherCore } from "@/biz/tmdb";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { cn } from "@/utils";
-import { DialogCore, ImageInListCore, PresenceCore } from "@/domains/ui";
 import { MediaSearchCore } from "@/biz/media_search";
-import { MediaTypes } from "@/constants";
 import { prepareEpisodeList, prepareSeasonList } from "@/biz/services/media_profile";
+import { ScrollViewCore } from "@/domains/ui/scroll-view";
+import { DialogCore, FormCore, ImageInListCore, InputCore, PresenceCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
+import { MediaTypes } from "@/constants/index";
+import { cn } from "@/utils/index";
 
 export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
@@ -33,15 +34,27 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         id: "movie",
         text: "电影",
       },
+      {
+        id: "custom",
+        text: "自定义",
+      },
     ],
     onChange(value) {
+      if (value.id === "custom") {
+        searchPanel.hide();
+        $custom.show();
+        return;
+      }
       const map: Record<string, MediaTypes> = {
         season: MediaTypes.Season,
         movie: MediaTypes.Movie,
       };
-      store.search({
-        type: map[value.id],
-      });
+      const keyword = store.$input.value;
+      if (keyword) {
+        store.search({
+          type: map[value.id],
+        });
+      }
     },
   });
   const searchPanel = new PresenceCore({
@@ -89,6 +102,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
       scrollView.finishLoadingMore();
     },
   });
+  const $custom = new PresenceCore();
 
   const [state, setState] = createSignal(store.state);
   const [episodes, setEpisodes] = createSignal<
@@ -262,6 +276,16 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
             }}
           </For>
         </div>
+      </Presence>
+      <Presence
+        store={$custom}
+        classList={{
+          "opacity-100": true,
+          "animate-in slide-in-from-right": true,
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right": true,
+        }}
+      >
+        <div class="h-[480px] overflow-y-auto"></div>
       </Presence>
     </div>
   );

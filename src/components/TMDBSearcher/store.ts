@@ -1,3 +1,6 @@
+/**
+ * @file TMDB 搜索
+ */
 import { TheMediaInTMDB } from "@/biz/services/media_profile";
 import { ButtonCore, DialogCore } from "@/domains/ui";
 import { BaseDomain, Handler } from "@/domains/base";
@@ -8,12 +11,12 @@ import { MediaTypes } from "@/constants";
 enum Events {
   Ok,
   Cancel,
-  StateChange,
+  Change,
 }
 type TheTypesOfEvents = {
   [Events.Ok]: TMDBSearcherDialogState;
   [Events.Cancel]: void;
-  [Events.StateChange]: TMDBSearcherDialogState;
+  [Events.Change]: TMDBSearcherDialogState;
 };
 type TMDBSearcherDialogState = {
   value: null | TheMediaInTMDB;
@@ -66,7 +69,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
     this.cancelBtn = this.dialog.cancelBtn;
     this.tmdb.$list.onStateChange((nextState) => {
       this.state.list = nextState;
-      this.emit(Events.StateChange, { ...this.state });
+      this.emit(Events.Change, { ...this.state });
     });
     this.tmdb.onTip((msg) => {
       this.tip(msg);
@@ -92,7 +95,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
   onCancel(handler: Handler<TheTypesOfEvents[Events.Ok]>) {
     this.on(Events.Ok, handler);
   }
-  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-    this.on(Events.StateChange, handler);
+  onChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {
+    this.on(Events.Change, handler);
   }
 }

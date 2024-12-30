@@ -1,5 +1,5 @@
-export type InputInterface = {
-  name: string;
-  onChange: (v: unknown) => void;
-  onStateChange: (v: unknown) => void;
+export type ValueInputInterface<T> = {
+  value: T;
+  setValue: (v: T) => void;
+  onChange: (fn: (v: T) => void) => void;
 };
