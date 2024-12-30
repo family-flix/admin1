@@ -1,5 +1,6 @@
 import { BaseDomain, Handler } from "@/domains/base";
 import { PopperCore } from "@/domains/ui/popper";
+import { PopoverCore } from "@/domains/ui/popover";
 import { CollectionCore } from "@/domains/ui/collection";
 import { DismissableLayerCore } from "@/domains/ui/dismissable-layer";
 import { Direction } from "@/domains/ui/direction";
@@ -10,7 +11,7 @@ import { SelectViewportCore } from "./viewport";
 import { SelectValueCore } from "./value";
 import { SelectTriggerCore } from "./trigger";
 import { SelectWrapCore } from "./wrap";
-import { SelectItemCore } from "./item";
+import { SelectOptionCore } from "./option";
 import { clamp } from "./utils";
 
 const CONTENT_MARGIN = 10;
@@ -27,9 +28,11 @@ type TheTypesOfEvents<T> = {
   [Events.Placed]: void;
 };
 type SelectState<T> = {
-  options: { value: T; label: string }[];
+  // options: { value: T; label: string }[];
+  options: SelectOptionCore<T>[];
   // options: { text: string; store: SelectItemCore<T> }[];
   value: T | null;
+  text: string;
   /** 菜单是否展开 */
   open: boolean;
   /** 提示 */
@@ -44,7 +47,7 @@ type SelectState<T> = {
 type SelectProps<T> = {
   defaultValue: T | null;
   placeholder?: string;
-  // options: SelectItemCore<T>[];
+  // options: SelectOptionCore<T>[];
   options?: { value: T; label: string }[];
   onChange?: (v: T | null) => void;
 };
@@ -55,11 +58,13 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
 
   // options: { text: string; store: SelectItemCore<T> }[] = [];
   placeholder: string;
-  options: { value: T; label: string }[] = [];
+  // options: { value: T; label: string }[] = [];
+  options: SelectOptionCore<T>[] = [];
   value: T | null = null;
   disabled: boolean = false;
   open: boolean = false;
 
+  popover: PopoverCore;
   popper: PopperCore;
   collection: CollectionCore;
   layer: DismissableLayerCore;
@@ -83,7 +88,9 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   /** 下拉列表容器 */
   viewport: SelectViewportCore | null = null;
   /** 选中的 item */
-  selectedItem: SelectItemCore<T> | null = null;
+  selectedItem: SelectOptionCore<T> | null = null;
+  /** 当前选中的 Option */
+  $selected: SelectOptionCore<T> | null = null;
 
   _findFirstValidItem = false;
 
@@ -91,6 +98,16 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     return {
       options: this.options,
       value: this.value,
+      text: (() => {
+        if (this.$selected) {
+          return this.$selected.text;
+        }
+        const matched = this.options.find((opt) => opt.value === this.value);
+        if (matched) {
+          return matched.text;
+        }
+        return "unknown";
+      })(),
       open: this.open,
       disabled: this.disabled,
       placeholder: this.placeholder,
@@ -105,9 +122,33 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
 
     const { defaultValue, placeholder = "点击选择", options = [], onChange } = props;
     // console.log("[DOMAIN]ui/select/index - constructor", defaultValue);
-    this.options = options.map((opt) => {
-      return opt;
-    });
+    for (let i = 0; i < options.length; i += 1) {
+      const opt = options[i];
+      const $opt = new SelectOptionCore({ label: opt.label, value: opt.value });
+      if (defaultValue !== undefined && defaultValue !== null) {
+        if (defaultValue === opt.value) {
+          this.$selected = $opt;
+          $opt.select();
+        }
+      }
+      $opt.onSelect(() => {
+        if (this.$selected) {
+          this.$selected.unselect();
+        }
+        this.$selected = $opt;
+        this.select($opt.value);
+      });
+      $opt.onUnSelect(() => {
+        this.$selected = null;
+        this.unselect($opt.value);
+      });
+      $opt.onPointerEnter(() => {
+        if (this.$selected && this.$selected !== $opt) {
+          this.$selected.blur();
+        }
+      });
+      this.options.push($opt);
+    }
     this.value = defaultValue;
     this.placeholder = placeholder;
     const matched = this.options.find((opt) => opt.value === defaultValue);
@@ -116,6 +157,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
       this.emit(Events.Change, defaultValue);
     }
     this.popper = new PopperCore();
+    this.popover = new PopoverCore();
     this.layer = new DismissableLayerCore();
     this.collection = new CollectionCore();
     this.popper.onReferenceMounted((reference) => {
@@ -158,20 +200,22 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   // setValue(value: SelectValueCore) {
   //   this.value = value;
   // }
-  setSelectedItem(item: SelectItemCore<T>) {
+  setSelectedItem(item: SelectOptionCore<T>) {
     this.selectedItem = item;
   }
-  async show() {
+  show() {
+    console.log("[DOMAIN]ui/select/index - show");
     // console.log(...this.log("show", this.state));
     if (this.disabled) {
       return;
     }
-    // if (this.open) {
-    //   return;
-    // }
-    this.popper.place();
-    // await sleep(800);
+    if (this.$selected) {
+      this.$selected.focus();
+    }
+    // this.popper.sho
+    this.popover.show();
     this.open = true;
+    this.popper.place();
     // this.position();
     this.emit(Events.StateChange, { ...this.state });
   }
@@ -180,6 +224,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     if (this.open === false) {
       return;
     }
+    this.popover.hide();
     this.open = false;
     this.emit(Events.StateChange, { ...this.state });
   };
@@ -208,35 +253,33 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   //     store: item,
   //   });
   // }
-  /** 选择 item */
+  /** 选择 option */
   select(value: T) {
-    // if (item.state.selected) {
-    //   this.hide();
-    //   return;
-    // }
     if (this.value === value) {
       return;
     }
     this.value = value;
-    // this.value = item.value;
-    // this.state.value = item.value;
-    this.emit(Events.StateChange, { ...this.state });
     this.emit(Events.Change, value);
-    // item.select/unselect 必须放在 select.emit 后面
-    for (let i = 0; i < this.options.length; i += 1) {
-      const it = this.options[i];
-      // if (it.state.selected) {
-      //   it.unselect();
-      // }
+    this.emit(Events.StateChange, { ...this.state });
+    this.hide();
+  }
+  unselect(value: T) {
+    if (this.value !== value) {
+      return;
     }
-    // item.select();
+    this.value = null;
+    this.emit(Events.Change, value);
+    this.emit(Events.StateChange, { ...this.state });
     this.hide();
   }
   focus() {
     this.emit(Events.Focus);
   }
   setOptions(options: NonNullable<SelectProps<T>["options"]>) {
-    this.options = options;
+    // this.options = options;
+    this.options = options.map((opt) => {
+      return new SelectOptionCore({ label: opt.label, value: opt.value });
+    });
     // console.log("[DOMAIN]ui/select - setOptions", this.unique_id, this.value, options);
     if (this.value === null) {
       return;

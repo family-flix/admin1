@@ -73,7 +73,7 @@ type PopperState = {
   reference: boolean;
 };
 export class PopperCore extends BaseDomain<TheTypesOfEvents> {
-  _name = "PopperCore";
+  unique_id = "PopperCore";
   debug = true;
 
   // side: Side = "bottom";
@@ -128,7 +128,7 @@ export class PopperCore extends BaseDomain<TheTypesOfEvents> {
 
     const { _name, side = "bottom", align = "center", strategy = "absolute", middleware = [] } = options;
     if (_name) {
-      this._name = _name;
+      this.unique_id = _name;
     }
     this.strategy = strategy;
     this.placement = (side + (align !== "center" ? "-" + align : "")) as Placement;

@@ -2,7 +2,7 @@ import { JSX, Show, createContext, createSignal, onMount, useContext } from "sol
 import { Portal as PortalPrimitive } from "solid-js/web";
 
 import { SelectCore } from "@/domains/ui/select";
-import { SelectItemCore } from "@/domains/ui/select/item";
+import { SelectOptionCore } from "@/domains/ui/select/option";
 import { SelectViewportCore } from "@/domains/ui/select/viewport";
 import { SelectContentCore } from "@/domains/ui/select/content";
 import { SelectTriggerCore } from "@/domains/ui/select/trigger";
@@ -12,6 +12,7 @@ import { cn } from "@/utils";
 
 import * as Collection from "./collection";
 import * as PopperPrimitive from "./popper";
+import * as PopoverPrimitive from "./popover";
 import { DismissableLayer } from "./dismissable-layer";
 
 const SELECTION_KEYS = [" ", "Enter"];
@@ -93,35 +94,54 @@ const Trigger = (props: { store: SelectCore<any> } & JSX.HTMLAttributes<HTMLElem
   );
 };
 
-const Value = (props: { store: SelectCore<any>; placeholder?: string } & JSX.HTMLAttributes<HTMLElement>) => {
+const Value = (props: { store: SelectCore<any> } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
-  let $value: HTMLSpanElement;
+  let $value: HTMLSpanElement | undefined;
 
   const [state, setState] = createSignal(store.state);
 
-  //   store.onStateChange((nextState) => {
-  //     setState(nextState);
-  //   });
+  store.onStateChange((v) => {
+    setState(v);
+  });
   // store.onValueChange((selectedItem) => {});
 
-  const valueCore = new SelectValueCore({
-    $node: () => $value,
-    getRect() {
-      return $value.getBoundingClientRect();
-    },
-    getStyles() {
-      return window.getComputedStyle($value);
-    },
-  });
+  // const valueCore = new SelectValueCore({
+  //   $node: () => $value!,
+  //   getRect() {
+  //     if ($value) {
+  //       return $value.getBoundingClientRect();
+  //     }
+  //     return {
+  //       left: 0,
+  //       top: 0,
+  //       bottom: 0,
+  //       right: 0,
+  //       x: 0,
+  //       y: 0,
+  //       width: 0,
+  //       height: 0,
+  //       toJSON() {
+  //         return {};
+  //       },
+  //     };
+  //   },
+  //   getStyles() {
+  //     if ($value) {
+  //       // @todo 不能出现 window
+  //       return window.getComputedStyle($value);
+  //     }
+  //     return {} as CSSStyleDeclaration;
+  //   },
+  // });
   //   store.setValue(valueCore);
 
-  const showPlaceholder = () => state().value === undefined && props.placeholder !== undefined;
+  const show_placeholder = () => state().value === undefined && state().placeholder !== undefined;
 
   return (
     <span style={{ "pointer-events": "none" }}>
-      <Show when={!showPlaceholder()} fallback={props.placeholder}>
-        {props.children}
+      <Show when={!show_placeholder()} fallback={state().placeholder}>
+        {state().text}
       </Show>
     </span>
   );
@@ -144,25 +164,18 @@ const Content = (props: { store: SelectCore<any> } & JSX.HTMLAttributes<HTMLDivE
   //   const store = useContext(SelectContext);
   const [state, setState] = createSignal(store.state);
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
+  store.onStateChange((v) => {
+    setState(v);
   });
 
-  const open = () => state().open;
-
   return (
-    <Show
-      when={open()}
-      fallback={
-        <PortalPrimitive mount={new DocumentFragment()}>
-          <div>{props.children}</div>
-        </PortalPrimitive>
-      }
-    >
-      <ContentImpl store={store} class={props.class} classList={props.classList}>
-        {props.children}
-      </ContentImpl>
-    </Show>
+    <PopoverPrimitive.Portal store={store.popover}>
+      <PopoverPrimitive.Content store={store.popover}>
+        <ContentImpl store={store} class={props.class} classList={props.classList}>
+          {props.children}
+        </ContentImpl>
+      </PopoverPrimitive.Content>
+    </PopoverPrimitive.Portal>
   );
 };
 
@@ -382,32 +395,26 @@ const Label = (props: { class?: string; children: JSX.Element }) => {
   return <div class={props.class}>{props.children}</div>;
 };
 
-const Item = (
+const Option = (
   props: {
     parent: SelectCore<any>;
-    store: SelectItemCore<any>;
+    store: SelectOptionCore<any>;
     value?: string;
   } & JSX.HTMLAttributes<HTMLDivElement>
 ) => {
-  const { value, parent, store: item } = props;
+  const { parent, store } = props;
 
-  let $item: HTMLDivElement;
-  // console.log("SelectItem initial", store.state.value);
+  let $item: HTMLDivElement | undefined;
 
-  //   const item = new SelectItemCore({
-  //     value,
-  //     selected: store.state.value === value,
-  //     getRect: () => $item.getBoundingClientRect(),
-  //     getStyles: () => window.getComputedStyle($item),
-  //   });
+  const [state, setState] = createSignal(store.state);
 
-  const [state, setState] = createSignal(item.state);
-
-  item.onStateChange((nextState) => {
+  store.onStateChange((nextState) => {
     setState(nextState);
   });
-  item.onFocus(() => {
-    // console.log("itemCore.onFocus");
+  store.onFocus(() => {
+    if (!$item) {
+      return;
+    }
     $item.focus({ preventScroll: true });
   });
   //   onMount(() => {
@@ -417,10 +424,6 @@ const Item = (
   //   item.destroy();
   // });
 
-  const focused = () => state().focused;
-  const selected = () => state().selected;
-  const disabled = () => state().disabled;
-
   return (
     <div
       ref={(ref) => {
@@ -429,33 +432,39 @@ const Item = (
       class={props.class}
       classList={props.classList}
       role="option"
-      data-highlighted={focused() ? "" : undefined}
-      aria-selected={selected() && focused()}
-      data-state={selected() ? "checked" : "unchecked"}
-      aria-disabled={disabled() || undefined}
-      data-disabled={disabled() ? "" : undefined}
-      tabIndex={disabled() ? undefined : -1}
+      aria-selected={state().selected && state().focused}
+      aria-disabled={state().disabled || undefined}
+      tabIndex={state().disabled ? undefined : -1}
+      data-highlighted={state().focused ? "" : undefined}
+      data-state={state().selected ? "checked" : "unchecked"}
+      data-disabled={state().disabled ? "" : undefined}
+      // onPointerUp={() => {
+      //   parent.handlePointerUp(store);
+      // }}
+      onPointerEnter={(event) => {
+        store.handlePointerEnter();
+      }}
+      // onPointerMove={(event) => {
+      //   store.handlePointerMove({ x: event.pageX, y: event.pageY });
+      // }}
+      onPointerLeave={() => {
+        store.handlePointerLeave();
+      }}
+      // onKeyDown={(event) => {
+      //   if (SELECTION_KEYS.includes(event.key)) {
+      //     parent.handlePointerUp(store);
+      //   }
+      // }}
+      onClick={() => {
+        store.handleClick();
+      }}
       onFocus={() => {
         // console.log(...itemCore.log("onFocus", value));
-        item.focus();
+        store.handleFocus();
       }}
       onBlur={() => {
         // console.log(...itemCore.log("onBlur", value));
-        item.blur();
-      }}
-      onPointerUp={() => {
-        parent.select(item);
-      }}
-      onPointerMove={(event) => {
-        item.move({ x: event.pageX, y: event.pageY });
-      }}
-      onPointerLeave={() => {
-        item.leave();
-      }}
-      onKeyDown={(event) => {
-        if (SELECTION_KEYS.includes(event.key)) {
-          parent.select(item);
-        }
+        store.handleBlur();
       }}
     >
       {props.children}
@@ -463,11 +472,11 @@ const Item = (
   );
 };
 
-const ItemText = (props: { store: SelectItemCore<any>; children: JSX.Element }) => {
+const OptionText = (props: { store: SelectOptionCore<any>; children: JSX.Element }) => {
   const { store } = props;
   //   const store = useContext(SelectContext);
   //   const item = useContext(SelectItemContext);
-  let $node: HTMLSpanElement;
+  let $node: HTMLSpanElement | undefined;
 
   const [state, setState] = createSignal(store.state);
 
@@ -508,20 +517,18 @@ const ItemText = (props: { store: SelectItemCore<any>; children: JSX.Element }) 
   );
 };
 
-const ItemIndicator = (props: { store: SelectItemCore<any> } & JSX.HTMLAttributes<HTMLElement>) => {
+const ItemIndicator = (props: { store: SelectOptionCore<any> } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
   const [state, setState] = createSignal(store.state);
 
-  store.onStateChange((nextState) => {
+  store.onStateChange((v) => {
     //     console.log(...item.log("item.onStateChange", item.value, nextState.selected));
-    setState(nextState);
+    setState(v);
   });
 
-  const selected = () => state().selected;
-
   return (
-    <Show when={selected()}>
+    <Show when={state().selected}>
       <span class={props.class} aria-hidden>
         {props.children}
       </span>
@@ -586,8 +593,8 @@ export {
   Viewport,
   Group,
   Label,
-  Item,
-  ItemText,
+  Option,
+  OptionText,
   ItemIndicator,
   //   ScrollUpButton,
   //   ScrollDownButton,

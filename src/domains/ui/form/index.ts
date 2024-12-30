@@ -1,27 +1,11 @@
 /**
  * @file 多字段 Input
  */
-import { BaseDomain, Handler } from "@/domains/base";
+import { base, BaseDomain, Handler } from "@/domains/base";
 
 import { FormFieldCore } from "./field";
 import { ValueInputInterface } from "./types";
 
-enum Events {
-  Input,
-  Submit,
-  Change,
-  StateChange,
-}
-type TheTypesOfEvents<T extends Record<string, unknown>> = {
-  [Events.Input]: unknown;
-  [Events.Submit]: T;
-  [Events.Change]: T;
-  [Events.StateChange]: T;
-};
-
-type FormState<T extends Record<string, unknown>> = {
-  value: T;
-};
 type FormProps<F extends Record<string, FieldCore<any>>> = {
   fields: F;
 };
@@ -30,63 +14,83 @@ type FieldCore<T> = {
   $input: ValueInputInterface<T>;
 };
 
-export class FormCore<T extends Record<string, any>, F extends Record<string, FieldCore<any>> = {}>
-  extends BaseDomain<TheTypesOfEvents<T>>
-  implements ValueInputInterface<T>
-{
-  fields: F;
+export function FormCore<T extends Record<string, any>, F extends Record<string, FieldCore<any>> = {}>(
+  props: FormProps<F>
+) {
+  const { fields } = props;
 
-  _values: T = {} as T;
+  let _fields: F = fields;
+  let _values: T = {} as T;
 
-  get state(): FormState<T> {
-    return {
-      value: this._values,
-    };
-  }
-  get value() {
-    return this._values;
-  }
+  const _state = {
+    get value() {
+      return _values;
+    },
+  };
 
-  constructor(props: Partial<{ _name: string }> & FormProps<F>) {
-    super(props);
+  enum Events {
+    Input,
+    Submit,
+    Change,
+    StateChange,
+  }
+  type TheTypesOfEvents<T extends Record<string, unknown>> = {
+    [Events.Input]: unknown;
+    [Events.Submit]: T;
+    [Events.Change]: T;
+    [Events.StateChange]: typeof _state;
+  };
+  const bus = base<TheTypesOfEvents<T>>();
 
-    const { fields } = props;
-    const keys: Array<keyof F> = Object.keys(fields);
-    for (let i = 0; i < keys.length; i += 1) {
-      const field = fields[keys[i]];
-      this.updateValues(field.name, field.$input.value);
-      field.$input.onChange((v) => {
-        this.updateValues(field.name, v);
-      });
-    }
-    this.fields = fields;
+  function updateValuesWithout<K extends keyof T>(name: K, value: T[K]) {
+    // console.log("[DOMAIN]ui/form/index - updateValues", name, value);
+    _values[name] = value;
   }
-  updateValues<K extends keyof T>(name: K, value: T[K]) {
-    console.log("[DOMAIN]ui/form/index - updateValues", name, value);
-    this._values[name] = value;
-    this.emit(Events.Change, { ...this.state.value });
-  }
-  setValue(v: T) {
-    this._values = v;
-    this.emit(Events.Change, { ...this.state.value });
-  }
-  // setFieldsValue(nextValues) {}
-  input<Key extends keyof T>(key: Key, value: T[Key]) {
-    this._values[key] = value;
-    this.emit(Events.Input, value);
-    this.emit(Events.Change, { ...this.state.value });
-  }
-  submit() {
-    this.emit(Events.Submit, { ...this.state.value });
+  function updateValues<K extends keyof T>(name: K, value: T[K]) {
+    // console.log("[DOMAIN]ui/form/index - updateValues", name, value);
+    _values[name] = value;
+    bus.emit(Events.Change, { ..._state.value });
   }
 
-  onSubmit(handler: Handler<TheTypesOfEvents<T>[Events.Submit]>) {
-    this.on(Events.Submit, handler);
+  const keys: Array<keyof F> = Object.keys(_fields);
+  for (let i = 0; i < keys.length; i += 1) {
+    const field = _fields[keys[i]];
+    updateValuesWithout(field.name, field.$input.value);
+    field.$input.onChange((v) => {
+      updateValues(field.name, v);
+    });
   }
-  onInput(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
-    this.on(Events.Change, handler);
-  }
-  onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
-    return this.on(Events.Change, handler);
-  }
+
+  return {
+    Symbol: "FormCore" as const,
+    get value() {
+      return _values;
+    },
+    get fields() {
+      return _fields;
+    },
+    setValue(v: T) {
+      _values = v;
+      bus.emit(Events.Change, _state.value);
+    },
+    // setFieldsValue(nextValues) {}
+    input<Key extends keyof T>(key: Key, value: T[Key]) {
+      _values[key] = value;
+      bus.emit(Events.Change, _state.value);
+    },
+    submit() {
+      bus.emit(Events.Submit, _state.value);
+    },
+    onSubmit(handler: Handler<TheTypesOfEvents<T>[Events.Submit]>) {
+      bus.on(Events.Submit, handler);
+    },
+    onInput(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+      bus.on(Events.Change, handler);
+    },
+    onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+      return bus.on(Events.Change, handler);
+    },
+  };
 }
+
+export type FormCore = ReturnType<typeof FormCore>;

@@ -29,7 +29,7 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
   type?: MediaTypes;
 
   $list = new ListCore(new RequestCore(searchMediaInTMDB));
-  $form: FormCore<{}>;
+  $form: FormCore;
   $input: InputCore<string>;
   searchBtn: ButtonCore;
   resetBtn: ButtonCore;
@@ -55,7 +55,7 @@ export class TMDBSearcherCore extends BaseDomain<TheTypesOfEvents> {
     }
     this.needEpisode = episode;
     this.$list.setParams({ type: type || MediaTypes.Season });
-    this.$form = new FormCore<{}>();
+    this.$form = FormCore({ fields: {} });
 
     this.searchBtn = new ButtonCore({
       onClick: () => {

@@ -31,7 +31,7 @@ type MediaSearchProps = {
 
 export class MediaSearchCore extends BaseDomain<TheTypesOfEvents> {
   $list = new ListCore(new RequestCore(fetchMediaProfileList, { process: fetchMediaProfileListProcess }));
-  form: FormCore<{}>;
+  form: FormCore;
   input: InputCore<string>;
   searchBtn: ButtonCore;
   resetBtn: ButtonCore;
@@ -54,7 +54,9 @@ export class MediaSearchCore extends BaseDomain<TheTypesOfEvents> {
       this.type = type;
       this.$list.setParams({ type });
     }
-    this.form = new FormCore<{}>();
+    this.form = FormCore({
+      fields: {},
+    });
     this.searchBtn = new ButtonCore({
       onClick: () => {
         if (!this.input.value) {

@@ -1,18 +1,32 @@
 import { expect, it, describe } from "vitest";
 
-import { FormCore, InputCore } from "@/domains/ui";
+import { FormCore, InputCore, SelectCore } from "@/domains/ui";
 import { DatePickerCore } from "@/domains/ui/date-picker";
 import { FormFieldCore } from "@/domains/ui/form/field";
 import { ListContainerCore } from "@/domains/ui/form/list";
+import { MediaTypes } from "@/constants";
 
 describe("路径生成", () => {
   it("没有路径参数", () => {
-    const $media = new FormCore({
+    const $media = FormCore({
       fields: {
         type: new FormFieldCore({
           label: "类型",
           name: "type",
-          input: new InputCore({ defaultValue: "" }),
+          tip: "有多集需要选择 电视剧 选项",
+          input: new SelectCore({
+            defaultValue: MediaTypes.Movie,
+            options: [
+              {
+                label: "电影",
+                value: MediaTypes.Movie,
+              },
+              {
+                label: "电视剧",
+                value: MediaTypes.Season,
+              },
+            ],
+          }),
         }),
         title: new FormFieldCore({
           label: "标题",
@@ -52,20 +66,21 @@ describe("路径生成", () => {
                 overview: "",
               },
             ],
-            input: new FormCore({
-              fields: {
-                name: new FormFieldCore({
-                  label: "名称",
-                  name: "name",
-                  input: new InputCore({ defaultValue: "" }),
-                }),
-                overview: new FormFieldCore({
-                  label: "简介",
-                  name: "overview",
-                  input: new InputCore({ defaultValue: "" }),
-                }),
-              },
-            }),
+            input: () =>
+              FormCore({
+                fields: {
+                  name: new FormFieldCore({
+                    label: "名称",
+                    name: "name",
+                    input: new InputCore({ defaultValue: "" }),
+                  }),
+                  overview: new FormFieldCore({
+                    label: "简介",
+                    name: "overview",
+                    input: new InputCore({ defaultValue: "" }),
+                  }),
+                },
+              }),
           }),
         }),
       },
@@ -73,16 +88,12 @@ describe("路径生成", () => {
 
     $media.fields.title.$input.setValue("测试新增媒体详情信息");
     $media.fields.air_date.$input.setValue(new Date("2024/12/10"));
-    $media.fields.episodes.$input.append();
-    console.log($media.fields.episodes.$input.list);
-    const matched = $media.fields.episodes.$input.list[1];
-    if (matched) {
-      matched.$input.fields.name.$input.setValue("第二集");
-      matched.$input.fields.overview.$input.setValue("第二集的简介");
-    }
+    const created = $media.fields.episodes.$input.append();
+    created.$input.fields.name.$input.setValue("第二集");
+    created.$input.fields.overview.$input.setValue("第二集的简介");
     const result = $media.value;
     expect(result).toStrictEqual({
-      type: "",
+      type: MediaTypes.Movie,
       title: "测试新增媒体详情信息",
       air_date: new Date("2024/12/10"),
       overview: "",

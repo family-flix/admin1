@@ -12,8 +12,9 @@ import { ViewComponent } from "@/store/types";
 import { RequestCore } from "@/domains/request";
 import { uploadFileToDrive } from "@/biz/services";
 import { Select } from "@/components/ui/select";
-import { SelectItemCore } from "@/domains/ui/select/item";
+import { SelectOptionCore } from "@/domains/ui/select/option";
 import { PopperCore } from "@/domains/ui/popper";
+import { MediaTypes } from "@/constants";
 
 export const TestPage: ViewComponent = (props) => {
   const { app } = props;
@@ -86,15 +87,24 @@ export const TestPage: ViewComponent = (props) => {
     },
   ].map((opt) => {
     const { label, value } = opt;
-    return new SelectItemCore({
+    return new SelectOptionCore({
       value,
       label,
     });
   });
-  const select = new SelectCore({
-    defaultValue: null,
-    // options,
-    options: [],
+  const $select = new SelectCore({
+    defaultValue: MediaTypes.Season,
+    placeholder: "请选择",
+    options: [
+      {
+        label: "电视剧",
+        value: MediaTypes.Season,
+      },
+      {
+        label: "电影",
+        value: MediaTypes.Movie,
+      },
+    ],
   });
   const popper = new PopperCore({
     side: "right",
@@ -125,32 +135,10 @@ export const TestPage: ViewComponent = (props) => {
       >
         Click
       </div>
-      {/* <img class="w-8" src="https://media-t.funzm.com/poster/615-1.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-2.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-3.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-4.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-5.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-6.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615-7.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/615.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/670.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-1.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-2.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-3.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-4.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-5.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-6.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-7.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693-8.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/693.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-1.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-2.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-3.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-4.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-5.jpg" />
-      <img class="w-8" src="https://media-t.funzm.com/poster/1398-6.jpg" /> */}
       <DropdownMenu store={menu}></DropdownMenu>
+      <div class="mt-4 w-[120px]">
+        <Select store={$select}></Select>
+      </div>
       {/* <div
         onClick={() => {
           app.tip({ text: ["Hello"] });
