@@ -26,7 +26,7 @@ type FormFieldCoreState = {
 // };
 
 export class FormFieldCore<
-  T extends { label: string; name: string; required?: boolean; input: any }
+  T extends { label: string; name: string; required?: boolean; input: ValueInputInterface<any> }
 > extends BaseDomain<TheTypesOfEvents> {
   _label: string;
   _name: string;
@@ -61,6 +61,9 @@ export class FormFieldCore<
 
   setLabel(label: string) {
     this._label = label;
+  }
+  setValue(...args: Parameters<typeof this.$input.setValue>) {
+    this.$input.setValue(...args);
   }
   onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
     this.on(Events.Input, handler);

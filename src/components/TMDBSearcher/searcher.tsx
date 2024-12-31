@@ -5,9 +5,9 @@ import { For, JSX, Show, createSignal } from "solid-js";
 import { Search } from "lucide-solid";
 
 import { Button, Input, LazyImage, Label, ListView, ScrollView, Dialog } from "@/components/ui";
-import * as Form from "@/components/ui/form";
 import { Presence } from "@/components/ui/presence";
 import { TabHeader } from "@/components/ui/tab-header";
+import { Form } from "@/components/ui/form";
 import { MediaSearchView } from "@/components/MediaSelect";
 import { Field } from "@/components/ListField";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
@@ -15,10 +15,15 @@ import { TMDBSearcherCore } from "@/biz/tmdb";
 import { MediaSearchCore } from "@/biz/media_search";
 import { prepareEpisodeList, prepareSeasonList } from "@/biz/services/media_profile";
 import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { DialogCore, FormCore, ImageInListCore, InputCore, PresenceCore } from "@/domains/ui";
+import { DialogCore, FormCore, ImageInListCore, InputCore, PresenceCore, SelectCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
+import { FormFieldCore } from "@/domains/ui/form/field";
+import { ListContainerCore } from "@/domains/ui/form/list";
+import { DatePickerCore } from "@/domains/ui/date-picker";
 import { MediaTypes } from "@/constants/index";
-import { cn } from "@/utils/index";
+import { cn, sleep } from "@/utils/index";
+import { DragZoneCore } from "@/domains/ui/drag-zone";
+import { ImageUploadCore } from "@/domains/ui/form/image-upload";
 
 export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
@@ -39,9 +44,10 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         text: "自定义",
       },
     ],
-    onChange(value) {
+    async onChange(value) {
       if (value.id === "custom") {
         searchPanel.hide();
+        await sleep(200);
         $custom.show();
         return;
       }
@@ -49,7 +55,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         season: MediaTypes.Season,
         movie: MediaTypes.Movie,
       };
-      const keyword = store.$input.value;
+      const keyword = store.ui.$input.value;
       if (keyword) {
         store.search({
           type: map[value.id],
@@ -98,7 +104,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
     //   console.log('scroll', pos);
     // },
     async onReachBottom() {
-      await store.$list.loadMore();
+      await store.ui.$list.loadMore();
       scrollView.finishLoadingMore();
     },
   });
@@ -118,15 +124,15 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
     }[]
   >([]);
 
-  store.onStateChange((nextState) => {
-    setState(nextState);
+  store.onStateChange((v) => {
+    setState(v);
   });
   const dataSource = () => state().response.dataSource;
   const cur = () => state().cur;
   const curEpisode = () => state().curEpisode;
 
   return (
-    <div>
+    <div class="min-h-[480px]">
       <Presence
         classList={{
           "opacity-100": true,
@@ -136,21 +142,19 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         store={searchPanel}
       >
         <div class="grid gap-4 py-4">
-          <Form.Root store={store.$form}>
-            <div class="grid grid-cols-12 items-center gap-4">
-              <Label class="col-span-2 text-right">名称</Label>
-              <div class="col-span-10">
-                <Input store={store.$input} />
-              </div>
+          <div class="grid grid-cols-12 items-center gap-4">
+            <Label class="col-span-2 text-right">名称</Label>
+            <div class="col-span-10">
+              <Input store={store.ui.$input} />
             </div>
-          </Form.Root>
+          </div>
           <div class="grid grid-cols-12">
             <div class="col-span-2" />
             <div class="space-x-2 col-span-10">
-              <Button class="" store={store.searchBtn}>
+              <Button class="" store={store.ui.searchBtn}>
                 搜索
               </Button>
-              <Button class="" variant="subtle" store={store.resetBtn}>
+              <Button class="" variant="subtle" store={store.ui.resetBtn}>
                 重置
               </Button>
             </div>
@@ -161,7 +165,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         </Show>
         <ScrollView store={scrollView} class="relative h-[360px] overflow-y-auto py-2 space-y-4">
           <ListView
-            store={store.$list}
+            store={store.ui.$list}
             skeleton={
               <div class="relative h-[360px] p-2 space-y-4">
                 <div class="absolute inset-0 flex items-center justify-center">
@@ -285,7 +289,9 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
           "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right": true,
         }}
       >
-        <div class="h-[480px] overflow-y-auto"></div>
+        <div class="h-[480px] overflow-y-auto">
+          <Form store={store.ui.$values} />
+        </div>
       </Presence>
     </div>
   );

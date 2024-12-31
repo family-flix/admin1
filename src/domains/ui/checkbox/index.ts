@@ -21,12 +21,14 @@ type CheckboxState = CheckboxProps & {
 };
 
 export class CheckboxCore extends BaseDomain<TheTypesOfEvents> {
-  presence: PresenceCore;
+  shape = "checkbox" as const;
 
   label: string;
   disabled: CheckboxProps["disabled"];
   checked: boolean;
   defaultChecked: boolean;
+
+  presence: PresenceCore;
 
   get state(): CheckboxState {
     return {

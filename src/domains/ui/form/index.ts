@@ -6,25 +6,38 @@ import { base, BaseDomain, Handler } from "@/domains/base";
 import { FormFieldCore } from "./field";
 import { ValueInputInterface } from "./types";
 
-type FormProps<F extends Record<string, FieldCore<any>>> = {
+type FormProps<F extends Record<string, FormFieldCore<any>>> = {
   fields: F;
 };
-type FieldCore<T> = {
-  name: string;
-  $input: ValueInputInterface<T>;
-};
+// type FieldCore<T> = {
+//   name: string;
+//   $input: ValueInputInterface<T>;
+// };
 
-export function FormCore<T extends Record<string, any>, F extends Record<string, FieldCore<any>> = {}>(
-  props: FormProps<F>
-) {
+export function FormCore<
+  F extends Record<string, FormFieldCore<{ label: string; name: string; input: ValueInputInterface<any> }>> = {}
+>(props: FormProps<F>) {
   const { fields } = props;
 
+  type Value<
+    O extends Record<string, FormFieldCore<{ label: string; name: string; input: ValueInputInterface<any> }>>
+  > = {
+    [K in keyof O]: O[K]["$input"]["value"];
+  };
+
   let _fields: F = fields;
-  let _values: T = {} as T;
+  let _values = {} as Value<F>;
+  let _inline = false;
 
   const _state = {
     get value() {
       return _values;
+    },
+    get fields() {
+      return Object.values(_fields);
+    },
+    get inline() {
+      return _inline;
     },
   };
 
@@ -40,13 +53,13 @@ export function FormCore<T extends Record<string, any>, F extends Record<string,
     [Events.Change]: T;
     [Events.StateChange]: typeof _state;
   };
-  const bus = base<TheTypesOfEvents<T>>();
+  const bus = base<TheTypesOfEvents<Value<F>>>();
 
-  function updateValuesWithout<K extends keyof T>(name: K, value: T[K]) {
+  function updateValuesWithout<K extends keyof Value<F>>(name: K, value: Value<F>[K]) {
     // console.log("[DOMAIN]ui/form/index - updateValues", name, value);
     _values[name] = value;
   }
-  function updateValues<K extends keyof T>(name: K, value: T[K]) {
+  function updateValues<K extends keyof Value<F>>(name: K, value: Value<F>[K]) {
     // console.log("[DOMAIN]ui/form/index - updateValues", name, value);
     _values[name] = value;
     bus.emit(Events.Change, { ..._state.value });
@@ -56,41 +69,58 @@ export function FormCore<T extends Record<string, any>, F extends Record<string,
   for (let i = 0; i < keys.length; i += 1) {
     const field = _fields[keys[i]];
     updateValuesWithout(field.name, field.$input.value);
-    field.$input.onChange((v) => {
+    field.$input.onChange((v: any) => {
+      console.log("[DOMAIN]ui/form/index - updateValues", field.name, v);
       updateValues(field.name, v);
     });
   }
 
   return {
-    Symbol: "FormCore" as const,
+    symbol: "FormCore" as const,
+    shape: "form" as const,
+    state: _state,
     get value() {
       return _values;
     },
     get fields() {
       return _fields;
     },
-    setValue(v: T) {
+    setValue(v: Value<F>) {
+      const keys = Object.keys(v);
+      for (let i = 0; i < keys.length; i += 1) {
+        const field = _fields[keys[i]];
+        field.$input.setValue(v[keys[i]], { silence: true });
+      }
       _values = v;
       bus.emit(Events.Change, _state.value);
     },
+    setInline(v: boolean) {
+      _inline = v;
+      bus.emit(Events.StateChange, { ..._state });
+    },
     // setFieldsValue(nextValues) {}
-    input<Key extends keyof T>(key: Key, value: T[Key]) {
+    input<Key extends keyof Value<F>>(key: Key, value: Value<F>[Key]) {
       _values[key] = value;
       bus.emit(Events.Change, _state.value);
     },
     submit() {
       bus.emit(Events.Submit, _state.value);
     },
-    onSubmit(handler: Handler<TheTypesOfEvents<T>[Events.Submit]>) {
+    onSubmit(handler: Handler<TheTypesOfEvents<Value<F>>[Events.Submit]>) {
       bus.on(Events.Submit, handler);
     },
-    onInput(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+    onInput(handler: Handler<TheTypesOfEvents<Value<F>>[Events.Change]>) {
       bus.on(Events.Change, handler);
     },
-    onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+    onChange(handler: Handler<TheTypesOfEvents<Value<F>>[Events.Change]>) {
       return bus.on(Events.Change, handler);
+    },
+    onStateChange(handler: Handler<TheTypesOfEvents<Value<F>>[Events.StateChange]>) {
+      return bus.on(Events.StateChange, handler);
     },
   };
 }
 
-export type FormCore = ReturnType<typeof FormCore>;
+export type FormCore<
+  F extends Record<string, FormFieldCore<{ label: string; name: string; input: ValueInputInterface<any> }>> = {}
+> = ReturnType<typeof FormCore<F>>;

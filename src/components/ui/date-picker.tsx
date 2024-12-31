@@ -19,7 +19,7 @@ export function DatePicker(props: { store: DatePickerCore }) {
         <Button
           variant={"outline"}
           icon={<CalendarIcon class="mr-2 h-4 w-4" />}
-          class={cn("flex justify-start w-[250px] text-left font-normal", !state().date && "text-muted-foreground")}
+          class={cn("flex justify-start w-full text-left font-normal", !state().date && "text-muted-foreground")}
           store={store.$btn}
         >
           {state().date ? state().date : <span>选择日期</span>}

@@ -39,6 +39,14 @@ export function base<Events extends Record<EventType, unknown>>() {
       emitter.on(event, handler);
       return unlisten;
     },
+    tip(content: { icon?: unknown; text: string[] }) {
+      // @ts-ignore
+      emitter.emit(BaseEvents.Tip, content);
+      return content.text.join("\n");
+    },
+    onTip(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Tip]>) {
+      return this.on(BaseEvents.Tip, handler);
+    },
     emit<Key extends keyof BaseDomainEvents<Events>>(event: Key, value?: BaseDomainEvents<Events>[Key]) {
       emitter.emit(event, value as any);
     },

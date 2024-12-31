@@ -286,7 +286,7 @@ const ItemAlignedPosition = (
         "flex-direction": "column",
         position: "fixed",
         // ...wrapStyles(),
-        // "z-index": contentZIndex,
+        "z-index": 999,
       }}
     >
       <div

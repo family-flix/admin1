@@ -2,11 +2,11 @@
  * @file TMDB 搜索
  */
 import { TheMediaInTMDB } from "@/biz/services/media_profile";
+import { TMDBSearcherCore } from "@/biz/tmdb";
 import { ButtonCore, DialogCore } from "@/domains/ui";
 import { BaseDomain, Handler } from "@/domains/base";
 import { Response } from "@/domains/list/typing";
-import { TMDBSearcherCore } from "@/biz/tmdb";
-import { MediaTypes } from "@/constants";
+import { MediaTypes } from "@/constants/index";
 
 enum Events {
   Ok,
@@ -43,10 +43,10 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
 
   state: TMDBSearcherDialogState;
 
-  constructor(options: Partial<{ _name: string } & TMDBSearcherDialogProps> = {}) {
-    super(options);
+  constructor(props: Partial<{ _name: string } & TMDBSearcherDialogProps> = {}) {
+    super(props);
 
-    const { type, footer = true, onOk, onCancel } = options;
+    const { type, footer = true, onOk, onCancel } = props;
     this.dialog = new DialogCore({
       title: type === MediaTypes.Movie ? "搜索电影" : "搜索电视剧",
       footer,
@@ -57,7 +57,7 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
       },
       onCancel,
     });
-    this.tmdb = new TMDBSearcherCore({
+    this.tmdb = TMDBSearcherCore({
       type,
     });
     this.state = {

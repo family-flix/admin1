@@ -37,6 +37,8 @@ type CheckboxGroupState<T> = Omit<CheckboxGroupProps<T>, "options"> & {
 };
 
 export class CheckboxGroupCore<T extends any> extends BaseDomain<TheTypesOfEvents<T>> {
+  shape = "checkbox-group" as const;
+
   options: {
     label: string;
     value: T;

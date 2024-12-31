@@ -32,13 +32,13 @@ const Trigger = (
 
   return (
     <PopperPrimitive.Anchor store={store.popper} class={props.class}>
-      <button
+      <div
         onClick={() => {
           store.toggle();
         }}
       >
         {props.children}
-      </button>
+      </div>
     </PopperPrimitive.Anchor>
   );
 };

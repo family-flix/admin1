@@ -40,6 +40,7 @@ export function DatePickerCore(props: { today: Date }) {
   const bus = base<TheTypesOfEvents>();
 
   return {
+    shape: "date-picker" as const,
     state: _state,
     get value() {
       return $calendar.value;

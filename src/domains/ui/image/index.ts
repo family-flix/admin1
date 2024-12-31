@@ -49,6 +49,9 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
     if (url.includes("http")) {
       return url;
     }
+    if (url.startsWith("data:image")) {
+      return url;
+    }
     return ImageCore.prefix + url;
   }
 
@@ -90,10 +93,11 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   }
 
   setURL(src?: string | null) {
-    console.log("[DOMAIN]ui/image setURL", this.realSrc, this.src, src, this.step);
+    // console.log("[DOMAIN]ui/image setURL", this.realSrc, this.src, src, this.step);
     if (!src) {
       return;
     }
+    // update image url
     if (this.realSrc && src !== this.realSrc) {
       this.realSrc = src;
       // 这里就是修改图片地址
@@ -105,6 +109,11 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
       return;
     }
     this.src = ImageCore.url(this.realSrc);
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  setLoaded() {
+    this.step = ImageStep.Loaded;
+    this.emit(Events.Loaded);
     this.emit(Events.StateChange, { ...this.state });
   }
   /** 图片进入可视区域 */
@@ -121,9 +130,7 @@ export class ImageCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 图片加载完成 */
   handleLoaded() {
-    this.step = ImageStep.Loaded;
-    this.emit(Events.Loaded);
-    this.emit(Events.StateChange, { ...this.state });
+    this.setLoaded();
   }
   /** 图片加载失败 */
   handleError() {

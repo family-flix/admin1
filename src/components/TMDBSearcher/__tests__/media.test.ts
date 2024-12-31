@@ -1,4 +1,4 @@
-import { expect, it, describe } from "vitest";
+import { expect, it, describe, vi } from "vitest";
 
 import { FormCore, InputCore, SelectCore } from "@/domains/ui";
 import { DatePickerCore } from "@/domains/ui/date-picker";
@@ -66,7 +66,7 @@ describe("路径生成", () => {
                 overview: "",
               },
             ],
-            input: () =>
+            factory: () =>
               FormCore({
                 fields: {
                   name: new FormFieldCore({
@@ -85,13 +85,21 @@ describe("路径生成", () => {
         }),
       },
     });
-
-    $media.fields.title.$input.setValue("测试新增媒体详情信息");
-    $media.fields.air_date.$input.setValue(new Date("2024/12/10"));
+    const fn = vi.fn(() => {
+      //
+    });
+    $media.onChange(fn);
+    $media.fields.title.setValue("测试新增媒体详情信息");
+    $media.fields.air_date.setValue(new Date("2024/12/10"));
     const created = $media.fields.episodes.$input.append();
-    created.$input.fields.name.$input.setValue("第二集");
-    created.$input.fields.overview.$input.setValue("第二集的简介");
+    created.$input.fields.name.setValue("第二集");
+    created.$input.fields.overview.setValue("第二集的简介");
+    const created2 = $media.fields.episodes.$input.append();
+    created2.$input.fields.name.setValue("第三集");
+    created2.$input.fields.overview.setValue("第三集的简介");
+    $media.fields.episodes.$input.removeFieldByIndex(created.index);
     const result = $media.value;
+    expect(fn).toBeCalledTimes(9);
     expect(result).toStrictEqual({
       type: MediaTypes.Movie,
       title: "测试新增媒体详情信息",
@@ -104,8 +112,8 @@ describe("路径生成", () => {
           overview: "",
         },
         {
-          name: "第二集",
-          overview: "第二集的简介",
+          name: "第三集",
+          overview: "第三集的简介",
         },
       ],
     });

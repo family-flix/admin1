@@ -15,6 +15,9 @@ import { Select } from "@/components/ui/select";
 import { SelectOptionCore } from "@/domains/ui/select/option";
 import { PopperCore } from "@/domains/ui/popper";
 import { MediaTypes } from "@/constants";
+import { ImageUploadCore } from "@/domains/ui/form/image-upload";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 export const TestPage: ViewComponent = (props) => {
   const { app } = props;
@@ -110,6 +113,7 @@ export const TestPage: ViewComponent = (props) => {
     side: "right",
     align: "end",
   });
+  const $upload = ImageUploadCore({});
   // client.get("/api/ping");
   // client.get("/api/ping1");
   // client.get("/api/ping2");

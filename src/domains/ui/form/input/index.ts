@@ -38,6 +38,7 @@ type InputState<T> = {
 };
 
 export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements ValueInputInterface<T> {
+  shape = "input" as const;
   defaultValue: T;
   value: T;
   placeholder: string;
@@ -110,7 +111,7 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements Val
     console.log("请在 connect 中实现该方法");
   }
   handleChange(event: unknown) {
-    console.log("[DOMAIN]ui/input - handleChange", event);
+    // console.log("[DOMAIN]ui/input - handleChange", event);
     if (this.type === "file") {
       const { target } = event as { target: { files: T } };
       const { files: v } = target;
@@ -121,10 +122,13 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements Val
     const { value: v } = target;
     this.setValue(v);
   }
-  setValue(value: T) {
+  setValue(value: T, extra: Partial<{ silence: boolean }> = {}) {
     this.value = value;
     if (this.type === "number") {
       this.value = Number(value) as T;
+    }
+    if (extra.silence) {
+      return;
     }
     this.emit(Events.Change, value);
     this.emit(Events.StateChange, { ...this.state });

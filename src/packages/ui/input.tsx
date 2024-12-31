@@ -2,11 +2,12 @@
  * @file 输入框
  */
 import { createSignal, JSX, onMount } from "solid-js";
+import { effect } from "solid-js/web";
 
 import { InputCore } from "@/domains/ui/form/input";
 import { connect } from "@/domains/ui/form/input/connect.web";
+import { ValueInputInterface } from "@/domains/ui/form/types";
 import { cn } from "@/utils";
-import { effect } from "solid-js/web";
 
 const Input = (
   props: {
@@ -53,7 +54,7 @@ const Input = (
       disabled={disabled()}
       type={type()}
       onInput={(event: Event & { currentTarget: HTMLInputElement }) => {
-        console.log("[COMPONENT]ui/input onInput", event.currentTarget.value);
+        // console.log("[COMPONENT]ui/input onInput", event.currentTarget.value);
         store.handleChange(event);
       }}
       // onChange={(event) => {

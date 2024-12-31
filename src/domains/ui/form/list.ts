@@ -5,16 +5,17 @@ import { base, Handler } from "@/domains/base";
 
 import { FormFieldCore } from "./field";
 import { FormCore } from "./index";
+import { ValueInputInterface } from "./types";
 // import { ValueInputInterface } from "./types";
 
 // type ListInputCoreProps<T extends { defaultValue: any; value: ValueInputInterface<any> }> = {
 //   defaultValue: T["defaultValue"];
 //   value: FormCore<T>;
 // };
-export function ListContainerCore<T extends { defaultValue: any; input: () => any }>(props: T) {
-  const { defaultValue, input } = props;
+export function ListContainerCore<T extends { defaultValue: any; factory: () => any }>(props: T) {
+  const { defaultValue, factory } = props;
 
-  const $input = input();
+  const $input = factory();
 
   if (defaultValue && Array.isArray(defaultValue)) {
     const v = defaultValue[0];
@@ -22,23 +23,9 @@ export function ListContainerCore<T extends { defaultValue: any; input: () => an
       $input.setValue(v);
     }
   }
-  let _factory = input;
-  let _list: { index: number; $input: ReturnType<T["input"]> }[] = [{ index: 0, $input }];
-  let _values = [...defaultValue];
-
-  function handle(item: { index: number; $input: ReturnType<T["input"]> }) {
-    //     _values[item.index] = item.$input.defaultValue;
-    //     console.log("[DOMAIN]ui/form/list - $input onChange", _values);
-    item.$input.onChange((v: any) => {
-//       console.log("[DOMAIN]ui/form/list - $input onChange", v, item.index);
-      _values[item.index] = v;
-    });
-  }
-
-  for (let i = 0; i < _list.length; i += 1) {
-    const $input = _list[i];
-    handle($input);
-  }
+  let _factory = factory;
+  let _list: { index: number; $input: ReturnType<T["factory"]> }[] = [{ index: 0, $input }];
+  let _values = [...defaultValue] as ReturnType<T["factory"]>["value"][];
 
   const _state = {
     get list() {
@@ -51,40 +38,69 @@ export function ListContainerCore<T extends { defaultValue: any; input: () => an
 
   enum Events {
     Change,
+    StateChange,
   }
   type TheTypesOfEvents = {
     [Events.Change]: typeof _state.value;
+    [Events.StateChange]: typeof _state;
   };
   const bus = base<TheTypesOfEvents>();
 
+  function handle(item: { index: number; $input: ReturnType<T["factory"]> }) {
+    //     console.log("[DOMAIN]ui/form/list - $input onChange", _values);
+    if (item.$input.defaultValue) {
+      _values[item.index] = item.$input.defaultValue;
+    }
+    bus.emit(Events.Change, _state.value);
+    item.$input.onChange((v: any) => {
+      console.log("[DOMAIN]ui/form/list - $input onChange", v, item.index);
+      _values[item.index] = v;
+      bus.emit(Events.Change, _state.value);
+    });
+  }
+
+  for (let i = 0; i < _list.length; i += 1) {
+    const $input = _list[i];
+    handle($input);
+  }
+
   return {
+    symbol: "ListContainerCore" as const,
+    shape: "list" as const,
     value: _state.value,
-    $value: input,
+    $value: factory,
+    state: _state,
     get list() {
       return _list;
     },
     append() {
-      const ins = { index: _list.length, $input: _factory() };
-//       console.log("[DOMAIN]ui/form/list - append", ins.index);
+      const ins: { index: number; $input: ReturnType<T["factory"]> } = { index: _list.length, $input: _factory() };
+      //       console.log("[DOMAIN]ui/form/list - append", ins.index);
       handle(ins);
       _list.push(ins);
-      //       _values.push(v);
-      bus.emit(Events.Change, _state.value);
+      bus.emit(Events.StateChange, { ..._state });
       return ins;
     },
-    removeField(v: ReturnType<T["input"]>) {
-      _list = _list.filter((f) => f !== v);
-      bus.emit(Events.Change, _state.value);
-    },
+    // removeField(v: ReturnType<T["input"]>) {
+    //   _list = _list.filter((f) => f !== v);
+    //   bus.emit(Events.Change, _state.value);
+    // },
     removeFieldByIndex(index: number) {
       _list = _list.filter((f) => f.index !== index);
+      _values = _values.filter((_, i) => i !== index);
       bus.emit(Events.Change, _state.value);
+      bus.emit(Events.StateChange, { ..._state });
     },
     setValue() {},
     onChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {
       return bus.on(Events.Change, handler);
     },
+    onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+      return bus.on(Events.StateChange, handler);
+    },
   };
 }
 
-export type ListContainerCore = ReturnType<typeof ListContainerCore>;
+export type ListContainerCore<T extends { defaultValue: any; factory: () => any }> = ReturnType<
+  typeof ListContainerCore<T>
+>;

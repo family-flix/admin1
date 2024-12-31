@@ -56,6 +56,7 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
   name = "SelectCore";
   debug = true;
 
+  shape = "select" as const;
   // options: { text: string; store: SelectItemCore<T> }[] = [];
   placeholder: string;
   // options: { value: T; label: string }[] = [];
