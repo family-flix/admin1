@@ -178,7 +178,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
       });
     },
   });
-  const mediaSearch = new TMDBSearcherCore({
+  const mediaSearch = TMDBSearcherCore({
     episode: true,
   });
   const bindEpisodeDialog = new DialogCore({
@@ -211,7 +211,7 @@ export const UnknownEpisodeListPage: ViewComponent = (props) => {
       });
     },
   });
-  const searcher2 = new TMDBSearcherCore({
+  const searcher2 = TMDBSearcherCore({
     episode: true,
   });
   const dialog2 = new DialogCore({

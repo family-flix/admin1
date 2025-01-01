@@ -2,12 +2,12 @@
  * @file TMDB 搜索器
  */
 import { For, JSX, Show, createSignal } from "solid-js";
-import { Search } from "lucide-solid";
+import { ChevronLeft, Search } from "lucide-solid";
 
 import { Button, Input, LazyImage, Label, ListView, ScrollView, Dialog } from "@/components/ui";
 import { Presence } from "@/components/ui/presence";
 import { TabHeader } from "@/components/ui/tab-header";
-import { Form } from "@/components/ui/form";
+import { MediaProfileValuesForm } from "@/components/ui/form";
 import { MediaSearchView } from "@/components/MediaSelect";
 import { Field } from "@/components/ListField";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
@@ -28,104 +28,14 @@ import { ImageUploadCore } from "@/domains/ui/form/image-upload";
 export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;
 
-  const tab = new TabHeaderCore({
-    key: "id",
-    options: [
-      {
-        id: "season",
-        text: "电视剧",
-      },
-      {
-        id: "movie",
-        text: "电影",
-      },
-      {
-        id: "custom",
-        text: "自定义",
-      },
-    ],
-    async onChange(value) {
-      if (value.id === "custom") {
-        searchPanel.hide();
-        await sleep(200);
-        $custom.show();
-        return;
-      }
-      const map: Record<string, MediaTypes> = {
-        season: MediaTypes.Season,
-        movie: MediaTypes.Movie,
-      };
-      const keyword = store.ui.$input.value;
-      if (keyword) {
-        store.search({
-          type: map[value.id],
-        });
-      }
-    },
-  });
-  const searchPanel = new PresenceCore({
-    visible: true,
-  });
-  const seasonPanel = new PresenceCore();
-  const episodePanel = new PresenceCore();
-  // const episodePanel = new PresenceCore();
-  const mediaSearch = new MediaSearchCore({
-    type: MediaTypes.Season,
-    async onSelect(value) {
-      if (store.needEpisode) {
-        if (!value) {
-          return;
-        }
-        store.select(value);
-        const r = await new RequestCore(prepareEpisodeList).run({
-          media_id: value.id,
-        });
-        if (r.error) {
-          store.tip({
-            text: ["获取剧集失败", r.error.message],
-          });
-          return;
-        }
-        seasonPanel.hide();
-        episodePanel.show();
-        setEpisodes(r.data.list);
-        return;
-      }
-      if (value) {
-        store.select(value);
-        return;
-      }
-      store.unSelect();
-    },
-  });
-  const poster = new ImageInListCore({});
-  const scrollView = new ScrollViewCore({
-    // onScroll(pos) {
-    //   console.log('scroll', pos);
-    // },
-    async onReachBottom() {
-      await store.ui.$list.loadMore();
-      scrollView.finishLoadingMore();
-    },
-  });
-  const $custom = new PresenceCore();
-
   const [state, setState] = createSignal(store.state);
-  const [episodes, setEpisodes] = createSignal<
-    {
-      id: string | number;
-      type: MediaTypes;
-      name: string;
-      original_name: string;
-      poster_path: string;
-      overview: string;
-      air_date: string;
-      order: number;
-    }[]
-  >([]);
+  const [episodes, setEpisodes] = createSignal(store.episodes);
 
   store.onStateChange((v) => {
     setState(v);
+  });
+  store.onEpisodesChange((v) => {
+    setEpisodes(v);
   });
   const dataSource = () => state().response.dataSource;
   const cur = () => state().cur;
@@ -139,7 +49,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
           "animate-in slide-in-from-right": true,
           "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right": true,
         }}
-        store={searchPanel}
+        store={store.ui.searchPanel}
       >
         <div class="grid gap-4 py-4">
           <div class="grid grid-cols-12 items-center gap-4">
@@ -161,9 +71,9 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
           </div>
         </div>
         <Show when={!store.type}>
-          <TabHeader store={tab} />
+          <TabHeader store={store.ui.tab} />
         </Show>
-        <ScrollView store={scrollView} class="relative h-[360px] overflow-y-auto py-2 space-y-4">
+        <ScrollView store={store.ui.scrollView} class="relative h-[360px] overflow-y-auto py-2 space-y-4">
           <ListView
             store={store.ui.$list}
             skeleton={
@@ -185,8 +95,8 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                     class={cn("p-2", media.id === cur()?.id ? "bg-slate-300" : "bg-white")}
                     onClick={async () => {
                       if (type === MediaTypes.Season) {
-                        searchPanel.hide();
-                        seasonPanel.show();
+                        store.ui.searchPanel.hide();
+                        store.ui.seasonPanel.show();
                         const r = await new RequestCore(prepareSeasonList).run({ series_id: String(id) });
                         if (r.error) {
                           return;
@@ -208,7 +118,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                     <div class="flex">
                       <LazyImage
                         class="w-[120px] rounded-sm object-fit mr-4"
-                        store={poster.bind(poster_path)}
+                        store={store.ui.poster.bind(poster_path)}
                         alt={name}
                       />
                       <div class="flex-1 overflow-hidden text-ellipsis">
@@ -244,9 +154,9 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
           "animate-in slide-in-from-right": true,
           "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right": true,
         }}
-        store={seasonPanel}
+        store={store.ui.seasonPanel}
       >
-        <MediaSearchView store={mediaSearch} />
+        <MediaSearchView store={store.ui.mediaSearch} />
       </Presence>
       <Presence
         classList={{
@@ -254,7 +164,7 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
           "animate-in slide-in-from-right": true,
           "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right": true,
         }}
-        store={episodePanel}
+        store={store.ui.episodePanel}
       >
         <div class="h-[480px] overflow-y-auto space-y-2">
           <For each={episodes()}>
@@ -282,15 +192,24 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
         </div>
       </Presence>
       <Presence
-        store={$custom}
+        store={store.ui.$custom}
         classList={{
           "opacity-100": true,
           "animate-in slide-in-from-right": true,
           "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right": true,
         }}
       >
+        <div
+          onClick={async () => {
+            store.ui.$custom.hide();
+            await sleep(200);
+            store.ui.searchPanel.show();
+          }}
+        >
+          <ChevronLeft class="w-8 h-8 cursor-pointer" />
+        </div>
         <div class="h-[480px] overflow-y-auto">
-          <Form store={store.ui.$values} />
+          <MediaProfileValuesForm store={store.ui.$values} />
         </div>
       </Presence>
     </div>

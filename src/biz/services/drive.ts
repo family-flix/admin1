@@ -69,6 +69,43 @@ export function fetchDriveFilesProcess(r: TmpRequestResp<typeof fetchDriveFiles>
 // export type AliyunDriveFile = UnpackedResult<Unpacked<ReturnType<typeof fetchDriveFiles>>>["list"][number];
 
 /**
+ * 获取文件夹列表
+ */
+export function fetchLocalFiles(
+  body: {
+    /** 云盘id */
+    drive_id: string;
+    /** 文件夹id（如果传入说明是获取指定文件夹下的文件列表，不传就是获取根文件夹 */
+    file_id: string;
+    /** 在获取文件列表时，如果是获取下一页，就需要传入该值 */
+    next_marker: string;
+    /** 按名称搜索时的关键字 */
+    name?: string;
+  } & FetchParams
+) {
+  const { drive_id, file_id, name, next_marker, page, pageSize = 24 } = body;
+  return media_request.post<{
+    items: {
+      file_id: string;
+      name: string;
+      next_marker: string;
+      parent_file_id: string;
+      size: number;
+      type: "folder" | "file";
+      thumbnail: string;
+    }[];
+    next_marker: string;
+  }>("/api/v2/local_file/list", {
+    drive_id,
+    name,
+    file_id,
+    next_marker,
+    page,
+    page_size: pageSize,
+  });
+}
+
+/**
  * 获取文件详情
  * 主要是看该文件关联的影视剧信息
  */

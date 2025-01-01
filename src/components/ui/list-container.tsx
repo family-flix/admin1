@@ -1,5 +1,5 @@
 import { JSX } from "solid-js/jsx-runtime";
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { Minus } from "lucide-solid";
 
 import { ListContainerCore } from "@/domains/ui/form/list";
@@ -8,7 +8,7 @@ import { DatePickerCore } from "@/domains/ui/date-picker";
 import { InputCore } from "@/domains/ui/form/input";
 
 import { Input } from "./input";
-import { Form } from "./form";
+import { MediaProfileValuesForm } from "./form";
 import { Select } from "./select";
 import { DatePicker } from "./date-picker";
 
@@ -28,7 +28,7 @@ export function ListContainer(props: { store: ListContainerCore<any> } & JSX.HTM
                 return <Input store={field.$input as InputCore<any>} />;
               }
               if (field.$input.shape === "form") {
-                return <Form store={field.$input as FormCore<any>} />;
+                return <MediaProfileValuesForm store={field.$input as FormCore<any>} />;
               }
               if (field.$input.shape === "select") {
                 return <Select store={field.$input as SelectCore<any>} />;
@@ -44,14 +44,16 @@ export function ListContainer(props: { store: ListContainerCore<any> } & JSX.HTM
             return (
               <div class="flex items-center justify-between">
                 {elm}
-                <div
-                  class="p-1 cursor-pointer hover:bg-slate-100"
-                  onClick={() => {
-                    store.removeFieldByIndex(field.index);
-                  }}
-                >
-                  <Minus class="w-4 h-4" />
-                </div>
+                <Show when={state().canRemove}>
+                  <div
+                    class="p-1 cursor-pointer hover:bg-slate-100"
+                    onClick={() => {
+                      store.removeFieldByIndex(field.index);
+                    }}
+                  >
+                    <Minus class="w-4 h-4" />
+                  </div>
+                </Show>
               </div>
             );
           }}

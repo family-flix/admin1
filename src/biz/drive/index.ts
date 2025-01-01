@@ -24,7 +24,7 @@ import {
   changeDriveFileHash,
   refreshDriveProfileProcess,
 } from "./services";
-import { AliyunDriveFile } from "./types";
+import { DriveFile } from "./types";
 
 enum Events {
   StateChange,
@@ -45,7 +45,7 @@ type TheTypesOfEvents = {
     refresh_token: string;
     folder_name: string;
   }>;
-  [Events.FoldersChange]: AliyunDriveFile[][];
+  [Events.FoldersChange]: DriveFile[][];
   [Events.PathsChange]: { file_id: string; name: string }[];
   [Events.Error]: Error;
   [Events.Login]: {};
@@ -97,7 +97,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
   /** 文件夹列表 */
   folderColumns: ({
     selected?: boolean;
-  } & AliyunDriveFile)[][] = [];
+  } & DriveFile)[][] = [];
   /** 当前选中的文件夹 */
   selectedFolderPos?: number[];
   /** 当前访问路径 */
@@ -125,7 +125,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
    */
   async startAnalysis(
     options: {
-      target_folders?: AliyunDriveFile[];
+      target_folders?: DriveFile[];
       quickly?: boolean;
     } = {}
   ) {
@@ -171,7 +171,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
    * 索引指定文件/文件夹
    * @param {boolean} [quickly=false] 是否增量索引
    */
-  async analysisSpecialFolders(options: { target_folders: AliyunDriveFile[] }) {
+  async analysisSpecialFolders(options: { target_folders: DriveFile[] }) {
     const { target_folders } = options;
     if (this.state.loading) {
       return Result.Err("索引正在进行中");
@@ -202,7 +202,7 @@ export class DriveCore extends BaseDomain<TheTypesOfEvents> {
     this.tip({ text: ["索引完成"] });
     this.emit(Events.StateChange, { ...this.state });
   }
-  async changeFileHash(options: { file: AliyunDriveFile }) {
+  async changeFileHash(options: { file: DriveFile }) {
     const { file } = options;
     const r = await new RequestCore(changeDriveFileHash).run({
       drive_id: this.id,

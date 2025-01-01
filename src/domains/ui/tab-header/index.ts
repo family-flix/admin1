@@ -20,7 +20,7 @@ type TabHeaderState<T extends { key: any; options: { id: any; text: string }[] }
   left: number | null;
   curId: string | null;
 };
-type TabHeaderProps<T extends { key: any; options: { id: any; text: string }[] }> = {
+type TabHeaderProps<T extends { key: any; options: { id: any; text: string; hidden?: boolean }[] }> = {
   key?: T["key"];
   options: T["options"];
   targetLeftWhenSelected?: number;
@@ -29,7 +29,7 @@ type TabHeaderProps<T extends { key: any; options: { id: any; text: string }[] }
 };
 
 export class TabHeaderCore<
-  T extends { key: any; options: { id: any; text: string; [x: string]: any }[] }
+  T extends { key: any; options: { id: any; text: string; hidden?: boolean; [x: string]: any }[] }
 > extends BaseDomain<TheTypesOfEvents<T>> {
   key: T["key"];
   tabs: T["options"] = [];
@@ -100,16 +100,18 @@ export class TabHeaderCore<
     }
     this.tabs = options;
     for (let i = 0; i < options.length; i += 1) {
-      const { id } = options[i];
-      this.extra[id] = {
-        rect() {
-          return {
-            left: 0,
-            width: 0,
-            height: 0,
-          };
-        },
-      };
+      const { id, hidden } = options[i];
+      if (!hidden) {
+        this.extra[id] = {
+          rect() {
+            return {
+              left: 0,
+              width: 0,
+              height: 0,
+            };
+          },
+        };
+      }
     }
   }
   select(index: number) {
@@ -194,7 +196,7 @@ export class TabHeaderCore<
     }
     this.extra[matchedTab.id] = info;
     // console.log("[DOMAIN]ui/tab-headers", index, Object.keys(this.extra).length, this.tabs.length);
-    if (Object.keys(this.extra).length !== this.tabs.length) {
+    if (Object.keys(this.extra).length !== this.tabs.filter((t) => !t.hidden).length) {
       return;
     }
     // if (this.current === null) {

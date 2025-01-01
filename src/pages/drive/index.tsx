@@ -9,10 +9,12 @@ import { ViewComponent } from "@/store/types";
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
 import { TabHeader } from "@/components/ui/tab-header";
+import { DriveFiles } from "@/components/DriveFiles";
 import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { RequestCore } from "@/domains/request/index";
-import { addDrive } from "@/biz/drive/index";
+import { fetchLocalFiles } from "@/biz/services/drive";
+import { addDrive, DriveFilesCore } from "@/biz/drive/index";
 import { code_get_drive_token, DriveTypes } from "@/constants/index";
 
 import { AlipanDriveCreateInput, AlipanOpenDriveCreateInput } from "./profile_input";
@@ -45,35 +47,57 @@ export const DriveListPage: ViewComponent = (props) => {
         id: DriveTypes.AliyunBackupDrive,
         text: "阿里云盘",
       },
-      {
-        id: DriveTypes.Cloud189Drive,
-        text: "天翼云盘",
-      },
-      {
-        id: DriveTypes.QuarkDrive,
-        text: "夸克",
-      },
+      // {
+      //   id: DriveTypes.Cloud189Drive,
+      //   text: "天翼云盘",
+      // },
+      // {
+      //   id: DriveTypes.QuarkDrive,
+      //   text: "夸克",
+      // },
       // {
       //   id: DriveTypes.XunleiDrive,
       //   text: "迅雷",
       // },
       {
         id: DriveTypes.LocalFolder,
-        text: "文件夹",
+        text: "本地文件夹",
       },
     ],
     onMounted() {
       driveTabs.selectById(DriveTypes.AlipanOpenDrive);
     },
+    onChange(value) {
+      if (value.id === DriveTypes.LocalFolder) {
+        $files.appendColumn({
+          file_id: "root",
+          name: "文件",
+        });
+      }
+    },
   });
   const driveCreateDialog = new DialogCore({
     title: "新增云盘",
     onOk() {
-      if (!driveTokenInput.value) {
-        app.tip({ text: ["请输入云盘信息"] });
+      if ([DriveTypes.AlipanOpenDrive, DriveTypes.AliyunBackupDrive].includes(driveTabs.selectedTabId)) {
+        if (!driveTokenInput.value) {
+          app.tip({ text: ["请输入云盘信息"] });
+          return;
+        }
+        driveCreateRequest.run({ type: driveTabs.selectedTabId, payload: driveTokenInput.value });
         return;
       }
-      driveCreateRequest.run({ type: driveTabs.selectedTabId, payload: driveTokenInput.value });
+      if (driveTabs.selectedTabId === DriveTypes.LocalFolder) {
+        const selected = $files.selectedFolder;
+        if (!selected) {
+          app.tip({ text: ["请选择文件夹"] });
+          return;
+        }
+        console.log("[PAGE]drive/index - before createDrive", selected);
+        driveCreateRequest.run({ type: driveTabs.selectedTabId, payload: JSON.stringify({ dir: selected.file_id }) });
+        return;
+      }
+      app.tip({ text: ["暂不支持的云盘类型"] });
     },
   });
   const driveCreateBtn = new ButtonCore({
@@ -121,6 +145,7 @@ export const DriveListPage: ViewComponent = (props) => {
       driveList.reset();
     },
   });
+  const $files = new DriveFilesCore({ id: "", service: fetchLocalFiles });
   const scrollView = new ScrollViewCore({
     async onReachBottom() {
       await driveList.loadMore();
@@ -213,7 +238,7 @@ export const DriveListPage: ViewComponent = (props) => {
         </div>
       </ScrollView>
       <Dialog store={driveCreateDialog}>
-        <div class="w-[520px]">
+        <div class="w-[520px] min-h-[120px]">
           <TabHeader store={driveTabs} />
           {(() => {
             if (tabId() === DriveTypes.AlipanOpenDrive) {
@@ -279,17 +304,13 @@ export const DriveListPage: ViewComponent = (props) => {
             //     </div>
             //   );
             // }
-            // if (tabId() === DriveTypes.LocalFolder) {
-            //   return (
-            //     <div class="p-4">
-            //       <div>1、获取存放视频文件的文件夹「绝对路径」</div>
-            //       <div>
-            //         2、构造 <pre class="inline p-1 rounded-sm bg-gray-200">{`{"dir": ""}`}</pre>
-            //         格式数据并粘贴到下方输入框，点击确认即可
-            //       </div>
-            //     </div>
-            //   );
-            // }
+            if (tabId() === DriveTypes.LocalFolder) {
+              return (
+                <div class="p-4">
+                  <DriveFiles store={$files} />
+                </div>
+              );
+            }
           })()}
         </div>
       </Dialog>

@@ -1,7 +1,7 @@
 /**
  * @file 多字段 Input
  */
-import { base, BaseDomain, Handler } from "@/domains/base";
+import { base, Handler } from "@/domains/base";
 
 import { FormFieldCore } from "./field";
 import { ValueInputInterface } from "./types";
@@ -55,7 +55,7 @@ export function FormCore<
   };
   const bus = base<TheTypesOfEvents<Value<F>>>();
 
-  function updateValuesWithout<K extends keyof Value<F>>(name: K, value: Value<F>[K]) {
+  function updateValuesSilence<K extends keyof Value<F>>(name: K, value: Value<F>[K]) {
     // console.log("[DOMAIN]ui/form/index - updateValues", name, value);
     _values[name] = value;
   }
@@ -68,10 +68,17 @@ export function FormCore<
   const keys: Array<keyof F> = Object.keys(_fields);
   for (let i = 0; i < keys.length; i += 1) {
     const field = _fields[keys[i]];
-    updateValuesWithout(field.name, field.$input.value);
+    updateValuesSilence(field.name, field.$input.value);
     field.$input.onChange((v: any) => {
       console.log("[DOMAIN]ui/form/index - updateValues", field.name, v);
       updateValues(field.name, v);
+    });
+    field.onShow(() => {
+      updateValues(field.name, field.$input.value);
+    });
+    field.onHide(() => {
+      delete _values[field.name];
+      bus.emit(Events.Change, { ..._state.value });
     });
   }
 
@@ -85,14 +92,16 @@ export function FormCore<
     get fields() {
       return _fields;
     },
-    setValue(v: Value<F>) {
-      const keys = Object.keys(v);
+    setValue(v: Value<F>, extra: { silence?: boolean } = {}) {
+      const keys = Object.keys(_fields);
       for (let i = 0; i < keys.length; i += 1) {
         const field = _fields[keys[i]];
         field.$input.setValue(v[keys[i]], { silence: true });
       }
       _values = v;
-      bus.emit(Events.Change, _state.value);
+      if (!extra.silence) {
+        bus.emit(Events.Change, _state.value);
+      }
     },
     setInline(v: boolean) {
       _inline = v;

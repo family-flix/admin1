@@ -126,7 +126,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const searcher = new TMDBSearcherCore({
+  const searcher = TMDBSearcherCore({
     type: MediaTypes.Movie,
   });
   const movieProfileChangeDialog = new DialogCore({
@@ -212,11 +212,13 @@ export const MovieProfilePage: ViewComponent = (props) => {
                 <div>
                   <div class="relative z-3">
                     <div class="flex">
-                      <LazyImage
-                        class="overflow-hidden w-[240px] h-[360px] rounded-lg mr-4 object-cover"
-                        store={poster}
-                        // src={profile()?.poster_path ?? undefined}
-                      />
+                      <div class="mr-4 ">
+                        <LazyImage
+                          class="overflow-hidden w-[240px] h-[360px] rounded-lg object-cover"
+                          store={poster}
+                          // src={profile()?.poster_path ?? undefined}
+                        />
+                      </div>
                       <div class="flex-1">
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>

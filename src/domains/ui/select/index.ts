@@ -461,18 +461,17 @@ export class SelectCore<T> extends BaseDomain<TheTypesOfEvents<T>> {
     // this.emit(Events.Placed);
     // this.emit(Events.StateChange, { ...this.state });
   }
-
-  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
-    return this.on(Events.StateChange, handler);
-  }
   onValueChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
-    return this.on(Events.Change, handler);
-  }
-  onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
     return this.on(Events.Change, handler);
   }
   onFocus(handler: Handler<TheTypesOfEvents<T>[Events.Focus]>) {
     return this.on(Events.Focus, handler);
+  }
+  onChange(handler: Handler<TheTypesOfEvents<T>[Events.Change]>) {
+    return this.on(Events.Change, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents<T>[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
   }
 }
 

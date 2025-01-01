@@ -153,7 +153,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
   const seasonRef = new RefCore<SeasonMediaProfile>();
   const episodeRef = new RefCore<MediaProfile>();
   const fileRef = new RefCore<EpisodeItemInSeason["sources"][number]>();
-  const searcher = new TMDBSearcherCore();
+  const searcher = TMDBSearcherCore();
   const dialog = new DialogCore({
     onOk() {
       const id = view.query.id as string;
@@ -381,11 +381,13 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                 <div>
                   <div class="relative z-3">
                     <div class="flex">
-                      <LazyImage
-                        class="overflow-hidden w-[240px] h-[360px] rounded-lg mr-4 object-cover"
-                        store={poster}
-                        // src={profile()?.poster_path ?? undefined}
-                      />
+                      <div class="mr-4">
+                        <LazyImage
+                          class="overflow-hidden w-[240px] h-[360px] rounded-lg object-cover"
+                          store={poster}
+                          // src={profile()?.poster_path ?? undefined}
+                        />
+                      </div>
                       <div class="flex-1">
                         <h2 class="text-5xl">{profile()?.name}</h2>
                         <div class="mt-6 text-2xl">剧情简介</div>
@@ -466,7 +468,8 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                     }}
                   </For>
                 </div>
-                <div class="mt-4 flex w-full pb-4 overflow-x-auto space-x-4">
+                <div class="mt-8 text-3xl">同系列</div>
+                <div class="mt-2 flex w-full pb-4 overflow-x-auto space-x-4">
                   <For each={profile()?.series}>
                     {(season) => {
                       const { id, name, poster_path, air_date } = season;
@@ -475,13 +478,13 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                       //   id,
                       // });
                       return (
-                        <div>
+                        <div class="w-[120px]">
                           <a href={url} target="_blank">
                             <div>
                               <LazyImage class="w-[120px]" store={seriesPoster.bind(poster_path)} />
                             </div>
                           </a>
-                          <div class="text-xl whitespace-nowrap">{name}</div>
+                          <div class="text-xl whitespace-nowrap truncate">{name}</div>
                           <div class="">{air_date}</div>
                         </div>
                       );

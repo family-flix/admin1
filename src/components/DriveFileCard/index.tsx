@@ -7,14 +7,14 @@ import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-soli
 import { fetchFileProfile } from "@/biz/services/drive";
 import { LazyImage } from "@/components/ui";
 import { RefCore } from "@/domains/cur";
-import { AliyunDriveFile, DriveCore } from "@/biz/drive";
+import { DriveFile, DriveCore } from "@/biz/drive";
 import { RequestCore } from "@/domains/request";
 import { ImageCore } from "@/domains/ui";
 import { bytes_to_size, is_video_file } from "@/utils/index";
 import { MediaTypes } from "@/constants/index";
 
 export const DriveFileCard = (props: {
-  store: RefCore<AliyunDriveFile>;
+  store: RefCore<DriveFile>;
   drive: DriveCore;
   footer: JSXElement;
   onTip?: (msg: { text: string[] }) => void;
@@ -71,7 +71,7 @@ export const DriveFileCard = (props: {
     <div>
       <div class="space-y-4">
         <div class="text-lg break-all">{state()?.name}</div>
-        <div class="">{state()?.file_id}</div>
+        <div class="break-all">{state()?.file_id}</div>
         <div>{size()}</div>
         <div class="">
           <div class="flex items-center flex-wrap mt-2 text-sm">

@@ -12,7 +12,7 @@ export function DragZone(props: { store: DragZoneCore } & JSX.HTMLAttributes<HTM
   return (
     <div
       classList={{
-        "overflow-hidden absolute inset-0 rounded-sm outline-slate-600 outline-2": true,
+        "overflow-hidden absolute inset-0 rounded-sm outline-slate-300 outline-2": true,
         outline: state().hovering,
         "outline-dashed": !state().hovering,
       }}

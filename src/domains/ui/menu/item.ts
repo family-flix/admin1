@@ -128,7 +128,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 鼠标进入菜单项 */
   handlePointerEnter() {
-    console.log("[DOMAIN]ui/menu/item - handle pointer enter", this.label, this._enter);
+    // console.log("[DOMAIN]ui/menu/item - handle pointer enter", this.label, this._enter);
     if (this._enter) {
       return;
     }
@@ -148,7 +148,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
   }
   /** 鼠标离开菜单项 */
   handlePointerLeave() {
-    console.log("[DOMAIN]ui/menu/item - handle pointer leave", this.label, this._enter, this._open);
+    // console.log("[DOMAIN]ui/menu/item - handle pointer leave", this.label, this._enter, this._open);
     if (this._enter === false) {
       return;
     }
@@ -158,7 +158,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Change, { ...this.state });
   }
   handleFocus() {
-    console.log("[DOMAIN]ui/menu/item - handle focus", this.label, this._focused);
+    // console.log("[DOMAIN]ui/menu/item - handle focus", this.label, this._focused);
     if (this._focused) {
       return;
     }
@@ -168,7 +168,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Change, { ...this.state });
   }
   handleBlur() {
-    console.log("[DOMAIN]ui/menu/item - handle blur", this.label, this._focused);
+    // console.log("[DOMAIN]ui/menu/item - handle blur", this.label, this._focused);
     if (this._focused === false) {
       return;
     }
@@ -187,7 +187,7 @@ export class MenuItemCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.Change, { ...this.state });
   }
   reset() {
-    console.log("[DOMAIN]ui/menu/item - reset", this.label, this.state.focused);
+    // console.log("[DOMAIN]ui/menu/item - reset", this.label, this.state.focused);
     // this._disabled = false;
     this._focused = false;
     this._open = false;

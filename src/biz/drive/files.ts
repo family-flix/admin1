@@ -9,10 +9,10 @@ import { ScrollViewCore } from "@/domains/ui";
 import { BizError } from "@/domains/error";
 import { FileType } from "@/constants/index";
 
-import { AliyunFilePath, AliyunDriveFile } from "./types";
+import { DriveFilePath, DriveFile } from "./types";
 
 type FileColumn = {
-  list: ListCore<RequestCore<typeof fetchDriveFiles>, AliyunDriveFile>;
+  list: ListCore<RequestCore<typeof fetchDriveFiles>, DriveFile>;
   view: ScrollViewCore;
 };
 enum Events {
@@ -28,29 +28,30 @@ type TheTypesOfEvents = {
   [Events.Initialized]: void;
   [Events.FoldersChange]: FileColumn[];
   [Events.PathsChange]: { file_id: string; name: string }[];
-  [Events.SelectFolder]: [AliyunDriveFile, [number, number]];
+  [Events.SelectFolder]: [DriveFile, [number, number]];
   [Events.LoadingChange]: boolean;
-  [Events.StateChange]: AliyunDriveFilesState;
+  [Events.StateChange]: DriveFilesState;
   [Events.Error]: BizError;
 };
-type AliyunDriveFilesState = {
+type DriveFilesState = {
   initialized: boolean;
-  curFolder: AliyunDriveFile | null;
-  tmpHoverFile: [AliyunDriveFile, [number, number]] | null;
+  curFolder: DriveFile | null;
+  tmpHoverFile: [DriveFile, [number, number]] | null;
 };
-type AliyunDriveFilesProps = {
+type DriveFilesProps = {
   id: string;
+  service?: typeof fetchDriveFiles;
   onError?: (err: BizError) => void;
 };
 
-export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
+export class DriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   id: string;
   loading = false;
   initialized = false;
-  selectedFolder: AliyunDriveFile | null = null;
-  virtualSelectedFolder: [AliyunDriveFile, [number, number]] | null = null;
+  selectedFolder: DriveFile | null = null;
+  virtualSelectedFolder: [DriveFile, [number, number]] | null = null;
   tmpSelectedColumn: FileColumn | null = null;
-  paths: AliyunFilePath[] = [
+  paths: DriveFilePath[] = [
     {
       file_id: "root",
       name: "文件",
@@ -58,6 +59,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
   ];
   /** 文件夹列表 */
   folderColumns: FileColumn[] = [];
+  service: typeof fetchDriveFiles;
   get state() {
     return {
       initialized: this.initialized,
@@ -66,23 +68,24 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     };
   }
 
-  constructor(props: AliyunDriveFilesProps) {
+  constructor(props: DriveFilesProps) {
     super();
 
-    const { id, onError } = props;
+    const { id, service = fetchDriveFiles, onError } = props;
 
     this.id = id;
     this.folderColumns = [];
+    this.service = service;
     if (onError) {
       this.onError(onError);
     }
   }
   createColumn(folder: { file_id: string; name: string }) {
-    console.log("[DOMAIN]drive/files - createColumn", this.id);
+    // console.log("[DOMAIN]drive/files - createColumn", this.id);
     const drive_id = this.id;
     const { file_id } = folder;
     const list = new ListCore(
-      new RequestCore(fetchDriveFiles, {
+      new RequestCore(this.service, {
         process: fetchDriveFilesProcess,
         onFailed: (error) => {
           this.tip({ text: [error.message] });
@@ -158,7 +161,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     this.emit(Events.FoldersChange, [...this.folderColumns]);
   }
   /** 选中文件/文件夹 */
-  select(folder: AliyunDriveFile, index: [number, number]) {
+  select(folder: DriveFile, index: [number, number]) {
     this.selectedFolder = folder;
     this.emit(Events.SelectFolder, [folder, index]);
     const [x, y] = index;
@@ -192,7 +195,7 @@ export class AliyunDriveFilesCore extends BaseDomain<TheTypesOfEvents> {
     })();
     this.emit(Events.PathsChange, [...this.paths]);
   }
-  virtualSelect(folder: AliyunDriveFile, position: [number, number]) {
+  virtualSelect(folder: DriveFile, position: [number, number]) {
     this.virtualSelectedFolder = [folder, position];
     this.emit(Events.SelectFolder, [folder, position]);
     const [x, y] = position;

@@ -302,7 +302,7 @@ export const HomeIndexPage: ViewComponent = (props) => {
                         <div class="w-[128px]" onClick={() => {
                           // history.push();
                         }}>
-                          <LazyImage class="w-[128px] h-[192px]" store={poster.bind(poster_path)} />
+                          <LazyImage class="w-[128px] h-[192px] object-cover" store={poster.bind(poster_path)} />
                           <div class="max-w-full">
                             <div class="truncate">{name}</div>
                             <div class="max-w-full truncate text-sm">{text}</div>

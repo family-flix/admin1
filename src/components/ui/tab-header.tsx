@@ -1,4 +1,4 @@
-import { For, createSignal, onMount } from "solid-js";
+import { For, Show, createSignal, onMount } from "solid-js";
 
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { cn } from "@/utils";
@@ -38,32 +38,34 @@ export const TabHeader = (props: { store: TabHeaderCore<any> }) => {
           <For each={state().tabs}>
             {(tab, index) => {
               return (
-                <div
-                  classList={{
-                    "__a p-4 break-keep cursor-pointer": true,
-                  }}
-                  // style="{{current === index ? activeItemStyle : itemStyle}}"
-                  onClick={() => {
-                    store.select(index());
-                  }}
-                  onAnimationEnd={(event) => {
-                    event.stopPropagation();
-                    const target = event.currentTarget;
-                    // const { width, height, left } = event.currentTarget.getBoundingClientRect();
-                    store.updateTabClient(index(), {
-                      rect() {
-                        const { offsetLeft, clientWidth, clientHeight } = target;
-                        return {
-                          width: clientWidth,
-                          height: clientHeight,
-                          left: offsetLeft,
-                        };
-                      },
-                    });
-                  }}
-                >
-                  {tab.text}
-                </div>
+                <Show when={!tab.hidden}>
+                  <div
+                    classList={{
+                      "__a p-4 break-keep cursor-pointer": true,
+                    }}
+                    // style="{{current === index ? activeItemStyle : itemStyle}}"
+                    onClick={() => {
+                      store.select(index());
+                    }}
+                    onAnimationEnd={(event) => {
+                      event.stopPropagation();
+                      const target = event.currentTarget;
+                      // const { width, height, left } = event.currentTarget.getBoundingClientRect();
+                      store.updateTabClient(index(), {
+                        rect() {
+                          const { offsetLeft, clientWidth, clientHeight } = target;
+                          return {
+                            width: clientWidth,
+                            height: clientHeight,
+                            left: offsetLeft,
+                          };
+                        },
+                      });
+                    }}
+                  >
+                    {tab.text}
+                  </div>
+                </Show>
               );
             }}
           </For>

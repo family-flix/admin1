@@ -22,6 +22,8 @@ import {
   FolderSymlink,
 } from "lucide-solid";
 
+import { createJob } from "@/store/job";
+import { ViewComponentProps } from "@/store/types";
 import {
   Button,
   Input,
@@ -33,6 +35,7 @@ import {
   Skeleton,
   DropdownMenu,
 } from "@/components/ui";
+import { DriveFiles } from "@/components/DriveFiles";
 import { List } from "@/components/List";
 import {
   InputCore,
@@ -45,11 +48,9 @@ import {
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { DriveCore, addDrive, updateDriveProfile } from "@/biz/drive";
-import { AliyunDriveFilesCore } from "@/biz/drive/files";
+import { DriveFilesCore } from "@/biz/drive/files";
 import { BizError } from "@/domains/error";
-import { DriveTypes, FileType } from "@/constants";
-import { createJob } from "@/store/job";
-import { ViewComponentProps } from "@/store/types";
+import { DriveTypes, FileType } from "@/constants/index";
 
 export const DriveCard = (
   props: Pick<ViewComponentProps, "app"> & { store: DriveCore; onClick?: () => void; onRefresh?: () => void }
@@ -105,7 +106,7 @@ export const DriveCard = (
       });
     },
   });
-  const driveFileManage = new AliyunDriveFilesCore({ id: drive.id });
+  const driveFileManage = new DriveFilesCore({ id: drive.id });
   const foldersModal = new DialogCore({
     title: "设置索引根目录",
     async onOk() {
@@ -422,24 +423,11 @@ export const DriveCard = (
   const avatarImage = new ImageCore({ src: drive.state.avatar });
 
   const [state, setState] = createSignal(drive.state);
-  const [folderColumns, setFolderColumns] = createSignal(driveFileManage.folderColumns);
-  const [hasError, setHasError] = createSignal<BizError | null>(null);
-  const [filesState, setFilesState] = createSignal(driveFileManage.state);
 
   drive.onStateChange((nextState) => {
     analysisBtn.setLoading(nextState.loading);
     avatarImage.setURL(nextState.avatar);
     setState(nextState);
-  });
-  driveFileManage.onFolderColumnChange((nextColumns) => {
-    console.log("[COMPONENT]onFolderColumnChange", nextColumns);
-    setFolderColumns(nextColumns);
-  });
-  driveFileManage.onError((e) => {
-    setHasError(e);
-  });
-  driveFileManage.onStateChange((nextState) => {
-    setFilesState(nextState);
   });
   drive.onTip((texts) => {
     app.tip(texts);
@@ -447,16 +435,6 @@ export const DriveCard = (
   // const { avatar, user_name, used_size, total_size, used_percent } = state();
   const usedSize = () => state().used_size;
   const totalSize = () => state().total_size;
-  const hasFolders = () => {
-    const first = folderColumns()[0];
-    if (!first) {
-      return false;
-    }
-    if (first.list.response.dataSource.length === 0) {
-      return false;
-    }
-    return true;
-  };
 
   return (
     <div class="relative p-4 bg-white rounded-xl border border-1">
@@ -510,94 +488,16 @@ export const DriveCard = (
         </div>
       </div>
       <Dialog title={state().name} store={foldersModal}>
-        <div class=" overflow-x-auto w-[520px] h-[320px]">
-          <Show
-            when={filesState().initialized}
-            fallback={
-              <div class="position h-full">
-                <div class="flex items-center justify-center space-x-2 text-slate-800">
-                  <Loader class="w-6 h-6 animate-spin" />
-                  <div>加载中</div>
-                </div>
+        <DriveFiles
+          store={driveFileManage}
+          empty={
+            <div class="position">
+              <div class="flex items-center justify-center">
+                <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
               </div>
-            }
-          >
-            <Show
-              when={hasFolders()}
-              fallback={
-                <Show
-                  when={!hasError()}
-                  fallback={
-                    <div>
-                      <div class="text-center">发生了错误</div>
-                    </div>
-                  }
-                >
-                  <div class="position">
-                    <div class="flex items-center justify-center">
-                      <Button store={showAddingFolderDialogBtn}>添加文件夹</Button>
-                    </div>
-                  </div>
-                </Show>
-              }
-            >
-              <div class="flex-1 flex space-x-2 max-w-full max-h-full overflow-x-auto bg-white">
-                <For each={folderColumns()}>
-                  {(column, columnIndex) => {
-                    return (
-                      <ScrollView
-                        store={column.view}
-                        class="flex-shrink-0 px-2 pt-2 pb-12 border-r-2 overflow-x-hidden w-[240px] h-[320px] overflow-y-auto"
-                      >
-                        <ListView
-                          store={column.list}
-                          skeleton={
-                            <div>
-                              <div class="space-y-2">
-                                <Skeleton class="w-12 h-[24px]" />
-                                <Skeleton class="w-full h-[24px]" />
-                                <Skeleton class="w-4 h-[24px]" />
-                              </div>
-                            </div>
-                          }
-                        >
-                          <div>
-                            <List
-                              store={column.list}
-                              renderItem={(folder, index) => {
-                                // @ts-ignore
-                                const { file_id, name, type, selected } = folder;
-                                return (
-                                  <div>
-                                    <div
-                                      class="flex items-center justify-between p-2 cursor-pointer rounded-sm hover:bg-slate-300"
-                                      classList={{
-                                        "bg-slate-200": selected,
-                                      }}
-                                      onClick={() => {
-                                        driveFileManage.select(folder, [columnIndex(), index]);
-                                      }}
-                                    >
-                                      <div class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">{name}</div>
-                                      <Show when={type === FileType.Folder}>
-                                        <ChevronRight class="ml-2 w-4 h-4" />
-                                      </Show>
-                                    </div>
-                                  </div>
-                                );
-                              }}
-                            />
-                          </div>
-                        </ListView>
-                      </ScrollView>
-                    );
-                  }}
-                </For>
-                <div class="flex-shrink-0 px-2 pb-12 border-r-2 overflow-x-hidden min-w-[240px] max-h-full overflow-y-auto"></div>
-              </div>
-            </Show>
-          </Show>
-        </div>
+            </div>
+          }
+        />
       </Dialog>
       <Dialog title="添加文件夹" store={createFolderModal}>
         <div class="w-[520px]">

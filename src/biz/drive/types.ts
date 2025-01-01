@@ -1,14 +1,14 @@
 import { FileType } from "@/constants";
 
-export type AliyunDriveFile = {
+export type DriveFile = {
   type: FileType;
   file_id: string;
   name: string;
   size: number;
-  parent_paths: AliyunFilePath[];
-  children?: AliyunDriveFile[];
+  parent_paths: DriveFilePath[];
+  children?: DriveFile[];
 };
-export type AliyunFilePath = {
+export type DriveFilePath = {
   file_id: string;
   name: string;
 };

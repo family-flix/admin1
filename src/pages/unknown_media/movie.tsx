@@ -134,7 +134,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
       dialog.show();
     },
   });
-  const searcher = new TMDBSearcherCore({
+  const searcher = TMDBSearcherCore({
     type: MediaTypes.Movie,
   });
   const dialog = new DialogCore({
@@ -165,7 +165,7 @@ export const UnknownMovieListPage: ViewComponent = (props) => {
       dialog2.show();
     },
   });
-  const searcher2 = new TMDBSearcherCore({
+  const searcher2 = TMDBSearcherCore({
     episode: true,
   });
   const dialog2 = new DialogCore({

@@ -127,10 +127,13 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements Val
     if (this.type === "number") {
       this.value = Number(value) as T;
     }
-    if (extra.silence) {
-      return;
+    if (!extra.silence) {
+      this.emit(Events.Change, value);
+      this.emit(Events.StateChange, { ...this.state });
     }
-    this.emit(Events.Change, value);
+  }
+  setPlaceholder(v: string) {
+    this.placeholder = v;
     this.emit(Events.StateChange, { ...this.state });
   }
   enable() {

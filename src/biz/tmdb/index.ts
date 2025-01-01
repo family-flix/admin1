@@ -1,16 +1,24 @@
+/**
+ * @file TMDB 搜索
+ */
+import { ViewComponentProps } from "@/store/types";
 import { TheMediaInTMDB, searchMediaInTMDB } from "@/biz/services/media_profile";
+import { UnknownSeasonMediaItem } from "@/biz/services/parsed_media";
+import { MediaSearchCore } from "@/biz/media_search";
+import { prepareEpisodeList, prepareSeasonList } from "@/biz/services/media_profile";
 import { base, BaseDomain, Handler } from "@/domains/base";
-import { ButtonCore, InputCore, SelectCore } from "@/domains/ui/index";
+import { ButtonCore, ImageInListCore, InputCore, PresenceCore, ScrollViewCore, SelectCore } from "@/domains/ui/index";
 import { ListCore } from "@/domains/list/index";
 import { Response } from "@/domains/list/typing";
 import { FormCore } from "@/domains/ui/form";
 import { FormFieldCore } from "@/domains/ui/form/field";
 import { ListContainerCore } from "@/domains/ui/form/list";
 import { DatePickerCore } from "@/domains/ui/date-picker";
-import { RequestCore } from "@/domains/request/index";
-import { MediaTypes } from "@/constants/index";
+import { RequestCore, TheResponseOfFetchFunction } from "@/domains/request/index";
 import { ImageUploadCore } from "@/domains/ui/form/image-upload";
-import { ViewComponentProps } from "@/store/types";
+import { TabHeaderCore } from "@/domains/ui/tab-header";
+import { MediaTypes } from "@/constants/index";
+import { sleep } from "@/utils/index";
 
 interface TMDBSearcherState {
   response: Response<TheMediaInTMDB>;
@@ -18,27 +26,139 @@ interface TMDBSearcherState {
   curEpisode: { id: string | number } | null;
 }
 type TMDBSearcherProps = {
+  /**
+   * 查询影视剧类型 如果不传就会出现 电视剧/电影 tab 可以切换
+   * 如果传了 就没有 tab 并且仅搜索传入的 type 类型
+   */
   type?: MediaTypes;
+  /** 是否支持选择剧集 点击了季之后会出现剧集列表可以选择 */
   episode?: boolean;
+  /** 是否支持自定义详情 出现 自定义 tab */
+  custom?: boolean;
 };
 
-export function TMDBSearcherCore(props: TMDBSearcherProps) {
-  const { type, episode = false } = props;
+export function TMDBSearcherCore(props: TMDBSearcherProps = {}) {
+  const { type, episode = false, custom = false } = props;
 
   let _type: MediaTypes;
 
   let _cur: null | TheMediaInTMDB = null;
   let _cur_episode: null | { id: string | number } = null;
   let _need_episode = episode;
-  let _values: Record<string, any> = {};
+  let _episodes: TheResponseOfFetchFunction<typeof prepareEpisodeList>["list"][number][] = [];
 
   // console.log("[DOMAIN]TMDB - constructor ", this.list.response);
   if (type) {
     _type = type;
   }
+
+  function select(v: TheMediaInTMDB) {
+    _cur = v;
+    bus.emit(Events.StateChange, { ..._state });
+  }
+  function unSelect() {
+    _cur = null;
+    bus.emit(Events.StateChange, { ..._state });
+  }
+
   // this.needEpisode = episode;
   const $list = new ListCore(new RequestCore(searchMediaInTMDB));
-
+  const tab = new TabHeaderCore({
+    key: "id",
+    options: [
+      {
+        id: "season",
+        text: "电视剧",
+      },
+      {
+        id: "movie",
+        text: "电影",
+      },
+      {
+        id: "custom",
+        text: "自定义",
+        hidden: !custom,
+      },
+    ],
+    async onChange(value) {
+      if (value.id === "custom") {
+        searchPanel.hide();
+        await sleep(200);
+        $custom.show();
+        return;
+      }
+      const map: Record<string, MediaTypes> = {
+        season: MediaTypes.Season,
+        movie: MediaTypes.Movie,
+      };
+      const keyword = $input.value;
+      if (keyword) {
+        $list.search({
+          type: map[value.id],
+        });
+      }
+    },
+    onMounted() {
+      console.log("[BIZ]tmdb/index - tab mounted", _type);
+      if (_type) {
+        if (_type === MediaTypes.Movie) {
+          tab.selectById("movie");
+        }
+        if (_type === MediaTypes.Season) {
+          tab.selectById("season");
+        }
+        return;
+      }
+      tab.selectById("season");
+    },
+  });
+  const searchPanel = new PresenceCore({
+    visible: true,
+  });
+  const seasonPanel = new PresenceCore();
+  const episodePanel = new PresenceCore();
+  // const episodePanel = new PresenceCore();
+  const mediaSearch = new MediaSearchCore({
+    type: MediaTypes.Season,
+    async onSelect(value) {
+      if (_need_episode) {
+        if (!value) {
+          return;
+        }
+        select(value);
+        const r = await new RequestCore(prepareEpisodeList).run({
+          media_id: value.id,
+        });
+        if (r.error) {
+          bus.tip({
+            text: ["获取剧集失败", r.error.message],
+          });
+          return;
+        }
+        seasonPanel.hide();
+        episodePanel.show();
+        _episodes = r.data.list;
+        bus.emit(Events.EpisodesChange, [..._episodes]);
+        return;
+      }
+      if (value) {
+        select(value);
+        return;
+      }
+      unSelect();
+    },
+  });
+  const poster = new ImageInListCore({});
+  const scrollView = new ScrollViewCore({
+    // onScroll(pos) {
+    //   console.log('scroll', pos);
+    // },
+    async onReachBottom() {
+      await $list.loadMore();
+      scrollView.finishLoadingMore();
+    },
+  });
+  const $custom = new PresenceCore();
   const searchBtn = new ButtonCore({
     onClick: () => {
       if (!$input.value) {
@@ -68,7 +188,7 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
         name: "type",
         tip: "有多集需要选择 电视剧 选项",
         input: new SelectCore({
-          defaultValue: MediaTypes.Movie,
+          defaultValue: type || MediaTypes.Season,
           options: [
             {
               label: "电影",
@@ -86,9 +206,9 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
         name: "cover",
         input: ImageUploadCore({ tip: "拖动图片到此处" }),
       }),
-      title: new FormFieldCore({
+      name: new FormFieldCore({
         label: "标题",
-        name: "title",
+        name: "name",
         input: new InputCore({
           defaultValue: "",
         }),
@@ -107,9 +227,9 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
           defaultValue: "",
         }),
       }),
-      num: new FormFieldCore({
+      order: new FormFieldCore({
         label: "序号",
-        name: "num",
+        name: "order",
         input: new InputCore({
           defaultValue: 1,
         }),
@@ -144,9 +264,9 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
     },
   });
 
-  function updateCustomValues(values: any) {
-    _values = values;
-  }
+  // function updateCustomValues(values: any) {
+  //   _values = values;
+  // }
 
   $list.setParams({ type: type || MediaTypes.Season });
   $list.onStateChange((v) => {
@@ -155,9 +275,17 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
   $list.onLoadingChange((loading) => {
     searchBtn.setLoading(loading);
   });
-  $values.onChange((v) => {
-    // console.log("[COMPONENT]TMDBSearcher - values onChange", v);
-    updateCustomValues(v);
+  // $values.onChange((v) => {
+  //   // console.log("[COMPONENT]TMDBSearcher - values onChange", v);
+  //   updateCustomValues(v);
+  // });
+  $values.fields.type.$input.onChange((v) => {
+    if (v === MediaTypes.Movie) {
+      $values.fields.episodes.hide();
+    }
+    if (v === MediaTypes.Season) {
+      $values.fields.episodes.show();
+    }
   });
 
   const _state = {
@@ -174,10 +302,12 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
 
   enum Events {
     Select,
+    EpisodesChange,
     StateChange,
   }
   type TheTypesOfEvents = {
     [Events.Select]: TheMediaInTMDB;
+    [Events.EpisodesChange]: TheResponseOfFetchFunction<typeof prepareEpisodeList>["list"][number][];
     [Events.StateChange]: typeof _state;
   };
   const bus = base<TheTypesOfEvents>();
@@ -189,8 +319,22 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
       $values,
       searchBtn,
       resetBtn,
+      mediaSearch,
+      $custom,
+      searchPanel,
+      seasonPanel,
+      episodePanel,
+      tab,
+      poster,
+      scrollView,
     },
     state: _state,
+    get values() {
+      return $values.value;
+    },
+    get episodes() {
+      return _episodes;
+    },
     $list,
     $input,
     get type() {
@@ -199,21 +343,34 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
     get needEpisode() {
       return _need_episode;
     },
+    get cur() {
+      return _cur;
+    },
+    get curEpisode() {
+      return _cur_episode;
+    },
+    setValues(values: UnknownSeasonMediaItem) {
+      const { name, sources, season_text, source_count } = values;
+      $values.fields.name.setValue(name);
+      $values.fields.type.setValue(MediaTypes.Season);
+      $values.fields.episodes.$input.setValue(
+        [...new Array(source_count)].map((_, i) => {
+          return {
+            name: `第 ${i + 1} 集`,
+            overview: "",
+          };
+        })
+      );
+    },
     search(body: Parameters<typeof $list.search>[0]) {
       $list.search(body);
     },
-    select(v: TheMediaInTMDB) {
-      _cur = v;
-      bus.emit(Events.StateChange, { ..._state });
-    },
+    select,
     selectEpisode(v: { id: string | number }) {
       _cur_episode = v;
       bus.emit(Events.StateChange, { ..._state });
     },
-    unSelect() {
-      _cur = null;
-      bus.emit(Events.StateChange, { ..._state });
-    },
+    unSelect,
     toggle(v: TheMediaInTMDB) {
       if (_cur === v) {
         _cur = null;
@@ -225,8 +382,11 @@ export function TMDBSearcherCore(props: TMDBSearcherProps) {
     },
     tip: bus.tip,
     onTip: bus.onTip,
+    onEpisodesChange(handler: Handler<TheTypesOfEvents[Events.EpisodesChange]>) {
+      return bus.on(Events.EpisodesChange, handler);
+    },
     onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
-      bus.on(Events.StateChange, handler);
+      return bus.on(Events.StateChange, handler);
     },
   };
 }

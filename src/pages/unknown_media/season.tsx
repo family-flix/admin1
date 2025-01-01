@@ -11,6 +11,7 @@ import {
   fetchUnknownMediaListProcess,
   setParsedMediaProfile,
   deleteParsedMedia,
+  createMediaProfileThenSetTo,
 } from "@/biz/services/parsed_media";
 import { Button, ListView, Dialog, LazyImage, ScrollView, Input, Checkbox } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
@@ -29,6 +30,7 @@ import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { RefCore } from "@/domains/cur";
 import { MediaTypes } from "@/constants/index";
+import dayjs from "dayjs";
 
 export const UnknownSeasonListPage: ViewComponent = (props) => {
   const { app, view, parent } = props;
@@ -50,7 +52,19 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
       app.tip({ text: ["修改失败", error.message] });
     },
     onSuccess() {
-      app.tip({ text: ["修改成功 请刷新查看"] });
+      app.tip({ text: ["修改成功", "请刷新查看"] });
+      dialog.hide();
+    },
+  });
+  const setProfileRequest2 = new RequestCore(createMediaProfileThenSetTo, {
+    onLoading(loading) {
+      dialog.okBtn.setLoading(loading);
+    },
+    onFailed(error) {
+      app.tip({ text: ["修改失败", error.message] });
+    },
+    onSuccess() {
+      app.tip({ text: ["修改成功", "请刷新查看"] });
       dialog.hide();
     },
   });
@@ -138,6 +152,7 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
   const unknownTVProfileSetBtn = new ButtonInListCore<UnknownSeasonMediaItem>({
     onClick(record) {
       seasonRef.select(record);
+      mediaSearch.setValues(record);
       dialog.show();
     },
   });
@@ -148,6 +163,30 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
         return;
       }
       const { id } = seasonRef.value;
+      const { selectedTabId } = mediaSearch.ui.tab;
+      if (selectedTabId === "custom") {
+        const { type, order, name, air_date, cover, overview, episodes } = mediaSearch.values;
+        setProfileRequest2.run({
+          parsed_media_id: id,
+          media_profile: {
+            type: type || MediaTypes.Season,
+            name,
+            order,
+            overview,
+            air_date: dayjs(air_date).format("YYYY/MM/DD"),
+            poster_path: cover,
+            episodes: episodes.map((e, i) => {
+              const { name, overview } = e;
+              return {
+                order: i + 1,
+                name,
+                overview,
+              };
+            }),
+          },
+        });
+        return;
+      }
       const media = mediaSearch.cur;
       if (!media) {
         app.tip({ text: ["请先选择设置的详情"] });
@@ -163,8 +202,9 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
       });
     },
   });
-  const mediaSearch = new TMDBSearcherCore({
+  const mediaSearch = TMDBSearcherCore({
     // type: MediaTypes.Season,
+    custom: true,
   });
   const poster = new ImageInListCore({});
   const folderImg = new ImageCore({
@@ -229,12 +269,12 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
           <div class="space-y-4">
             <For each={response().dataSource}>
               {(parsedMedia) => {
-                const { id, name, season_text, profile, sources } = parsedMedia;
+                const { id, name, season_text, profile, sources, has_more_sources, source_count } = parsedMedia;
                 return (
                   <div class="flex p-4 bg-white rounded-sm">
                     <div class="mr-2 w-[80px]">
                       <Show when={profile} fallback={<LazyImage class="w-full object-contain" store={folderImg} />}>
-                        <LazyImage class="w-full h-[120px] object-contain" store={poster.bind(profile?.poster_path)} />
+                        <LazyImage class="w-full h-[120px] object-cover" store={poster.bind(profile?.poster_path)} />
                         <div>{profile?.name}</div>
                       </Show>
                     </div>
@@ -264,6 +304,10 @@ export const UnknownSeasonListPage: ViewComponent = (props) => {
                               );
                             }}
                           </For>
+                          <Show when={has_more_sources}>
+                            <div class="text-sm text-gray-500">...等共{source_count}个</div>
+                          </Show>
+                          <div></div>
                         </div>
                       </Show>
                       <div class="flex items-center mt-4 space-x-2">

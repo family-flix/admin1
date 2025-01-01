@@ -1,4 +1,7 @@
-import { createSignal, For, JSX } from "solid-js";
+/**
+ * @file 影视剧详情表单
+ */
+import { createSignal, For, JSX, Show } from "solid-js";
 import { Minus, Plus } from "lucide-solid";
 
 import { FormCore } from "@/domains/ui/form";
@@ -21,13 +24,14 @@ import { DragZone } from "./drag-zone";
 import { ImageUpload } from "./image-upload";
 import { Textarea } from "./textarea";
 
-export function Form(
+export function MediaProfileValuesForm(
   props: {
     store: FormCore<{
       cover: FormFieldCore<{ label: string; name: string; input: ImageUploadCore }>;
       type: FormFieldCore<{ label: string; name: string; input: SelectCore<MediaTypes> }>;
-      title: FormFieldCore<{ label: string; name: string; input: InputCore<string> }>;
+      name: FormFieldCore<{ label: string; name: string; input: InputCore<string> }>;
       air_date: FormFieldCore<{ label: string; name: string; input: DatePickerCore }>;
+      order: FormFieldCore<{ label: string; name: string; input: InputCore<number> }>;
       overview: FormFieldCore<{ label: string; name: string; input: InputCore<string> }>;
       episodes: FormFieldCore<{
         label: string;
@@ -59,8 +63,8 @@ export function Form(
           <ImageUpload class="relative w-[180px] h-[270px]" store={store.fields.cover.$input} />
           <div class="flex-1 w-0 ml-2">
             <div class="space-y-2">
-              <Field store={store.fields.title}>
-                <Input store={store.fields.title.$input} />
+              <Field store={store.fields.name}>
+                <Input store={store.fields.name.$input} />
               </Field>
               <div class="flex items-center space-x-2">
                 <Field store={store.fields.type}>
@@ -100,14 +104,16 @@ export function Form(
                         <Input store={field.$input.fields.name.$input} />
                         <Input store={field.$input.fields.overview.$input} />
                       </div>
-                      <div
-                        class="p-1 cursor-pointer hover:bg-slate-100"
-                        onClick={() => {
-                          store.fields.episodes.$input.removeFieldByIndex(field.index);
-                        }}
-                      >
-                        <Minus class="w-4 h-4" />
-                      </div>
+                      <Show when={state2().canRemove} fallback={<div class="p-1 w-[24px] h-[24px]"></div>}>
+                        <div
+                          class="p-1 cursor-pointer hover:bg-slate-100"
+                          onClick={() => {
+                            store.fields.episodes.$input.removeFieldByIndex(field.index);
+                          }}
+                        >
+                          <Minus class="w-4 h-4" />
+                        </div>
+                      </Show>
                     </div>
                   );
                 }}

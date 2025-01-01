@@ -58,6 +58,7 @@ export function onRequestCreated(h: (v: RequestCore<any>) => void) {
   handler = h;
 }
 export type TheResponseOfRequestCore<T extends RequestCore<any, any>> = NonNullable<T["response"]>;
+export type TheResponseOfFetchFunction<T extends FetchFunction> = UnpackedRequestPayload<ReturnType<T>>;
 
 /**
  * 用于接口请求的核心类

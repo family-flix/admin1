@@ -41,6 +41,8 @@ export function fetchUnknownMediaList(params: FetchParams & { name?: string; emp
           name: string;
         };
       }[];
+      has_more_sources: boolean;
+      source_count: number;
     }>
   >("/api/v2/admin/parsed_media/list", {
     ...rest,
@@ -57,13 +59,15 @@ export function fetchUnknownMediaListProcess(r: TmpRequestResp<typeof fetchUnkno
   return Result.Ok({
     ...r.data,
     list: r.data.list.map((tv) => {
-      const { id, name, season_text, profile, sources } = tv;
+      const { id, name, season_text, profile, sources, has_more_sources, source_count } = tv;
       return {
         id,
         name,
         season_text,
         profile,
         sources,
+        has_more_sources,
+        source_count,
       };
     }),
   });
@@ -221,6 +225,31 @@ export function setParsedSeasonMediaSourceProfile(body: {
     parsed_media_source_id,
     media_profile,
     media_source_profile,
+  });
+}
+/**
+ * 创建一个自定义的详情信息后将其设置给一个解析结果
+ */
+export function createMediaProfileThenSetTo(body: {
+  parsed_media_id: string;
+  media_profile: {
+    type: MediaTypes;
+    name: string;
+    overview: string;
+    poster_path: string;
+    air_date: string;
+    order: number;
+    episodes: {
+      name: string;
+      overview: string;
+      order: number;
+    }[];
+  };
+}) {
+  const { parsed_media_id, media_profile } = body;
+  return media_request.post<void>("/api/v2/admin/parsed_media/set_profile_after_create", {
+    parsed_media_id,
+    media_profile,
   });
 }
 /**

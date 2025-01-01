@@ -7,16 +7,20 @@ import { FormCore } from "./index";
 import { ValueInputInterface } from "./types";
 
 enum Events {
-  Input,
+  Show,
+  Hide,
   StateChange,
 }
 type TheTypesOfEvents = {
-  [Events.Input]: unknown;
+  [Events.Show]: void;
+  [Events.Hide]: void;
   [Events.StateChange]: FormFieldCoreState;
 };
 type FormFieldCoreState = {
   label: string;
   name: string;
+  required: boolean;
+  hidden: boolean;
 };
 // value: InputCore<any> | DatePickerCore | ListInputCore | FormCore<any>;
 // type FormFieldCoreProps = {
@@ -31,12 +35,15 @@ export class FormFieldCore<
   _label: string;
   _name: string;
   _required = false;
+  _hidden = false;
   $input: T["input"];
 
   get state(): FormFieldCoreState {
     return {
       label: this._label,
       name: this._name,
+      required: this._required,
+      hidden: this._hidden,
     };
   }
   get label() {
@@ -65,7 +72,32 @@ export class FormFieldCore<
   setValue(...args: Parameters<typeof this.$input.setValue>) {
     this.$input.setValue(...args);
   }
-  onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
-    this.on(Events.Input, handler);
+  hide() {
+    if (this._hidden === true) {
+      return;
+    }
+    this._hidden = true;
+    this.emit(Events.Hide);
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  show() {
+    if (this._hidden === false) {
+      return;
+    }
+    this._hidden = false;
+    this.emit(Events.Show);
+    this.emit(Events.StateChange, { ...this.state });
+  }
+  // onInput(handler: Handler<TheTypesOfEvents[Events.Input]>) {
+  //   this.on(Events.Input, handler);
+  // }
+  onShow(handler: Handler<TheTypesOfEvents[Events.Show]>) {
+    return this.on(Events.Show, handler);
+  }
+  onHide(handler: Handler<TheTypesOfEvents[Events.Hide]>) {
+    return this.on(Events.Hide, handler);
+  }
+  onStateChange(handler: Handler<TheTypesOfEvents[Events.StateChange]>) {
+    return this.on(Events.StateChange, handler);
   }
 }

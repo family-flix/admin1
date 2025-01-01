@@ -9,23 +9,7 @@ import { media_request } from "@/biz/requests/index";
 import { ListResponseWithCursor } from "@/biz/requests/types";
 import { RequestPayload, TmpRequestResp, RequestedResource } from "@/domains/request/utils";
 import { DriveTypes, FileType } from "@/constants/index";
-import { JSONObject } from "@/types/index";
-import { bytes_to_size } from "@/utils/index";
-
-/** 解析一段 json 字符串 */
-function parseJSONStr<T extends JSONObject>(json: string) {
-  try {
-    if (json[0] !== "{") {
-      return Result.Err("不是合法的 json");
-    }
-    const d = JSON.parse(json);
-    return Result.Ok(d as T);
-  } catch (err) {
-    const e = err as Error;
-    return Result.Err(e);
-  }
-}
-
+import { bytes_to_size, parseJSONStr } from "@/utils/index";
 /**
  * 新增云盘
  * @param {object} body 提交体

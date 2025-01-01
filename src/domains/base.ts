@@ -3,11 +3,18 @@
  */
 import mitt, { EventType, Handler } from "mitt";
 
-let _uid = 0;
-export function uid() {
-  _uid += 1;
-  return _uid;
+// import { uidFactory } from "@/utils/index";
+
+function uid_factory() {
+  let _uid = 0;
+  return function uid() {
+    _uid += 1;
+    return _uid;
+  };
 }
+
+const uid = uid_factory();
+
 // 这里必须给 Tip 显示声明值，否则默认为 0，会和其他地方声明的 Events 第一个 Key 冲突
 enum BaseEvents {
   Tip = "__tip",
@@ -24,6 +31,7 @@ type BaseDomainEvents<E> = TheTypesOfBaseEvents & E;
 
 export function base<Events extends Record<EventType, unknown>>() {
   const emitter = mitt<BaseDomainEvents<Events>>();
+  const uid = uid_factory();
   let listeners: (() => void)[] = [];
 
   return {
@@ -39,13 +47,14 @@ export function base<Events extends Record<EventType, unknown>>() {
       emitter.on(event, handler);
       return unlisten;
     },
+    uid,
     tip(content: { icon?: unknown; text: string[] }) {
       // @ts-ignore
       emitter.emit(BaseEvents.Tip, content);
       return content.text.join("\n");
     },
     onTip(handler: Handler<TheTypesOfBaseEvents[BaseEvents.Tip]>) {
-      return this.on(BaseEvents.Tip, handler);
+      return emitter.on(BaseEvents.Tip, handler);
     },
     emit<Key extends keyof BaseDomainEvents<Events>>(event: Key, value?: BaseDomainEvents<Events>[Key]) {
       emitter.emit(event, value as any);

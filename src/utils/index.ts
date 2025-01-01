@@ -15,6 +15,28 @@ export function cn(...inputs: any[]) {
   return twMerge(inputs);
 }
 
+/** 解析一段 json 字符串 */
+export function parseJSONStr<T extends JSONObject>(json: string) {
+  try {
+    if (json[0] !== "{") {
+      return Result.Err("不是合法的 json");
+    }
+    const d = JSON.parse(json);
+    return Result.Ok(d as T);
+  } catch (err) {
+    const e = err as Error;
+    return Result.Err(e);
+  }
+}
+
+export function uidFactory() {
+  let _uid = 0;
+  return function uid() {
+    _uid += 1;
+    return _uid;
+  };
+}
+
 export function padding_zero(str: number | string) {
   if (String(str).length === 1) {
     return `0${str}`;

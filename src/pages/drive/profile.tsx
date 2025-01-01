@@ -31,7 +31,7 @@ import {
   ScrollViewCore,
   MenuCore,
 } from "@/domains/ui";
-import { DriveCore, AliyunDriveFilesCore, DriveItem, AliyunDriveFile } from "@/biz/drive";
+import { DriveCore, DriveFilesCore, DriveItem, DriveFile } from "@/biz/drive";
 import { RefCore } from "@/domains/cur/index";
 import { RequestCore } from "@/domains/request";
 import { FileType, MediaTypes } from "@/constants/index";
@@ -133,7 +133,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
     },
   });
   // const fileProfileRequest = new RequestCore(fetchFileProfile);
-  const driveFileManage = new AliyunDriveFilesCore({
+  const driveFileManage = new DriveFilesCore({
     id: view.query.id,
     onError(err) {
       app.tip({
@@ -152,8 +152,8 @@ export const DriveProfilePage: ViewComponent = (props) => {
   // const input = new InputCore({
   //   defaultValue: "",
   // });
-  const curFileWithPosition = new RefCore<[AliyunDriveFile, [number, number]]>();
-  const curFile = new RefCore<AliyunDriveFile>();
+  const curFileWithPosition = new RefCore<[DriveFile, [number, number]]>();
+  const curFile = new RefCore<DriveFile>();
   const filesRef = new RefCore<{ name: string }[]>();
   // const btn = new ButtonCore({
   //   onClick() {
@@ -447,7 +447,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const mediaSearch = new TMDBSearcherCore({
+  const mediaSearch = TMDBSearcherCore({
     // type: MediaTypes.Season,
   });
   const dialog2 = new DialogCore({
@@ -478,7 +478,7 @@ export const DriveProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const movieSelect = new TMDBSearcherCore({
+  const movieSelect = TMDBSearcherCore({
     type: MediaTypes.Movie,
   });
   const fileSearchDialog = new DialogCore({

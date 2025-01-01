@@ -302,7 +302,7 @@ export const MovieListPage: ViewComponent = (props) => {
                       <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                         <div class="flex">
                           <div class="overflow-hidden mr-2 rounded-sm">
-                            <LazyImage class="w-[180px] h-[272px]" store={poster.bind(poster_path)} alt={name} />
+                            <LazyImage class="w-[180px] h-[272px] object-cover" store={poster.bind(poster_path)} alt={name} />
                           </div>
                           <div class="flex-1 w-0 p-4">
                             <h2 class="text-2xl text-slate-800">

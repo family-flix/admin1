@@ -21,9 +21,7 @@ export function ImageUpload(props: { store: ImageUploadCore } & JSX.HTMLAttribut
     <div class={cn(props.class, "relative")}>
       <Show when={state().url}>
         <div class="absolute inset-0 h-full">
-          <AspectRatio ratio={6 / 9}>
-            <LazyImage class="h-full" store={store.ui.img} />
-          </AspectRatio>
+          <LazyImage class="h-full object-cover" store={store.ui.img} />
         </div>
       </Show>
       <DragZone store={store.ui.zone}></DragZone>

@@ -71,6 +71,17 @@ export class TMDBSearcherDialogCore extends BaseDomain<TheTypesOfEvents> {
       this.state.list = nextState;
       this.emit(Events.Change, { ...this.state });
     });
+    this.tmdb.ui.tab.onChange((v) => {
+      // console.log("[COMPONENT]TMDBSearcher/store tab change", v.id);
+      if (v.id === "movie") {
+        this.dialog.setTitle("搜索电影");
+        this.tmdb.ui.$input.setPlaceholder("请输入电影名称");
+      }
+      if (v.id === "season") {
+        this.dialog.setTitle("搜索电视剧");
+        this.tmdb.ui.$input.setPlaceholder("请输入电视剧名称");
+      }
+    });
     this.tmdb.onTip((msg) => {
       this.tip(msg);
     });

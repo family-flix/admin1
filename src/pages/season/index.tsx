@@ -380,7 +380,11 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
                         <div class="rounded-md border border-slate-300 bg-white shadow-sm">
                           <div class="flex">
                             <div class="overflow-hidden mr-2 rounded-sm">
-                              <LazyImage class="w-[180px] h-[272px]" store={poster.bind(poster_path)} alt={name} />
+                              <LazyImage
+                                class="w-[180px] h-[272px] object-cover"
+                                store={poster.bind(poster_path)}
+                                alt={name}
+                              />
                             </div>
                             <div class="flex-1 w-0 p-4">
                               <div class="flex items-center">
@@ -473,7 +477,8 @@ export const HomeSeasonListPage: ViewComponent = (props) => {
       </ScrollView>
       <Dialog store={deleteConfirmDialog}>
         <div class="w-[520px]">
-          <div>确认删除吗？</div>
+          <div>该操作仅删除电视剧记录</div>
+          <div>云盘内对应视频等文件不会被删除</div>
         </div>
       </Dialog>
       <Popover
