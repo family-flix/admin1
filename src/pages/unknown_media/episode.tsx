@@ -26,7 +26,7 @@ import {
   InputCore,
   ScrollViewCore,
 } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
 import { MediaTypes } from "@/constants/index";

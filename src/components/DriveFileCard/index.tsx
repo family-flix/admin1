@@ -6,7 +6,7 @@ import { AlertCircle, Binary, CheckCircle2, Lightbulb, Trash } from "lucide-soli
 
 import { fetchFileProfile } from "@/biz/services/drive";
 import { LazyImage } from "@/components/ui";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { DriveFile, DriveCore } from "@/biz/drive";
 import { RequestCore } from "@/domains/request";
 import { ImageCore } from "@/domains/ui";

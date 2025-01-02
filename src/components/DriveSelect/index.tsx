@@ -1,5 +1,5 @@
 import { BaseDomain, Handler } from "@/domains/base";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { DriveCore } from "@/biz/drive";
 
 enum Events {

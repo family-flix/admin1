@@ -32,7 +32,7 @@ import { ButtonCore, ButtonInListCore, CheckboxGroupCore, DialogCore, InputCore,
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { DriveCore } from "@/biz/drive";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { createJob } from "@/store/job";
 import { driveList } from "@/store/drives";
 import { ViewComponent } from "@/store/types";

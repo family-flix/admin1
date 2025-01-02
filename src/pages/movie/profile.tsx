@@ -19,7 +19,7 @@ import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/compon
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/biz/tmdb";
 import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
 import { MediaTypes } from "@/constants/index";

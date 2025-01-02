@@ -28,7 +28,7 @@ import {
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
 import { ListCore } from "@/domains/list";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { MediaTypes } from "@/constants/index";
 import dayjs from "dayjs";
 

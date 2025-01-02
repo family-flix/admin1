@@ -5,7 +5,7 @@ import {
   fetchCollectionProfileProcess,
 } from "@/biz/services/collection";
 import { InputCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { RequestCore } from "@/domains/request";
 import { BaseDomain, Handler } from "@/domains/base";
 import { MovieSelectCore } from "@/components/MovieSelect";

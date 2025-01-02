@@ -8,7 +8,7 @@ import { MovieItem, fetchMovieList } from "@/biz/services";
 import { BaseDomain, Handler } from "@/domains/base";
 import { Button, Input, LazyImage, ListView, ScrollView, Skeleton } from "@/components/ui";
 import { ButtonCore, DialogCore, DialogProps, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
 import { fetchMovieMediaList, fetchMovieMediaListProcess } from "@/biz/services/media";

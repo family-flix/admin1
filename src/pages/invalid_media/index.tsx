@@ -10,7 +10,7 @@ import { LazyImage, Input, Button, Skeleton, ScrollView, ListView } from "@/comp
 import { InputCore, ButtonCore, ButtonInListCore, ScrollViewCore, ImageInListCore } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { MediaErrorTypes, MediaTypes } from "@/constants/index";
 
 export const InvalidMediaListPage: ViewComponent = (props) => {

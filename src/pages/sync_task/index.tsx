@@ -46,7 +46,7 @@ import {
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { SharedResourceCore } from "@/biz/shared_resource";
 import { Result } from "@/domains/result/index";
 import { FileType } from "@/constants/index";

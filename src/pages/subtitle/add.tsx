@@ -28,7 +28,7 @@ import { MediaTypes, SubtitleLanguageOptions } from "@/constants";
 import { DragZoneCore } from "@/domains/ui/drag-zone";
 import { SeasonSelect } from "@/components/SeasonSelect/main";
 import { TVSeasonSelectCore } from "@/components/SeasonSelect";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { Select } from "@/components/ui/select";
 import { SubtitlePreview, SubtitleReaderCore } from "@/components/SubtitlePreview";
 import { MovieSelect, MovieSelectCore } from "@/components/MovieSelect";

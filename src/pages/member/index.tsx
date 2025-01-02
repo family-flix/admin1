@@ -30,7 +30,7 @@ import {
 } from "@/domains/ui/index";
 import { ListCore } from "@/domains/list/index";
 import { RequestCore } from "@/domains/request/index";
-import { RefCore } from "@/domains/cur/index";
+import { RefCore } from "@/domains/ui/cur/index";
 import { MultipleSelectionCore } from "@/domains/multiple/index";
 import { cn } from "@/utils/index";
 

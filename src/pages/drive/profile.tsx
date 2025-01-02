@@ -32,7 +32,7 @@ import {
   MenuCore,
 } from "@/domains/ui";
 import { DriveCore, DriveFilesCore, DriveItem, DriveFile } from "@/biz/drive";
-import { RefCore } from "@/domains/cur/index";
+import { RefCore } from "@/domains/ui/cur/index";
 import { RequestCore } from "@/domains/request";
 import { FileType, MediaTypes } from "@/constants/index";
 import { downloadFile } from "@/utils/download";

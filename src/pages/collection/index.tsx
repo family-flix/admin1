@@ -21,7 +21,7 @@ import {
 } from "@/domains/ui";
 import { ListCore } from "@/domains/list";
 import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 
 export const CollectionListPage: ViewComponent = (props) => {
   const { app, history, view } = props;

@@ -31,7 +31,7 @@ import {
   ImageInListCore,
 } from "@/domains/ui";
 import { RequestCore } from "@/domains/request/index";
-import { RefCore } from "@/domains/cur/index";
+import { RefCore } from "@/domains/ui/cur/index";
 import { ListCore } from "@/domains/list/index";
 import { SeasonProfileInput, SeasonProfileInputCore } from "@/components/SeasonProfileInput";
 import dayjs from "dayjs";

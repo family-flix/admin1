@@ -20,7 +20,7 @@ import { Button, Skeleton, ScrollView, ListView, Dialog, Input, LazyImage, Texta
 import { TVSeasonSelectCore, SeasonSelect } from "@/components/SeasonSelect";
 import { MovieSelect, MovieSelectCore } from "@/components/MovieSelect";
 import { ButtonCore, ButtonInListCore, DialogCore, ImageInListCore, InputCore, ScrollViewCore } from "@/domains/ui";
-import { RefCore } from "@/domains/cur/index";
+import { RefCore } from "@/domains/ui/cur/index";
 import { RequestCore } from "@/domains/request/index";
 import { ListCore } from "@/domains/list/index";
 import { MediaTypes, ReportTypes } from "@/constants/index";

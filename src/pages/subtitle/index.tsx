@@ -10,7 +10,7 @@ import { SubtitleItem, deleteSubtitle, fetchSubtitleList } from "@/biz/services"
 import { Button, Skeleton, ScrollView, ListView, LazyImage, Dialog } from "@/components/ui";
 import { ButtonCore, DialogCore, ImageInListCore, ScrollViewCore } from "@/domains/ui";
 import { RequestCore } from "@/domains/request";
-import { RefCore } from "@/domains/cur";
+import { RefCore } from "@/domains/ui/cur";
 import { ListCore } from "@/domains/list";
 import { ReportTypes } from "@/constants";
 import { cn } from "@/utils";
