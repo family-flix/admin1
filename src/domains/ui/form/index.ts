@@ -5,6 +5,7 @@ import { base, Handler } from "@/domains/base";
 
 import { FormFieldCore } from "./field";
 import { ValueInputInterface } from "./types";
+import { Result } from "@/domains/result";
 
 type FormProps<F extends Record<string, FormFieldCore<any>>> = {
   fields: F;
@@ -114,6 +115,9 @@ export function FormCore<
     },
     submit() {
       bus.emit(Events.Submit, _state.value);
+    },
+    validate() {
+      return Result.Ok(_values);
     },
     onSubmit(handler: Handler<TheTypesOfEvents<Value<F>>[Events.Submit]>) {
       bus.on(Events.Submit, handler);
