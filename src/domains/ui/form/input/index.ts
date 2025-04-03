@@ -49,7 +49,7 @@ type InputState<T> = {
 
 export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements ValueInputInterface<T> {
   shape = "input" as const;
-  _defaultValue: T;
+  defaultValue: T;
   value: T;
   placeholder: string;
   disabled: boolean;
@@ -101,7 +101,7 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements Val
     this.disabled = disabled;
     this.autoComplete = autoComplete;
     this.autoFocus = autoFocus;
-    this._defaultValue = defaultValue;
+    this.defaultValue = defaultValue;
     this.value = defaultValue;
     if (onChange) {
       this.onChange(onChange);
@@ -188,14 +188,14 @@ export class InputCore<T> extends BaseDomain<TheTypesOfEvents<T>> implements Val
     this.emit(Events.StateChange, { ...this.state });
   }
   clear() {
-    console.log("[COMPONENT]ui/input/index - clear", this._defaultValue);
-    this.value = this._defaultValue;
+    console.log("[COMPONENT]ui/input/index - clear", this.defaultValue);
+    this.value = this.defaultValue;
     // this.emit(Events.Change, this.value);
     this.emit(Events.Clear);
     this.emit(Events.StateChange, { ...this.state });
   }
   reset() {
-    this.value = this._defaultValue;
+    this.value = this.defaultValue;
     this.emit(Events.StateChange, { ...this.state });
   }
   enter() {

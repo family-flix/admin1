@@ -12,6 +12,7 @@ type TheTypesOfEvents = {
 type CheckboxProps = {
   label?: string;
   checked?: boolean;
+  value?: boolean;
   disabled?: boolean;
   required?: boolean;
   onChange?: (checked: boolean) => void;
@@ -26,6 +27,7 @@ export class CheckboxCore extends BaseDomain<TheTypesOfEvents> {
   label: string;
   disabled: CheckboxProps["disabled"];
   checked: boolean;
+  value: boolean;
   defaultChecked: boolean;
 
   presence: PresenceCore;
@@ -34,6 +36,7 @@ export class CheckboxCore extends BaseDomain<TheTypesOfEvents> {
     return {
       label: this.label,
       checked: this.checked,
+      value: this.checked,
       disabled: this.disabled,
     };
   }
@@ -47,6 +50,7 @@ export class CheckboxCore extends BaseDomain<TheTypesOfEvents> {
     this.label = label;
     this.disabled = disabled;
     this.checked = checked;
+    this.value = checked;
     this.defaultChecked = checked;
 
     this.presence = new PresenceCore();
@@ -94,6 +98,9 @@ export class CheckboxCore extends BaseDomain<TheTypesOfEvents> {
   }
   reset() {
     this.checked = this.defaultChecked;
+  }
+  setValue(v: boolean) {
+    this.checked = v;
   }
 
   onChange(handler: Handler<TheTypesOfEvents[Events.Change]>) {

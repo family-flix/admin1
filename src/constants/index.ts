@@ -296,6 +296,12 @@ export enum DriveTypes {
   AlipanOpenDrive = 6,
   /** 阿里云盘资源盘/开放接口 */
   AlipanResourceOpenDrive = 7,
+  /** boju.cc */
+  BOJU = 8,
+  /** 115 */
+  Drive115 = 9,
+  /** Alist */
+  Alist = 10,
 }
 
 export enum MediaErrorTypes {

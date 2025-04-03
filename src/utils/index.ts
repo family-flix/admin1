@@ -115,6 +115,21 @@ export function query_stringify(query?: null | JSONObject) {
     })
     .join("&");
 }
+export function query_parse(url: string, opt: {} = {}): Record<string, string> {
+  let u = url.replace(/^\?/, "");
+  const segments = u.split("&");
+  const query = segments
+    .map((seg) => {
+      const [k, v] = seg.split("=");
+      return {
+        [k]: v,
+      };
+    })
+    .reduce((a, b) => {
+      return { ...a, ...b };
+    }, {});
+  return query;
+}
 
 export function bytes_to_size(bytes: number) {
   if (!bytes) {

@@ -5,12 +5,13 @@ import { createSignal, For, Switch } from "solid-js";
 import { RotateCcw, HardDrive, Search } from "lucide-solid";
 
 import { driveList } from "@/store/drives";
-import { ViewComponent } from "@/store/types";
+import { ViewComponent, ViewComponentProps } from "@/store/types";
 import { Button, Dialog, ListView, Skeleton, ScrollView, Textarea, Checkbox, Input } from "@/components/ui";
 import { DriveCard } from "@/components/DriveCard";
 import { TabHeader } from "@/components/ui/tab-header";
 import { DriveFiles } from "@/components/DriveFiles";
-import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore } from "@/domains/ui";
+import { FieldObjectValuesView } from "@/components/ui/field-object-view";
+import { ButtonCore, DialogCore, ScrollViewCore, InputCore, CheckboxCore, SelectCore } from "@/domains/ui";
 import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { RequestCore } from "@/domains/request/index";
 import { fetchLocalFiles } from "@/biz/services/drive";
@@ -18,25 +19,49 @@ import { addDrive, DriveFilesCore } from "@/biz/drive/index";
 import { code_get_drive_token, DriveTypes } from "@/constants/index";
 
 import { AlipanDriveCreateInput, AlipanOpenDriveCreateInput } from "./profile_input";
+import { ObjectFieldCore, SingleFieldCore } from "@/domains/ui/formv2";
 
-export const DriveListPage: ViewComponent = (props) => {
-  const { app, history, view } = props;
+function DriveCreateViewModel(props: ViewComponentProps) {
+  const drives = [
+    {
+      id: DriveTypes.AlipanOpenDrive,
+      text: "阿里云盘/开放接口",
+    },
+    {
+      id: DriveTypes.AliyunBackupDrive,
+      text: "阿里云盘",
+    },
+    {
+      id: DriveTypes.Drive115,
+      text: "115",
+    },
+    {
+      id: DriveTypes.Alist,
+      text: "Alist",
+    },
+  ];
 
-  const driveCreateRequest = new RequestCore(addDrive, {
-    onLoading(loading) {
-      driveCreateDialog.okBtn.setLoading(loading);
+  const request = {
+    drive: {
+      list: driveList,
+      create: new RequestCore(addDrive, {
+        onLoading(loading) {
+          $drive_create_dialog.okBtn.setLoading(loading);
+        },
+        onSuccess() {
+          props.app.tip({ text: ["添加云盘成功"] });
+          $drive_create_dialog.hide();
+          $drive_token_input.clear();
+          driveList.refresh();
+        },
+        onFailed(error) {
+          props.app.tip({ text: ["添加云盘失败", error.message] });
+        },
+      }),
     },
-    onSuccess() {
-      app.tip({ text: ["添加云盘成功"] });
-      driveCreateDialog.hide();
-      driveTokenInput.clear();
-      driveList.refresh();
-    },
-    onFailed(error) {
-      app.tip({ text: ["添加云盘失败", error.message] });
-    },
-  });
-  const driveTabs = new TabHeaderCore({
+  };
+
+  const $tabs = new TabHeaderCore({
     key: "id",
     options: [
       {
@@ -47,6 +72,10 @@ export const DriveListPage: ViewComponent = (props) => {
         id: DriveTypes.AliyunBackupDrive,
         text: "阿里云盘",
       },
+      // {
+      //   id: DriveTypes.Drive115,
+      //   text: "115",
+      // },
       // {
       //   id: DriveTypes.Cloud189Drive,
       //   text: "天翼云盘",
@@ -60,12 +89,20 @@ export const DriveListPage: ViewComponent = (props) => {
       //   text: "迅雷",
       // },
       {
+        id: DriveTypes.Alist,
+        text: "Alist",
+      },
+      // {
+      //   id: DriveTypes.BOJU,
+      //   text: "boju.cc",
+      // },
+      {
         id: DriveTypes.LocalFolder,
         text: "本地文件夹",
       },
     ],
     onMounted() {
-      driveTabs.selectById(DriveTypes.AlipanOpenDrive);
+      $tabs.selectById(DriveTypes.AlipanOpenDrive);
     },
     onChange(value) {
       if (value.id === DriveTypes.LocalFolder) {
@@ -76,122 +113,255 @@ export const DriveListPage: ViewComponent = (props) => {
       }
     },
   });
-  const driveCreateDialog = new DialogCore({
+  const $pan115_values = new ObjectFieldCore({
+    label: "115",
+    name: "pan115",
+    fields: {
+      user_id: new SingleFieldCore({
+        name: "qrcode_token",
+        label: "二维码Token",
+        input: new InputCore({
+          defaultValue: "",
+        }),
+      }),
+      cookie: new SingleFieldCore({
+        name: "qrcode_source",
+        label: "二维码来源",
+        input: new SelectCore({
+          defaultValue: "alipaymini",
+          options: [
+            {
+              value: "web",
+              label: "web",
+            },
+            {
+              value: "android",
+              label: "android",
+            },
+            {
+              value: "ios",
+              label: "ios",
+            },
+            {
+              value: "tv",
+              label: "tv",
+            },
+            {
+              value: "alipaymini",
+              label: "alipaymini",
+            },
+            {
+              value: "wechatmini",
+              label: "wechatmini",
+            },
+            {
+              value: "qandroid",
+              label: "qandroid",
+            },
+          ],
+        }),
+      }),
+    },
+  });
+  const $alist_values = new ObjectFieldCore({
+    label: "Alist",
+    name: "alist",
+    fields: {
+      url: new SingleFieldCore({
+        name: "url",
+        label: "URL",
+        input: new InputCore({
+          defaultValue: "",
+        }),
+      }),
+      token: new SingleFieldCore({
+        name: "token",
+        label: "token",
+        input: new InputCore({
+          defaultValue: "",
+        }),
+      }),
+      password: new SingleFieldCore({
+        name: "password",
+        label: "密码",
+        input: new InputCore({
+          defaultValue: "",
+        }),
+      }),
+    },
+  });
+  const $drive_create_dialog = new DialogCore({
     title: "新增云盘",
-    onOk() {
-      if ([DriveTypes.AlipanOpenDrive, DriveTypes.AliyunBackupDrive].includes(driveTabs.selectedTabId)) {
-        if (!driveTokenInput.value) {
-          app.tip({ text: ["请输入云盘信息"] });
+    async onOk() {
+      if ([DriveTypes.AlipanOpenDrive, DriveTypes.AliyunBackupDrive].includes($tabs.selectedTabId)) {
+        if (!$drive_token_input.value) {
+          props.app.tip({ text: ["请输入云盘信息"] });
           return;
         }
-        driveCreateRequest.run({ type: driveTabs.selectedTabId, payload: driveTokenInput.value });
+        request.drive.create.run({ type: $tabs.selectedTabId, payload: $drive_token_input.value });
         return;
       }
-      if (driveTabs.selectedTabId === DriveTypes.LocalFolder) {
+      if ($tabs.selectedTabId === DriveTypes.BOJU) {
+        request.drive.create.run({ type: $tabs.selectedTabId, payload: JSON.stringify({}) });
+        return;
+      }
+      if ($tabs.selectedTabId === DriveTypes.LocalFolder) {
         const selected = $files.selectedFolder;
         if (!selected) {
-          app.tip({ text: ["请选择文件夹"] });
+          props.app.tip({ text: ["请选择文件夹"] });
           return;
         }
         console.log("[PAGE]drive/index - before createDrive", selected);
-        driveCreateRequest.run({ type: driveTabs.selectedTabId, payload: JSON.stringify({ dir: selected.file_id }) });
+        request.drive.create.run({ type: $tabs.selectedTabId, payload: JSON.stringify({ dir: selected.file_id }) });
         return;
       }
-      app.tip({ text: ["暂不支持的云盘类型"] });
+      if ($tabs.selectedTabId === DriveTypes.Drive115) {
+        const r = await $pan115_values.validate();
+        if (r.error) {
+          props.app.tip({ text: ["请输入正确的115信息"] });
+          return;
+        }
+        const payload = r.data;
+        request.drive.create.run({ type: $tabs.selectedTabId, payload: JSON.stringify(payload) });
+        return;
+      }
+      if ($tabs.selectedTabId === DriveTypes.Alist) {
+        const r = await $alist_values.validate();
+        if (r.error) {
+          props.app.tip({ text: ["请输入正确的Alist信息"] });
+          return;
+        }
+        const payload = r.data;
+        if (!payload.url) {
+          props.app.tip({ text: ["请输入正确的Alist信息"] });
+          return;
+        }
+        request.drive.create.run({ type: $tabs.selectedTabId, payload: JSON.stringify(payload) });
+        return;
+      }
+      props.app.tip({ text: ["暂不支持的云盘类型"] });
     },
   });
-  const driveCreateBtn = new ButtonCore({
+  const $drive_create_btn = new ButtonCore({
     onClick() {
-      driveCreateDialog.show();
+      $drive_create_dialog.show();
     },
   });
-  const driveTokenInput = new InputCore({
+  const $drive_token_input = new InputCore({
     defaultValue: "",
     placeholder: "请输入",
   });
-  const allDriveCheckbox = new CheckboxCore({
+  const $checkbox = new CheckboxCore({
     onChange(checked) {
       driveList.search({
         hidden: checked ? null : 0,
       });
     },
   });
-  const refreshBtn = new ButtonCore({
+  const $boju = new ButtonCore({
+    onClick() {},
+  });
+  const $refresh_btn = new ButtonCore({
     onClick() {
       driveList.refresh();
     },
   });
-  const searchBtn = new ButtonCore({
+  const $search_btn = new ButtonCore({
     onClick() {
-      if (!nameSearchInput.value) {
-        app.tip({
+      if (!$search_input.value) {
+        props.app.tip({
           text: ["请输入搜索关键字"],
         });
         return;
       }
       driveList.search({
-        name: nameSearchInput.value,
+        name: $search_input.value,
       });
     },
   });
-  const nameSearchInput = new InputCore({
+  const $search_input = new InputCore({
     defaultValue: "",
     onEnter() {
-      searchBtn.click();
+      $search_btn.click();
     },
   });
-  const resetBtn = new ButtonCore({
+  const $reset_btn = new ButtonCore({
     onClick() {
       driveList.reset();
     },
   });
   const $files = new DriveFilesCore({ id: "", service: fetchLocalFiles });
-  const scrollView = new ScrollViewCore({
+  const $view = new ScrollViewCore({
     async onReachBottom() {
       await driveList.loadMore();
-      scrollView.finishLoadingMore();
+      $view.finishLoadingMore();
     },
   });
 
-  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
-  const [tabId, setTabId] = createSignal(driveTabs.selectedTabId);
+  return {
+    request,
+    ui: {
+      $drive_create_dialog,
+      $drive_create_btn,
+      $drive_token_input,
+      $refresh_btn,
+      $reset_btn,
+      $search_btn,
+      $search_input,
+      $tabs,
+      $checkbox,
+      $view,
+      $files,
+      $pan115_values,
+      $alist_values,
+    },
+  };
+}
 
-  driveTabs.onChange((event) => setTabId(event.id));
-  driveList.onLoadingChange((v) => refreshBtn.setLoading(v));
+export const DriveListPage: ViewComponent = (props) => {
+  const { app, history, view } = props;
+
+  const $model = DriveCreateViewModel(props);
+
+  const [driveResponse, setDriveResponse] = createSignal(driveList.response);
+  const [tabId, setTabId] = createSignal($model.ui.$tabs.selectedTabId);
+
+  $model.ui.$tabs.onChange((event) => setTabId(event.id));
+  driveList.onLoadingChange((v) => $model.ui.$refresh_btn.setLoading(v));
   driveList.onStateChange((v) => setDriveResponse(v));
 
   driveList.initAny();
 
   return (
     <>
-      <ScrollView store={scrollView} class="h-screen p-8 whitespace-nowrap">
+      <ScrollView store={$model.ui.$view} class="h-screen p-8 whitespace-nowrap">
         <div class="flex items-center space-x-4">
           <h1 class="text-2xl">云盘列表</h1>
         </div>
         <div class="mt-8">
           <div class="flex items-center space-x-2">
-            <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={refreshBtn}>
+            <Button class="space-x-1" icon={<RotateCcw class="w-4 h-4" />} store={$model.ui.$refresh_btn}>
               刷新
             </Button>
-            <Button class="" store={resetBtn}>
+            <Button class="" store={$model.ui.$reset_btn}>
               重置
             </Button>
-            <Button store={driveCreateBtn} icon={<HardDrive class="w-4 h-4" />}>
+            <Button store={$model.ui.$drive_create_btn} icon={<HardDrive class="w-4 h-4" />}>
               新增云盘
             </Button>
             <div class="flex items-center space-x-2">
-              <Checkbox store={allDriveCheckbox}></Checkbox>
+              <Checkbox store={$model.ui.$checkbox}></Checkbox>
               <span>全部云盘</span>
             </div>
           </div>
           <div class="flex items-center space-x-2 mt-4">
-            <Input class="" store={nameSearchInput} />
-            <Button class="" icon={<Search class="w-4 h-4" />} store={searchBtn}>
+            <Input class="" store={$model.ui.$search_input} />
+            <Button class="" icon={<Search class="w-4 h-4" />} store={$model.ui.$search_btn}>
               搜索
             </Button>
           </div>
           <ListView
-            store={driveList}
+            store={$model.request.drive.list}
             skeleton={
               <div class="grid grid-cols-1 gap-2 mt-4 lg:grid-cols-2">
                 <div class="relative p-4 bg-white rounded-xl border border-1">
@@ -237,14 +407,14 @@ export const DriveListPage: ViewComponent = (props) => {
           </ListView>
         </div>
       </ScrollView>
-      <Dialog store={driveCreateDialog}>
+      <Dialog store={$model.ui.$drive_create_dialog}>
         <div class="w-[520px] min-h-[120px]">
-          <TabHeader store={driveTabs} />
+          <TabHeader store={$model.ui.$tabs} />
           {(() => {
             if (tabId() === DriveTypes.AlipanOpenDrive) {
               return (
                 <>
-                  <AlipanOpenDriveCreateInput app={app} store={driveTokenInput} />
+                  <AlipanOpenDriveCreateInput app={app} store={$model.ui.$drive_token_input} />
                 </>
               );
             }
@@ -278,8 +448,22 @@ export const DriveListPage: ViewComponent = (props) => {
                     <p>4、紧接着粘贴复制的代码并回车</p>
                     <p>5、将得到的代码粘贴到下方输入框，点击确认即可</p>
                   </div>
-                  <AlipanDriveCreateInput store={driveTokenInput} />
+                  <AlipanDriveCreateInput store={$model.ui.$drive_token_input} />
                 </>
+              );
+            }
+            if (tabId() === DriveTypes.Drive115) {
+              return (
+                <div class="py-4">
+                  <FieldObjectValuesView store={$model.ui.$pan115_values} />
+                </div>
+              );
+            }
+            if (tabId() === DriveTypes.Alist) {
+              return (
+                <div class="py-4">
+                  <FieldObjectValuesView store={$model.ui.$alist_values} />
+                </div>
               );
             }
             // if (tabId() === DriveTypes.Cloud189Drive) {
@@ -307,7 +491,7 @@ export const DriveListPage: ViewComponent = (props) => {
             if (tabId() === DriveTypes.LocalFolder) {
               return (
                 <div class="p-4">
-                  <DriveFiles store={$files} />
+                  <DriveFiles store={$model.ui.$files} />
                 </div>
               );
             }

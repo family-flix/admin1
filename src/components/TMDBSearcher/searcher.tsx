@@ -101,15 +101,16 @@ export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAt
                         if (r.error) {
                           return;
                         }
-                        // @ts-ignore
-                        mediaSearch.$list.modifyResponse((v) => {
-                          return {
-                            ...v,
-                            initial: false,
-                            dataSource: [...r.data.list],
-                            noMore: !r.data.next_marker,
-                          };
-                        });
+                        store.ui.mediaSearch.$list
+                          // @ts-ignore
+                          .modifyResponse((v) => {
+                            return {
+                              ...v,
+                              initial: false,
+                              dataSource: [...r.data.list],
+                              noMore: !r.data.next_marker,
+                            };
+                          });
                         return;
                       }
                       store.toggle(media);
