@@ -141,7 +141,7 @@ const Value = (props: { store: SelectCore<any> } & JSX.HTMLAttributes<HTMLElemen
   return (
     <span style={{ "pointer-events": "none" }}>
       <Show when={!show_placeholder()} fallback={state().placeholder}>
-        {state().text}
+        {state().value}
       </Show>
     </span>
   );
