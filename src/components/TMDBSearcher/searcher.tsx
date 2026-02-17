@@ -9,21 +9,11 @@ import { Presence } from "@/components/ui/presence";
 import { TabHeader } from "@/components/ui/tab-header";
 import { MediaProfileValuesForm } from "@/components/ui/form";
 import { MediaSearchView } from "@/components/MediaSelect";
-import { Field } from "@/components/ListField";
-import { TabHeaderCore } from "@/domains/ui/tab-header";
 import { TMDBSearcherCore } from "@/biz/tmdb";
-import { MediaSearchCore } from "@/biz/media_search";
-import { prepareEpisodeList, prepareSeasonList } from "@/biz/services/media_profile";
-import { ScrollViewCore } from "@/domains/ui/scroll-view";
-import { DialogCore, FormCore, ImageInListCore, InputCore, PresenceCore, SelectCore } from "@/domains/ui";
+import { prepareSeasonList } from "@/biz/services/media_profile";
 import { RequestCore } from "@/domains/request";
-import { FormFieldCore } from "@/domains/ui/form/field";
-import { ListContainerCore } from "@/domains/ui/form/list";
-import { DatePickerCore } from "@/domains/ui/date-picker";
 import { MediaTypes } from "@/constants/index";
 import { cn, sleep } from "@/utils/index";
-import { DragZoneCore } from "@/domains/ui/drag-zone";
-import { ImageUploadCore } from "@/domains/ui/form/image-upload";
 
 export const TMDBSearcherView = (props: { store: TMDBSearcherCore } & JSX.HTMLAttributes<HTMLElement>) => {
   const { store } = props;

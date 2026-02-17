@@ -91,7 +91,7 @@ export const MediaPlayingPage: ViewComponent = (props) => {
   // console.log("[PAGE]tv/play - before fetch tv profile", view.query.id);
   onMount(() => {
     console.log("[PAGE]play/index - onMount", view.query.id);
-    fileRequest.run({ id: view.query.id });
+    fileRequest.run({ drive_id: view.query.drive_id, file_id: view.query.file_id });
   });
   onCleanup(() => {
     console.log("[PAGE]play/index - onCleanup", view.query.id);

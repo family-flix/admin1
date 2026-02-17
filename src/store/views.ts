@@ -7,6 +7,7 @@ import { HomeSeasonProfilePage } from "@/pages/season/profile";
 import { UnknownMediaLayout } from "@/pages/unknown_media/layout";
 import { UnknownMovieListPage } from "@/pages/unknown_media/movie";
 import { UnknownSeasonListPage } from "@/pages/unknown_media/season";
+import { UnknownAVListPage } from "@/pages/unknown_media/av";
 import { LoginPage } from "@/pages/login";
 import { RegisterPage } from "@/pages/register";
 import { NotFoundPage } from "@/pages/notfound";
@@ -18,6 +19,8 @@ import { DriveProfilePage } from "@/pages/drive/profile";
 import { SharedFilesTransferPage } from "@/pages/resource";
 import { MovieListPage } from "@/pages/movie";
 import { MovieProfilePage } from "@/pages/movie/profile";
+import { AVListPage } from "@/pages/av";
+import { AVProfilePage } from "@/pages/av/profile";
 import { MediaPlayingPage } from "@/pages/play/index";
 import { UnknownEpisodeListPage } from "@/pages/unknown_media/episode";
 import { SyncTaskListPage } from "@/pages/sync_task";
@@ -34,11 +37,14 @@ import { SeasonArchivePage } from "@/pages/archive/season";
 import { CollectionListPage } from "@/pages/collection";
 import { CollectionEditPage } from "@/pages/collection/edit";
 import { InvalidMediaListPage } from "@/pages/invalid_media";
+import { MediaProfileListPage } from "@/pages/media_profile/list";
+import { MediaProfileDetailPage } from "@/pages/media_profile/profile";
 
 import { ViewComponent } from "@/store/types";
 
 import { PageKeys } from "./routes";
 import { TestPage } from "@/pages/test";
+import { MediaProfileLayout } from "@/pages/media_profile/layout";
 
 export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout": HomeLayout,
@@ -49,6 +55,8 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.season_profile": HomeSeasonProfilePage,
   "root.home_layout.movie_list": MovieListPage,
   "root.home_layout.movie_profile": MovieProfilePage,
+  "root.home_layout.av_list": AVListPage,
+  "root.home_layout.av_profile": AVProfilePage,
   "root.home_layout.invalid_media_list": InvalidMediaListPage,
   "root.home_layout.permission": PermissionManagePage,
   "root.home_layout.person_list": PersonListPage,
@@ -56,6 +64,7 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.parse_result_layout.movie": UnknownMovieListPage,
   "root.home_layout.parse_result_layout.season": UnknownSeasonListPage,
   "root.home_layout.parse_result_layout.episode": UnknownEpisodeListPage,
+  "root.home_layout.parse_result_layout.av": UnknownAVListPage,
   "root.home_layout.member_list": HomeMemberListPage,
   "root.home_layout.resource_sync": SyncTaskListPage,
   "root.home_layout.job_list": LogListPage,
@@ -72,6 +81,9 @@ export const pages: Omit<Record<PageKeys, ViewComponent>, "root"> = {
   "root.home_layout.test": TestPage,
   "root.archive": SeasonArchivePage,
   "root.preview": MediaPlayingPage,
+  "root.media_profile": MediaProfileLayout,
+  "root.media_profile.media_profile_list": MediaProfileListPage,
+  "root.media_profile.media_profile_profile": MediaProfileDetailPage,
   "root.login": LoginPage,
   "root.register": RegisterPage,
   "root.notfound": NotFoundPage,

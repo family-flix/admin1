@@ -61,6 +61,20 @@ const configure = {
               require: ["login"],
             },
           },
+          av_list: {
+            title: "AV列表",
+            pathname: "/home/av",
+            options: {
+              require: ["login"],
+            },
+          },
+          av_profile: {
+            title: "AV详情",
+            pathname: "/home/av_profile",
+            options: {
+              require: ["login"],
+            },
+          },
           invalid_media_list: {
             title: "影视剧待处理问题",
             pathname: "/home/invalid_media",
@@ -111,6 +125,10 @@ const configure = {
               movie: {
                 title: "电影解析结果",
                 pathname: "/home/unknown_media/movie",
+              },
+              av: {
+                title: "AV解析结果",
+                pathname: "/home/unknown_media/av",
               },
             },
             options: {
@@ -212,6 +230,20 @@ const configure = {
         pathname: "/home/preview",
         options: {
           require: ["login"],
+        },
+      },
+      media_profile: {
+        title: "影视剧档案",
+        pathname: "/media_profile",
+        children: {
+          media_profile_list: {
+            title: "影视剧档案",
+            pathname: "/media_profile/list",
+          },
+          media_profile_profile: {
+            title: "影视剧档案",
+            pathname: "/media_profile/profile",
+          },
         },
       },
       login: {

@@ -11,7 +11,7 @@ import { MediaTypes } from "@/constants/index";
  * @returns
  */
 export function fetchMediaProfileList(
-  params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>
+  params: Partial<FetchParams> & Partial<{ keyword: string; type: MediaTypes; series_id: string }>,
 ) {
   const { keyword, page, pageSize, type, ...rest } = params;
   return media_request.post<
@@ -77,7 +77,15 @@ export function fetchMediaProfileListProcess(r: TmpRequestResp<typeof fetchMedia
         name,
         original_name,
         overview,
-        poster_path,
+        poster_path: (() => {
+          if (!poster_path) {
+            return poster_path;
+          }
+          if (media.type === MediaTypes.AV) {
+            return `/api/proxy/javbus?url=${encodeURIComponent(poster_path)}`;
+          }
+          return poster_path;
+        })(),
         air_date,
         vote_average,
         episode_count,
@@ -181,6 +189,72 @@ export function fetchPartialMediaProfileProcess(r: TmpRequestResp<typeof fetchPa
   });
 }
 /**
+ * 获取影视剧档案详情（完整）
+ */
+export function fetchMediaProfileDetail(body: { id: string }) {
+  return media_request.post<{
+    id: string;
+    type: MediaTypes;
+    name: string;
+    original_name: string;
+    overview: string;
+    poster_path: string;
+    backdrop_path: string;
+    air_date: string;
+    vote_average: number;
+    source_count: number;
+    genres: string[];
+    origin_country: string[];
+    episodes: {
+      id: string;
+      name: string;
+      overview: string;
+      order: number;
+      air_date: string;
+      runtime: number | null;
+    }[];
+    persons: {
+      id: string;
+      name: string;
+      order: number;
+      profile_path: string;
+    }[];
+    series?: {
+      id: string;
+      name: string;
+    };
+  }>("/api/v2/media_profile/profile", {
+    id: body.id,
+  });
+}
+export function fetchMediaProfileDetailProcess(r: TmpRequestResp<typeof fetchMediaProfileDetail>) {
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const data = r.data;
+  const proxy = (url: string | null) => {
+    if (!url) {
+      return "";
+    }
+    if (data.type !== MediaTypes.AV) {
+      return url;
+    }
+    return `/api/proxy/javbus?url=${encodeURIComponent(url)}`;
+  };
+  return Result.Ok({
+    ...data,
+    poster_path: proxy(data.poster_path),
+    backdrop_path: proxy(data.backdrop_path),
+    persons: data.persons.map((p) => ({ ...p, profile_path: p.profile_path ? proxy(p.profile_path) : "" })),
+  });
+}
+/**
+ * 刷新影视剧档案详情
+ */
+export function refreshMediaProfileDetail(body: { id: string }) {
+  return media_request.post<void>("/api/v2/media_profile/refresh", { id: body.id });
+}
+/**
  * 删除指定影视剧详情
  */
 export function deleteMediaProfile(body: { id: string }) {
@@ -266,6 +340,30 @@ export function searchMediaInTMDB(params: Partial<FetchParams> & { keyword: stri
 export type TheMediaInTMDB = NonNullable<UnpackedResult<TmpRequestResp<typeof searchMediaInTMDB>>>["list"][number];
 
 /**
+ * 在 JAVBus 搜索 AV
+ */
+export function searchJavbus(params: Partial<FetchParams> & { keyword: string }) {
+  const { keyword, page, pageSize, ...rest } = params;
+  return media_request.post<
+    ListResponse<{
+      id: string | number;
+      type: MediaTypes;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      air_date: string;
+    }>
+  >("/api/v2/media_profile/search_javbus", {
+    ...rest,
+    keyword,
+    page,
+    page_size: pageSize,
+  });
+}
+export type TheMediaInJavbus = NonNullable<UnpackedResult<TmpRequestResp<typeof searchJavbus>>>["list"][number];
+
+/**
  * 刷新电视剧详情
  */
 export function refreshMediaProfile(body: { media_id: string }) {
@@ -284,7 +382,7 @@ export function modifyMediaProfile(
     overview: string;
     source_count: number;
     air_date: number;
-  }>
+  }>,
 ) {
   return media_request.post<void>("/api/v2/media_profile/edit", { id, ...body });
 }

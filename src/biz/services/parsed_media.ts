@@ -273,8 +273,8 @@ export function deleteParsedMediaSource(params: { parsed_media_source_id: string
 /**
  * 获取视频文件播放信息
  */
-export function fetchSourcePreviewInfo(body: { id: string }) {
-  const { id } = body;
+export function fetchSourcePreviewInfo(body: { drive_id: string; file_id: string }) {
+  const { drive_id, file_id } = body;
   return media_request.post<{
     id: string;
     url: string;
@@ -289,8 +289,9 @@ export function fetchSourcePreviewInfo(body: { id: string }) {
       width: number;
       height: number;
     }[];
-  }>("/api/v2/admin/parsed_media_source/preview", {
-    id,
+  }>("/api/v2/drive/file/preview", {
+    drive_id,
+    file_id,
   });
 }
 export function fetchSourcePreviewInfoProcess(r: TmpRequestResp<typeof fetchSourcePreviewInfo>) {

@@ -47,7 +47,7 @@ export function fetchDriveFilesProcess(r: TmpRequestResp<typeof fetchDriveFiles>
   }
   const { items, next_marker } = r.data;
   return Result.Ok({
-    list: items.map((file) => {
+    list: (items).map((file) => {
       const { file_id, name, parent_file_id, size, type, thumbnail } = file;
       return {
         file_id,

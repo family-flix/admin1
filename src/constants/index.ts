@@ -336,6 +336,7 @@ export const MediaErrorTypeOptions = Object.keys(MediaErrorTypeTextMap).map((k) 
 export enum MediaTypes {
   Season = 1,
   Movie = 2,
+  AV = 3,
 }
 
 export enum CollectionTypes {

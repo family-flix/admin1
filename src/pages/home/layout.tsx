@@ -20,6 +20,7 @@ import {
   Sparkles,
   HeartCrack,
   HardDrive,
+  Video,
 } from "lucide-solid";
 
 import { ViewComponent, ViewComponentProps } from "@/store/types";
@@ -331,6 +332,11 @@ export const HomeLayout: ViewComponent = (props) => {
       text: "电影",
       icon: <Film class="w-6 h-6" />,
       url: "root.home_layout.movie_list",
+    },
+    {
+      text: "AV",
+      icon: <Video class="w-6 h-6" />,
+      url: "root.home_layout.av_list",
     },
     {
       text: "刮削结果",

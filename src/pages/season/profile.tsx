@@ -423,7 +423,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                           <div class="pl-4 space-y-1">
                             <For each={sources}>
                               {(source) => {
-                                const { id, file_name, parent_paths, drive } = source;
+                                const { id, file_id, file_name, parent_paths, drive } = source;
                                 return (
                                   <div class="flex items-center space-x-4 text-slate-500">
                                     <span class="break-all" title={`[${drive.name}]${parent_paths}/${file_name}`}>
@@ -434,7 +434,7 @@ export const HomeSeasonProfilePage: ViewComponent = (props) => {
                                         class="p-1 cursor-pointer"
                                         title="播放"
                                         onClick={() => {
-                                          history.push("root.preview", { id });
+                                          history.push("root.preview", { drive_id: drive.id, file_id });
                                           // mediaPlayingPage.query = {
                                           //   id,
                                           // };

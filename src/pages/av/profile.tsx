@@ -1,5 +1,5 @@
 /**
- * @file 电影详情
+ * @file AV详情
  */
 import { For, Show, createSignal, onMount } from "solid-js";
 import { ArrowLeft, Play, Trash } from "lucide-solid";
@@ -7,40 +7,39 @@ import { ArrowLeft, Play, Trash } from "lucide-solid";
 import { ViewComponent } from "@/store/types";
 import { appendAction } from "@/store/actions";
 import {
-  MovieProfile,
-  fetchMovieMediaProfile,
+  AVProfile,
+  fetchAVMediaProfile,
   deleteMedia,
   refreshMediaProfile,
   setMediaProfile,
-  fetchMovieMediaProfileProcess,
+  fetchAVMediaProfileProcess,
 } from "@/biz/services/media";
 import { deleteParsedMediaSource } from "@/biz/services/parsed_media";
-import { Button, Dialog, Skeleton, LazyImage, ScrollView, Input } from "@/components/ui";
+import { Button, Dialog, Skeleton, LazyImage, ScrollView } from "@/components/ui";
 import { TMDBSearcherView } from "@/components/TMDBSearcher";
 import { TMDBSearcherCore } from "@/biz/tmdb";
-import { DialogCore, ButtonCore, ScrollViewCore, InputCore, ImageCore } from "@/domains/ui";
+import { DialogCore, ButtonCore, ScrollViewCore, ImageCore, ImageInListCore } from "@/domains/ui";
 import { RefCore } from "@/domains/ui/cur";
-import { parseVideoFilename } from "@/components/FilenameParser/services";
 import { RequestCore } from "@/domains/request";
 import { MediaTypes } from "@/constants/index";
 
-export const MovieProfilePage: ViewComponent = (props) => {
+export const AVProfilePage: ViewComponent = (props) => {
   const { app, history, view } = props;
 
-  const profileRequest = new RequestCore(fetchMovieMediaProfile, {
-    process: fetchMovieMediaProfileProcess,
+  const profileRequest = new RequestCore(fetchAVMediaProfile, {
+    process: fetchAVMediaProfileProcess,
     onSuccess(v) {
       poster.setURL(v.poster_path);
       setProfile(v);
     },
   });
-  const movieProfileChangeRequest = new RequestCore(setMediaProfile, {
+  const profileChangeRequest = new RequestCore(setMediaProfile, {
     onLoading(loading) {
-      movieProfileChangeDialog.okBtn.setLoading(loading);
+      profileChangeDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
       app.tip({ text: ["更改详情成功"] });
-      movieProfileChangeDialog.hide();
+      profileChangeDialog.hide();
       profileRequest.reload();
     },
     onFailed(error) {
@@ -51,9 +50,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
     onSuccess() {
       const theSource = sourceRef.value;
       if (!theSource) {
-        app.tip({
-          text: ["删除成功，请刷新页面"],
-        });
+        app.tip({ text: ["删除成功，请刷新页面"] });
         return;
       }
       profileRequest.modifyResponse((response) => {
@@ -64,12 +61,10 @@ export const MovieProfilePage: ViewComponent = (props) => {
           }),
         };
       });
-      app.tip({
-        text: ["删除成功"],
-      });
+      app.tip({ text: ["删除成功"] });
     },
   });
-  const movieProfileRefreshRequest = new RequestCore(refreshMediaProfile, {
+  const profileRefreshRequest = new RequestCore(refreshMediaProfile, {
     onSuccess() {
       profileRefreshBtn.setLoading(false);
       app.tip({ text: ["刷新详情成功"] });
@@ -77,63 +72,54 @@ export const MovieProfilePage: ViewComponent = (props) => {
     },
     onFailed(error) {
       profileRefreshBtn.setLoading(false);
-      app.tip({
-        text: ["刷新详情失败", error.message],
-      });
+      app.tip({ text: ["刷新详情失败", error.message] });
     },
   });
-  const movieDeletingRequest = new RequestCore(deleteMedia, {
+  const deletingRequest = new RequestCore(deleteMedia, {
     onLoading(loading) {
-      movieDeletingConfirmDialog.okBtn.setLoading(loading);
+      deletingConfirmDialog.okBtn.setLoading(loading);
     },
     onSuccess() {
-      app.tip({
-        text: ["删除成功"],
-      });
-      movieDeletingConfirmDialog.hide();
+      app.tip({ text: ["删除成功"] });
+      deletingConfirmDialog.hide();
       appendAction("deleteMovie", {
         movie_id: view.query.id,
       });
       history.back();
     },
     onFailed(error) {
-      app.tip({
-        text: ["删除失败", error.message],
-      });
+      app.tip({ text: ["删除失败", error.message] });
     },
   });
   const sourceRef = new RefCore<{ id: string; file_id: string }>();
   const poster = new ImageCore({});
+  const personAvatar = new ImageInListCore({});
   const profileRefreshBtn = new ButtonCore({
     onClick() {
-      app.tip({
-        text: ["开始刷新"],
-      });
+      app.tip({ text: ["开始刷新"] });
       profileRefreshBtn.setLoading(true);
-      movieProfileRefreshRequest.run({ media_id: view.query.id });
+      profileRefreshRequest.run({ media_id: view.query.id });
     },
   });
-  const movieDeletingBtn = new ButtonCore({
+  const deletingBtn = new ButtonCore({
     onClick() {
-      movieDeletingConfirmDialog.show();
+      deletingConfirmDialog.show();
     },
   });
-  const movieDeletingConfirmDialog = new DialogCore({
-    title: "删除电影",
+  const deletingConfirmDialog = new DialogCore({
+    title: "删除AV",
     onOk() {
-      movieDeletingRequest.run({
-        media_id: view.query.id,
-      });
+      deletingRequest.run({ media_id: view.query.id });
     },
   });
   const searcher = TMDBSearcherCore({
-    type: MediaTypes.Movie,
+    type: MediaTypes.AV,
   });
-  const movieProfileChangeDialog = new DialogCore({
+  const profileChangeDialog = new DialogCore({
     onOk() {
       const id = view.query.id as string;
       if (!id) {
-        app.tip({ text: ["更新详情失败", "缺少电影 id"] });
+        app.tip({ text: ["更新详情失败", "缺少 id"] });
         return;
       }
       const media = searcher.cur;
@@ -141,7 +127,7 @@ export const MovieProfilePage: ViewComponent = (props) => {
         app.tip({ text: ["请选择详情"] });
         return;
       }
-      movieProfileChangeRequest.run({
+      profileChangeRequest.run({
         media_id: id,
         media_profile: {
           id: String(media.id),
@@ -151,12 +137,12 @@ export const MovieProfilePage: ViewComponent = (props) => {
       });
     },
   });
-  const movieProfileChangeBtn = new ButtonCore({
+  const profileChangeBtn = new ButtonCore({
     onClick() {
       if (profileRequest.response) {
         searcher.$input.setValue(profileRequest.response.name);
       }
-      movieProfileChangeDialog.show();
+      profileChangeDialog.show();
     },
   });
   const scrollView = new ScrollViewCore({});
@@ -164,10 +150,10 @@ export const MovieProfilePage: ViewComponent = (props) => {
     setProfile(v.response);
   });
 
-  const [profile, setProfile] = createSignal<MovieProfile | null>(null);
+  const [profile, setProfile] = createSignal<AVProfile | null>(null);
 
   onMount(() => {
-    profileRequest.run({ movie_id: view.query.id });
+    profileRequest.run({ av_id: view.query.id });
   });
 
   return (
@@ -216,17 +202,27 @@ export const MovieProfilePage: ViewComponent = (props) => {
                         <LazyImage
                           class="overflow-hidden w-[240px] h-[360px] rounded-lg object-cover"
                           store={poster}
-                          // src={profile()?.poster_path ?? undefined}
                         />
                       </div>
                       <div class="flex-1">
                         <h2 class="text-5xl">{profile()?.name}</h2>
+                        <div class="mt-4 flex items-center space-x-4 text-sm text-slate-600">
+                          <Show when={profile()?.vote_average}>
+                            <span>评分: {profile()?.vote_average}</span>
+                          </Show>
+                          <Show when={profile()?.air_date}>
+                            <span>{profile()?.air_date}</span>
+                          </Show>
+                        </div>
+                        <Show when={profile()?.genres && profile()!.genres.length > 0}>
+                          <div class="mt-3 flex flex-wrap gap-2">
+                            <For each={profile()?.genres}>
+                              {(genre) => <span class="px-2 py-1 text-xs bg-slate-200 rounded">{genre.label}</span>}
+                            </For>
+                          </div>
+                        </Show>
                         <div class="mt-6 text-2xl">剧情简介</div>
-                        <div class="mt-2">{profile()?.overview}</div>
-                        {/* <div class="mt-4 space-x-2">
-                          <a href={`https://www.themoviedb.org/movie/${profile()?.tmdb_id}`}>TMDB</a>
-                        </div> */}
-                        {/* <div class="mt-4 space-x-2">{profile()?.source_size_text}</div> */}
+                        <div class="mt-2">{profile()?.overview || "暂无简介"}</div>
                       </div>
                     </div>
                   </div>
@@ -234,9 +230,8 @@ export const MovieProfilePage: ViewComponent = (props) => {
               </div>
               <div class="relative z-3 mt-4">
                 <div class="flex items-center space-x-4">
-                  {/* <Button store={movieProfileChangeBtn}>关联详情</Button> */}
                   <Button store={profileRefreshBtn}>刷新详情</Button>
-                  <Button store={movieDeletingBtn} variant="subtle">
+                  <Button store={deletingBtn} variant="subtle">
                     删除
                   </Button>
                 </div>
@@ -257,10 +252,6 @@ export const MovieProfilePage: ViewComponent = (props) => {
                                 title="播放"
                                 onClick={() => {
                                   history.push("root.preview", { drive_id: drive.id, file_id });
-                                  // mediaPlayingPage.query = {
-                                  //   id,
-                                  // };
-                                  // app.showView(mediaPlayingPage);
                                 }}
                               >
                                 <Play class="w-4 h-4" />
@@ -285,16 +276,35 @@ export const MovieProfilePage: ViewComponent = (props) => {
                   </For>
                 </div>
               </div>
+              <Show when={profile()?.persons && profile()!.persons.length > 0}>
+                <div class="mt-8">
+                  <div class="text-2xl">演员</div>
+                  <div class="mt-2 flex flex-wrap gap-4">
+                    <For each={profile()?.persons}>
+                      {(person) => (
+                        <div class="text-sm text-center w-[80px]">
+                          <LazyImage
+                            class="w-[80px] h-[80px] rounded-full object-cover"
+                            store={personAvatar.bind(person.profile_path ? `/api/proxy/javbus?url=${encodeURIComponent(person.profile_path)}` : "")}
+                            alt={person.name}
+                          />
+                          <div class="mt-1 truncate">{person.name}</div>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </div>
+              </Show>
             </div>
           </Show>
         </div>
       </ScrollView>
-      <Dialog store={movieProfileChangeDialog}>
+      <Dialog store={profileChangeDialog}>
         <div class="w-[520px]">
           <TMDBSearcherView store={searcher} />
         </div>
       </Dialog>
-      <Dialog store={movieDeletingConfirmDialog}>
+      <Dialog store={deletingConfirmDialog}>
         <div class="w-[520px]">
           <div>确认删除吗？</div>
           <div>该操作不删除视频文件</div>

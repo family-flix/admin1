@@ -30,6 +30,10 @@ export const UnknownMediaLayout: ViewComponent = (props) => {
         id: "root.home_layout.parse_result_layout.movie" as PageKeys,
         text: "电影",
       },
+      {
+        id: "root.home_layout.parse_result_layout.av" as PageKeys,
+        text: "AV",
+      },
     ],
     onChange(opt) {
       history.push(opt.id);

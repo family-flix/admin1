@@ -182,6 +182,54 @@ export function fetchMovieMediaListProcess(r: TmpRequestResp<typeof fetchMovieMe
 }
 
 /**
+ * 获取 AV 列表
+ */
+export function fetchAVMediaList(params: FetchParams & { name: string; duplicated: number }) {
+  const { page, pageSize, ...rest } = params;
+  return media_request.post<
+    ListResponseWithCursor<{
+      id: string;
+      name: string;
+      original_name: string;
+      overview: string;
+      poster_path: string;
+      air_date: string;
+      vote_average: number;
+      runtime: number;
+      genres: { value: string; label: string }[];
+      tips: string[];
+      persons: {
+        id: string;
+        name: string;
+        profile_path: string;
+        order: number;
+      }[];
+    }>
+  >("/api/v2/admin/av/list", {
+    ...rest,
+    page,
+    page_size: pageSize,
+  });
+}
+export type AVMediaItem = RequestedResource<typeof fetchAVMediaListProcess>["list"][number];
+export function fetchAVMediaListProcess(r: TmpRequestResp<typeof fetchAVMediaList>) {
+  if (r.error) {
+    return r;
+  }
+  return Result.Ok({
+    ...r.data,
+    list: r.data.list.map((av) => {
+      const { persons = [], genres, ...rest } = av;
+      return {
+        ...rest,
+        poster_path: av.poster_path ? `/api/proxy/javbus?url=${encodeURIComponent(av.poster_path)}` : "",
+        persons: persons.slice(0, 5),
+      };
+    }),
+  });
+}
+
+/**
  * 获取电影详情
  */
 export function fetchMovieMediaProfile(body: { movie_id: string }) {
@@ -222,6 +270,62 @@ export function fetchMovieMediaProfileProcess(r: TmpRequestResp<typeof fetchMovi
     poster_path,
     backdrop_path,
     air_date,
+    sources,
+  });
+}
+
+/**
+ * 获取AV详情
+ */
+export function fetchAVMediaProfile(body: { av_id: string }) {
+  const { av_id } = body;
+  return media_request.post<{
+    id: string;
+    name: string;
+    overview: string;
+    poster_path: null;
+    backdrop_path: null;
+    air_date: string;
+    vote_average: number;
+    genres: { value: string; label: string }[];
+    persons: {
+      id: string;
+      name: string;
+      profile_path: string;
+      order: number;
+    }[];
+    sources: {
+      id: string;
+      file_id: string;
+      file_name: string;
+      parent_paths: string;
+      size: number;
+      drive: {
+        id: string;
+        name: string;
+        avatar: string;
+      };
+    }[];
+  }>("/api/v2/admin/av/profile", {
+    media_id: av_id,
+  });
+}
+export type AVProfile = RequestedResource<typeof fetchAVMediaProfileProcess>;
+export function fetchAVMediaProfileProcess(r: TmpRequestResp<typeof fetchAVMediaProfile>) {
+  if (r.error) {
+    return Result.Err(r.error.message);
+  }
+  const { id, name, overview, poster_path, backdrop_path, air_date, vote_average, genres, persons = [], sources } = r.data;
+  return Result.Ok({
+    id,
+    name,
+    overview,
+    poster_path: poster_path ? `/api/proxy/javbus?url=${encodeURIComponent(poster_path)}` : "",
+    backdrop_path,
+    air_date,
+    vote_average,
+    genres,
+    persons,
     sources,
   });
 }
